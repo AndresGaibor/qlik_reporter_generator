@@ -2,7 +2,6 @@ import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
@@ -18,9 +17,8 @@ import {
 } from "@/modulos/reportes/api";
 import { ListaEjecuciones } from "@/modulos/reportes/componentes/lista-ejecuciones";
 import { ModalClonarAutomatizacion } from "@/modulos/reportes/componentes/modal-clonar-automatizacion";
-import { TarjetaDetalleAutomatizacion } from "@/modulos/reportes/componentes/tarjeta-detalle-automatizacion";
 import { ResumenConfiguracionReporte } from "@/modulos/reportes/componentes/resumen-configuracion-reporte";
-import { VisorWorkspace } from "@/modulos/reportes/componentes/visor-workspace";
+import { TarjetaDetalleAutomatizacion } from "@/modulos/reportes/componentes/tarjeta-detalle-automatizacion";
 import type { ConfiguracionReporte } from "@/modulos/reportes/pagina-nueva-automatizacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -291,7 +289,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl space-y-5">
       <div>
         <Link
           to="/reportes"
@@ -302,10 +300,19 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
         </Link>
       </div>
 
-      <PageHeader
-        title={auto.nombre}
-        description="Consulta el estado, ejecuta el reporte y revisa sus resultados recientes."
-      />
+      <header className="border-b border-line-200 pb-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-brand-700">
+          <Icon name="file-text" size="sm" />
+          Detalle del reporte
+        </div>
+        <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[28px]">
+          {auto.nombre}
+        </h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-500">
+          Consulta el estado, ejecuta el reporte y revisa sus resultados
+          recientes.
+        </p>
+      </header>
 
       <TarjetaDetalleAutomatizacion
         automatizacion={auto}
@@ -330,10 +337,6 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
       )}
 
       <ListaEjecuciones ejecuciones={ejecuciones ?? []} />
-
-      {esAdmin && !modoUsuarioFinal && workspace && (
-        <VisorWorkspace workspace={workspace} />
-      )}
 
       <ModalClonarAutomatizacion
         open={modalClonarAbierto}

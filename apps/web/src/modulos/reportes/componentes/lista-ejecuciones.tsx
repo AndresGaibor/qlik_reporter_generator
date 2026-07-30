@@ -2,11 +2,11 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { formatearFechaYHora } from "@/compartido/utiles/formateador-fechas";
 import type { EjecucionResumen } from "@/modulos/reportes/api";
 import {
+  type TonoEstadoEjecucion,
   abreviarIdEjecucion,
   calcularDuracion,
   extraerMensajeError,
   presentarEstadoEjecucion,
-  type TonoEstadoEjecucion,
 } from "@/modulos/reportes/utiles-presentacion-reporte";
 
 interface Props {
@@ -49,7 +49,9 @@ export function ListaEjecuciones({ ejecuciones }: Props) {
         </div>
         <span className="text-xs font-medium text-ink-400">
           {ejecuciones.length}{" "}
-          {ejecuciones.length === 1 ? "ejecución registrada" : "ejecuciones registradas"}
+          {ejecuciones.length === 1
+            ? "ejecución registrada"
+            : "ejecuciones registradas"}
         </span>
       </div>
 

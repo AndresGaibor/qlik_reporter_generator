@@ -154,9 +154,7 @@ export function PaginaNuevaAutomatizacion({
 
   return (
     <div
-      className={
-        integrado ? "space-y-4" : "mx-auto max-w-5xl space-y-4 pb-4"
-      }
+      className={integrado ? "space-y-4" : "mx-auto max-w-5xl space-y-4 pb-4"}
     >
       {!integrado && (
         <Link

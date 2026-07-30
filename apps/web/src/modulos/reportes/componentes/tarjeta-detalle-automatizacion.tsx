@@ -6,10 +6,10 @@ import type {
   EjecucionResumen,
 } from "@/modulos/reportes/api";
 import {
+  type TonoEstadoEjecucion,
   calcularDuracion,
   extraerMensajeError,
   presentarEstadoEjecucion,
-  type TonoEstadoEjecucion,
 } from "@/modulos/reportes/utiles-presentacion-reporte";
 import { useState } from "react";
 import { VisorWorkspaceModal } from "./visor-workspace-modal";

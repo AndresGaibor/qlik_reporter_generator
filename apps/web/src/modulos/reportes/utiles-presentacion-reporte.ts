@@ -1,8 +1,4 @@
-export type TonoEstadoEjecucion =
-  | "exito"
-  | "error"
-  | "progreso"
-  | "neutral";
+export type TonoEstadoEjecucion = "exito" | "error" | "progreso" | "neutral";
 
 export interface EstadoEjecucionPresentado {
   etiqueta: string;

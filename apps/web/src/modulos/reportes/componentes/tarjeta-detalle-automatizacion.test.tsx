@@ -1,5 +1,5 @@
 import { flushSync } from "react-dom";
-import { createRoot, type Root } from "react-dom/client";
+import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { TarjetaDetalleAutomatizacion } from "./tarjeta-detalle-automatizacion";
 

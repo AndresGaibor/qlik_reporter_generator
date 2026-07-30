@@ -1,5 +1,5 @@
 import { flushSync } from "react-dom";
-import { createRoot, type Root } from "react-dom/client";
+import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { ListaEjecuciones } from "./lista-ejecuciones";
 
@@ -56,5 +56,7 @@ test("hace visible el motivo de una ejecución fallida", () => {
   const vista = montar();
 
   expect(vista.textContent).toContain("Conexión rechazada por el destino");
-  expect(vista.querySelector('[title="87654321-4321-4321-4321-cba987654321"]')).not.toBeNull();
+  expect(
+    vista.querySelector('[title="87654321-4321-4321-4321-cba987654321"]'),
+  ).not.toBeNull();
 });

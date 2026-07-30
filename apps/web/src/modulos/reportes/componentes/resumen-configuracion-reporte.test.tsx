@@ -1,5 +1,5 @@
 import { flushSync } from "react-dom";
-import { createRoot, type Root } from "react-dom/client";
+import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { ResumenConfiguracionReporte } from "./resumen-configuracion-reporte";
 
@@ -36,8 +36,8 @@ function montar() {
 }
 
 function boton(texto: string) {
-  return Array.from(container?.querySelectorAll("button") ?? []).find((elemento) =>
-    elemento.textContent?.includes(texto),
+  return Array.from(container?.querySelectorAll("button") ?? []).find(
+    (elemento) => elemento.textContent?.includes(texto),
   );
 }
 
