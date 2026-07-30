@@ -19,11 +19,9 @@ import {
 import { ListaEjecuciones } from "@/modulos/reportes/componentes/lista-ejecuciones";
 import { ModalClonarAutomatizacion } from "@/modulos/reportes/componentes/modal-clonar-automatizacion";
 import { TarjetaDetalleAutomatizacion } from "@/modulos/reportes/componentes/tarjeta-detalle-automatizacion";
+import { ResumenConfiguracionReporte } from "@/modulos/reportes/componentes/resumen-configuracion-reporte";
 import { VisorWorkspace } from "@/modulos/reportes/componentes/visor-workspace";
-import {
-  type ConfiguracionReporte,
-  PaginaNuevaAutomatizacion,
-} from "@/modulos/reportes/pagina-nueva-automatizacion";
+import type { ConfiguracionReporte } from "@/modulos/reportes/pagina-nueva-automatizacion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -306,18 +304,8 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
 
       <PageHeader
         title={auto.nombre}
-        description={`Orquestación configurada para el espacio ${auto.espacioNombre || "Personal"}`}
+        description="Consulta el estado, ejecuta el reporte y revisa sus resultados recientes."
       />
-
-      {workspace && (
-        <PaginaNuevaAutomatizacion
-          configuracionInicial={configuracionInicial(workspace)}
-          integrado
-          onGuardarCambios={async (configuracion) => {
-            await guardarConfiguracion.mutateAsync(configuracion);
-          }}
-        />
-      )}
 
       <TarjetaDetalleAutomatizacion
         automatizacion={auto}
@@ -332,11 +320,20 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
         mostrarWorkspace={esAdmin && !modoUsuarioFinal}
       />
 
-      {esAdmin && !modoUsuarioFinal && workspace && (
-        <VisorWorkspace workspace={workspace} />
+      {workspace && (
+        <ResumenConfiguracionReporte
+          configuracion={configuracionInicial(workspace)}
+          onGuardarCambios={async (configuracion) => {
+            await guardarConfiguracion.mutateAsync(configuracion);
+          }}
+        />
       )}
 
       <ListaEjecuciones ejecuciones={ejecuciones ?? []} />
+
+      {esAdmin && !modoUsuarioFinal && workspace && (
+        <VisorWorkspace workspace={workspace} />
+      )}
 
       <ModalClonarAutomatizacion
         open={modalClonarAbierto}
