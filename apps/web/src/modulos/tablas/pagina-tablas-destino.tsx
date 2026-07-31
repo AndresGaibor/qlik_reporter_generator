@@ -13,13 +13,13 @@ import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { CatalogoResultados } from "./componentes/catalogo-resultados";
 import { DetalleResultado } from "./componentes/detalle-resultado";
+import { EstadoAccesoResultados } from "./componentes/estado-acceso-resultados";
 import { EstadoResultados } from "./componentes/estado-resultados";
 import type { PestanaResultado } from "./tipos-resultados";
 
 function mensajeError(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Ocurrió un error inesperado.";
+  if (error instanceof Error) return error.message;
+  return "Ocurrió un error inesperado.";
 }
 
 function exigirId(valor: string | undefined | null, nombre: string): string {
@@ -78,7 +78,7 @@ function MarcoResultados({
 }
 
 export function PaginaTablasDestino() {
-  const { tenant } = useTenantActivo();
+  const { tenant, haySesion, sinTenantsDisponibles } = useTenantActivo();
   const [busqueda, setBusqueda] = useState("");
   const [tablaId, setTablaId] = useState<string | null>(null);
   const [pestana, setPestana] = useState<PestanaResultado>("campos");
@@ -144,6 +144,17 @@ export function PaginaTablasDestino() {
     retry: false,
     staleTime: 30_000,
   });
+
+  if (!haySesion || sinTenantsDisponibles) {
+    return (
+      <MarcoResultados>
+        <EstadoAccesoResultados
+          sesion={haySesion}
+          sinEntornos={sinTenantsDisponibles}
+        />
+      </MarcoResultados>
+    );
+  }
 
   if (!tenant || configuracion.isLoading) {
     return (
