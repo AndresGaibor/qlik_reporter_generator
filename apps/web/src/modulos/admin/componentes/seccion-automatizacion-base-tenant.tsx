@@ -8,6 +8,10 @@ import {
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { TenantQlik } from "@/modulos/admin/api";
 import { useState } from "react";
+import {
+  nombreVisibleEntornoQlik,
+  normalizarHostQlik,
+} from "../utiles-presentacion-qlik";
 import { ResumenPlantillaBase } from "./resumen-plantilla-base";
 import { SeccionConfigurarAutomatizacionBase } from "./seccion-configurar-automatizacion-base";
 
@@ -51,13 +55,15 @@ function PlantillaPorEntorno({
 }: { organizacionId: string; tenantQlik: TenantQlik }) {
   const configurada = Boolean(tenantQlik.automatizacionBaseIdQlik);
   const [editando, setEditando] = useState(!configurada);
+  const nombreEntorno = nombreVisibleEntornoQlik(tenantQlik);
+  const hostVisible = normalizarHostQlik(tenantQlik.host);
 
   if (configurada && !editando) {
     return (
       <ResumenPlantillaBase
         nombre={tenantQlik.automatizacionBaseNombre || "Plantilla base"}
-        entorno={tenantQlik.nombre || "Entorno Qlik Cloud"}
-        host={tenantQlik.host}
+        entorno={nombreEntorno}
+        host={hostVisible}
         onCambiar={() => setEditando(true)}
       />
     );
@@ -67,10 +73,8 @@ function PlantillaPorEntorno({
     <section className="rounded-xl border border-line-200 bg-app/20 p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-ink-900">
-            {tenantQlik.nombre || "Entorno Qlik Cloud"}
-          </p>
-          <p className="font-mono text-xs text-ink-500">{tenantQlik.host}</p>
+          <p className="text-sm font-semibold text-ink-900">{nombreEntorno}</p>
+          <p className="font-mono text-xs text-ink-500">{hostVisible}</p>
         </div>
         {configurada && (
           <Button

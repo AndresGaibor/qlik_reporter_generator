@@ -18,7 +18,7 @@ describe("crearResumenConfiguracion", () => {
       "Verificado",
       "Configurada",
       "Conectada",
-      "1 autorizado",
+      "1 usuario autorizado",
     ]);
     expect(items.every((item) => item.completo)).toBe(true);
   });

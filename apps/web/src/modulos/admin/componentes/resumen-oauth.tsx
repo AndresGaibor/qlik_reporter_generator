@@ -56,6 +56,7 @@ export function ResumenOauth({
           <Button
             type="button"
             size="sm"
+            variant="outline"
             onClick={onVerificar}
             disabled={verificando}
             className="gap-1.5"

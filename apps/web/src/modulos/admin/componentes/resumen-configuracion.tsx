@@ -9,7 +9,7 @@ interface Props {
 const iconos: Record<ItemResumenConfiguracion["id"], IconName> = {
   general: "gear",
   qlik: "cloud",
-  oauth: "shield",
+  oauth: "zap",
   plantilla: "robot",
   bigquery: "db",
   usuarios: "users",

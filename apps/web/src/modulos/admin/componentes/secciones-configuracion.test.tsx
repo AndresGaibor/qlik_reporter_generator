@@ -3,6 +3,7 @@ import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { SeccionInfoTenant } from "./seccion-info-tenant";
 import { SeccionQlikCloud } from "./seccion-qlik-cloud";
+import { SeccionUsuarios } from "./seccion-usuarios";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -86,4 +87,70 @@ test("Qlik Cloud muestra conexiones y abre el formulario bajo demanda", () => {
   act(() => boton?.click());
   expect(vista.querySelector("#host-qlik")).not.toBeNull();
   expect(vista.textContent).toContain("Cancelar");
+});
+
+test("Qlik Cloud evita repetir una URL usada como nombre", () => {
+  const host = "empresa.us.qlikcloud.com";
+  const vista = montar(
+    <SeccionQlikCloud
+      tenant={{ id: "org-1" }}
+      tenantsQlik={[
+        {
+          id: "q1",
+          organizacionId: "org-1",
+          tenantIdQlik: "tenant-1",
+          host,
+          nombre: `https://${host}`,
+          estado: "activo",
+          esPrincipal: true,
+          tieneDestinoApiKey: false,
+          destinoApiKeyMascara: null,
+          creadoEn: "2026-07-25",
+        },
+      ]}
+      onCrear={vi.fn()}
+      onEliminar={vi.fn()}
+      onHacerPrincipal={vi.fn()}
+      crear={{ isPending: false }}
+      eliminar={{ isPending: false }}
+      hacerPrincipal={{ isPending: false }}
+    />,
+  );
+  expect(vista.textContent).toContain("Entorno principal");
+  expect(vista.textContent).not.toContain(`https://${host}`);
+  expect(vista.textContent).toContain(host);
+  expect(
+    vista.querySelector<HTMLAnchorElement>(
+      'a[href="https://empresa.us.qlikcloud.com"]',
+    ),
+  ).not.toBeNull();
+});
+
+test("un único usuario se presenta como tarjeta compacta", () => {
+  const vista = montar(
+    <SeccionUsuarios
+      usuarios={[
+        {
+          id: "u1",
+          nombre: "Andrés",
+          correo: "andres@empresa.com",
+          rol: "admin",
+        },
+      ]}
+      onActualizarRol={vi.fn()}
+      onEliminarUsuario={vi.fn()}
+      onAbrirModalAgregar={vi.fn()}
+      modalAgregar={{
+        open: false,
+        onClose: vi.fn(),
+        onAgregar: vi.fn(),
+        isPending: false,
+      }}
+      actualizar={{ isPending: false }}
+      eliminar={{ isPending: false }}
+    />,
+  );
+  expect(vista.querySelector("table")).toBeNull();
+  expect(vista.querySelector("article")).not.toBeNull();
+  expect(vista.textContent).toContain("1 usuario autorizado");
 });

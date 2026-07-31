@@ -92,8 +92,8 @@ export function SeccionUsuarios({
               <p className="mt-1 text-xs text-ink-500">
                 {usuarios.length}{" "}
                 {usuarios.length === 1
-                  ? "persona autorizada"
-                  : "personas autorizadas"}{" "}
+                  ? "usuario autorizado"
+                  : "usuarios autorizados"}{" "}
                 en la plataforma.
               </p>
             </div>
@@ -115,6 +115,18 @@ export function SeccionUsuarios({
               <p className="mt-1 text-xs text-ink-500">
                 Autoriza al menos un administrador para gestionar la plataforma.
               </p>
+            </div>
+          ) : usuarios.length === 1 ? (
+            <div className="p-4">
+              <div className="overflow-hidden rounded-lg border border-line-200 bg-app/20">
+                <TarjetaUsuario
+                  usuario={usuarios[0]}
+                  usuarios={usuarios}
+                  ocupado={actualizar.isPending || eliminar.isPending}
+                  onRol={solicitarRol}
+                  onQuitar={solicitarQuitar}
+                />
+              </div>
             </div>
           ) : (
             <>

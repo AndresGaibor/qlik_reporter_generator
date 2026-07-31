@@ -29,15 +29,15 @@ export function SeccionInfoTenant({
   return (
     <>
       <Card className="border-line-200 bg-surface shadow-card">
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-brand-50 text-brand-700">
                   <Icon name="gear" size="sm" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-semibold text-ink-900">
+                  <h2 className="font-display text-base font-semibold text-ink-900">
                     General
                   </h2>
                   <p className="text-xs text-ink-500">
@@ -46,7 +46,7 @@ export function SeccionInfoTenant({
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <NombreEditor
                   nombre={tenant.nombre}
                   isPending={actualizar.isPending}

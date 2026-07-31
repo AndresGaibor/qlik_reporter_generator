@@ -9,6 +9,11 @@ import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { useState } from "react";
 import type { TenantQlik } from "../api";
+import {
+  nombreVisibleEntornoQlik,
+  normalizarHostQlik,
+  urlEntornoQlik,
+} from "../utiles-presentacion-qlik";
 
 interface Props {
   tenant: { id: string };
@@ -155,63 +160,78 @@ export function SeccionQlikCloud({
               </div>
             ) : (
               <div className="space-y-3">
-                {tenantsQlik.map((tQlik) => (
-                  <div
-                    key={tQlik.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-line-200 bg-surface hover:border-line-300 transition-colors"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-ink-900 text-sm">
-                          {tQlik.nombre || "Tenant Qlik"}
-                        </span>
-                        {tQlik.esPrincipal && (
-                          <span className="inline-flex items-center gap-1 rounded bg-brand-50 border border-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
-                            <Icon
-                              name="star"
-                              size="sm"
-                              className="text-brand-600"
-                            />
-                            Conexión Principal
+                {tenantsQlik.map((tQlik) => {
+                  const nombreVisible = nombreVisibleEntornoQlik(tQlik);
+                  const hostVisible = normalizarHostQlik(tQlik.host);
+                  return (
+                    <div
+                      key={tQlik.id}
+                      className="flex flex-col justify-between gap-3 rounded-lg border border-line-200 bg-surface p-4 transition-colors hover:border-line-300 sm:flex-row sm:items-center"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-semibold text-ink-900">
+                            {nombreVisible}
                           </span>
-                        )}
+                          {tQlik.esPrincipal && (
+                            <span className="inline-flex items-center gap-1 rounded border border-brand-100 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                              <Icon
+                                name="star"
+                                size="sm"
+                                className="text-brand-600"
+                              />
+                              Principal
+                            </span>
+                          )}
+                        </div>
+                        <span className="mt-0.5 block truncate font-mono text-xs text-ink-500">
+                          {hostVisible}
+                        </span>
                       </div>
-                      <span className="font-mono text-xs text-ink-500 block mt-0.5">
-                        {tQlik.host}
-                      </span>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      {!tQlik.esPrincipal && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button asChild size="sm" variant="outline">
+                          <a
+                            href={urlEntornoQlik(tQlik.host)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="gap-1.5"
+                          >
+                            <Icon name="ext" size="sm" />
+                            Abrir Qlik Cloud
+                          </a>
+                        </Button>
+                        {!tQlik.esPrincipal && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={hacerPrincipal.isPending}
+                            onClick={() => onHacerPrincipal(tQlik.id)}
+                            className="gap-1 text-xs"
+                          >
+                            <Icon name="star" size="sm" />
+                            Hacer principal
+                          </Button>
+                        )}
                         <Button
                           size="sm"
-                          variant="outline"
-                          disabled={hacerPrincipal.isPending}
-                          onClick={() => onHacerPrincipal(tQlik.id)}
-                          className="text-xs gap-1"
+                          variant="ghost"
+                          disabled={eliminar.isPending}
+                          className="text-xs text-danger-600 hover:bg-red-50"
+                          onClick={() =>
+                            setConfirmDialog({
+                              open: true,
+                              mensaje: `¿Eliminar la conexión con "${nombreVisible}"? Esta acción no se puede deshacer.`,
+                              onConfirm: () => onEliminar(tQlik.id),
+                            })
+                          }
                         >
-                          <Icon name="star" size="sm" />
-                          Hacer Principal
+                          Eliminar
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={eliminar.isPending}
-                        className="text-danger-600 hover:bg-red-50 text-xs"
-                        onClick={() =>
-                          setConfirmDialog({
-                            open: true,
-                            mensaje: `¿Eliminar la conexión con "${tQlik.nombre || tQlik.host}"? Esta acción no se puede deshacer.`,
-                            onConfirm: () => onEliminar(tQlik.id),
-                          })
-                        }
-                      >
-                        Eliminar
-                      </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

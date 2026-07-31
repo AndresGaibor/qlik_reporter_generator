@@ -195,7 +195,7 @@ function ResumenConexionBigQuery({
             Seguridad
           </span>
           <span className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700">
-            <Icon name="shield" size="sm" /> Credenciales protegidas
+            <Icon name="check" size="sm" /> Credenciales protegidas
           </span>
         </div>
       </div>
@@ -210,6 +210,7 @@ function ResumenConexionBigQuery({
         </Button>
         <Button
           type="button"
+          variant="outline"
           onClick={onProbar}
           disabled={probando}
           className="gap-1.5"

@@ -99,7 +99,7 @@ export function crearResumenConfiguracion(
       estado:
         usuarios === 0
           ? "Sin usuarios"
-          : `${usuarios} ${usuarios === 1 ? "autorizado" : "autorizados"}`,
+          : `${usuarios} ${usuarios === 1 ? "usuario autorizado" : "usuarios autorizados"}`,
       completo: usuarios > 0,
       tono: usuarios > 0 ? "exito" : "pendiente",
     },
