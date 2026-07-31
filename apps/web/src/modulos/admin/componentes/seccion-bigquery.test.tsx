@@ -56,15 +56,23 @@ vi.mock("@tanstack/react-query", () => ({
     mutationFn: () => Promise<unknown>;
     onSuccess?: (resultado: unknown) => void;
     onError?: (error: Error) => void;
-  }) => ({
-    isPending: false,
-    mutate: () => {
-      opciones
-        .mutationFn()
-        .then((resultado) => opciones.onSuccess?.(resultado))
-        .catch((error) => opciones.onError?.(error));
-    },
-  }),
+  }) => {
+    const ejecutar = async () => {
+      try {
+        const resultado = await opciones.mutationFn();
+        opciones.onSuccess?.(resultado);
+        return resultado;
+      } catch (error) {
+        opciones.onError?.(error as Error);
+        throw error;
+      }
+    };
+    return {
+      isPending: false,
+      mutate: () => void ejecutar(),
+      mutateAsync: ejecutar,
+    };
+  },
 }));
 
 vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
@@ -147,4 +155,36 @@ test("permite guardar el dataset conservando las credenciales", async () => {
       ]
     )?.[2],
   ).not.toHaveProperty("credencialesJson");
+});
+
+test("guarda los cambios pendientes antes de probar la conexión", async () => {
+  await montar();
+  const dataset =
+    container?.querySelector<HTMLInputElement>("#bigquery-dataset");
+  const boton = elementoConTexto("button", "Probar conexión");
+  expect(dataset).not.toBeNull();
+  expect(boton).toBeDefined();
+
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(dataset, "dataset_nuevo");
+    dataset?.dispatchEvent(new Event("input", { bubbles: true }));
+    await Promise.resolve();
+  });
+
+  await act(async () => {
+    boton?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
+  expect(api.guardar).toHaveBeenCalledWith(
+    "org-1",
+    "tenant-q1",
+    expect.objectContaining({ dataset: "dataset_nuevo" }),
+  );
+  expect(api.probar).toHaveBeenCalledWith("conexion-1");
 });

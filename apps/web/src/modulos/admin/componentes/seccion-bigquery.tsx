@@ -90,8 +90,17 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
 
   const probar = useMutation({
     mutationFn: async () => {
-      if (!configuracion?.id) throw new Error("Primero guarda BigQuery");
-      return probarConfiguracionBigQuery(configuracion.id);
+      let idActual = configuracion?.id;
+      if (
+        !idActual ||
+        credencialesJson.trim() ||
+        dataset.trim() !== (configuracion?.dataset ?? "")
+      ) {
+        const resultadoGuardar = await guardar.mutateAsync();
+        idActual = resultadoGuardar.id;
+      }
+      if (!idActual) throw new Error("Primero guarda BigQuery");
+      return probarConfiguracionBigQuery(idActual);
     },
     onSuccess: async (resultado) => {
       await queryClient.invalidateQueries({
@@ -208,7 +217,11 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
               <Button
                 type="button"
                 variant="outline"
-                disabled={!configuracion?.id || probar.isPending}
+                disabled={
+                  (!configuracion?.id && !habilitado) ||
+                  probar.isPending ||
+                  guardar.isPending
+                }
                 onClick={() => probar.mutate()}
                 className="gap-1.5"
               >
