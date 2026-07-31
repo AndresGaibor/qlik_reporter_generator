@@ -5,7 +5,7 @@ import { expect, test } from "vitest";
 const admin = resolve(process.cwd(), "src/modulos/admin");
 const componentes = resolve(admin, "componentes");
 
-test("la configuración no expone conexiones técnicas de destino", () => {
+test("la configuración elimina el administrador genérico y conserva BigQuery", () => {
   const pagina = readFileSync(
     resolve(admin, "pagina-detalle-tenant.tsx"),
     "utf8",
@@ -16,6 +16,8 @@ test("la configuración no expone conexiones técnicas de destino", () => {
   );
 
   expect(pagina).not.toContain("SeccionConfigurarDestinosTenant");
+  expect(pagina).toContain("SeccionBigQuery");
+  expect(existsSync(resolve(componentes, "seccion-bigquery.tsx"))).toBe(true);
   expect(plantilla).not.toContain("Conexión de destino");
   expect(plantilla).not.toContain("Agregar destino");
   expect(

@@ -123,7 +123,10 @@ export const esquemaConfigurarBigQuery = z.object({
     .trim()
     .min(1)
     .max(1024)
-    .regex(/^[A-Za-z0-9_]+$/, "El dataset solo admite letras, números y guion bajo"),
+    .regex(
+      /^[A-Za-z0-9_]+$/,
+      "El dataset solo admite letras, números y guion bajo",
+    ),
   credencialesJson: z.string().trim().min(1).optional(),
   limiteMiB: z.number().positive().optional(),
   limiteUsd: z.number().positive().optional(),

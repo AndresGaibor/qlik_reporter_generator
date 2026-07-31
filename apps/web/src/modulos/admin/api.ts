@@ -4,7 +4,9 @@ import type {
   ActualizarUsuario,
   AgregarSuperadmin,
   AgregarUsuario,
+  ConfiguracionBigQuery,
   ConfiguracionOauthQlik,
+  ConfigurarBigQuery,
   ConfigurarOauthQlik,
   CrearTenant,
   CrearTenantQlik,
@@ -21,7 +23,9 @@ export type {
   AgregarUsuario,
   ActualizarTenant,
   CrearTenant,
+  ConfiguracionBigQuery,
   ConfiguracionOauthQlik,
+  ConfigurarBigQuery,
   ConfigurarOauthQlik,
   DetalleTenant,
   Superadmin,
@@ -133,6 +137,37 @@ export function configurarConexionDestinoTenant(
   return clienteApi.put<{ id: string }>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/destino-generico`,
     entrada,
+  );
+}
+
+function rutaBigQuery(organizacionId: string, tenantQlikId: string) {
+  return `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/bigquery`;
+}
+
+export function obtenerConfiguracionBigQuery(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.get<ConfiguracionBigQuery>(
+    rutaBigQuery(organizacionId, tenantQlikId),
+  );
+}
+
+export function guardarConfiguracionBigQuery(
+  organizacionId: string,
+  tenantQlikId: string,
+  entrada: ConfigurarBigQuery,
+) {
+  return clienteApi.put<ConfiguracionBigQuery>(
+    rutaBigQuery(organizacionId, tenantQlikId),
+    entrada,
+  );
+}
+
+export function probarConfiguracionBigQuery(id: string) {
+  return clienteApi.post<{ exitoso: boolean; mensaje: string }>(
+    `/destinos/conexiones/${encodeURIComponent(id)}/probar`,
+    {},
   );
 }
 

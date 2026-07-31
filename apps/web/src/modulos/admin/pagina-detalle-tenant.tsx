@@ -12,6 +12,7 @@ import {
   obtenerTenantsQlik,
 } from "./api";
 import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
+import { SeccionBigQuery } from "./componentes/seccion-bigquery";
 import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
 import { SeccionOauthQlik } from "./componentes/seccion-oauth-qlik";
 import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
@@ -92,12 +93,15 @@ export function PaginaDetalleTenant({
     );
   }
 
+  const tenantQlikPrincipal =
+    tenantsQlik.find((item) => item.esPrincipal) ?? tenantsQlik[0];
+
   return (
     <PageLayout>
       {modoConfiguracion ? (
         <PageHeader
           title="Configuración"
-          description="Administra Qlik Cloud, el acceso OAuth, la automatización base y los usuarios autorizados."
+          description="Administra Qlik Cloud, BigQuery, el acceso OAuth, la automatización base y los usuarios autorizados."
           actions={<EstadoConfiguracion tenant={tenant} />}
         />
       ) : (
@@ -142,6 +146,11 @@ export function PaginaDetalleTenant({
         <SeccionAutomatizacionBaseTenant
           organizacionId={tenantId}
           tenantsQlik={tenantsQlik}
+        />
+
+        <SeccionBigQuery
+          organizacionId={tenantId}
+          tenantQlikId={tenantQlikPrincipal?.id}
         />
 
         <SeccionUsuarios
