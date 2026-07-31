@@ -19,6 +19,34 @@ export function NavegacionConfiguracion({ items }: Props) {
     return () => window.removeEventListener("hashchange", actualizar);
   }, [items]);
 
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const secciones = items
+      .map((item) => document.getElementById(item.id))
+      .filter((seccion): seccion is HTMLElement => Boolean(seccion));
+    if (secciones.length === 0) return;
+
+    const visibles = new Map<string, IntersectionObserverEntry>();
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        for (const entrada of entradas) {
+          if (entrada.isIntersecting) visibles.set(entrada.target.id, entrada);
+          else visibles.delete(entrada.target.id);
+        }
+        const siguiente = [...visibles.values()].sort(
+          (a, b) =>
+            Math.abs((a.boundingClientRect?.top ?? 0) - 112) -
+            Math.abs((b.boundingClientRect?.top ?? 0) - 112),
+        )[0];
+        if (siguiente?.target.id) setActivo(siguiente.target.id);
+      },
+      { rootMargin: "-96px 0px -55% 0px", threshold: [0, 0.1, 0.5] },
+    );
+
+    for (const seccion of secciones) observador.observe(seccion);
+    return () => observador.disconnect();
+  }, [items]);
+
   return (
     <nav
       aria-label="Secciones de configuración"

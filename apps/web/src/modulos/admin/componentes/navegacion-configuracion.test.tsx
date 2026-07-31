@@ -1,6 +1,6 @@
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { NavegacionConfiguracion } from "./navegacion-configuracion";
 
 (
@@ -72,4 +72,57 @@ test("navega por las seis secciones y marca la activa", () => {
       .querySelector('a[href="#bigquery"]')
       ?.getAttribute("aria-current"),
   ).toBe("location");
+});
+
+test("actualiza la sección activa al desplazarse", () => {
+  let emitir:
+    | ((entradas: Array<{ isIntersecting: boolean; target: Element }>) => void)
+    | undefined;
+  const observar = vi.fn();
+  const desconectar = vi.fn();
+  class ObservadorFalso {
+    constructor(callback: typeof emitir) {
+      emitir = callback;
+    }
+    observe = observar;
+    disconnect = desconectar;
+  }
+  vi.stubGlobal("IntersectionObserver", ObservadorFalso);
+
+  const general = document.createElement("section");
+  general.id = "general";
+  const qlik = document.createElement("section");
+  qlik.id = "qlik";
+  document.body.append(general, qlik);
+
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  const items = [
+    {
+      id: "general",
+      etiqueta: "General",
+      estado: "Activa",
+      completo: true,
+      tono: "exito",
+    },
+    {
+      id: "qlik",
+      etiqueta: "Qlik Cloud",
+      estado: "Conectado",
+      completo: true,
+      tono: "exito",
+    },
+  ] as const;
+  act(() => root?.render(<NavegacionConfiguracion items={[...items]} />));
+
+  expect(observar).toHaveBeenCalledTimes(2);
+  act(() => emitir?.([{ isIntersecting: true, target: qlik }]));
+  expect(
+    container.querySelector('a[href="#qlik"]')?.getAttribute("aria-current"),
+  ).toBe("location");
+
+  general.remove();
+  qlik.remove();
+  vi.unstubAllGlobals();
 });
