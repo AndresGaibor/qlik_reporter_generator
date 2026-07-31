@@ -20,9 +20,7 @@ describe("mapeador del resumen de automatizaciones", () => {
     );
 
     expect(resumen.ultimaEjecucionEstado).toBe("finished");
-    expect(resumen.ultimaEjecucionInicio).toBe(
-      "2026-07-30T20:00:00.000Z",
-    );
+    expect(resumen.ultimaEjecucionInicio).toBe("2026-07-30T20:00:00.000Z");
     expect(resumen.ultimaEjecucionFin).toBe("2026-07-30T20:01:30.000Z");
   });
 });

@@ -42,7 +42,7 @@ describe("estado operativo de reportes", () => {
     expect(claseEstado(crearResumen())).toContain("brand");
     expect(
       claseEstado(crearResumen({ ultimaEjecucionEstado: "failed" })),
-    ).toContain("danger");
+    ).toContain("red");
   });
 });
 

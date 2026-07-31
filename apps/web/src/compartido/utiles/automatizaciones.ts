@@ -21,16 +21,16 @@ export function claseEstado(auto: ResumenAutomatizacion): string {
   const estado = estadoVisual(auto);
 
   if (estado === "En ejecución") {
-    return "border border-warning-200 bg-warning-50 text-warning-700";
+    return "border border-amber-200 bg-amber-50 text-amber-800";
   }
   if (estado === "Requiere atención") {
-    return "border border-danger-200 bg-danger-50 text-danger-700";
+    return "border border-red-200 bg-red-50 text-red-700";
   }
   if (estado === "Inactivo") {
     return "border border-line-200 bg-app text-ink-500";
   }
 
-  return "border border-brand-200 bg-brand-50 text-brand-700";
+  return "border border-brand-100 bg-brand-50 text-brand-700";
 }
 
 export function resumenUltimaEjecucion(auto: ResumenAutomatizacion): string {
