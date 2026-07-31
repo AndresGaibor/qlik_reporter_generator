@@ -105,6 +105,48 @@ export type ConfigurarConexionDestino = z.infer<
   typeof esquemaConfigurarConexionDestino
 >;
 
+export const esquemaCredencialesBigQuery = z.object({
+  type: z.literal("service_account"),
+  project_id: z.string().trim().min(1),
+  client_email: z.string().trim().email(),
+  private_key: z
+    .string()
+    .min(1)
+    .refine((valor) => valor.includes("BEGIN PRIVATE KEY"), {
+      message: "La clave privada del JSON no es válida",
+    }),
+});
+
+export const esquemaConfigurarBigQuery = z.object({
+  dataset: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1024)
+    .regex(/^[A-Za-z0-9_]+$/, "El dataset solo admite letras, números y guion bajo"),
+  credencialesJson: z.string().trim().min(1).optional(),
+  limiteMiB: z.number().positive().optional(),
+  limiteUsd: z.number().positive().optional(),
+  precioUsdPorTib: z.number().positive().default(6.25),
+});
+
+export const esquemaConfiguracionBigQuery = z.object({
+  configurada: z.boolean(),
+  id: z.string().optional(),
+  estado: z.enum(["activo", "error", "desconectado"]).optional(),
+  projectId: z.string().optional(),
+  dataset: z.string().optional(),
+  clientEmail: z.string().email().optional(),
+  credencialesConfiguradas: z.boolean(),
+  mensajeError: z.string().nullable().optional(),
+});
+
+export type CredencialesBigQuery = z.infer<typeof esquemaCredencialesBigQuery>;
+export type ConfigurarBigQuery = z.infer<typeof esquemaConfigurarBigQuery>;
+export type ConfiguracionBigQuery = z.infer<
+  typeof esquemaConfiguracionBigQuery
+>;
+
 export const esquemaEstadoConfiguracionOauth = z.enum([
   "pendiente",
   "verificada",
