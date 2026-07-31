@@ -6,11 +6,17 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
+  type ConfiguracionBigQuery,
+  type ConfiguracionOauthQlik,
   type DetalleTenant,
   type TenantQlik,
+  obtenerConfiguracionBigQuery,
+  obtenerConfiguracionOauthTenant,
   obtenerDetalleTenant,
   obtenerTenantsQlik,
 } from "./api";
+import { NavegacionConfiguracion } from "./componentes/navegacion-configuracion";
+import { ResumenConfiguracion } from "./componentes/resumen-configuracion";
 import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
 import { SeccionBigQuery } from "./componentes/seccion-bigquery";
 import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
@@ -18,6 +24,7 @@ import { SeccionOauthQlik } from "./componentes/seccion-oauth-qlik";
 import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
 import { SeccionUsuarios } from "./componentes/seccion-usuarios";
 import { useDetalleTenantMutations } from "./hooks/useDetalleTenantMutations";
+import { crearResumenConfiguracion } from "./utiles-estado-configuracion";
 
 interface Props {
   tenantId: string;
@@ -44,6 +51,20 @@ function EstadoConfiguracion({ tenant }: { tenant: DetalleTenant }) {
   );
 }
 
+function SeccionAnclada({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-24">
+      {children}
+    </section>
+  );
+}
+
 export function PaginaDetalleTenant({
   tenantId,
   modoConfiguracion = false,
@@ -60,6 +81,25 @@ export function PaginaDetalleTenant({
   const { data: tenantsQlik = [] } = useQuery<TenantQlik[]>({
     queryKey: ["admin-tenants-qlik", tenantId],
     queryFn: () => obtenerTenantsQlik(tenantId),
+  });
+
+  const tenantQlikPrincipal =
+    tenantsQlik.find((item) => item.esPrincipal) ?? tenantsQlik[0];
+
+  const oauthPrincipal = useQuery<ConfiguracionOauthQlik>({
+    queryKey: ["admin-oauth-qlik", tenantId, tenantQlikPrincipal?.id],
+    queryFn: () =>
+      obtenerConfiguracionOauthTenant(tenantId, tenantQlikPrincipal?.id ?? ""),
+    enabled: Boolean(tenantQlikPrincipal?.id),
+    retry: false,
+  });
+
+  const bigQueryPrincipal = useQuery<ConfiguracionBigQuery>({
+    queryKey: ["admin-bigquery", tenantId, tenantQlikPrincipal?.id],
+    queryFn: () =>
+      obtenerConfiguracionBigQuery(tenantId, tenantQlikPrincipal?.id ?? ""),
+    enabled: Boolean(tenantQlikPrincipal?.id),
+    retry: false,
   });
 
   const {
@@ -93,8 +133,23 @@ export function PaginaDetalleTenant({
     );
   }
 
-  const tenantQlikPrincipal =
-    tenantsQlik.find((item) => item.esPrincipal) ?? tenantsQlik[0];
+  const resumen = crearResumenConfiguracion({
+    empresaActiva: tenant.estado === "activa",
+    cantidadUsuarios: tenant.usuarios.length,
+    qlik: {
+      conectado: tenantQlikPrincipal?.estado === "activo",
+      host: tenantQlikPrincipal?.host,
+    },
+    oauth: { estado: oauthPrincipal.data?.estado },
+    plantilla: {
+      configurada: Boolean(tenantQlikPrincipal?.automatizacionBaseIdQlik),
+      nombre: tenantQlikPrincipal?.automatizacionBaseNombre,
+    },
+    bigQuery: {
+      estado: bigQueryPrincipal.data?.estado,
+      dataset: bigQueryPrincipal.data?.dataset,
+    },
+  });
 
   return (
     <PageLayout>
@@ -122,55 +177,78 @@ export function PaginaDetalleTenant({
         </>
       )}
 
-      <div className="space-y-6">
-        <SeccionInfoTenant
-          tenant={tenant}
-          onActualizarEstado={(estado) => actualizar.mutate({ estado })}
-          onActualizarNombre={(nombre) => actualizar.mutate({ nombre })}
-          actualizar={actualizar}
-        />
+      <ResumenConfiguracion items={resumen} />
 
-        <SeccionQlikCloud
-          tenant={{ id: tenant.id }}
-          tenantsQlik={tenantsQlik}
-          onCrear={(params) => crearQlik.mutate(params)}
-          onEliminar={(id) => eliminarQlik.mutate(id)}
-          onHacerPrincipal={(id) => hacerPrincipal.mutate(id)}
-          crear={crearQlik}
-          eliminar={eliminarQlik}
-          hacerPrincipal={hacerPrincipal}
-        />
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <aside className="min-w-0">
+          <NavegacionConfiguracion items={resumen} />
+        </aside>
 
-        <SeccionOauthQlik organizacionId={tenantId} tenantsQlik={tenantsQlik} />
+        <div className="min-w-0 space-y-6">
+          <SeccionAnclada id="general">
+            <SeccionInfoTenant
+              tenant={tenant}
+              onActualizarEstado={(estado) => actualizar.mutate({ estado })}
+              onActualizarNombre={(nombre) => actualizar.mutate({ nombre })}
+              actualizar={actualizar}
+            />
+          </SeccionAnclada>
 
-        <SeccionAutomatizacionBaseTenant
-          organizacionId={tenantId}
-          tenantsQlik={tenantsQlik}
-        />
+          <SeccionAnclada id="qlik">
+            <SeccionQlikCloud
+              tenant={{ id: tenant.id }}
+              tenantsQlik={tenantsQlik}
+              onCrear={(params) => crearQlik.mutate(params)}
+              onEliminar={(id) => eliminarQlik.mutate(id)}
+              onHacerPrincipal={(id) => hacerPrincipal.mutate(id)}
+              crear={crearQlik}
+              eliminar={eliminarQlik}
+              hacerPrincipal={hacerPrincipal}
+            />
+          </SeccionAnclada>
 
-        <SeccionBigQuery
-          organizacionId={tenantId}
-          tenantQlikId={tenantQlikPrincipal?.id}
-        />
+          <SeccionAnclada id="oauth">
+            <SeccionOauthQlik
+              organizacionId={tenantId}
+              tenantsQlik={tenantsQlik}
+            />
+          </SeccionAnclada>
 
-        <SeccionUsuarios
-          usuarios={tenant.usuarios}
-          onActualizarRol={(params) => actualizarUsuario.mutate(params)}
-          onEliminarUsuario={(id) => eliminarUsuario.mutate(id)}
-          onAbrirModalAgregar={() => setModalUsuario(true)}
-          modalAgregar={{
-            open: modalUsuario,
-            onClose: () => setModalUsuario(false),
-            onAgregar: (correo, rol) => {
-              setCorreoUsuario(correo);
-              setRolUsuario(rol);
-              agregarUsuario.mutate();
-            },
-            isPending: agregarUsuario.isPending,
-          }}
-          actualizar={actualizarUsuario}
-          eliminar={eliminarUsuario}
-        />
+          <SeccionAnclada id="plantilla">
+            <SeccionAutomatizacionBaseTenant
+              organizacionId={tenantId}
+              tenantsQlik={tenantsQlik}
+            />
+          </SeccionAnclada>
+
+          <SeccionAnclada id="bigquery">
+            <SeccionBigQuery
+              organizacionId={tenantId}
+              tenantQlikId={tenantQlikPrincipal?.id}
+            />
+          </SeccionAnclada>
+
+          <SeccionAnclada id="usuarios">
+            <SeccionUsuarios
+              usuarios={tenant.usuarios}
+              onActualizarRol={(params) => actualizarUsuario.mutate(params)}
+              onEliminarUsuario={(id) => eliminarUsuario.mutate(id)}
+              onAbrirModalAgregar={() => setModalUsuario(true)}
+              modalAgregar={{
+                open: modalUsuario,
+                onClose: () => setModalUsuario(false),
+                onAgregar: (correo, rol) => {
+                  setCorreoUsuario(correo);
+                  setRolUsuario(rol);
+                  agregarUsuario.mutate();
+                },
+                isPending: agregarUsuario.isPending,
+              }}
+              actualizar={actualizarUsuario}
+              eliminar={eliminarUsuario}
+            />
+          </SeccionAnclada>
+        </div>
       </div>
     </PageLayout>
   );
