@@ -189,7 +189,7 @@ export function configurarAutomatizacionBaseTenant(
 export function listarAutomatizacionesParaAdmin() {
   return clienteApi.get<
     import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]
-  >("/automatizaciones", {
+  >("/reportes", {
     parametros: { incluirBase: "true" },
   });
 }
