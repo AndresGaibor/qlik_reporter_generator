@@ -15,6 +15,8 @@ test("la página es un orquestador de solo lectura sin simulaciones", () => {
   expect(fuente).toContain("CatalogoResultados");
   expect(fuente).toContain("DetalleResultado");
   expect(fuente).toContain("EstadoResultados");
+  expect(fuente).toContain("function MarcoResultados");
+  expect((fuente.match(/<MarcoResultados/g) ?? []).length).toBeGreaterThan(4);
   expect(fuente).not.toContain("obtenerConexionesDestino");
   expect(fuente).not.toContain("mutationSolicitarCrear");
   expect(fuente).not.toContain("modalCrearTabla");

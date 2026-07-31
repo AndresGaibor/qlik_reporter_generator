@@ -10,7 +10,7 @@ import {
   obtenerVistaPreviaDestino,
 } from "@/modulos/reportes/api";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { CatalogoResultados } from "./componentes/catalogo-resultados";
 import { DetalleResultado } from "./componentes/detalle-resultado";
 import { EstadoResultados } from "./componentes/estado-resultados";
@@ -43,6 +43,40 @@ function EstadoConexion({ estado }: { estado?: string }) {
   );
 }
 
+function MarcoResultados({
+  children,
+  proyecto,
+  estado,
+}: {
+  children: ReactNode;
+  proyecto?: string;
+  estado?: string;
+}) {
+  const acciones = proyecto ? (
+    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+      <span
+        className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-obj-50 px-2.5 py-1 font-mono text-xs font-semibold text-obj-600"
+        title={proyecto}
+      >
+        <Icon name="cloud" size="sm" />
+        <span className="truncate">{proyecto}</span>
+      </span>
+      <EstadoConexion estado={estado} />
+    </div>
+  ) : undefined;
+
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Resultados BigQuery"
+        description="Explora las tablas del dataset configurado, revisa sus campos y utiliza una muestra para preparar nuevos reportes."
+        actions={acciones}
+      />
+      {children}
+    </PageLayout>
+  );
+}
+
 export function PaginaTablasDestino() {
   const { tenant } = useTenantActivo();
   const [busqueda, setBusqueda] = useState("");
@@ -57,6 +91,7 @@ export function PaginaTablasDestino() {
     },
     enabled: Boolean(tenant?.organizacionId && tenant?.id),
     retry: false,
+    staleTime: 60_000,
   });
 
   const conexionId = configuracion.data?.id;
@@ -66,6 +101,7 @@ export function PaginaTablasDestino() {
       obtenerRecursosDestino(exigirId(conexionId, "La conexión BigQuery")),
     enabled: Boolean(configuracion.data?.configurada && conexionId),
     retry: false,
+    staleTime: 60_000,
   });
 
   const tablas = useMemo(
@@ -93,6 +129,7 @@ export function PaginaTablasDestino() {
       ),
     enabled: Boolean(conexionId && tablaId),
     retry: false,
+    staleTime: 60_000,
   });
 
   const preview = useQuery({
@@ -105,58 +142,53 @@ export function PaginaTablasDestino() {
       ),
     enabled: Boolean(conexionId && tablaId && pestana === "preview"),
     retry: false,
+    staleTime: 30_000,
   });
 
   if (!tenant || configuracion.isLoading) {
-    return <EstadoCarga mensaje="Cargando configuración de BigQuery…" />;
+    return (
+      <MarcoResultados>
+        <EstadoCarga mensaje="Cargando configuración de BigQuery…" />
+      </MarcoResultados>
+    );
   }
 
   if (configuracion.isError) {
     return (
-      <EstadoResultados
-        tipo="catalogo-error"
-        mensaje={mensajeError(configuracion.error)}
-        onReintentar={() => configuracion.refetch()}
-      />
+      <MarcoResultados>
+        <EstadoResultados
+          tipo="catalogo-error"
+          mensaje={mensajeError(configuracion.error)}
+          onReintentar={() => configuracion.refetch()}
+        />
+      </MarcoResultados>
     );
   }
 
   const bigQuery = configuracion.data;
   if (!bigQuery?.configurada || !bigQuery.id) {
-    return <EstadoResultados tipo="sin-conexion" />;
+    return (
+      <MarcoResultados>
+        <EstadoResultados tipo="sin-conexion" />
+      </MarcoResultados>
+    );
   }
 
+  const proyecto = bigQuery.projectId || "Proyecto no disponible";
   if (bigQuery.estado === "error") {
     return (
-      <EstadoResultados
-        tipo="conexion-error"
-        mensaje={bigQuery.mensajeError ?? undefined}
-      />
+      <MarcoResultados proyecto={proyecto} estado={bigQuery.estado}>
+        <EstadoResultados
+          tipo="conexion-error"
+          mensaje={bigQuery.mensajeError ?? undefined}
+        />
+      </MarcoResultados>
     );
   }
 
   const dataset = bigQuery.dataset || "Dataset BigQuery";
-  const proyecto = bigQuery.projectId || "Proyecto no disponible";
-
   return (
-    <PageLayout>
-      <PageHeader
-        title="Resultados BigQuery"
-        description="Explora las tablas del dataset configurado, revisa sus campos y utiliza una muestra para preparar nuevos reportes."
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span
-              className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-obj-50 px-2.5 py-1 font-mono text-xs font-semibold text-obj-600"
-              title={proyecto}
-            >
-              <Icon name="cloud" size="sm" />
-              <span className="truncate">{proyecto}</span>
-            </span>
-            <EstadoConexion estado={bigQuery.estado} />
-          </div>
-        }
-      />
-
+    <MarcoResultados proyecto={proyecto} estado={bigQuery.estado}>
       {catalogo.isLoading ? (
         <EstadoCarga mensaje="Consultando tablas de BigQuery…" />
       ) : catalogo.isError ? (
@@ -210,6 +242,6 @@ export function PaginaTablasDestino() {
           </main>
         </div>
       )}
-    </PageLayout>
+    </MarcoResultados>
   );
 }
