@@ -38,7 +38,7 @@ export function SeccionInfoTenant({
                 {/* Nombre editable */}
                 <div>
                   <p className="text-xs font-semibold text-ink-500 mb-1.5">
-                    Nombre de la plataforma
+                    Nombre de la empresa
                   </p>
                   <NombreEditor
                     nombre={tenant.nombre}

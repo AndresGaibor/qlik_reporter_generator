@@ -1,3 +1,4 @@
+import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +14,15 @@ export function PaginaConfiguracion() {
 
   if (configuraciones.isLoading) {
     return <EstadoCarga mensaje="Cargando configuración..." />;
+  }
+
+  if (configuraciones.isError) {
+    return (
+      <EstadoError
+        mensaje="No pudimos cargar la configuración de la plataforma."
+        onReintentar={() => configuraciones.refetch()}
+      />
+    );
   }
 
   const configuracion = seleccionarConfiguracionPrincipal(

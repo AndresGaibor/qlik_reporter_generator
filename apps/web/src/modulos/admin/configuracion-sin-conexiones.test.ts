@@ -1,0 +1,30 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { expect, test } from "vitest";
+
+const admin = resolve(process.cwd(), "src/modulos/admin");
+const componentes = resolve(admin, "componentes");
+
+test("la configuración no expone conexiones técnicas de destino", () => {
+  const pagina = readFileSync(
+    resolve(admin, "pagina-detalle-tenant.tsx"),
+    "utf8",
+  );
+  const plantilla = readFileSync(
+    resolve(componentes, "seccion-automatizacion-base-tenant.tsx"),
+    "utf8",
+  );
+
+  expect(pagina).not.toContain("SeccionConfigurarDestinosTenant");
+  expect(plantilla).not.toContain("Conexión de destino");
+  expect(plantilla).not.toContain("Agregar destino");
+  expect(
+    existsSync(resolve(componentes, "seccion-configurar-destinos-tenant.tsx")),
+  ).toBe(false);
+  expect(
+    existsSync(resolve(componentes, "seccion-configurar-impala-tenant.tsx")),
+  ).toBe(false);
+  expect(existsSync(resolve(componentes, "seccion-setup-tecnico.tsx"))).toBe(
+    false,
+  );
+});

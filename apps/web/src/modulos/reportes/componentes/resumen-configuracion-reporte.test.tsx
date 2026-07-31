@@ -1,6 +1,22 @@
 import { flushSync } from "react-dom";
 import { type Root, createRoot } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+
+vi.mock("@/modulos/reportes/pagina-nueva-automatizacion", () => ({
+  PaginaNuevaAutomatizacion: ({
+    onCancelar,
+  }: {
+    onCancelar: () => void;
+  }) => (
+    <div>
+      <p>Elige los campos del reporte</p>
+      <button type="button" onClick={onCancelar}>
+        Cancelar
+      </button>
+    </div>
+  ),
+}));
+
 import { ResumenConfiguracionReporte } from "./resumen-configuracion-reporte";
 
 let root: Root | undefined;
