@@ -33,6 +33,9 @@ export function SeccionQlikCloud({
 }: Props) {
   const [hostQlik, setHostQlik] = useState("");
   const [nombreTenantQlik, setNombreTenantQlik] = useState("");
+  const [formularioAbierto, setFormularioAbierto] = useState(
+    tenantsQlik.length === 0,
+  );
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     mensaje: string;
@@ -54,54 +57,85 @@ export function SeccionQlikCloud({
           </p>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
-          <div className="bg-app/50 p-4 rounded-lg border border-line-200 grid gap-3 sm:grid-cols-3 items-end">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <label
-                htmlFor="host-qlik"
-                className="block text-xs font-semibold text-ink-700 mb-1"
-              >
-                Dirección del entorno Qlik Cloud{" "}
-                <span className="text-danger-600">*</span>
-              </label>
-              <input
-                id="host-qlik"
-                value={hostQlik}
-                onChange={(evento) => setHostQlik(evento.target.value)}
-                placeholder="ej: miempresa.us.qlikcloud.com"
-                className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="nombre-tenant-qlik"
-                className="block text-xs font-semibold text-ink-700 mb-1"
-              >
-                Alias o nombre descriptivo (opcional)
-              </label>
-              <input
-                id="nombre-tenant-qlik"
-                value={nombreTenantQlik}
-                onChange={(evento) => setNombreTenantQlik(evento.target.value)}
-                placeholder="ej: Producción, Pruebas, BanCol"
-                className="w-full rounded-md border border-line-200 bg-surface px-3 py-2 text-sm text-ink-900 focus:border-brand-600 focus:outline-none"
-              />
+              <p className="text-sm font-semibold text-ink-900">
+                {tenantsQlik.length}{" "}
+                {tenantsQlik.length === 1
+                  ? "entorno conectado"
+                  : "entornos conectados"}
+              </p>
+              <p className="mt-1 text-xs text-ink-500">
+                El entorno principal se utiliza para OAuth, plantillas y
+                BigQuery.
+              </p>
             </div>
             <Button
-              disabled={!hostQlik.trim() || crear.isPending}
-              onClick={() => {
-                onCrear({
-                  host: hostQlik.trim(),
-                  nombre: nombreTenantQlik.trim() || undefined,
-                });
-                setHostQlik("");
-                setNombreTenantQlik("");
-              }}
+              type="button"
+              size="sm"
+              variant={formularioAbierto ? "outline" : "default"}
+              aria-expanded={formularioAbierto}
+              onClick={() => setFormularioAbierto((actual) => !actual)}
               className="gap-1.5"
             >
-              <Icon name="plus" size="sm" />
-              Agregar este entorno Qlik
+              <Icon name={formularioAbierto ? "x" : "plus"} size="sm" />
+              {formularioAbierto ? "Cancelar" : "Agregar entorno"}
             </Button>
           </div>
+
+          {formularioAbierto && (
+            <div className="grid items-end gap-3 rounded-lg border border-line-200 bg-app/50 p-4 sm:grid-cols-3">
+              <div>
+                <label
+                  htmlFor="host-qlik"
+                  className="mb-1 block text-xs font-semibold text-ink-700"
+                >
+                  Dirección del entorno Qlik Cloud{" "}
+                  <span className="text-danger-600">*</span>
+                </label>
+                <input
+                  id="host-qlik"
+                  value={hostQlik}
+                  onChange={(evento) => setHostQlik(evento.target.value)}
+                  placeholder="ej: miempresa.us.qlikcloud.com"
+                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 text-sm text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="nombre-tenant-qlik"
+                  className="mb-1 block text-xs font-semibold text-ink-700"
+                >
+                  Alias descriptivo (opcional)
+                </label>
+                <input
+                  id="nombre-tenant-qlik"
+                  value={nombreTenantQlik}
+                  onChange={(evento) =>
+                    setNombreTenantQlik(evento.target.value)
+                  }
+                  placeholder="ej: Producción"
+                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 text-sm text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+                />
+              </div>
+              <Button
+                disabled={!hostQlik.trim() || crear.isPending}
+                onClick={() => {
+                  onCrear({
+                    host: hostQlik.trim(),
+                    nombre: nombreTenantQlik.trim() || undefined,
+                  });
+                  setHostQlik("");
+                  setNombreTenantQlik("");
+                  setFormularioAbierto(false);
+                }}
+                className="gap-1.5"
+              >
+                <Icon name="plus" size="sm" />
+                {crear.isPending ? "Agregando…" : "Agregar este entorno"}
+              </Button>
+            </div>
+          )}
 
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-3">
