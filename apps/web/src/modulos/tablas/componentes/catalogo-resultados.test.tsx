@@ -86,3 +86,9 @@ test("ofrece configurar BigQuery cuando no existe conexión", () => {
   expect(vista.textContent).toContain("Configura BigQuery");
   expect(vista.querySelector('a[href="/configuracion"]')).not.toBeNull();
 });
+
+test("explica un dataset vacío sin pedir seleccionar una tabla", () => {
+  const vista = montar(<EstadoResultados tipo="catalogo-vacio" />);
+  expect(vista.textContent).toContain("El dataset todavía no tiene tablas");
+  expect(vista.textContent).not.toContain("Selecciona una tabla");
+});

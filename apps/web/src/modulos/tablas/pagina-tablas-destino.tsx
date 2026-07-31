@@ -165,6 +165,8 @@ export function PaginaTablasDestino() {
           mensaje={mensajeError(catalogo.error)}
           onReintentar={() => catalogo.refetch()}
         />
+      ) : tablas.length === 0 ? (
+        <EstadoResultados tipo="catalogo-vacio" />
       ) : (
         <div className="grid items-start gap-5 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
           <div className="lg:sticky lg:top-24">

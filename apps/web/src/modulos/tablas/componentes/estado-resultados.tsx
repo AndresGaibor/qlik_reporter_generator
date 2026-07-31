@@ -5,6 +5,7 @@ type TipoEstado =
   | "sin-conexion"
   | "conexion-error"
   | "catalogo-error"
+  | "catalogo-vacio"
   | "sin-seleccion";
 
 interface Props {
@@ -34,6 +35,12 @@ const COPIA: Record<
     titulo: "No pudimos cargar las tablas",
     descripcion:
       "BigQuery respondió con un error al consultar el catálogo. Puedes volver a intentarlo.",
+  },
+  "catalogo-vacio": {
+    icono: "db",
+    titulo: "El dataset todavía no tiene tablas",
+    descripcion:
+      "Cuando BigQuery tenga tablas o vistas disponibles, aparecerán en este catálogo automáticamente.",
   },
   "sin-seleccion": {
     icono: "db",
