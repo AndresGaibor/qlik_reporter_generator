@@ -15,7 +15,10 @@ interface Props {
 export function TablaPreview({ filas, cargando, error, onReintentar }: Props) {
   if (cargando) {
     return (
-      <div className="flex min-h-52 flex-col items-center justify-center gap-3 px-6 py-12 text-sm text-ink-500" aria-live="polite">
+      <div
+        className="flex min-h-52 flex-col items-center justify-center gap-3 px-6 py-12 text-sm text-ink-500"
+        aria-live="polite"
+      >
         <span className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
         Cargando una muestra de datos…
       </div>
@@ -24,7 +27,10 @@ export function TablaPreview({ filas, cargando, error, onReintentar }: Props) {
 
   if (error) {
     return (
-      <div className="flex min-h-52 flex-col items-center justify-center px-6 py-12 text-center" role="alert">
+      <div
+        className="flex min-h-52 flex-col items-center justify-center px-6 py-12 text-center"
+        role="alert"
+      >
         <span className="grid h-11 w-11 place-items-center rounded-full bg-red-50 text-danger-600">
           <Icon name="x" />
         </span>
@@ -33,7 +39,12 @@ export function TablaPreview({ filas, cargando, error, onReintentar }: Props) {
         </p>
         <p className="mt-1 max-w-md text-sm text-ink-500">{error}</p>
         {onReintentar && (
-          <Button variant="outline" size="sm" className="mt-4" onClick={onReintentar}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={onReintentar}
+          >
             Reintentar
           </Button>
         )}
@@ -50,21 +61,32 @@ export function TablaPreview({ filas, cargando, error, onReintentar }: Props) {
   }
 
   const columnas = obtenerColumnasPreview(filas);
+  const ocurrencias = new Map<string, number>();
+  const filasConClave = filas.map((fila) => {
+    const base = formatearValorResultado(fila);
+    const ocurrencia = (ocurrencias.get(base) ?? 0) + 1;
+    ocurrencias.set(base, ocurrencia);
+    return { fila, clave: `${base}-${ocurrencia}` };
+  });
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-max border-collapse text-left text-xs">
         <thead className="sticky top-0 z-10 border-b border-line-200 bg-app text-ink-700">
           <tr>
             {columnas.map((columna) => (
-              <th key={columna} className="whitespace-nowrap border-r border-line-200 px-3 py-3 font-mono font-semibold last:border-r-0">
+              <th
+                key={columna}
+                className="whitespace-nowrap border-r border-line-200 px-3 py-3 font-mono font-semibold last:border-r-0"
+              >
                 {columna}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-line-200 font-mono text-ink-700">
-          {filas.map((fila, indice) => (
-            <tr key={indice} className="hover:bg-hover/70">
+          {filasConClave.map(({ fila, clave }) => (
+            <tr key={clave} className="hover:bg-hover/70">
               {columnas.map((columna) => {
                 const valor = fila[columna];
                 return (
@@ -72,7 +94,9 @@ export function TablaPreview({ filas, cargando, error, onReintentar }: Props) {
                     key={columna}
                     title={formatearValorResultado(valor)}
                     className={`max-w-64 truncate whitespace-nowrap border-r border-line-200 px-3 py-2.5 last:border-r-0 ${
-                      valor === null || valor === undefined ? "italic text-ink-400" : ""
+                      valor === null || valor === undefined
+                        ? "italic text-ink-400"
+                        : ""
                     }`}
                   >
                     {formatearValorResultado(valor)}

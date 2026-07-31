@@ -4,7 +4,9 @@ import { afterEach, expect, test, vi } from "vitest";
 import { CatalogoResultados } from "./catalogo-resultados";
 import { EstadoResultados } from "./estado-resultados";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -16,8 +18,20 @@ afterEach(() => {
 });
 
 const recursos = [
-  { id: "ventas", nombre: "ventas", tipo: "tabla" as const, espacioDeNombres: "demo", metadatos: {} },
-  { id: "clientes", nombre: "clientes", tipo: "tabla" as const, espacioDeNombres: "demo", metadatos: {} },
+  {
+    id: "ventas",
+    nombre: "ventas",
+    tipo: "tabla" as const,
+    espacioDeNombres: "demo",
+    metadatos: {},
+  },
+  {
+    id: "clientes",
+    nombre: "clientes",
+    tipo: "tabla" as const,
+    espacioDeNombres: "demo",
+    metadatos: {},
+  },
 ];
 
 function montar(elemento: React.ReactNode) {
@@ -43,12 +57,14 @@ test("muestra contexto, cantidad y filas compactas seleccionables", () => {
 
   expect(vista.textContent).toContain("demo_lafavorita");
   expect(vista.textContent).toContain("2 tablas");
-  const botonClientes = Array.from(vista.querySelectorAll("button")).find((boton) =>
-    boton.textContent?.includes("clientes"),
+  const botonClientes = Array.from(vista.querySelectorAll("button")).find(
+    (boton) => boton.textContent?.includes("clientes"),
   );
   act(() => botonClientes?.click());
   expect(seleccionar).toHaveBeenCalledWith("clientes");
-  expect(vista.querySelector('[aria-pressed="true"]')?.textContent).toContain("ventas");
+  expect(vista.querySelector('[aria-pressed="true"]')?.textContent).toContain(
+    "ventas",
+  );
 });
 
 test("distingue catálogo vacío de una búsqueda sin coincidencias", () => {

@@ -25,7 +25,10 @@ function Metrica({ etiqueta, valor }: { etiqueta: string; valor: string }) {
       <span className="block text-xs font-semibold uppercase tracking-wide text-ink-400">
         {etiqueta}
       </span>
-      <span className="mt-1 block truncate text-sm font-semibold text-ink-900" title={valor}>
+      <span
+        className="mt-1 block truncate text-sm font-semibold text-ink-900"
+        title={valor}
+      >
         {valor}
       </span>
     </div>
@@ -94,7 +97,11 @@ export function DetalleResultado({
         </div>
       </header>
 
-      <div className="flex gap-1 overflow-x-auto border-b border-line-200 bg-app/50 px-3 pt-2 sm:px-5" role="tablist" aria-label="Contenido de la tabla">
+      <div
+        className="flex gap-1 overflow-x-auto border-b border-line-200 bg-app/50 px-3 pt-2 sm:px-5"
+        role="tablist"
+        aria-label="Contenido de la tabla"
+      >
         <button
           type="button"
           role="tab"

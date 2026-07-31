@@ -3,7 +3,9 @@ import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { DetalleResultado } from "./detalle-resultado";
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -51,9 +53,9 @@ test("resume la tabla y ofrece crear un reporte sin acciones administrativas", (
   expect(vista.textContent).toContain("1.250");
   expect(vista.textContent).toContain("2 campos");
   expect(vista.textContent).toContain("venta_id");
-  expect(vista.querySelector('a[href*="/reportes/nueva"]')?.textContent).toContain(
-    "Crear reporte con esta tabla",
-  );
+  expect(
+    vista.querySelector('a[href*="/reportes/nueva"]')?.textContent,
+  ).toContain("Crear reporte con esta tabla");
   expect(vista.textContent).not.toContain("Editar reporte");
   expect(vista.textContent).not.toContain("Aprobación");
   expect(vista.textContent).not.toContain("Historial de cambios");

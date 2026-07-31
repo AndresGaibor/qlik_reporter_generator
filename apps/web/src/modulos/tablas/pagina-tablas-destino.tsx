@@ -17,7 +17,14 @@ import { EstadoResultados } from "./componentes/estado-resultados";
 import type { PestanaResultado } from "./tipos-resultados";
 
 function mensajeError(error: unknown): string {
-  return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+  return error instanceof Error
+    ? error.message
+    : "Ocurrió un error inesperado.";
+}
+
+function exigirId(valor: string | undefined | null, nombre: string): string {
+  if (!valor) throw new Error(`${nombre} no está disponible`);
+  return valor;
 }
 
 function EstadoConexion({ estado }: { estado?: string }) {
@@ -44,8 +51,10 @@ export function PaginaTablasDestino() {
 
   const configuracion = useQuery({
     queryKey: ["bigquery-config", tenant?.organizacionId, tenant?.id],
-    queryFn: () =>
-      obtenerConfiguracionBigQuery(tenant!.organizacionId, tenant!.id),
+    queryFn: () => {
+      if (!tenant) throw new Error("El entorno Qlik no está disponible");
+      return obtenerConfiguracionBigQuery(tenant.organizacionId, tenant.id);
+    },
     enabled: Boolean(tenant?.organizacionId && tenant?.id),
     retry: false,
   });
@@ -53,7 +62,8 @@ export function PaginaTablasDestino() {
   const conexionId = configuracion.data?.id;
   const catalogo = useQuery({
     queryKey: ["bigquery-recursos", conexionId],
-    queryFn: () => obtenerRecursosDestino(conexionId!),
+    queryFn: () =>
+      obtenerRecursosDestino(exigirId(conexionId, "La conexión BigQuery")),
     enabled: Boolean(configuracion.data?.configurada && conexionId),
     retry: false,
   });
@@ -76,14 +86,23 @@ export function PaginaTablasDestino() {
 
   const detalle = useQuery({
     queryKey: ["bigquery-recurso", conexionId, tablaId],
-    queryFn: () => obtenerDetalleRecursoDestino(conexionId!, tablaId!),
+    queryFn: () =>
+      obtenerDetalleRecursoDestino(
+        exigirId(conexionId, "La conexión BigQuery"),
+        exigirId(tablaId, "La tabla"),
+      ),
     enabled: Boolean(conexionId && tablaId),
     retry: false,
   });
 
   const preview = useQuery({
     queryKey: ["bigquery-preview", conexionId, tablaId],
-    queryFn: () => obtenerVistaPreviaDestino(conexionId!, tablaId!, 15),
+    queryFn: () =>
+      obtenerVistaPreviaDestino(
+        exigirId(conexionId, "La conexión BigQuery"),
+        exigirId(tablaId, "La tabla"),
+        15,
+      ),
     enabled: Boolean(conexionId && tablaId && pestana === "preview"),
     retry: false,
   });
@@ -126,7 +145,10 @@ export function PaginaTablasDestino() {
         description="Explora las tablas del dataset configurado, revisa sus campos y utiliza una muestra para preparar nuevos reportes."
         actions={
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-obj-50 px-2.5 py-1 font-mono text-xs font-semibold text-obj-600" title={proyecto}>
+            <span
+              className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-obj-50 px-2.5 py-1 font-mono text-xs font-semibold text-obj-600"
+              title={proyecto}
+            >
               <Icon name="cloud" size="sm" />
               <span className="truncate">{proyecto}</span>
             </span>
@@ -177,7 +199,9 @@ export function PaginaTablasDestino() {
                 onPestanaChange={setPestana}
                 filasPreview={preview.data ?? []}
                 cargandoPreview={preview.isLoading}
-                errorPreview={preview.isError ? mensajeError(preview.error) : undefined}
+                errorPreview={
+                  preview.isError ? mensajeError(preview.error) : undefined
+                }
                 onReintentarPreview={() => preview.refetch()}
               />
             )}

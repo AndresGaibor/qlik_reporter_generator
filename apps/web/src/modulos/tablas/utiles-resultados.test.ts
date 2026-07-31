@@ -7,8 +7,18 @@ import {
 } from "./utiles-resultados";
 
 const recursos = [
-  { id: "ventas", nombre: "Ventas Mensuales", tipo: "tabla" as const, metadatos: {} },
-  { id: "clientes", nombre: "CLIENTES_ACTIVOS", tipo: "tabla" as const, metadatos: {} },
+  {
+    id: "ventas",
+    nombre: "Ventas Mensuales",
+    tipo: "tabla" as const,
+    metadatos: {},
+  },
+  {
+    id: "clientes",
+    nombre: "CLIENTES_ACTIVOS",
+    tipo: "tabla" as const,
+    metadatos: {},
+  },
 ];
 
 describe("utilidades del catálogo BigQuery", () => {
@@ -18,7 +28,10 @@ describe("utilidades del catálogo BigQuery", () => {
   });
 
   it("conserva el orden de columnas según su primera aparición", () => {
-    const filas = [{ id: 1, nombre: "Ana" }, { nombre: "Luis", ciudad: "Quito" }];
+    const filas = [
+      { id: 1, nombre: "Ana" },
+      { nombre: "Luis", ciudad: "Quito" },
+    ];
     expect(obtenerColumnasPreview(filas)).toEqual(["id", "nombre", "ciudad"]);
   });
 

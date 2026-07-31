@@ -30,7 +30,10 @@ export function CatalogoResultados({
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-400">
               Dataset activo
             </p>
-            <p className="mt-1 truncate font-mono text-sm font-semibold text-ink-900" title={dataset}>
+            <p
+              className="mt-1 truncate font-mono text-sm font-semibold text-ink-900"
+              title={dataset}
+            >
               {dataset}
             </p>
           </div>
@@ -68,7 +71,10 @@ export function CatalogoResultados({
         </label>
       </div>
 
-      <div className="max-h-[620px] overflow-y-auto p-2" aria-label="Tablas BigQuery">
+      <div
+        className="max-h-[620px] overflow-y-auto p-2"
+        aria-label="Tablas BigQuery"
+      >
         {filtrados.length === 0 ? (
           <div className="px-4 py-12 text-center">
             <div className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-hover text-ink-400">
@@ -103,13 +109,18 @@ export function CatalogoResultados({
                 >
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-md ${
-                      seleccionada ? "bg-brand-100 text-brand-700" : "bg-app text-ink-500"
+                      seleccionada
+                        ? "bg-brand-100 text-brand-700"
+                        : "bg-app text-ink-500"
                     }`}
                   >
                     <Icon name="db" size="sm" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold" title={recurso.nombre}>
+                    <span
+                      className="block truncate text-sm font-semibold"
+                      title={recurso.nombre}
+                    >
                       {recurso.nombre}
                     </span>
                     <span className="mt-0.5 block truncate font-mono text-[11px] text-ink-400">
