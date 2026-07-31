@@ -7,20 +7,10 @@ import { afterEach, expect, test, vi } from "vitest";
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 const api = vi.hoisted(() => ({
-  obtener: vi.fn(async () => ({
-    configurada: true,
-    id: "conexion-1",
-    estado: "desconectado" as const,
-    projectId: "poc-bigquery-talend",
-    dataset: "demo_lafavorita",
-    clientEmail: "sa@example.iam.gserviceaccount.com",
-    credencialesConfiguradas: true,
-    mensajeError: null,
-  })),
   guardar: vi.fn(async () => ({
     configurada: true,
     id: "conexion-1",
-    estado: "desconectado" as const,
+    estado: "activo" as const,
     projectId: "poc-bigquery-talend",
     dataset: "demo_lafavorita",
     clientEmail: "sa@example.iam.gserviceaccount.com",
@@ -29,42 +19,35 @@ const api = vi.hoisted(() => ({
   })),
   probar: vi.fn(async () => ({ exitoso: true, mensaje: "Conexión exitosa" })),
 }));
-
-const estado = vi.hoisted(() => ({
-  configuracion: {
-    configurada: true,
-    id: "conexion-1",
-    estado: "desconectado" as const,
-    projectId: "poc-bigquery-talend",
-    dataset: "demo_lafavorita",
-    clientEmail: "sa@example.iam.gserviceaccount.com",
-    credencialesConfiguradas: true,
-    mensajeError: null,
-  },
-}));
+const configuracion = {
+  configurada: true,
+  id: "conexion-1",
+  estado: "activo" as const,
+  projectId: "poc-bigquery-talend",
+  dataset: "demo_lafavorita",
+  clientEmail: "sa@example.iam.gserviceaccount.com",
+  credencialesConfiguradas: true,
+  mensajeError: null,
+};
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({
-    data: estado.configuracion,
-    isLoading: false,
-    isError: false,
-  }),
+  useQuery: () => ({ data: configuracion, isLoading: false, isError: false }),
   useQueryClient: () => ({
     setQueryData: vi.fn(),
     invalidateQueries: vi.fn(async () => undefined),
   }),
   useMutation: (opciones: {
     mutationFn: () => Promise<unknown>;
-    onSuccess?: (resultado: unknown) => void;
-    onError?: (error: Error) => void;
+    onSuccess?: (r: never) => void;
+    onError?: (e: Error) => void;
   }) => {
     const ejecutar = async () => {
       try {
-        const resultado = await opciones.mutationFn();
-        opciones.onSuccess?.(resultado);
-        return resultado;
-      } catch (error) {
-        opciones.onError?.(error as Error);
-        throw error;
+        const r = await opciones.mutationFn();
+        opciones.onSuccess?.(r as never);
+        return r;
+      } catch (e) {
+        opciones.onError?.(e as Error);
+        throw e;
       }
     };
     return {
@@ -74,20 +57,14 @@ vi.mock("@tanstack/react-query", () => ({
     };
   },
 }));
-
 vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
-  useNotificaciones: () => ({
-    mostrarError: vi.fn(),
-    mostrarExito: vi.fn(),
-  }),
+  useNotificaciones: () => ({ mostrarError: vi.fn(), mostrarExito: vi.fn() }),
 }));
-
 vi.mock("../api", () => ({
-  obtenerConfiguracionBigQuery: api.obtener,
+  obtenerConfiguracionBigQuery: vi.fn(),
   guardarConfiguracionBigQuery: api.guardar,
   probarConfiguracionBigQuery: api.probar,
 }));
-
 import { SeccionBigQuery } from "./seccion-bigquery";
 
 let root: Root | undefined;
@@ -97,11 +74,8 @@ afterEach(() => {
   container?.remove();
   root = undefined;
   container = undefined;
-  api.obtener.mockClear();
-  api.guardar.mockClear();
-  api.probar.mockClear();
+  vi.clearAllMocks();
 });
-
 async function montar() {
   container = document.createElement("div");
   document.body.append(container);
@@ -114,77 +88,36 @@ async function montar() {
   });
   return container;
 }
-
-function elementoConTexto(selector: string, texto: string) {
-  return Array.from(
-    container?.querySelectorAll<HTMLElement>(selector) ?? [],
-  ).find((elemento) => elemento.textContent?.includes(texto));
+function boton(texto: string) {
+  return Array.from(container?.querySelectorAll("button") ?? []).find((b) =>
+    b.textContent?.includes(texto),
+  );
 }
 
-test("muestra la configuración sin exponer la clave privada", async () => {
+test("una conexión configurada inicia en resumen sin exponer el formulario", async () => {
   const vista = await montar();
-
-  expect(vista.textContent).toContain("BigQuery");
   expect(vista.textContent).toContain("poc-bigquery-talend");
-  expect(vista.textContent).toContain("sa@example.iam.gserviceaccount.com");
-  expect(vista.textContent).toContain("Credenciales protegidas");
+  expect(vista.textContent).toContain("demo_lafavorita");
+  expect(vista.textContent).toContain("Editar configuración");
+  expect(vista.querySelector("textarea")).toBeNull();
   expect(vista.textContent).not.toContain("PRIVATE KEY");
+});
+
+test("abre edición bajo demanda y permite cancelarla", async () => {
+  const vista = await montar();
+  await act(async () => boton("Editar configuración")?.click());
+  expect(vista.querySelector("#bigquery-dataset")).not.toBeNull();
   expect(vista.querySelector("textarea")).not.toBeNull();
-});
-test("permite guardar el dataset conservando las credenciales", async () => {
-  await montar();
-  const boton = elementoConTexto("button", "Guardar BigQuery");
-  expect(boton).toBeDefined();
-
-  await act(async () => {
-    boton?.click();
-    await Promise.resolve();
-  });
-
-  expect(api.guardar).toHaveBeenCalledWith(
-    "org-1",
-    "tenant-q1",
-    expect.objectContaining({ dataset: "demo_lafavorita" }),
-  );
-  expect(
-    (
-      api.guardar.mock.calls[0] as unknown as [
-        string,
-        string,
-        Record<string, unknown>,
-      ]
-    )?.[2],
-  ).not.toHaveProperty("credencialesJson");
+  await act(async () => boton("Cancelar")?.click());
+  expect(vista.querySelector("textarea")).toBeNull();
 });
 
-test("guarda los cambios pendientes antes de probar la conexión", async () => {
+test("prueba la conexión directamente desde el resumen", async () => {
   await montar();
-  const dataset =
-    container?.querySelector<HTMLInputElement>("#bigquery-dataset");
-  const boton = elementoConTexto("button", "Probar conexión");
-  expect(dataset).not.toBeNull();
-  expect(boton).toBeDefined();
-
   await act(async () => {
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value",
-    )?.set;
-    setter?.call(dataset, "dataset_nuevo");
-    dataset?.dispatchEvent(new Event("input", { bubbles: true }));
+    boton("Probar conexión")?.click();
     await Promise.resolve();
   });
-
-  await act(async () => {
-    boton?.click();
-    await Promise.resolve();
-    await Promise.resolve();
-  });
-
-  expect(api.guardar).toHaveBeenCalledWith(
-    "org-1",
-    "tenant-q1",
-    expect.objectContaining({ dataset: "dataset_nuevo" }),
-  );
   expect(api.probar).toHaveBeenCalledWith("conexion-1");
+  expect(api.guardar).not.toHaveBeenCalled();
 });
