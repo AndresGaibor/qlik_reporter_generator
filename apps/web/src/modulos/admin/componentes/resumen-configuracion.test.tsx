@@ -16,41 +16,48 @@ afterEach(() => {
   container = undefined;
 });
 
-test("muestra progreso y accesos a cada sección", () => {
+function montar(completos: boolean[]) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   act(() =>
     root?.render(
       <ResumenConfiguracion
-        items={[
-          {
-            id: "general",
-            etiqueta: "General",
-            estado: "Activa",
-            completo: true,
-            tono: "exito",
-          },
-          {
-            id: "qlik",
-            etiqueta: "Qlik Cloud",
-            estado: "Pendiente",
-            completo: false,
-            tono: "pendiente",
-          },
-        ]}
+        items={completos.map((completo, indice) => ({
+          id: indice === 0 ? "general" : "qlik",
+          etiqueta: indice === 0 ? "General" : "Qlik Cloud",
+          estado: completo ? "Lista" : "Pendiente",
+          completo,
+          tono: completo ? "exito" : "pendiente",
+        }))}
       />,
     ),
   );
+  return container;
+}
 
-  expect(container.textContent).toContain("1 de 2 listas");
-  expect(container.querySelector('a[href="#general"]')).not.toBeNull();
-  expect(container.querySelector('a[href="#qlik"]')?.textContent).toContain(
-    "Pendiente",
+test("compacta el detalle cuando toda la configuración está lista", () => {
+  const vista = montar([true, true]);
+  expect(vista.textContent).toContain("Todo configurado");
+  expect(vista.querySelector('a[href="#general"]')).toBeNull();
+  const boton = vista.querySelector<HTMLButtonElement>(
+    'button[aria-expanded="false"]',
   );
+  expect(boton).not.toBeNull();
+  act(() => boton?.click());
+  expect(vista.querySelector('a[href="#general"]')).not.toBeNull();
+});
+
+test("mantiene visible el detalle cuando existe una configuración pendiente", () => {
+  const vista = montar([true, false]);
+  expect(vista.textContent).toContain("1 configuración requiere atención");
+  expect(vista.querySelector('a[href="#qlik"]')).not.toBeNull();
+  expect(vista.querySelector('button[aria-expanded="true"]')).not.toBeNull();
+});
+
+test("expone el progreso con semántica accesible", () => {
+  const vista = montar([true, false]);
   expect(
-    container
-      .querySelector('[role="progressbar"]')
-      ?.getAttribute("aria-valuenow"),
+    vista.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"),
   ).toBe("50");
 });
