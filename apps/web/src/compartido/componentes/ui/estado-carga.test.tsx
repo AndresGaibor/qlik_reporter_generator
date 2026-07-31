@@ -21,7 +21,7 @@ test("comunica la carga con estado accesible y spinner visual", () => {
   root = createRoot(container);
   act(() => root?.render(<EstadoCarga mensaje="Consultando BigQuery…" />));
 
-  expect(container.querySelector('[role="status"]')).not.toBeNull();
+  expect(container.querySelector("output")).not.toBeNull();
   expect(container.textContent).toContain("Consultando BigQuery…");
   expect(container.querySelector('[data-spinner="true"]')).not.toBeNull();
 });
