@@ -1,0 +1,189 @@
+import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { PageHeader } from "@/compartido/componentes/ui/page-header";
+import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
+import { obtenerConfiguracionBigQuery } from "@/modulos/admin/api";
+import {
+  obtenerDetalleRecursoDestino,
+  obtenerRecursosDestino,
+  obtenerVistaPreviaDestino,
+} from "@/modulos/reportes/api";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { CatalogoResultados } from "./componentes/catalogo-resultados";
+import { DetalleResultado } from "./componentes/detalle-resultado";
+import { EstadoResultados } from "./componentes/estado-resultados";
+import type { PestanaResultado } from "./tipos-resultados";
+
+function mensajeError(error: unknown): string {
+  return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
+}
+
+function EstadoConexion({ estado }: { estado?: string }) {
+  const activo = estado === "activo";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+        activo ? "bg-brand-50 text-brand-700" : "bg-app text-ink-500"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${activo ? "bg-brand-600" : "bg-ink-300"}`}
+      />
+      {activo ? "Conexión verificada" : "Configuración guardada"}
+    </span>
+  );
+}
+
+export function PaginaTablasDestino() {
+  const { tenant } = useTenantActivo();
+  const [busqueda, setBusqueda] = useState("");
+  const [tablaId, setTablaId] = useState<string | null>(null);
+  const [pestana, setPestana] = useState<PestanaResultado>("campos");
+
+  const configuracion = useQuery({
+    queryKey: ["bigquery-config", tenant?.organizacionId, tenant?.id],
+    queryFn: () =>
+      obtenerConfiguracionBigQuery(tenant!.organizacionId, tenant!.id),
+    enabled: Boolean(tenant?.organizacionId && tenant?.id),
+    retry: false,
+  });
+
+  const conexionId = configuracion.data?.id;
+  const catalogo = useQuery({
+    queryKey: ["bigquery-recursos", conexionId],
+    queryFn: () => obtenerRecursosDestino(conexionId!),
+    enabled: Boolean(configuracion.data?.configurada && conexionId),
+    retry: false,
+  });
+
+  const tablas = useMemo(
+    () => (catalogo.data ?? []).filter((recurso) => recurso.tipo === "tabla"),
+    [catalogo.data],
+  );
+
+  useEffect(() => {
+    if (tablas.length === 0) {
+      setTablaId(null);
+      return;
+    }
+    if (!tablaId || !tablas.some((tabla) => tabla.id === tablaId)) {
+      setTablaId(tablas[0]?.id ?? null);
+      setPestana("campos");
+    }
+  }, [tablaId, tablas]);
+
+  const detalle = useQuery({
+    queryKey: ["bigquery-recurso", conexionId, tablaId],
+    queryFn: () => obtenerDetalleRecursoDestino(conexionId!, tablaId!),
+    enabled: Boolean(conexionId && tablaId),
+    retry: false,
+  });
+
+  const preview = useQuery({
+    queryKey: ["bigquery-preview", conexionId, tablaId],
+    queryFn: () => obtenerVistaPreviaDestino(conexionId!, tablaId!, 15),
+    enabled: Boolean(conexionId && tablaId && pestana === "preview"),
+    retry: false,
+  });
+
+  if (!tenant || configuracion.isLoading) {
+    return <EstadoCarga mensaje="Cargando configuración de BigQuery…" />;
+  }
+
+  if (configuracion.isError) {
+    return (
+      <EstadoResultados
+        tipo="catalogo-error"
+        mensaje={mensajeError(configuracion.error)}
+        onReintentar={() => configuracion.refetch()}
+      />
+    );
+  }
+
+  const bigQuery = configuracion.data;
+  if (!bigQuery?.configurada || !bigQuery.id) {
+    return <EstadoResultados tipo="sin-conexion" />;
+  }
+
+  if (bigQuery.estado === "error") {
+    return (
+      <EstadoResultados
+        tipo="conexion-error"
+        mensaje={bigQuery.mensajeError ?? undefined}
+      />
+    );
+  }
+
+  const dataset = bigQuery.dataset || "Dataset BigQuery";
+  const proyecto = bigQuery.projectId || "Proyecto no disponible";
+
+  return (
+    <PageLayout>
+      <PageHeader
+        title="Resultados BigQuery"
+        description="Explora las tablas del dataset configurado, revisa sus campos y utiliza una muestra para preparar nuevos reportes."
+        actions={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="inline-flex max-w-64 items-center gap-1.5 rounded-full bg-obj-50 px-2.5 py-1 font-mono text-xs font-semibold text-obj-600" title={proyecto}>
+              <Icon name="cloud" size="sm" />
+              <span className="truncate">{proyecto}</span>
+            </span>
+            <EstadoConexion estado={bigQuery.estado} />
+          </div>
+        }
+      />
+
+      {catalogo.isLoading ? (
+        <EstadoCarga mensaje="Consultando tablas de BigQuery…" />
+      ) : catalogo.isError ? (
+        <EstadoResultados
+          tipo="catalogo-error"
+          mensaje={mensajeError(catalogo.error)}
+          onReintentar={() => catalogo.refetch()}
+        />
+      ) : (
+        <div className="grid items-start gap-5 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
+          <div className="lg:sticky lg:top-24">
+            <CatalogoResultados
+              recursos={tablas}
+              seleccionId={tablaId}
+              busqueda={busqueda}
+              onBusquedaChange={setBusqueda}
+              onSeleccionar={(id) => {
+                setTablaId(id);
+                setPestana("campos");
+              }}
+              dataset={dataset}
+            />
+          </div>
+
+          <main className="min-w-0" aria-live="polite">
+            {!tablaId ? (
+              <EstadoResultados tipo="sin-seleccion" />
+            ) : detalle.isLoading ? (
+              <EstadoCarga mensaje="Cargando información de la tabla…" />
+            ) : detalle.isError || !detalle.data ? (
+              <EstadoResultados
+                tipo="catalogo-error"
+                mensaje={mensajeError(detalle.error)}
+                onReintentar={() => detalle.refetch()}
+              />
+            ) : (
+              <DetalleResultado
+                detalle={detalle.data}
+                pestana={pestana}
+                onPestanaChange={setPestana}
+                filasPreview={preview.data ?? []}
+                cargandoPreview={preview.isLoading}
+                errorPreview={preview.isError ? mensajeError(preview.error) : undefined}
+                onReintentarPreview={() => preview.refetch()}
+              />
+            )}
+          </main>
+        </div>
+      )}
+    </PageLayout>
+  );
+}
