@@ -78,6 +78,7 @@ export interface DependenciasAplicacion {
     tenantId: string;
     usuarioId: string;
     organizacionId: string;
+    usuarioIdQlik: string;
   }>;
 
   idempotencia?: PuertoIdempotencia;
@@ -153,6 +154,7 @@ export async function crearAplicacion(
         tenantId: contexto.tenantQlikId,
         usuarioId: contexto.usuarioId,
         organizacionId: contexto.organizacionId,
+        usuarioIdQlik: contexto.usuarioIdQlik,
       };
     });
   const resolverQlik =
@@ -163,6 +165,7 @@ export async function crearAplicacion(
         sesionId: contexto.sesionId,
         usuarioId: contexto.usuarioId,
         identidadQlikId: contexto.identidadQlikId,
+        usuarioIdQlik: contexto.usuarioIdQlik,
         tenantId: contexto.tenantQlikId,
         tenantHost: contexto.tenantHost,
         organizacionId: contexto.organizacionId,
@@ -275,6 +278,7 @@ export async function crearAplicacion(
     crearRutasAutenticacionQlik(servicioAutenticacion, {
       frontendUrl,
       produccion,
+      registrador,
     }),
   );
   aplicacion.route(

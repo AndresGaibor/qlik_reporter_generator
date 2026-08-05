@@ -1,5 +1,6 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { obtenerAutorReporte } from "@/compartido/utiles/automatizaciones";
 import { formatearFechaYHora } from "@/compartido/utiles/formateador-fechas";
 import type {
   DetalleAutomatizacion,
@@ -245,7 +246,7 @@ export function TarjetaDetalleAutomatizacion({
           <div>
             <dt className="text-xs font-medium text-ink-400">Propietario</dt>
             <dd className="mt-1 truncate text-sm font-semibold text-ink-900">
-              {auto.propietarioNombre || "Sin propietario"}
+              {obtenerAutorReporte(auto)}
             </dd>
           </div>
           <div>

@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1785511980265,
+  "projectRoot": "/Users/andresgaibor/code/javascript/qlik_reportes_creator",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "bun run --parallel dev:api dev:web",
+      "dev:api": "bun run --cwd apps/api dev",
+      "dev:web": "bun run --cwd apps/web dev",
+      "build": "bun run --cwd packages/contratos build && bun run --cwd apps/api build && bun run --cwd apps/web build",
+      "test": "bun test",
+      "typecheck": "bun run --cwd packages/contratos typecheck && bun run --cwd apps/api typecheck && bun run --cwd apps/web typecheck",
+      "lint": "biome check .",
+      "lint:fix": "biome check --write .",
+      "db:migrate": "bun run --cwd apps/api db:migrate",
+      "db:check": "bun run --cwd apps/api db:check",
+      "db:seed": "bun run --cwd apps/api db:seed"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": "*.test.ts",
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [
+      "apps/*",
+      "packages/*"
+    ],
+    "mainDirectories": [
+      "docs",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "apps": {
+      "path": "apps",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1785511980242,
+      "keyFiles": []
+    },
+    "deploy": {
+      "path": "deploy",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1785511980242,
+      "keyFiles": [
+        "nginx.conf",
+        "qlik-api.service"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 7,
+      "lastAccessed": 1785511980242,
+      "keyFiles": [
+        "AGENTS_GUIDE.md",
+        "INDEX.md",
+        "NAVIGATION.json",
+        "QLIK_CLOUD_API_HANDBOOK.md",
+        "SUMMARY.md"
+      ]
+    },
+    "packages": {
+      "path": "packages",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1785511980242,
+      "keyFiles": []
+    },
+    "scratch": {
+      "path": "scratch",
+      "purpose": null,
+      "fileCount": 12,
+      "lastAccessed": 1785511980243,
+      "keyFiles": [
+        "advanced_tests_report.json",
+        "clean_analytics_apps.js",
+        "fetch_auth_docs.js",
+        "fetch_jina.js",
+        "modifications_report.json"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 1,
+      "lastAccessed": 1785511980243,
+      "keyFiles": [
+        "task-1.1-root-config.test.ts"
+      ]
+    },
+    "apps/api": {
+      "path": "apps/api",
+      "purpose": "API routes",
+      "fileCount": 4,
+      "lastAccessed": 1785511980243,
+      "keyFiles": [
+        "drizzle.config.ts",
+        "local.db",
+        "package.json"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

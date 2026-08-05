@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qlik_automatizaciones
+      POSTGRES_USER: ${POSTGRES_USER:-qlik_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambiar_en_produccion}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qlik_app} -d qlik_automatizaciones"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT_API:-7823}
+      DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${PORT_API:-7823}:${PORT_API:-7823}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT_API: ${PORT_API:-7823}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-3847}:80"
+
+volumes:
+  postgres_data:

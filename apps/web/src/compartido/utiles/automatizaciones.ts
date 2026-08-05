@@ -55,3 +55,7 @@ export function resumenUltimaEjecucion(auto: ResumenAutomatizacion): string {
 export function sufijoBusqueda(espacioId?: string): string {
   return espacioId ? `?espacioId=${encodeURIComponent(espacioId)}` : "";
 }
+
+export function obtenerAutorReporte(auto: ResumenAutomatizacion): string {
+  return auto.propietarioNombre || "Sin propietario";
+}

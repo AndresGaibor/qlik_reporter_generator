@@ -1,8 +1,19 @@
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import { Card, CardContent } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
+import {
+  crearAutomatizacionDesdePlantilla,
+  estimarConsultaDestino,
+  obtenerConexionesDestino,
+  obtenerDetalleRecursoDestino,
+  obtenerRecursosDestino,
+  obtenerVistaPreviaDestino,
+} from "./api";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type DateRange, DayPicker } from "react-day-picker";
 
 interface TablaMaqueta {
@@ -11,6 +22,7 @@ interface TablaMaqueta {
 }
 
 export interface ConfiguracionReporte {
+  nombre?: string;
   tabla: string;
   columnas: string[];
   rango?: DateRange;
@@ -23,51 +35,33 @@ interface Props {
   integrado?: boolean;
 }
 
-const TABLAS_MAQUETA: TablaMaqueta[] = [
-  {
-    nombre: "ventas_diarias",
-    columnas: ["id", "telefono", "nombre", "dia", "importe", "region"],
-  },
-  {
-    nombre: "clientes",
-    columnas: [
-      "id",
-      "nombre",
-      "email",
-      "telefono",
-      "fecha_alta",
-      ...Array.from(
-        { length: 55 },
-        (_, indice) => `campo_${String(indice + 1).padStart(2, "0")}`,
-      ),
-    ],
-  },
-  {
-    nombre: "productos",
-    columnas: ["id", "nombre", "categoria", "precio", "stock"],
-  },
-];
-
 export function PaginaNuevaAutomatizacion({
   configuracionInicial,
   onGuardarCambios,
   onCancelar,
   integrado = false,
 }: Props = {}) {
-  const tablasDisponibles =
-    configuracionInicial?.tabla &&
-    !TABLAS_MAQUETA.some((tabla) => tabla.nombre === configuracionInicial.tabla)
-      ? [
-          ...TABLAS_MAQUETA,
-          {
-            nombre: configuracionInicial.tabla,
-            columnas: configuracionInicial.columnas,
-          },
-        ]
-      : TABLAS_MAQUETA;
-  const [tablaSeleccionada, setTablaSeleccionada] = useState(
-    configuracionInicial?.tabla ?? TABLAS_MAQUETA[1].nombre,
+  const { data: conexiones = [], isLoading: cargandoConexiones } = useQuery({
+    queryKey: ["destinos-conexiones"],
+    queryFn: obtenerConexionesDestino,
+  });
+  const conexionesBigQuery = conexiones.filter(
+    (conexion) => conexion.tipo === "bigquery",
   );
+  const conexionActiva =
+    conexionesBigQuery.find((conexion) => conexion.esPredeterminada) ??
+    conexionesBigQuery[0];
+  const { data: recursos = [], isLoading: cargandoRecursos } = useQuery({
+    queryKey: ["destinos-recursos", conexionActiva?.id],
+    queryFn: () => obtenerRecursosDestino(conexionActiva?.id ?? ""),
+    enabled: Boolean(conexionActiva),
+  });
+  const parametros = new URLSearchParams(window.location.search);
+  const tablaInicial = configuracionInicial?.tabla ?? parametros.get("tablaId") ?? "";
+  const [nombrePersonalizado, setNombrePersonalizado] = useState(
+    configuracionInicial?.nombre ?? "",
+  );
+  const [tablaSeleccionada, setTablaSeleccionada] = useState(tablaInicial);
   const [columnasSeleccionadas, setColumnasSeleccionadas] = useState<string[]>(
     configuracionInicial?.columnas ?? [],
   );
@@ -79,12 +73,81 @@ export function PaginaNuevaAutomatizacion({
   const [creado, setCreado] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
-  const tablaActual =
-    tablasDisponibles.find((tabla) => tabla.nombre === tablaSeleccionada) ??
-    tablasDisponibles[0];
+  const { data: detalleTabla } = useQuery({
+    queryKey: ["destino-recurso-detalle", conexionActiva?.id, tablaSeleccionada],
+    queryFn: () => obtenerDetalleRecursoDestino(conexionActiva?.id ?? "", tablaSeleccionada),
+    enabled: Boolean(conexionActiva && tablaSeleccionada),
+  });
+
+  const { data: previewFilas = [], isLoading: cargandoPreview } = useQuery({
+    queryKey: ["destino-recurso-preview", conexionActiva?.id, tablaSeleccionada],
+    queryFn: () => obtenerVistaPreviaDestino(conexionActiva!.id, tablaSeleccionada, 10),
+    enabled: Boolean(conexionActiva?.id && tablaSeleccionada),
+  });
+
+  const fechaDesdeStr = formatearFechaLocal(rango?.from);
+  const fechaHastaStr = formatearFechaLocal(rango?.to);
+
+  const { data: estimacionCosto, isLoading: cargandoEstimacion } = useQuery({
+    queryKey: [
+      "destino-recurso-estimacion",
+      conexionActiva?.id,
+      tablaSeleccionada,
+      columnasSeleccionadas.join(","),
+      fechaDesdeStr,
+      fechaHastaStr,
+    ],
+    queryFn: () =>
+      estimarConsultaDestino(conexionActiva!.id, {
+        recursoId: tablaSeleccionada,
+        columnas: columnasSeleccionadas,
+        fechaDesde: fechaDesdeStr,
+        fechaHasta: fechaHastaStr,
+      }),
+    enabled:
+      Boolean(conexionActiva?.id) &&
+      Boolean(tablaSeleccionada) &&
+      columnasSeleccionadas.length > 0,
+  });
+
+  const listaColumnas =
+    detalleTabla?.columnas && detalleTabla.columnas.length > 0
+      ? detalleTabla.columnas
+      : previewFilas[0]
+        ? Object.keys(previewFilas[0]).map((nombre) => ({
+            nombre,
+            tipo: "STRING",
+          }))
+        : [];
+
+  const columnasDeTabla = listaColumnas.map((columna) => columna.nombre);
+
+  const objetosColumnasVisibles = listaColumnas.filter((columna) =>
+    columna.nombre.toLowerCase().includes(busquedaColumnas.toLowerCase()),
+  );
+
+  const [tablaInicializada, setTablaInicializada] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!tablaSeleccionada && recursos[0]) setTablaSeleccionada(recursos[0].nombre);
+  }, [recursos, tablaSeleccionada]);
+
+  useEffect(() => {
+    if (
+      tablaSeleccionada &&
+      columnasDeTabla.length > 0 &&
+      tablaInicializada !== tablaSeleccionada
+    ) {
+      setTablaInicializada(tablaSeleccionada);
+      if (columnasSeleccionadas.length === 0) {
+        setColumnasSeleccionadas(columnasDeTabla);
+      }
+    }
+  }, [tablaSeleccionada, columnasDeTabla, tablaInicializada, columnasSeleccionadas.length]);
 
   function cambiarTabla(nombre: string) {
     setTablaSeleccionada(nombre);
+    setTablaInicializada(null);
     setColumnasSeleccionadas([]);
     setBusquedaColumnas("");
   }
@@ -97,18 +160,19 @@ export function PaginaNuevaAutomatizacion({
     );
   }
 
-  const columnasVisibles = tablaActual.columnas.filter((columna) =>
-    columna.toLowerCase().includes(busquedaColumnas.toLowerCase()),
-  );
-
-  function alternarColumnasVisibles() {
-    const todasSeleccionadas = columnasVisibles.every((columna) =>
-      columnasSeleccionadas.includes(columna),
-    );
+  function alternarColumnasVisibles(evento?: React.MouseEvent) {
+    if (evento) {
+      evento.preventDefault();
+      evento.stopPropagation();
+    }
+    const nombresVisibles = objetosColumnasVisibles.map((c) => c.nombre);
+    const todasSeleccionadas =
+      nombresVisibles.length > 0 &&
+      nombresVisibles.every((col) => columnasSeleccionadas.includes(col));
     setColumnasSeleccionadas((actuales) =>
       todasSeleccionadas
-        ? actuales.filter((columna) => !columnasVisibles.includes(columna))
-        : Array.from(new Set([...actuales, ...columnasVisibles])),
+        ? actuales.filter((col) => !nombresVisibles.includes(col))
+        : Array.from(new Set([...actuales, ...nombresVisibles])),
     );
   }
 
@@ -131,8 +195,24 @@ export function PaginaNuevaAutomatizacion({
     }).format(fecha);
   }
 
+  const { mostrarExito, mostrarError } = useNotificaciones();
+  const { data: sesionInfo } = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const autor =
+    sesionInfo?.usuario?.nombre ||
+    sesionInfo?.identidad?.nombreQlik ||
+    sesionInfo?.usuario?.correo ||
+    "";
+  const nombreSugerido = `Reporte ${tablaSeleccionada}${autor ? ` ${autor}` : ""}`;
+  const nombreFinal = nombrePersonalizado.trim() || nombreSugerido;
+
   async function guardarReporte() {
     const configuracion: ConfiguracionReporte = {
+      nombre: nombreFinal,
       tabla: tablaSeleccionada,
       columnas: columnasSeleccionadas,
       rango,
@@ -149,13 +229,43 @@ export function PaginaNuevaAutomatizacion({
       return;
     }
 
-    setCreado(true);
+    setGuardando(true);
+    try {
+      const fDesde = formatearFechaLocal(rango?.from);
+      const fHasta = formatearFechaLocal(rango?.to);
+      const resultado = await crearAutomatizacionDesdePlantilla({
+        nombre: nombreFinal,
+        tablaId: tablaSeleccionada,
+        autor,
+        fechaDesde: fDesde,
+        fechaHasta: fHasta,
+        columnas: columnasSeleccionadas,
+        formatoSalida: "CSV",
+        espacioIdQlik: parametros.get("espacioId") || undefined,
+        reemplazosWorkspace: [],
+      });
+      mostrarExito("Reporte creado y configurado con éxito");
+      if (resultado?.id) {
+        window.location.href = `/reportes/${resultado.id}`;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error al crear el reporte";
+      mostrarError(msg);
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
     <div
       className={integrado ? "space-y-4" : "mx-auto max-w-5xl space-y-4 pb-4"}
     >
+      {cargandoConexiones || cargandoRecursos ? (
+        <p className="rounded-lg border border-line-200 bg-surface p-4 text-sm text-ink-500">Cargando tablas de BigQuery…</p>
+      ) : !conexionActiva ? (
+        <p className="rounded-lg border border-line-200 bg-surface p-4 text-sm text-ink-500">No hay una conexión BigQuery predeterminada configurada.</p>
+      ) : null}
+
       {!integrado && (
         <Link
           to="/reportes"
@@ -185,9 +295,28 @@ export function PaginaNuevaAutomatizacion({
         }
       >
         <CardContent
-          className={`grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] ${integrado ? "rounded-b-xl" : ""}`}
+          className={`space-y-6 p-5 sm:p-6 ${integrado ? "rounded-b-xl" : ""}`}
         >
-          <div className="space-y-5">
+          {/* Nombre del reporte */}
+          <section className="space-y-2">
+            <label
+              htmlFor="nombre-reporte"
+              className="block text-sm font-semibold text-ink-900"
+            >
+              Nombre del reporte
+            </label>
+            <input
+              id="nombre-reporte"
+              type="text"
+              value={nombrePersonalizado}
+              onChange={(evento) => setNombrePersonalizado(evento.target.value)}
+              placeholder={nombreSugerido}
+              className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100 placeholder:text-ink-300"
+            />
+          </section>
+
+          {/* Fila superior: 1. Tabla y 2. Periodo */}
+          <div className="grid gap-5 sm:grid-cols-2">
             <section className="space-y-2">
               <label
                 htmlFor="tabla-reporte"
@@ -201,22 +330,19 @@ export function PaginaNuevaAutomatizacion({
                 onChange={(evento) => cambiarTabla(evento.target.value)}
                 className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
               >
-                {tablasDisponibles.map((tabla) => (
-                  <option key={tabla.nombre} value={tabla.nombre}>
-                    {tabla.nombre}
+                {recursos.map((recurso) => (
+                  <option key={recurso.nombre} value={recurso.nombre}>
+                    {recurso.nombre}
                   </option>
                 ))}
               </select>
             </section>
 
-            <section className="relative space-y-3">
+            <section className="relative space-y-2">
               <div>
                 <h2 className="text-sm font-semibold text-ink-900">
-                  3. Elige el periodo
+                  2. Elige el periodo
                 </h2>
-                <p className="mt-1 text-xs text-ink-500">
-                  Indica las fechas que quieres incluir en el reporte.
-                </p>
               </div>
 
               <button
@@ -243,7 +369,7 @@ export function PaginaNuevaAutomatizacion({
               </button>
 
               {selectorRangoAbierto && (
-                <div className="absolute bottom-full left-0 z-20 mb-2 rounded-lg border border-line-200 bg-surface p-3 shadow-panel">
+                <div className="absolute top-full left-0 z-20 mt-1 rounded-lg border border-line-200 bg-surface p-3 shadow-panel">
                   <DayPicker
                     mode="range"
                     min={1}
@@ -294,18 +420,20 @@ export function PaginaNuevaAutomatizacion({
             </section>
           </div>
 
-          <section className="space-y-3">
-            <div className="flex items-end justify-between gap-3">
+          {/* Sección de Vista Previa de Datos y Selección de Columnas */}
+          <section className="space-y-3 pt-2 border-t border-line-200">
+            <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-ink-900">
-                  2. Elige los campos del reporte
+                <h2 className="text-sm font-semibold text-ink-900 flex items-center gap-2">
+                  <Icon name="grid" size="sm" className="text-brand-600" />
+                  3. Vista previa de datos y selección de campos
                 </h2>
                 <p className="mt-1 text-xs text-ink-500">
-                  Selecciona la información que quieres ver en tu reporte.
+                  Haz clic en el checkbox de la cabecera para incluir o descartar cada columna del reporte final.
                 </p>
               </div>
-              <span className="shrink-0 text-xs font-medium text-brand-700">
-                {columnasSeleccionadas.length} de {tablaActual.columnas.length}
+              <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+                {columnasSeleccionadas.length} de {columnasDeTabla.length} campos seleccionados
               </span>
             </div>
 
@@ -322,7 +450,7 @@ export function PaginaNuevaAutomatizacion({
                   onChange={(evento) =>
                     setBusquedaColumnas(evento.target.value)
                   }
-                  placeholder="Buscar un campo..."
+                  placeholder="Filtrar columnas de la vista previa..."
                   aria-label="Buscar campos"
                   className="h-10 w-full rounded-md border border-line-200 bg-surface pl-9 pr-3 text-sm text-ink-900 shadow-card outline-none transition placeholder:text-ink-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
                 />
@@ -330,46 +458,112 @@ export function PaginaNuevaAutomatizacion({
               <button
                 type="button"
                 onClick={alternarColumnasVisibles}
-                className="h-10 shrink-0 rounded-md border border-line-200 px-3 text-xs font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+                className="h-10 shrink-0 rounded-md border border-line-200 px-3.5 text-xs font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
               >
-                {columnasVisibles.length > 0 &&
-                columnasVisibles.every((columna) =>
-                  columnasSeleccionadas.includes(columna),
+                {objetosColumnasVisibles.length > 0 &&
+                objetosColumnasVisibles.every((col) =>
+                  columnasSeleccionadas.includes(col.nombre),
                 )
-                  ? "Limpiar"
-                  : "Todos"}
+                  ? "Deseleccionar visibles"
+                  : "Seleccionar visibles"}
               </button>
             </div>
 
-            <div className="max-h-56 overflow-y-auto rounded-md border border-line-200 bg-app/30 p-2 pr-1">
-              <div className="grid gap-2 pr-1 sm:grid-cols-2">
-                {columnasVisibles.map((columna) => {
-                  const seleccionada = columnasSeleccionadas.includes(columna);
-                  return (
-                    <label
-                      key={columna}
-                      className={`flex cursor-pointer items-center gap-3 rounded-md border px-3.5 py-3 text-sm transition-colors ${
-                        seleccionada
-                          ? "border-brand-300 bg-brand-50 text-brand-900"
-                          : "border-line-200 bg-surface text-ink-700 hover:border-line-300 hover:bg-hover"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={seleccionada}
-                        onChange={() => alternarColumna(columna)}
-                        className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)]"
-                      />
-                      <span className="font-medium">{columna}</span>
-                    </label>
-                  );
-                })}
+            {/* Tabla con registros de Vista Previa y Checkbox en cada Cabecera */}
+            <div className="rounded-lg border border-line-200 bg-surface shadow-inner overflow-hidden">
+              <div className="max-h-[360px] overflow-auto">
+                {cargandoPreview ? (
+                  <div className="p-8 text-center text-xs text-ink-500">
+                    Cargando datos de vista previa desde BigQuery…
+                  </div>
+                ) : objetosColumnasVisibles.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-ink-400">
+                    No encontramos campos con esa búsqueda.
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs font-mono border-collapse">
+                    <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-sm text-ink-900 font-semibold border-b border-line-200 z-10">
+                      <tr>
+                        <th className="px-3 py-2.5 w-10 text-center border-r border-line-200 bg-slate-200/60">
+                          #
+                        </th>
+                        {objetosColumnasVisibles.map((col) => {
+                          const seleccionada = columnasSeleccionadas.includes(col.nombre);
+                          return (
+                            <th
+                              key={col.nombre}
+                              onClick={() => alternarColumna(col.nombre)}
+                              className={`px-3.5 py-2.5 whitespace-nowrap border-r border-line-200 cursor-pointer select-none transition-colors ${
+                                seleccionada
+                                  ? "bg-brand-50/90 text-brand-950"
+                                  : "bg-slate-100/80 text-ink-400"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={seleccionada}
+                                  onChange={() => alternarColumna(col.nombre)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)] cursor-pointer shrink-0"
+                                />
+                                <div>
+                                  <div className={`font-mono text-xs ${seleccionada ? "font-bold text-ink-900" : "font-medium text-slate-400 line-through"}`}>
+                                    {col.nombre}
+                                  </div>
+                                  <div className="text-[10px] font-sans font-normal text-ink-400">
+                                    {col.tipo || "STRING"}
+                                  </div>
+                                </div>
+                              </div>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line-100">
+                      {previewFilas.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={objetosColumnasVisibles.length + 1}
+                            className="p-6 text-center text-xs text-ink-400"
+                          >
+                            No hay registros para mostrar en esta vista previa.
+                          </td>
+                        </tr>
+                      ) : (
+                        previewFilas.map((fila, i) => (
+                          <tr key={i} className="hover:bg-slate-50/80">
+                            <td className="px-3 py-2 text-center text-ink-400 font-mono text-[11px] border-r border-line-100 bg-slate-50/50">
+                              {i + 1}
+                            </td>
+                            {objetosColumnasVisibles.map((col) => {
+                              const seleccionada = columnasSeleccionadas.includes(col.nombre);
+                              const val = fila[col.nombre];
+                              return (
+                                <td
+                                  key={col.nombre}
+                                  className={`px-3.5 py-2 whitespace-nowrap border-r border-line-100 max-w-[240px] truncate transition-opacity ${
+                                    seleccionada
+                                      ? "bg-white font-medium text-slate-800"
+                                      : "bg-slate-50/60 opacity-35 italic text-slate-400"
+                                  }`}
+                                >
+                                  {val === null || val === undefined ? (
+                                    <span className="text-slate-400 italic">null</span>
+                                  ) : (
+                                    formatearValorCelda(val)
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                )}
               </div>
-              {columnasVisibles.length === 0 && (
-                <p className="px-3 py-6 text-center text-sm text-ink-400">
-                  No encontramos campos con esa búsqueda.
-                </p>
-              )}
             </div>
           </section>
 
@@ -379,41 +573,92 @@ export function PaginaNuevaAutomatizacion({
             </p>
           )}
 
-          <div className="flex flex-wrap justify-end gap-3 border-t border-line-200 pt-4 lg:col-span-2">
-            {onCancelar && (
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line-200 pt-4">
+            {/* Costo estimado del reporte directamente al lado de la acción */}
+            <div className="flex flex-wrap items-center gap-3 bg-slate-900 text-slate-100 px-4 py-2.5 rounded-xl border border-slate-800 shadow-sm text-xs font-mono">
+              <div className="flex items-center gap-2 font-sans font-semibold text-slate-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                Costo estimado:
+              </div>
+              {cargandoEstimacion ? (
+                <span className="text-slate-400 animate-pulse">Calculando…</span>
+              ) : estimacionCosto ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="font-bold text-emerald-400 text-sm">
+                    ${estimacionCosto.costoEstimadoUsd.toFixed(8)} USD
+                  </span>
+                  <span className="text-slate-400 text-[11px]">
+                    (~{(estimacionCosto.bytesProcesados / (1024 * 1024)).toFixed(2)} MB)
+                  </span>
+                </div>
+              ) : (
+                <span className="text-slate-400">—</span>
+              )}
+            </div>
+
+            {/* Acciones del formulario */}
+            <div className="flex items-center gap-3 shrink-0">
+              {onCancelar && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  disabled={guardando}
+                  onClick={onCancelar}
+                >
+                  Cancelar
+                </Button>
+              )}
               <Button
                 type="button"
-                variant="outline"
                 size="lg"
-                disabled={guardando}
-                onClick={onCancelar}
+                className="min-w-44 gap-2 bg-brand-600 hover:bg-brand-700 text-white"
+                disabled={
+                  guardando ||
+                  !tablaSeleccionada ||
+                  columnasSeleccionadas.length === 0 ||
+                  !rango?.from ||
+                  !rango.to
+                }
+                onClick={guardarReporte}
               >
-                Cancelar
+                <Icon name="file-text" size="sm" />
+                {guardando
+                  ? "Guardando cambios..."
+                  : onGuardarCambios
+                    ? "Guardar cambios"
+                    : "Crear reporte"}
               </Button>
-            )}
-            <Button
-              type="button"
-              size="lg"
-              className="min-w-44 gap-2"
-              disabled={
-                guardando ||
-                !tablaSeleccionada ||
-                columnasSeleccionadas.length === 0 ||
-                !rango?.from ||
-                !rango.to
-              }
-              onClick={guardarReporte}
-            >
-              <Icon name="file-text" size="sm" />
-              {guardando
-                ? "Guardando cambios..."
-                : onGuardarCambios
-                  ? "Guardar cambios"
-                  : "Crear reporte"}
-            </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
+}
+
+function formatearValorCelda(val: unknown): string {
+  if (val === null || val === undefined) return "null";
+  if (typeof val === "object" && val !== null) {
+    if ("value" in val && val.value !== undefined && val.value !== null) {
+      return String(val.value);
+    }
+    if (val instanceof Date) {
+      return val.toISOString().split("T")[0] ?? String(val);
+    }
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+  return String(val);
+}
+
+function formatearFechaLocal(fecha?: Date): string | undefined {
+  if (!fecha) return undefined;
+  const a = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, "0");
+  const d = String(fecha.getDate()).padStart(2, "0");
+  return `${a}-${m}-${d}`;
 }

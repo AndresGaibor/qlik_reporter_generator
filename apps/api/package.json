@@ -1,0 +1,36 @@
+{
+  "name": "@qlik/automatizaciones-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --env-file=../../.env run --watch src/entradas/bun.ts",
+    "build": "bun build src/entradas/node.ts --target=node --outdir=dist",
+    "build:worker": "bun build src/entradas/worker.ts --target=node --outdir=dist/worker",
+    "start": "node dist/node.js",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun --env-file=../../.env run drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:check": "bun --env-file=../../.env run src/plataforma/bootstrap/check.ts",
+    "db:seed": "bun --env-file=../../.env run src/plataforma/bootstrap/seed.ts"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^8.3.1",
+    "@hono/node-server": "^2.0.12",
+    "@qlik/contratos": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.5.0",
+    "pino": "^9.3.0",
+    "pino-pretty": "^11.2.0",
+    "postgres": "^3.4.4",
+    "ssh2-sftp-client": "^12.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/ssh2-sftp-client": "^9.0.6",
+    "bun-types": "^1.1.0",
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.5.0"
+  }
+}

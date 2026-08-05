@@ -41,8 +41,17 @@ export const esquemaCrearDesdePlantilla = z.object({
   propietarioIdQlik: esquemaIdQlik.optional(),
   flujoId: z.string().optional(),
   tablaId: z.string().optional(),
+  autor: z.string().optional(),
+  fechaDesde: z.string().optional(),
+  fechaHasta: z.string().optional(),
+  columnas: z.array(z.string()).optional(),
+  formatoSalida: z.string().optional(),
   destinoId: z.string().uuid().optional(),
-  reemplazosWorkspace: z.array(esquemaReemplazoWorkspace).max(100).default([]),
+  reemplazosWorkspace: z
+    .array(esquemaReemplazoWorkspace)
+    .max(100)
+    .optional()
+    .default([]),
   claveIdempotencia: z.string().trim().min(8).max(255).optional(),
 });
 export type CrearDesdePlantilla = z.infer<typeof esquemaCrearDesdePlantilla>;

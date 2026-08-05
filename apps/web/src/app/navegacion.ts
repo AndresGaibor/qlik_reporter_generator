@@ -28,10 +28,4 @@ export const NAVEGACION: readonly {
     icono: "admin",
     admin: true,
   },
-  {
-    to: "/admin/superadmins",
-    etiqueta: "Superadmins",
-    icono: "shield",
-    superadmin: true,
-  },
 ] as const;

@@ -1,3 +1,4 @@
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
@@ -7,6 +8,8 @@ import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-e
 import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
+import { obtenerAutorReporte } from "@/compartido/utiles/automatizaciones";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type ResumenAutomatizacion,
   ejecutarAutomatizacion,
@@ -21,6 +24,7 @@ import { PaginacionLista } from "./componentes/paginacion-lista";
 import { useBusquedaDiferida } from "./hooks/use-busqueda-diferida";
 
 export function PaginaAutomatizaciones() {
+  const modoUsuarioFinal = useVistaUsuarioFinal();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
   const { tenant: tenantActivo } = useTenantActivo();
@@ -29,6 +33,20 @@ export function PaginaAutomatizaciones() {
   );
   const espacioFiltrado = espacioId.trim() || undefined;
   const [idEjecutando, setIdEjecutando] = useState<string | null>(null);
+  const [autorFiltrado, setAutorFiltrado] = useState<string>("");
+
+  const { data: sesionInfo } = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const usuarioId = sesionInfo?.usuario?.id || sesionInfo?.identidad?.id;
+  const usuarioNombre =
+    sesionInfo?.usuario?.nombre ||
+    sesionInfo?.identidad?.nombreQlik ||
+    sesionInfo?.usuario?.correo ||
+    "";
 
   const {
     busquedaTemp,
@@ -92,13 +110,55 @@ export function PaginaAutomatizaciones() {
     }
   }, [isError, error, manejar]);
 
+  const listaBruta = automatizaciones ?? [];
+
+  const autoresDisponibles = Array.from(
+    new Set(
+      listaBruta
+        .map((a) => obtenerAutorReporte(a))
+        .filter((n): n is string => Boolean(n) && n !== "Sin propietario"),
+    ),
+  ).map((nombre) => ({ id: nombre, nombre }));
+
+  const listaFiltrada = listaBruta.filter((auto) => {
+    const autorResuelto = obtenerAutorReporte(auto);
+    if (modoUsuarioFinal) {
+      if (!usuarioId && !usuarioNombre) return true;
+      const coincidePropietarioId = Boolean(
+        usuarioId && auto.propietarioId === usuarioId,
+      );
+      const coincidePropietarioNombre = Boolean(
+        usuarioNombre &&
+          (auto.propietarioNombre === usuarioNombre ||
+            autorResuelto.toLowerCase().includes(usuarioNombre.toLowerCase())),
+      );
+      const coincideEnNombreReporte = Boolean(
+        usuarioNombre &&
+          auto.nombre.toLowerCase().includes(usuarioNombre.toLowerCase()),
+      );
+      return (
+        coincidePropietarioId ||
+        coincidePropietarioNombre ||
+        coincideEnNombreReporte
+      );
+    }
+    if (autorFiltrado) {
+      return (
+        auto.propietarioId === autorFiltrado ||
+        auto.propietarioNombre === autorFiltrado ||
+        autorResuelto === autorFiltrado
+      );
+    }
+    return true;
+  });
+
   const {
     paginaActual,
     totalPaginas,
     elementosPagina: automatizacionesPaginados,
     irPagina,
     reset: reiniciarPaginacion,
-  } = usePaginacion(automatizaciones ?? []);
+  } = usePaginacion(listaFiltrada);
 
   const aplicarBusqueda = useCallback(
     (valor: string) => {
@@ -117,7 +177,6 @@ export function PaginaAutomatizaciones() {
     return <EstadoError mensaje={error.message} onReintentar={handleRefetch} />;
   }
 
-  const lista = automatizaciones ?? [];
   const inicio = (paginaActual - 1) * 10;
 
   return (
@@ -140,7 +199,14 @@ export function PaginaAutomatizaciones() {
           establecerEspacioId(id);
           reiniciarPaginacion();
         }}
-        totalResultados={lista.length}
+        autores={autoresDisponibles}
+        autorFiltrado={autorFiltrado}
+        onAutorChange={(autor) => {
+          setAutorFiltrado(autor);
+          reiniciarPaginacion();
+        }}
+        mostrarFiltroAutor={!modoUsuarioFinal}
+        totalResultados={listaFiltrada.length}
       />
 
       <div className="space-y-4">
@@ -149,17 +215,17 @@ export function PaginaAutomatizaciones() {
           idEjecutando={idEjecutando}
           espacioFiltrado={espacioFiltrado}
           targetHost={tenantActivo?.host}
-          hayFiltros={Boolean(espacioFiltrado || busquedaActiva)}
+          hayFiltros={Boolean(espacioFiltrado || busquedaActiva || autorFiltrado)}
           onEjecutar={(id) => ejecutar.mutate(id)}
         />
 
-        {lista.length > 0 && (
+        {listaFiltrada.length > 0 && (
           <PaginacionLista
             paginaActual={paginaActual}
             totalPaginas={totalPaginas}
             onIrPagina={irPagina}
             inicio={inicio}
-            total={lista.length}
+            total={listaFiltrada.length}
           />
         )}
       </div>

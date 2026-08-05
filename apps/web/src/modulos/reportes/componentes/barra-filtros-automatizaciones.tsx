@@ -14,6 +14,10 @@ interface Props {
   errorEspacios?: boolean;
   espacioFiltrado?: string;
   onEspacioChange: (id: string) => void;
+  autores?: { id: string; nombre: string }[];
+  autorFiltrado?: string;
+  onAutorChange?: (id: string) => void;
+  mostrarFiltroAutor?: boolean;
   totalResultados: number;
 }
 
@@ -26,6 +30,10 @@ export function BarraFiltrosAutomatizaciones({
   errorEspacios,
   espacioFiltrado,
   onEspacioChange,
+  autores = [],
+  autorFiltrado,
+  onAutorChange,
+  mostrarFiltroAutor = false,
   totalResultados,
 }: Props) {
   const busqueda = sufijoBusqueda(espacioFiltrado);
@@ -43,7 +51,13 @@ export function BarraFiltrosAutomatizaciones({
       />
 
       <div className="rounded-xl border border-line-200 bg-surface p-3 shadow-card sm:p-4">
-        <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)]">
+        <div
+          className={`grid grid-cols-1 items-end gap-3 ${
+            mostrarFiltroAutor
+              ? "md:grid-cols-[minmax(200px,1fr)_minmax(200px,1fr)_minmax(0,1.2fr)]"
+              : "md:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.2fr)]"
+          }`}
+        >
           <SelectBuscable
             etiqueta="Filtrar por espacio"
             placeholder="Todos los espacios"
@@ -55,6 +69,19 @@ export function BarraFiltrosAutomatizaciones({
             valorSeleccionado={espacioFiltrado ?? ""}
             onSeleccionar={onEspacioChange}
           />
+
+          {mostrarFiltroAutor && (
+            <SelectBuscable
+              etiqueta="Filtrar por autor"
+              placeholder="Todos los autores"
+              searchPlaceholder="Escribe el nombre del autor…"
+              emptyText="No encontramos autor con ese nombre."
+              allowClear
+              opciones={autores}
+              valorSeleccionado={autorFiltrado ?? ""}
+              onSeleccionar={onAutorChange ?? (() => {})}
+            />
+          )}
 
           <form onSubmit={buscar} className="space-y-1.5">
             <div className="flex items-center justify-between gap-3">

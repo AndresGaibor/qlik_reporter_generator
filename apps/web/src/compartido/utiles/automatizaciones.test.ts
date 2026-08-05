@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   claseEstado,
   estadoVisual,
+  obtenerAutorReporte,
   resumenUltimaEjecucion,
 } from "./automatizaciones";
 
@@ -64,5 +65,15 @@ describe("resumen de la última ejecución", () => {
     expect(resumenUltimaEjecucion(crearResumen())).toBe(
       "Aún no se ha ejecutado",
     );
+  });
+});
+
+describe("obtenerAutorReporte", () => {
+  test("devuelve el propietario real de Qlik Automate", () => {
+    const auto = crearResumen({
+      nombre: "Reporte VENTAS_COMERCIAL_DIARIAS_D Andrés Gaibor Apunte",
+      propietarioNombre: "Byron Nasimba Quinatoa",
+    });
+    expect(obtenerAutorReporte(auto)).toBe("Byron Nasimba Quinatoa");
   });
 });

@@ -46,6 +46,7 @@ function valoresWorkspace(workspace: Record<string, unknown>) {
     if (typeof bloque !== "object" || bloque === null) continue;
     const entrada = bloque as Record<string, unknown>;
     const nombre = String(entrada.name ?? "");
+    const type = String(entrada.type ?? "");
     const operaciones = Array.isArray(entrada.operations)
       ? entrada.operations
       : [];
@@ -60,6 +61,24 @@ function valoresWorkspace(workspace: Record<string, unknown>) {
       const operacion = primeraOperacion as Record<string, unknown>;
       valores[nombre] = operacion.value ?? valores[nombre] ?? "";
     }
+
+    if (nombre === "executeTask" || type === "EndpointBlock") {
+      const inputs = Array.isArray(entrada.inputs) ? entrada.inputs : [];
+      for (const input of inputs) {
+        if (
+          typeof input === "object" &&
+          input !== null &&
+          (input as Record<string, unknown>).mode === "keyValue" &&
+          Array.isArray((input as Record<string, unknown>).value)
+        ) {
+          for (const kv of (input as Record<string, unknown>).value as Array<{ key: string; value: string }>) {
+            if (kv.key === "gcp_tabla" && kv.value) {
+              valores["gcp_tabla"] = kv.value;
+            }
+          }
+        }
+      }
+    }
   }
 
   return valores;
@@ -67,19 +86,24 @@ function valoresWorkspace(workspace: Record<string, unknown>) {
 
 function fechaWorkspace(valor: unknown) {
   if (!valor) return undefined;
-  const fecha = new Date(String(valor));
+  const str = String(valor).split(" ")[0];
+  const fecha = new Date(str);
   return Number.isNaN(fecha.getTime()) ? undefined : fecha;
 }
 
 function configuracionInicial(
   workspace: WorkspaceAutomatizacion,
+  nombreOriginal?: string,
 ): ConfiguracionReporte {
   const valores = valoresWorkspace(workspace.workspace);
   const desde = fechaWorkspace(valores.fechadesde);
   const hasta = fechaWorkspace(valores.fechahasta);
 
   return {
-    tabla: String(valores.TablaDestino ?? "clientes"),
+    nombre: nombreOriginal,
+    tabla: String(
+      valores.gcp_tabla ?? valores.TablaDestino ?? valores.tabla ?? "VENTAS_COMERCIAL_DIARIAS_D",
+    ),
     columnas: String(valores.campos ?? "")
       .split(/[\n,]/)
       .map((campo) => campo.trim())
@@ -92,11 +116,19 @@ function workspaceConConfiguracion(
   workspace: WorkspaceAutomatizacion,
   configuracion: ConfiguracionReporte,
 ) {
+  const fDesde = configuracion.rango?.from
+    ? `${configuracion.rango.from.toISOString().split("T")[0]} 00:00:00`
+    : "";
+  const fHasta = configuracion.rango?.to
+    ? `${configuracion.rango.to.toISOString().split("T")[0]} 00:00:00`
+    : "";
+
   const valores: Record<string, string> = {
     TablaDestino: configuracion.tabla,
-    campos: configuracion.columnas.join(", "),
-    fechadesde: configuracion.rango?.from?.toISOString() ?? "",
-    fechahasta: configuracion.rango?.to?.toISOString() ?? "",
+    gcp_tabla: configuracion.tabla,
+    campos: configuracion.columnas.join(","),
+    fechadesde: fDesde,
+    fechahasta: fHasta,
   };
   const nuevoWorkspace = structuredClone(workspace.workspace);
 
@@ -116,6 +148,26 @@ function workspaceConConfiguracion(
       if (typeof bloque !== "object" || bloque === null) return bloque;
       const entrada = bloque as Record<string, unknown>;
       const nombre = String(entrada.name ?? "");
+      const type = String(entrada.type ?? "");
+
+      // 1. Modificar executeTask EndpointBlock inputs
+      if (nombre === "executeTask" || type === "EndpointBlock") {
+        const inputs = (
+          Array.isArray(entrada.inputs) ? entrada.inputs : []
+        ) as Record<string, unknown>[];
+        for (const input of inputs) {
+          if (input.mode === "keyValue" && Array.isArray(input.value)) {
+            const listKv = input.value as Array<{ key: string; value: string }>;
+            for (const item of listKv) {
+              if (item.key === "gcp_tabla") {
+                item.value = configuracion.tabla;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Modificar VariableBlocks
       const operaciones = Array.isArray(entrada.operations)
         ? entrada.operations
         : [];
@@ -329,7 +381,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
 
       {workspace && (
         <ResumenConfiguracionReporte
-          configuracion={configuracionInicial(workspace)}
+          configuracion={configuracionInicial(workspace, auto.nombre)}
           onGuardarCambios={async (configuracion) => {
             await guardarConfiguracion.mutateAsync(configuracion);
           }}

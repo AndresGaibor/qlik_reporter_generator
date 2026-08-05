@@ -3,6 +3,7 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import {
   claseEstado,
   estadoVisual,
+  obtenerAutorReporte,
   resumenUltimaEjecucion,
   sufijoBusqueda,
 } from "@/compartido/utiles/automatizaciones";
@@ -94,7 +95,7 @@ export function ListaAutomatizaciones({
                   <span className="hidden text-line-300 sm:inline">•</span>
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <Icon name="users" size="sm" className="text-ink-400" />
-                    <span className="truncate">{auto.propietarioNombre}</span>
+                    <span className="truncate">{obtenerAutorReporte(auto)}</span>
                   </span>
                   <span className="hidden text-line-300 sm:inline">•</span>
                   <span className="capitalize">

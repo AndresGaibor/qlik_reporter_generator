@@ -37,9 +37,11 @@ export function PaginaDetalleFlujo() {
     data: flujos = [],
     isLoading: cargandoFlujos,
     isError: errorFlujos,
+    error: errorFlujosMsg,
   } = useQuery<ResumenFlujo[]>({
     queryKey: ["flujos"],
     queryFn: () => obtenerFlujosConFiltros(),
+    retry: false,
     staleTime: 60 * 1000,
   });
 
@@ -48,16 +50,24 @@ export function PaginaDetalleFlujo() {
     data: datosScript,
     isLoading: cargandoScript,
     isError: errorScript,
+    error: errorScriptMsg,
   } = useQuery({
     queryKey: ["flujo-script", id],
     queryFn: () => obtenerScriptFlujo(id),
+    retry: false,
     staleTime: 60 * 1000,
   });
 
   // 3. Obtener el catálogo Spark derivado
-  const { data: datosSpark, isLoading: cargandoSpark } = useQuery({
+  const {
+    data: datosSpark,
+    isLoading: cargandoSpark,
+    isError: errorSpark,
+    error: errorSparkMsg,
+  } = useQuery({
     queryKey: ["flujo-catalogo-spark", id],
     queryFn: () => obtenerCatalogoSparkFlujo(id),
+    retry: false,
     staleTime: 60 * 1000,
   });
 
@@ -89,9 +99,11 @@ export function PaginaDetalleFlujo() {
     return (
       <EstadoError
         mensaje={
-          !flujo
-            ? `No se encontró el flujo de datos con ID "${id}".`
-            : "Error al recuperar información del flujo."
+          errorFlujosMsg instanceof Error
+            ? errorFlujosMsg.message
+            : !flujo
+              ? `No se encontró el flujo de datos con ID "${id}".`
+              : "Error al recuperar información del flujo."
         }
       />
     );
@@ -274,9 +286,17 @@ export function PaginaDetalleFlujo() {
             {errorScript && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-xs text-amber-900 space-y-2">
                 <p className="font-semibold text-sm">
-                  Este Dataflow se creó con transformación visual en Qlik Cloud
-                  (sin escribir código), por eso no hay un script para mostrar
-                  aquí. La automatización funciona igual de bien.
+                  No se pudo cargar el script de este Dataflow.
+                  {errorScriptMsg instanceof Error && (
+                    <span className="block mt-1 font-normal text-xs opacity-75">
+                      {errorScriptMsg.message}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs opacity-80">
+                  Este Dataflow puede haberse creado con transformación visual
+                  en Qlik Cloud (sin escribir código), en cuyo caso la
+                  automatización funciona igual de bien.
                 </p>
               </div>
             )}
@@ -333,11 +353,20 @@ export function PaginaDetalleFlujo() {
                   Generando catálogo JSON para Spark...
                 </p>
               </div>
+            ) : errorSpark ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-xs text-amber-900 space-y-2">
+                <p className="font-semibold text-sm">
+                  No se pudo generar el catálogo Spark para este flujo.
+                </p>
+                {errorSparkMsg instanceof Error && (
+                  <p className="text-xs opacity-80">{errorSparkMsg.message}</p>
+                )}
+              </div>
             ) : datosSpark?.catalogoJson ? (
               <VisorJsonInteractivo data={datosSpark.catalogoJson} />
             ) : (
               <div className="p-5 text-xs text-slate-500">
-                No se pudo generar el catálogo para este flujo.
+                No hay catálogo disponible para este flujo.
               </div>
             )}
           </div>
@@ -452,7 +481,8 @@ export function PaginaDetalleFlujo() {
                 </h4>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
                   Créala en Qlik Automate para que la extracción y carga hacia
-                  Impala ocurran solas, sin que tengas que hacerlo manualmente.
+                  el destino ocurran solas, sin que tengas que hacerlo
+                  manualmente.
                 </p>
                 <Button
                   asChild
