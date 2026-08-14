@@ -1,9 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import { configuracionesAutomatizacion } from "../../../plataforma/persistencia/esquema.js";
+import {
+  configuracionesAutomatizacion,
+  ejecucionesReportes,
+} from "../../../plataforma/persistencia/esquema.js";
 import type {
   ConfiguracionReportePersistida,
   CrearConfiguracionReportePersistida,
+  CrearEjecucionReportePersistida,
+  EjecucionReportePersistida,
   PuertoRepositorioReportes,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
@@ -37,6 +42,51 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     });
     return fila ? mapearConfiguracion(fila) : null;
   }
+
+  async crearEjecucion(
+    entrada: CrearEjecucionReportePersistida,
+  ): Promise<EjecucionReportePersistida> {
+    const [fila] = await this.db
+      .insert(ejecucionesReportes)
+      .values(entrada)
+      .returning();
+    if (!fila) throw new Error("No se pudo crear la auditoría de ejecución");
+    return mapearEjecucion(fila);
+  }
+
+  async marcarEjecucionIniciada(
+    id: string,
+    runIdQlik: string,
+    iniciadoEn: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        runIdQlik,
+        estado: "iniciada",
+        iniciadoEn,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, id));
+  }
+
+  async marcarEjecucionError(
+    id: string,
+    etapaError: string,
+    mensajeError: string,
+    finalizadoEn: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        estado: "error",
+        etapaError,
+        mensajeError,
+        finalizadoEn,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, id));
+  }
 }
 
 function mapearConfiguracion(
@@ -68,5 +118,29 @@ function mapearConfiguracion(
     ...(fila.claveIdempotencia
       ? { claveIdempotencia: fila.claveIdempotencia }
       : {}),
+  };
+}
+
+function mapearEjecucion(
+  fila: typeof ejecucionesReportes.$inferSelect,
+): EjecucionReportePersistida {
+  return {
+    id: fila.id,
+    configuracionId: fila.configuracionId,
+    flujoIdQlik: fila.flujoIdQlik,
+    automatizacionIdQlik: fila.automatizacionIdQlik,
+    hashDataflowSha256: fila.hashDataflowSha256,
+    scriptDataflow: fila.scriptDataflow,
+    sqlBigQueryCompilado: fila.sqlBigQueryCompilado,
+    scriptExportacion: fila.scriptExportacion,
+    uriBaseGcs: fila.uriBaseGcs,
+    tipoEjecucion: fila.tipoEjecucion as "manual" | "programada",
+    estado: "preparando",
+    versionCompilador: fila.versionCompilador,
+    runIdQlik: fila.runIdQlik,
+    etapaError: fila.etapaError,
+    mensajeError: fila.mensajeError,
+    iniciadoEn: fila.iniciadoEn,
+    finalizadoEn: fila.finalizadoEn,
   };
 }

@@ -29,6 +29,30 @@ export interface ConfiguracionReportePersistida
   id: string;
 }
 
+export interface CrearEjecucionReportePersistida {
+  id: string;
+  configuracionId: string;
+  flujoIdQlik: string;
+  automatizacionIdQlik: string;
+  hashDataflowSha256: string;
+  scriptDataflow: string;
+  sqlBigQueryCompilado: string;
+  scriptExportacion: string;
+  uriBaseGcs: string;
+  tipoEjecucion: "manual" | "programada";
+  estado: "preparando";
+  versionCompilador: number;
+}
+
+export interface EjecucionReportePersistida
+  extends CrearEjecucionReportePersistida {
+  runIdQlik?: string | null;
+  etapaError?: string | null;
+  mensajeError?: string | null;
+  iniciadoEn?: Date | null;
+  finalizadoEn?: Date | null;
+}
+
 export interface PuertoRepositorioReportes {
   crearConfiguracion(
     entrada: CrearConfiguracionReportePersistida,
@@ -37,4 +61,18 @@ export interface PuertoRepositorioReportes {
     tenantQlikId: string,
     automatizacionIdQlik: string,
   ): Promise<ConfiguracionReportePersistida | null>;
+  crearEjecucion(
+    entrada: CrearEjecucionReportePersistida,
+  ): Promise<EjecucionReportePersistida>;
+  marcarEjecucionIniciada(
+    id: string,
+    runIdQlik: string,
+    iniciadoEn: Date,
+  ): Promise<void>;
+  marcarEjecucionError(
+    id: string,
+    etapaError: string,
+    mensajeError: string,
+    finalizadoEn: Date,
+  ): Promise<void>;
 }

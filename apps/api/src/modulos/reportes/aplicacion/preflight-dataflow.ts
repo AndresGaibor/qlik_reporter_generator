@@ -21,6 +21,17 @@ export interface AlcanceBigQueryReporte {
   dataset: string;
 }
 
+export interface PreparacionDataflowActual {
+  flujoIdQlik: string;
+  scriptDataflow: string;
+  hashDataflowSha256: string;
+  compatible: boolean;
+  operacionesNoSoportadas: string[];
+  sqlBigQuery: string;
+  camposSalida: string[];
+  resumen: PreflightDataflowReporte["resumen"];
+}
+
 export class PreflightDataflow {
   constructor(
     private readonly qlik: LectorScriptDataflow,
@@ -29,49 +40,86 @@ export class PreflightDataflow {
   ) {}
 
   async ejecutar(flujoIdQlik: string): Promise<PreflightDataflowReporte> {
-    const { script } = await this.qlik.obtenerScriptApp(flujoIdQlik, "current");
-    const hashDataflowSha256 = await sha256Texto(script);
-    const plan = parsearDataflow(script);
-    const problemasFuentes = normalizarFuentesBigQuery(plan, this.alcance);
-    const operacionesNoSoportadas = [
-      ...plan.operacionesNoSoportadas.map(
-        (item) => `${item.operacion}: ${item.detalle}`,
-      ),
-      ...problemasFuentes,
-    ];
-    const resumen = {
-      fuentes: plan.fuentes.length,
-      filtros: plan.pasos.filter((paso) => paso.tipo === "filtrar").length,
-      joins: plan.pasos.filter((paso) => paso.tipo === "join").length,
-      camposSalida: plan.salida.campos.length,
-    };
-
-    if (operacionesNoSoportadas.length > 0) {
+    const preparacion = await prepararDataflowActual(
+      this.qlik,
+      flujoIdQlik,
+      this.alcance,
+    );
+    if (!preparacion.compatible) {
       return {
         flujoIdQlik,
-        hashDataflowSha256,
+        hashDataflowSha256: preparacion.hashDataflowSha256,
         compatible: false,
-        operacionesNoSoportadas,
+        operacionesNoSoportadas: preparacion.operacionesNoSoportadas,
         sqlBigQuery: "",
         bytesProcesados: 0,
         costoEstimadoUsd: 0,
-        resumen,
+        resumen: preparacion.resumen,
       };
     }
 
-    const { sql } = compilarPlanABigQuery(plan);
-    const estimacion = await this.estimador.estimarConsulta(sql);
+    const estimacion = await this.estimador.estimarConsulta(
+      preparacion.sqlBigQuery,
+    );
     return {
       flujoIdQlik,
-      hashDataflowSha256,
+      hashDataflowSha256: preparacion.hashDataflowSha256,
       compatible: true,
       operacionesNoSoportadas: [],
-      sqlBigQuery: sql,
+      sqlBigQuery: preparacion.sqlBigQuery,
       bytesProcesados: estimacion.bytesProcesados,
       costoEstimadoUsd: estimacion.costoEstimadoUsd,
+      resumen: preparacion.resumen,
+    };
+  }
+}
+
+export async function prepararDataflowActual(
+  qlik: LectorScriptDataflow,
+  flujoIdQlik: string,
+  alcance: AlcanceBigQueryReporte,
+): Promise<PreparacionDataflowActual> {
+  const { script } = await qlik.obtenerScriptApp(flujoIdQlik, "current");
+  const hashDataflowSha256 = await sha256Texto(script);
+  const plan = parsearDataflow(script);
+  const problemasFuentes = normalizarFuentesBigQuery(plan, alcance);
+  const operacionesNoSoportadas = [
+    ...plan.operacionesNoSoportadas.map(
+      (item) => `${item.operacion}: ${item.detalle}`,
+    ),
+    ...problemasFuentes,
+  ];
+  const resumen = {
+    fuentes: plan.fuentes.length,
+    filtros: plan.pasos.filter((paso) => paso.tipo === "filtrar").length,
+    joins: plan.pasos.filter((paso) => paso.tipo === "join").length,
+    camposSalida: plan.salida.campos.length,
+  };
+
+  if (operacionesNoSoportadas.length > 0) {
+    return {
+      flujoIdQlik,
+      scriptDataflow: script,
+      hashDataflowSha256,
+      compatible: false,
+      operacionesNoSoportadas,
+      sqlBigQuery: "",
+      camposSalida: plan.salida.campos,
       resumen,
     };
   }
+
+  const { sql, camposSalida } = compilarPlanABigQuery(plan);
+  return {
+    flujoIdQlik,
+    scriptDataflow: script,
+    hashDataflowSha256,
+    compatible: true,
+    operacionesNoSoportadas: [],
+    sqlBigQuery: sql,
+    camposSalida,
+    resumen,
+  };
 }
 
 export async function sha256Texto(texto: string): Promise<string> {

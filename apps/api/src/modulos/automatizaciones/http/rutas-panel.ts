@@ -8,12 +8,12 @@ import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
 import { obtenerContextoSolicitud } from "../../../plataforma/contexto/contexto-solicitud.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
+import { EjecutarReporte } from "../../reportes/aplicacion/ejecutar-reporte.js";
 import { PreflightDataflow } from "../../reportes/aplicacion/preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { ResolucionBigQueryReporte } from "../../reportes/http/rutas-reportes-dataflow.js";
 import { ConsultarPanelAutomatizaciones } from "../aplicacion/casos-de-uso/consultar-panel.js";
 import { CrearAutomatizacionDesdePlantilla } from "../aplicacion/casos-de-uso/crear-desde-plantilla.js";
-import { EjecutarAutomatizacion } from "../aplicacion/casos-de-uso/ejecutar-automatizacion.js";
 import type { PuertoBloqueoEjecucion } from "../aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { PuertoConsultaTenantQlik } from "../aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 
@@ -241,14 +241,23 @@ export function crearRutasPanelAutomatizaciones(
 
   rutas.post("/:id/ejecuciones", async (c) => {
     const id = esquemaIdQlik.parse(c.req.param("id"));
-    const [qlik, sesion] = await Promise.all([
+    const [qlik, sesion, bigQuery] = await Promise.all([
       dependencias.resolverQlik(c),
       dependencias.resolverSesion(c),
+      dependencias.resolverBigQueryReporte(c),
     ]);
-    const resultado = await new EjecutarAutomatizacion(
+    const resultado = await new EjecutarReporte(
       qlik,
+      dependencias.repositorioReportes,
       dependencias.bloqueos,
-    ).ejecutar(sesion.tenantId, id);
+      { projectId: bigQuery.projectId, dataset: bigQuery.dataset },
+    ).ejecutar({
+      tenantId: sesion.tenantId,
+      organizacionId: sesion.organizacionId,
+      automatizacionIdQlik: id,
+      usuarioId: sesion.usuarioId,
+      tipo: "manual",
+    });
     return responderExito(c, resultado, 201);
   });
 
