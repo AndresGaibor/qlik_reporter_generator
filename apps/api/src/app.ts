@@ -1,5 +1,5 @@
 import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
@@ -22,17 +22,27 @@ import {
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
-import { crearRutasDestinosGenericas } from "./modulos/destinos/publico.js";
+import {
+  crearClienteDestino,
+  crearRutasDestinosGenericas,
+} from "./modulos/destinos/publico.js";
 import { crearRutasConexionesOrigen } from "./modulos/origenes/publico.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
+import {
+  type ResolucionBigQueryReporte,
+  crearRutasReportesDataflow,
+} from "./modulos/reportes/http/rutas-reportes-dataflow.js";
 import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
 import { crearRutasSetup } from "./modulos/setup/publico.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
-import { ErrorNoAutorizado } from "./nucleo/errores/error-aplicacion.js";
+import {
+  ErrorAplicacion,
+  ErrorNoAutorizado,
+} from "./nucleo/errores/error-aplicacion.js";
 import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "./nucleo/valores/generar-uuid.js";
@@ -74,6 +84,7 @@ export interface DependenciasAplicacion {
   repositorioAutenticacion?: RepositorioAutenticacion;
   servicioAutenticacion?: ServicioAutenticacionQlik;
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
+  resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
   resolverSesion?: (c: Context) => Promise<{
     tenantId: string;
     usuarioId: string;
@@ -173,6 +184,58 @@ export async function crearAplicacion(
       if (!credenciales)
         throw new ErrorNoAutorizado("El tenant activo requiere conexión Qlik");
       return new ClienteHttpQlik(credenciales.host, credenciales.token);
+    });
+
+  const resolverBigQueryReporte =
+    dependencias.resolverBigQueryReporte ??
+    (async (c: Context): Promise<ResolucionBigQueryReporte> => {
+      const sesion = await resolverSesion(c);
+      const fila = await db.query.conexionesDestino.findFirst({
+        where: (tabla, operadores) =>
+          operadores.and(
+            operadores.eq(tabla.organizacionId, sesion.organizacionId),
+            operadores.eq(tabla.tipo, "bigquery"),
+            operadores.eq(tabla.esPredeterminada, true),
+          ),
+        orderBy: (tabla, operadores) => [operadores.desc(tabla.actualizadoEn)],
+      });
+      if (!fila) {
+        throw new ErrorAplicacion(
+          "BIGQUERY_NO_CONFIGURADO",
+          "La organización no tiene una conexión BigQuery predeterminada",
+          422,
+        );
+      }
+      const config = fila.config as Record<string, unknown>;
+      const projectId =
+        typeof config.projectId === "string" ? config.projectId.trim() : "";
+      const dataset =
+        typeof config.dataset === "string" ? config.dataset.trim() : "";
+      if (!projectId || !dataset) {
+        throw new ErrorAplicacion(
+          "BIGQUERY_INCOMPLETO",
+          "La conexión BigQuery predeterminada requiere proyecto y dataset",
+          422,
+        );
+      }
+      const cliente = crearClienteDestino({
+        tipo: "bigquery",
+        config,
+        secretoRefs: fila.secretoRefs as Record<string, unknown>,
+      });
+      const estimarConsulta = cliente.estimarConsulta?.bind(cliente);
+      if (!estimarConsulta) {
+        throw new ErrorAplicacion(
+          "BIGQUERY_SIN_ESTIMACION",
+          "La conexión BigQuery no permite estimar consultas",
+          422,
+        );
+      }
+      return {
+        projectId,
+        dataset,
+        estimador: { estimarConsulta },
+      };
     });
 
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
@@ -295,6 +358,13 @@ export async function crearAplicacion(
       idempotencia,
       outbox,
       auditoria,
+    }),
+  );
+  aplicacion.route(
+    "/api/reportes",
+    crearRutasReportesDataflow({
+      resolverQlik,
+      resolverBigQuery: resolverBigQueryReporte,
     }),
   );
   aplicacion.route(
