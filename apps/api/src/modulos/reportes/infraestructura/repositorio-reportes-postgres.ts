@@ -1,14 +1,16 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, lte } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   configuracionesAutomatizacion,
   ejecucionesReportes,
+  programacionesAutomatizacion,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
   ConfiguracionReportePersistida,
   CrearConfiguracionReportePersistida,
   CrearEjecucionReportePersistida,
   EjecucionReportePersistida,
+  ProgramacionReportePersistida,
   PuertoRepositorioReportes,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
@@ -86,6 +88,67 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         actualizadoEn: new Date(),
       })
       .where(eq(ejecucionesReportes.id, id));
+  }
+
+  async obtenerConfiguracionPorId(
+    configuracionId: string,
+  ): Promise<ConfiguracionReportePersistida | null> {
+    const fila = await this.db.query.configuracionesAutomatizacion.findFirst({
+      where: eq(configuracionesAutomatizacion.id, configuracionId),
+    });
+    return fila ? mapearConfiguracion(fila) : null;
+  }
+
+  async listarProgramacionesVencidas(
+    ahora: Date,
+    limite = 50,
+  ): Promise<ProgramacionReportePersistida[]> {
+    const filas = await this.db.query.programacionesAutomatizacion.findMany({
+      where: and(
+        eq(programacionesAutomatizacion.activa, true),
+        eq(programacionesAutomatizacion.tipo, "cron"),
+        lte(programacionesAutomatizacion.proximaEjecucionEn, ahora),
+      ),
+      orderBy: [asc(programacionesAutomatizacion.proximaEjecucionEn)],
+      limit: Math.min(Math.max(limite, 1), 200),
+    });
+    return filas.flatMap((fila) => {
+      if (!fila.expresionCron || !fila.proximaEjecucionEn) return [];
+      return [
+        {
+          id: fila.id,
+          configuracionId: fila.configuracionId,
+          expresionCron: fila.expresionCron,
+          zonaHoraria: fila.zonaHoraria,
+          proximaEjecucionEn: fila.proximaEjecucionEn,
+          activa: fila.activa,
+        },
+      ];
+    });
+  }
+
+  async intentarReclamarProgramacion(
+    programacionId: string,
+    proximaEsperada: Date,
+    nuevaProxima: Date,
+    ejecutadaEn: Date,
+  ): Promise<boolean> {
+    const filas = await this.db
+      .update(programacionesAutomatizacion)
+      .set({
+        proximaEjecucionEn: nuevaProxima,
+        ultimaEjecucionEn: ejecutadaEn,
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(programacionesAutomatizacion.id, programacionId),
+          eq(programacionesAutomatizacion.activa, true),
+          eq(programacionesAutomatizacion.proximaEjecucionEn, proximaEsperada),
+        ),
+      )
+      .returning({ id: programacionesAutomatizacion.id });
+    return filas.length === 1;
   }
 }
 

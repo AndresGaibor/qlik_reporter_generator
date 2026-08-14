@@ -53,6 +53,15 @@ export interface EjecucionReportePersistida
   finalizadoEn?: Date | null;
 }
 
+export interface ProgramacionReportePersistida {
+  id: string;
+  configuracionId: string;
+  expresionCron: string;
+  zonaHoraria: string;
+  proximaEjecucionEn: Date;
+  activa: boolean;
+}
+
 export interface PuertoRepositorioReportes {
   crearConfiguracion(
     entrada: CrearConfiguracionReportePersistida,
@@ -75,4 +84,17 @@ export interface PuertoRepositorioReportes {
     mensajeError: string,
     finalizadoEn: Date,
   ): Promise<void>;
+  obtenerConfiguracionPorId(
+    configuracionId: string,
+  ): Promise<ConfiguracionReportePersistida | null>;
+  listarProgramacionesVencidas(
+    ahora: Date,
+    limite?: number,
+  ): Promise<ProgramacionReportePersistida[]>;
+  intentarReclamarProgramacion(
+    programacionId: string,
+    proximaEsperada: Date,
+    nuevaProxima: Date,
+    ejecutadaEn: Date,
+  ): Promise<boolean>;
 }

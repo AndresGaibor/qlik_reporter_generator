@@ -132,4 +132,60 @@ describe("RepositorioReportesPostgres", () => {
       mensajeError: "falló",
     });
   });
+
+  it("lista programaciones vencidas y reclama con compare-and-swap", async () => {
+    const programacion = {
+      id: "66666666-6666-4666-8666-666666666666",
+      configuracionId: "44444444-4444-4444-8444-444444444444",
+      tipo: "cron",
+      expresionCron: "0 8 * * *",
+      zonaHoraria: "America/Guayaquil",
+      activa: true,
+      proximaEjecucionEn: new Date("2026-08-14T13:00:00Z"),
+    };
+    let retornarClaim = true;
+    const db = {
+      query: {
+        configuracionesAutomatizacion: { findFirst: async () => null },
+        programacionesAutomatizacion: {
+          findMany: async () => [programacion],
+        },
+      },
+      update: () => ({
+        set: () => ({
+          where: () => ({
+            returning: async () =>
+              retornarClaim ? [{ id: programacion.id }] : [],
+          }),
+        }),
+      }),
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    expect(
+      await repo.listarProgramacionesVencidas(new Date("2026-08-14T18:00:00Z")),
+    ).toEqual([
+      expect.objectContaining({
+        id: programacion.id,
+        expresionCron: "0 8 * * *",
+      }),
+    ]);
+    expect(
+      await repo.intentarReclamarProgramacion(
+        programacion.id,
+        programacion.proximaEjecucionEn,
+        new Date("2026-08-15T13:00:00Z"),
+        new Date("2026-08-14T18:00:00Z"),
+      ),
+    ).toBe(true);
+    retornarClaim = false;
+    expect(
+      await repo.intentarReclamarProgramacion(
+        programacion.id,
+        programacion.proximaEjecucionEn,
+        new Date("2026-08-15T13:00:00Z"),
+        new Date("2026-08-14T18:00:00Z"),
+      ),
+    ).toBe(false);
+  });
 });

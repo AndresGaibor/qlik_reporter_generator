@@ -59,6 +59,9 @@ describe("POST /desde-plantilla", () => {
         crearEjecucion: async (entrada) => entrada as never,
         marcarEjecucionIniciada: async () => undefined,
         marcarEjecucionError: async () => undefined,
+        obtenerConfiguracionPorId: async () => null,
+        listarProgramacionesVencidas: async () => [],
+        intentarReclamarProgramacion: async () => false,
       },
       resolverBigQueryReporte: async () => ({
         projectId: "p",

@@ -1,4 +1,5 @@
 import { crearAplicacion } from "../app.js";
+import { iniciarProgramadorReportesAplicacion } from "../modulos/reportes/infraestructura/crear-programador-reportes.js";
 import { cargarConfiguracion } from "../plataforma/configuracion/entorno.js";
 import {
   asegurarEsquemaTablas,
@@ -9,6 +10,7 @@ const configuracion = cargarConfiguracion();
 await asegurarEsquemaTablas();
 
 const app = await crearAplicacion({ configuracion });
+const programadorReportes = iniciarProgramadorReportesAplicacion(configuracion);
 const puerto = configuracion.PORT;
 
 const servidor = Bun.serve({
@@ -22,8 +24,9 @@ let cerrando = false;
 async function cerrarOrdenadamente(senal: string): Promise<void> {
   if (cerrando) return;
   cerrando = true;
-  console.info(`\n👋 Cerrando API...`);
+  console.info("\n👋 Cerrando API...");
   servidor.stop();
+  programadorReportes.detener();
   await cerrarConexion();
   process.exit(0);
 }
