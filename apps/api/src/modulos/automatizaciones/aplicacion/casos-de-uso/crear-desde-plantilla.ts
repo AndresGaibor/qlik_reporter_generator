@@ -1,3 +1,4 @@
+import type { PreflightDataflowReporte } from "@qlik/contratos";
 import type {
   CrearDesdePlantilla,
   ResultadoCrearDesdePlantilla,
@@ -8,6 +9,7 @@ import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
   completarIdempotencia,
@@ -15,6 +17,8 @@ import {
   verificarIdempotencia,
 } from "../servicios/servicio-idempotencia.js";
 import { hashCanonico } from "../servicios/utilidades-automatizacion.js";
+
+const DESTINO_GCS_REPORTES = "gs://bkt_dwh/POCs/TalendDescargados/";
 
 export interface ContextoCreacionAutomatizacion {
   tenantId: string;
@@ -25,12 +29,18 @@ export interface ContextoCreacionAutomatizacion {
   agenteUsuario?: string;
 }
 
+export interface ValidadorDataflowReporte {
+  ejecutar(flujoIdQlik: string): Promise<PreflightDataflowReporte>;
+}
+
 export class CrearAutomatizacionDesdePlantilla {
   constructor(
     private readonly qlik: PuertoQlik,
     private readonly idempotencia: PuertoIdempotencia,
     private readonly outbox: PuertoOutbox,
     private readonly auditoria: PuertoAuditoria,
+    private readonly repositorioReportes: PuertoRepositorioReportes,
+    private readonly preflight: ValidadorDataflowReporte,
   ) {}
 
   async ejecutar(
@@ -51,9 +61,42 @@ export class CrearAutomatizacionDesdePlantilla {
           hashSolicitud,
         },
       );
-      if (!esNuevo && resultadoPrevio) {
-        return resultadoPrevio;
-      }
+      if (!esNuevo && resultadoPrevio) return resultadoPrevio;
+    }
+
+    const flujoIdQlik = entrada.flujoId?.trim();
+    if (!flujoIdQlik) {
+      const error = new ErrorAplicacion(
+        "DATAFLOW_REQUERIDO",
+        "Debes seleccionar un Dataflow de Qlik para crear el reporte",
+        422,
+      );
+      await this.registrarFalloIdempotencia(contexto, alcance, clave, error);
+      throw error;
+    }
+
+    const validacion = await this.preflight.ejecutar(flujoIdQlik);
+    if (!validacion.compatible) {
+      const error = new ErrorAplicacion(
+        "DATAFLOW_NO_COMPATIBLE",
+        "El Dataflow contiene operaciones que todavía no pueden convertirse a BigQuery SQL",
+        422,
+        { operacionesNoSoportadas: validacion.operacionesNoSoportadas },
+      );
+      await this.registrarFalloIdempotencia(contexto, alcance, clave, error);
+      throw error;
+    }
+
+    const flujos = await this.qlik.listarFlujos(entrada.espacioIdQlik);
+    const flujo = flujos.find((item) => item.id === flujoIdQlik);
+    if (!flujo) {
+      const error = new ErrorAplicacion(
+        "DATAFLOW_NO_ENCONTRADO",
+        "El Dataflow seleccionado ya no está disponible en Qlik",
+        404,
+      );
+      await this.registrarFalloIdempotencia(contexto, alcance, clave, error);
+      throw error;
     }
 
     let copiaId: string | undefined;
@@ -62,32 +105,13 @@ export class CrearAutomatizacionDesdePlantilla {
 
     if (resultadoCopia.error) {
       await this.qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
-      const mensaje =
-        resultadoCopia.error instanceof Error
-          ? resultadoCopia.error.message
-          : "Error desconocido";
-      await this.auditoria
-        .registrar({
-          organizacionId: contexto.organizacionId,
-          usuarioId: contexto.usuarioId,
-          accion: "automatizacion.crear-desde-plantilla",
-          entidadTipo: "automatizacion-qlik",
-          entidadId: copiaId,
-          resultado: "error",
-          mensajeError: mensaje,
-          idSolicitud: contexto.idSolicitud,
-          ip: contexto.ip,
-          agenteUsuario: contexto.agenteUsuario,
-        })
-        .catch(() => undefined);
-      if (clave) {
-        await fallarIdempotencia(
-          this.idempotencia,
-          { organizacionId: contexto.organizacionId, alcance, clave },
-          estadoHttpDelError(resultadoCopia.error),
-          { mensaje },
-        ).catch(() => undefined);
-      }
+      await this.registrarErrorCreacion(
+        contexto,
+        copiaId,
+        resultadoCopia.error,
+        alcance,
+        clave,
+      );
       throw resultadoCopia.error;
     }
 
@@ -98,6 +122,24 @@ export class CrearAutomatizacionDesdePlantilla {
     };
 
     try {
+      await this.repositorioReportes.crearConfiguracion({
+        organizacionId: contexto.organizacionId,
+        tenantQlikId: contexto.tenantId,
+        creadoPorUsuarioId: contexto.usuarioId,
+        nombre: resultado.nombre,
+        flujoIdQlik,
+        flujoNombreSnapshot: flujo.name,
+        ...(flujo.spaceId ? { flujoEspacioIdQlik: flujo.spaceId } : {}),
+        destinoProveedor: "gcs",
+        destinoIdExterno: DESTINO_GCS_REPORTES,
+        destinoNombreSnapshot: "TalendDescargados",
+        automatizacionIdQlik: resultado.id,
+        automatizacionNombreSnapshot: resultado.nombre,
+        programar: false,
+        estado: "activa",
+        ...(clave ? { claveIdempotencia: clave } : {}),
+      });
+
       await Promise.all([
         this.outbox.guardar([
           {
@@ -112,6 +154,7 @@ export class CrearAutomatizacionDesdePlantilla {
               tenantId: contexto.tenantId,
               organizacionId: contexto.organizacionId,
               usuarioId: contexto.usuarioId,
+              flujoIdQlik,
             },
           },
         ]),
@@ -122,7 +165,7 @@ export class CrearAutomatizacionDesdePlantilla {
           entidadTipo: "automatizacion-qlik",
           entidadId: resultado.id,
           resultado: "exito",
-          datosNuevos: resultado,
+          datosNuevos: { ...resultado, flujoIdQlik },
           idSolicitud: contexto.idSolicitud,
           ip: contexto.ip,
           agenteUsuario: contexto.agenteUsuario,
@@ -139,32 +182,59 @@ export class CrearAutomatizacionDesdePlantilla {
       }
       return resultado;
     } catch (error) {
-      const mensaje =
-        error instanceof Error ? error.message : "Error desconocido";
-      await this.auditoria
-        .registrar({
-          organizacionId: contexto.organizacionId,
-          usuarioId: contexto.usuarioId,
-          accion: "automatizacion.crear-desde-plantilla",
-          entidadTipo: "automatizacion-qlik",
-          entidadId: copiaId,
-          resultado: "error",
-          mensajeError: mensaje,
-          idSolicitud: contexto.idSolicitud,
-          ip: contexto.ip,
-          agenteUsuario: contexto.agenteUsuario,
-        })
-        .catch(() => undefined);
-      if (clave) {
-        await fallarIdempotencia(
-          this.idempotencia,
-          { organizacionId: contexto.organizacionId, alcance, clave },
-          estadoHttpDelError(error),
-          { mensaje },
-        ).catch(() => undefined);
-      }
+      await this.qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
+      await this.registrarErrorCreacion(
+        contexto,
+        copiaId,
+        error,
+        alcance,
+        clave,
+      );
       throw error;
     }
+  }
+
+  private async registrarErrorCreacion(
+    contexto: ContextoCreacionAutomatizacion,
+    copiaId: string | undefined,
+    error: unknown,
+    alcance: string,
+    clave?: string,
+  ) {
+    const mensaje =
+      error instanceof Error ? error.message : "Error desconocido";
+    await this.auditoria
+      .registrar({
+        organizacionId: contexto.organizacionId,
+        usuarioId: contexto.usuarioId,
+        accion: "automatizacion.crear-desde-plantilla",
+        entidadTipo: "automatizacion-qlik",
+        entidadId: copiaId,
+        resultado: "error",
+        mensajeError: mensaje,
+        idSolicitud: contexto.idSolicitud,
+        ip: contexto.ip,
+        agenteUsuario: contexto.agenteUsuario,
+      })
+      .catch(() => undefined);
+    await this.registrarFalloIdempotencia(contexto, alcance, clave, error);
+  }
+
+  private async registrarFalloIdempotencia(
+    contexto: ContextoCreacionAutomatizacion,
+    alcance: string,
+    clave: string | undefined,
+    error: unknown,
+  ) {
+    if (!clave) return;
+    const mensaje =
+      error instanceof Error ? error.message : "Error desconocido";
+    await fallarIdempotencia(
+      this.idempotencia,
+      { organizacionId: contexto.organizacionId, alcance, clave },
+      estadoHttpDelError(error),
+      { mensaje },
+    ).catch(() => undefined);
   }
 }
 

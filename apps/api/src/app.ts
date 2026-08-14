@@ -36,6 +36,7 @@ import {
   type ResolucionBigQueryReporte,
   crearRutasReportesDataflow,
 } from "./modulos/reportes/http/rutas-reportes-dataflow.js";
+import { RepositorioReportesPostgres } from "./modulos/reportes/infraestructura/repositorio-reportes-postgres.js";
 import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
 import { crearRutasSetup } from "./modulos/setup/publico.js";
 import type { PuertoAuditoria } from "./nucleo/auditoria/puerto-auditoria.js";
@@ -348,6 +349,7 @@ export async function crearAplicacion(
     "/api/conexiones-origen",
     crearRutasConexionesOrigen(resolverSesion),
   );
+  const repositorioReportes = new RepositorioReportesPostgres(db);
   aplicacion.route(
     "/api/reportes",
     crearRutasPanelAutomatizaciones({
@@ -358,6 +360,8 @@ export async function crearAplicacion(
       idempotencia,
       outbox,
       auditoria,
+      repositorioReportes,
+      resolverBigQueryReporte,
     }),
   );
   aplicacion.route(

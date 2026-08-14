@@ -29,6 +29,10 @@ function crearQlik() {
       }),
     ),
     eliminarAutomatizacion: vi.fn(async () => undefined),
+    listarFlujos: vi.fn(async () => [
+      { id: "flujo-1", name: "Ventas Dataflow", spaceId: "espacio-1" },
+    ]),
+    obtenerScriptApp: vi.fn(async () => ({ script: "SQL SELECT 1" })),
   } as unknown as ServicioQlik;
 }
 
@@ -106,6 +110,37 @@ function crearAuditoria() {
   };
 }
 
+function crearRepositorioReportes() {
+  const crearConfiguracion = vi.fn(async (entrada: unknown) => ({
+    id: "config-1",
+    ...(entrada as Record<string, unknown>),
+  }));
+  return {
+    puerto: {
+      crearConfiguracion,
+      obtenerPorAutomatizacion: async () => null,
+    },
+    crearConfiguracion,
+  };
+}
+
+function crearPreflight(orden?: string[]) {
+  const ejecutar = vi.fn(async () => {
+    orden?.push("preflight");
+    return {
+      flujoIdQlik: "flujo-1",
+      hashDataflowSha256: "a".repeat(64),
+      compatible: true,
+      operacionesNoSoportadas: [],
+      sqlBigQuery: "SELECT 1",
+      bytesProcesados: 1,
+      costoEstimadoUsd: 0,
+      resumen: { fuentes: 1, filtros: 0, joins: 0, camposSalida: 1 },
+    };
+  });
+  return { ejecutar };
+}
+
 const contexto = {
   tenantId: "tenant-1",
   organizacionId: "organizacion-1",
@@ -124,6 +159,8 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       idempotencia.puerto,
       outbox.puerto,
       auditoria.puerto,
+      crearRepositorioReportes().puerto as never,
+      crearPreflight() as never,
     );
 
     const resultado = await caso.ejecutar(
@@ -132,6 +169,7 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
         plantillaIdQlik: "plantilla-1",
         espacioIdQlik: "espacio-1",
         propietarioIdQlik: "propietario-1",
+        flujoId: "flujo-1",
         reemplazosWorkspace: [
           { ruta: "/blocks/0/settings/table", valor: "ventas" },
         ],
@@ -175,10 +213,13 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       idempotencia.puerto,
       outbox.puerto,
       auditoria.puerto,
+      crearRepositorioReportes().puerto as never,
+      crearPreflight() as never,
     );
     const entrada = {
       nombre: "Nueva",
       plantillaIdQlik: "plantilla-1",
+      flujoId: "flujo-1",
       reemplazosWorkspace: [],
       claveIdempotencia: "clave-idempotente-2",
     };
@@ -200,6 +241,8 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       idempotencia.puerto,
       outbox.puerto,
       auditoria.puerto,
+      crearRepositorioReportes().puerto as never,
+      crearPreflight() as never,
     );
 
     await expect(
@@ -207,6 +250,7 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
         {
           nombre: "Nueva",
           plantillaIdQlik: "plantilla-1",
+          flujoId: "flujo-1",
           reemplazosWorkspace: [{ ruta: "/blocks/9/value", valor: "x" }],
           claveIdempotencia: "clave-idempotente-3",
         },
@@ -217,6 +261,83 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
     expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("copia-1");
     expect(auditoria.registrar).toHaveBeenCalledWith(
       expect.objectContaining({ resultado: "error", entidadId: "copia-1" }),
+    );
+  });
+
+  it("rechaza una creación nueva sin Dataflow", async () => {
+    const qlik = crearQlik();
+    const idempotencia = crearIdempotencia();
+    const outbox = crearOutbox();
+    const auditoria = crearAuditoria();
+    const repositorio = crearRepositorioReportes();
+    const caso = new CrearAutomatizacionDesdePlantilla(
+      qlik,
+      idempotencia.puerto,
+      outbox.puerto,
+      auditoria.puerto,
+      repositorio.puerto as never,
+      crearPreflight() as never,
+    );
+
+    await expect(
+      caso.ejecutar(
+        {
+          nombre: "Sin Dataflow",
+          plantillaIdQlik: "plantilla-1",
+          reemplazosWorkspace: [],
+        },
+        contexto,
+      ),
+    ).rejects.toThrow("Dataflow");
+    expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+    expect(repositorio.crearConfiguracion).not.toHaveBeenCalled();
+  });
+
+  it("valida current antes de copiar y persiste la asociación Dataflow-Automate", async () => {
+    const orden: string[] = [];
+    const qlik = crearQlik();
+    (qlik.copiarAutomatizacion as ReturnType<typeof vi.fn>).mockImplementation(
+      async () => {
+        orden.push("copiar");
+        return { id: "copia-1" };
+      },
+    );
+    const idempotencia = crearIdempotencia();
+    const outbox = crearOutbox();
+    const auditoria = crearAuditoria();
+    const repositorio = crearRepositorioReportes();
+    const caso = new CrearAutomatizacionDesdePlantilla(
+      qlik,
+      idempotencia.puerto,
+      outbox.puerto,
+      auditoria.puerto,
+      repositorio.puerto as never,
+      crearPreflight(orden) as never,
+    );
+
+    await caso.ejecutar(
+      {
+        nombre: "Ventas",
+        plantillaIdQlik: "plantilla-1",
+        flujoId: "flujo-1",
+        espacioIdQlik: "espacio-1",
+        reemplazosWorkspace: [],
+      },
+      contexto,
+    );
+
+    expect(orden.slice(0, 2)).toEqual(["preflight", "copiar"]);
+    expect(repositorio.crearConfiguracion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizacionId: "organizacion-1",
+        tenantQlikId: "tenant-1",
+        flujoIdQlik: "flujo-1",
+        flujoNombreSnapshot: "Ventas Dataflow",
+        automatizacionIdQlik: "copia-1",
+        destinoProveedor: "gcs",
+        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
+        estado: "activa",
+      }),
     );
   });
 });

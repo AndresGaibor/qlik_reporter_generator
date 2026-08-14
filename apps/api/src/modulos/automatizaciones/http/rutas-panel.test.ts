@@ -22,6 +22,13 @@ describe("POST /desde-plantilla", () => {
       })),
       actualizarAutomatizacion: vi.fn(async () => ({})),
       eliminarAutomatizacion: vi.fn(async () => undefined),
+      listarFlujos: vi.fn(async () => [
+        { id: "flujo-1", name: "Ventas Dataflow", spaceId: "espacio-1" },
+      ]),
+      obtenerScriptApp: vi.fn(async () => ({
+        script:
+          "LIB CONNECT TO [Google BigQuery:Prod]; [x]: LOAD [id]; SQL SELECT id FROM `p.d.t`;",
+      })),
     } as unknown as ServicioQlik;
     const rutas = crearRutasPanelAutomatizaciones({
       resolverQlik: async () => qlik,
@@ -46,6 +53,20 @@ describe("POST /desde-plantilla", () => {
         registrarFallo: async () => undefined,
       } satisfies PuertoOutbox,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
+      repositorioReportes: {
+        crearConfiguracion: async (entrada) => ({ id: "config-1", ...entrada }),
+        obtenerPorAutomatizacion: async () => null,
+      },
+      resolverBigQueryReporte: async () => ({
+        projectId: "p",
+        dataset: "d",
+        estimador: {
+          estimarConsulta: async () => ({
+            bytesProcesados: 1,
+            costoEstimadoUsd: 0,
+          }),
+        },
+      }),
     });
 
     const respuesta = await rutas.request("/desde-plantilla", {
@@ -53,6 +74,7 @@ describe("POST /desde-plantilla", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         nombre: "Nueva",
+        flujoId: "flujo-1",
         propietarioIdQlik: "byron-qlik-id",
       }),
     });
