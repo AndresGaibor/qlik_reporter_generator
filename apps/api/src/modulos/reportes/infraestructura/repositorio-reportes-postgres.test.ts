@@ -188,4 +188,54 @@ describe("RepositorioReportesPostgres", () => {
       ),
     ).toBe(false);
   });
+
+  it("crea configuración y programación cron en una sola transacción", async () => {
+    const inserciones: Array<Record<string, unknown>> = [];
+    const tx = {
+      insert: () => ({
+        values: (valor: Record<string, unknown>) => {
+          inserciones.push(valor);
+          return {
+            returning: async () => [
+              {
+                id: "44444444-4444-4444-8444-444444444444",
+                ...valor,
+              },
+            ],
+          };
+        },
+      }),
+    };
+    const db: Record<string, unknown> = {
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback(tx),
+      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    await repo.crearConfiguracion({
+      ...entrada,
+      programar: true,
+      programacion: {
+        activa: true,
+        expresionCron: "0 8 * * *",
+        zonaHoraria: "America/Guayaquil",
+        proximaEjecucionEn: new Date("2026-08-15T13:00:00Z"),
+      },
+    } as never);
+
+    expect(inserciones).toHaveLength(2);
+    expect(inserciones[0]).toMatchObject({
+      flujoIdQlik: "flujo-1",
+      programar: true,
+    });
+    expect(inserciones[1]).toMatchObject({
+      configuracionId: "44444444-4444-4444-8444-444444444444",
+      tipo: "cron",
+      expresionCron: "0 8 * * *",
+      zonaHoraria: "America/Guayaquil",
+      activa: true,
+      proximaEjecucionEn: new Date("2026-08-15T13:00:00Z"),
+    });
+  });
 });

@@ -9,6 +9,7 @@ import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { calcularProximaEjecucion } from "../../../reportes/aplicacion/programacion-reporte.js";
 import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
@@ -122,6 +123,18 @@ export class CrearAutomatizacionDesdePlantilla {
     };
 
     try {
+      const programacion = entrada.programacion
+        ? {
+            activa: entrada.programacion.activa,
+            expresionCron: entrada.programacion.expresionCron,
+            zonaHoraria: entrada.programacion.zonaHoraria,
+            proximaEjecucionEn: calcularProximaEjecucion(
+              entrada.programacion.expresionCron,
+              entrada.programacion.zonaHoraria,
+              new Date(),
+            ),
+          }
+        : undefined;
       await this.repositorioReportes.crearConfiguracion({
         organizacionId: contexto.organizacionId,
         tenantQlikId: contexto.tenantId,
@@ -135,7 +148,8 @@ export class CrearAutomatizacionDesdePlantilla {
         destinoNombreSnapshot: "TalendDescargados",
         automatizacionIdQlik: resultado.id,
         automatizacionNombreSnapshot: resultado.nombre,
-        programar: false,
+        programar: programacion?.activa ?? false,
+        ...(programacion ? { programacion } : {}),
         estado: "activa",
         ...(clave ? { claveIdempotencia: clave } : {}),
       });

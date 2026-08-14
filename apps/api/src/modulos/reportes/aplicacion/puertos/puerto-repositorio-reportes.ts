@@ -6,6 +6,13 @@ export type EstadoConfiguracionReporte =
   | "desactivada"
   | "eliminada";
 
+export interface NuevaProgramacionReportePersistida {
+  expresionCron: string;
+  zonaHoraria: string;
+  proximaEjecucionEn: Date;
+  activa: boolean;
+}
+
 export interface CrearConfiguracionReportePersistida {
   organizacionId: string;
   tenantQlikId: string;
@@ -20,12 +27,13 @@ export interface CrearConfiguracionReportePersistida {
   automatizacionIdQlik: string;
   automatizacionNombreSnapshot: string;
   programar: boolean;
+  programacion?: NuevaProgramacionReportePersistida;
   estado: EstadoConfiguracionReporte;
   claveIdempotencia?: string;
 }
 
 export interface ConfiguracionReportePersistida
-  extends CrearConfiguracionReportePersistida {
+  extends Omit<CrearConfiguracionReportePersistida, "programacion"> {
   id: string;
 }
 

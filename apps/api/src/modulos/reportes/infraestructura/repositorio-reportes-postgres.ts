@@ -20,13 +20,35 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   async crearConfiguracion(
     entrada: CrearConfiguracionReportePersistida,
   ): Promise<ConfiguracionReportePersistida> {
-    const [fila] = await this.db
-      .insert(configuracionesAutomatizacion)
-      .values(entrada)
-      .returning();
-    if (!fila)
-      throw new Error("No se pudo persistir la configuración del reporte");
-    return mapearConfiguracion(fila);
+    const { programacion, ...configuracion } = entrada;
+    if (!programacion) {
+      const [fila] = await this.db
+        .insert(configuracionesAutomatizacion)
+        .values(configuracion)
+        .returning();
+      if (!fila)
+        throw new Error("No se pudo persistir la configuración del reporte");
+      return mapearConfiguracion(fila);
+    }
+
+    return this.db.transaction(async (tx) => {
+      const [fila] = await tx
+        .insert(configuracionesAutomatizacion)
+        .values(configuracion)
+        .returning();
+      if (!fila)
+        throw new Error("No se pudo persistir la configuración del reporte");
+      await tx.insert(programacionesAutomatizacion).values({
+        configuracionId: fila.id,
+        tipo: "cron",
+        expresionCron: programacion.expresionCron,
+        zonaHoraria: programacion.zonaHoraria,
+        activa: programacion.activa,
+        proximaEjecucionEn: programacion.proximaEjecucionEn,
+        programacionIdQlik: null,
+      });
+      return mapearConfiguracion(fila);
+    });
   }
 
   async obtenerPorAutomatizacion(

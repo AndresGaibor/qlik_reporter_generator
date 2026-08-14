@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { esquemaIdQlik } from "../qlik/comunes.js";
+import { esquemaProgramacionReporte } from "../reportes/dataflow.js";
 
 export const esquemaResumenAutomatizacion = z.object({
   id: esquemaIdQlik,
@@ -39,7 +40,7 @@ export const esquemaCrearDesdePlantilla = z.object({
   plantillaIdQlik: esquemaIdQlik,
   espacioIdQlik: esquemaIdQlik.optional(),
   propietarioIdQlik: esquemaIdQlik.optional(),
-  flujoId: z.string().optional(),
+  flujoId: z.string().trim().min(1),
   tablaId: z.string().optional(),
   autor: z.string().optional(),
   fechaDesde: z.string().optional(),
@@ -47,6 +48,7 @@ export const esquemaCrearDesdePlantilla = z.object({
   columnas: z.array(z.string()).optional(),
   formatoSalida: z.string().optional(),
   destinoId: z.string().uuid().optional(),
+  programacion: esquemaProgramacionReporte.optional(),
   reemplazosWorkspace: z
     .array(esquemaReemplazoWorkspace)
     .max(100)
