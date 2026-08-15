@@ -1,11 +1,10 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type {
-  CapacidadesDestino,
-  ConexionDestino,
-  CrearConexionDestino,
-  RecursoDestino,
-  TipoDestino,
-} from "@qlik/contratos/destinos";
+  ActualizarConfiguracionReporte,
+  ConfiguracionReporteDataflow,
+  DetalleEjecucionReporte,
+  PreflightDataflowReporte,
+} from "@qlik/contratos";
 import type {
   CrearDesdePlantilla,
   DetalleAutomatizacion,
@@ -13,12 +12,53 @@ import type {
   ResultadoCrearDesdePlantilla,
   ResumenAutomatizacion,
 } from "@qlik/contratos/automatizaciones";
+import type {
+  CapacidadesDestino,
+  ConexionDestino,
+  CrearConexionDestino,
+  RecursoDestino,
+  TipoDestino,
+} from "@qlik/contratos/destinos";
 
 const RUTA = "/reportes";
 
 export interface ConfiguracionTenant {
   automatizacionBaseIdQlik: string | null;
   automatizacionBaseNombre: string | null;
+}
+
+export function preflightDataflowReporte(
+  flujoId: string,
+): Promise<PreflightDataflowReporte> {
+  return clienteApi.get<PreflightDataflowReporte>(
+    `${RUTA}/dataflows/${encodeURIComponent(flujoId)}/preflight`,
+  );
+}
+
+export function obtenerConfiguracionReporte(
+  automatizacionId: string,
+): Promise<ConfiguracionReporteDataflow> {
+  return clienteApi.get<ConfiguracionReporteDataflow>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
+  );
+}
+
+export function actualizarConfiguracionReporte(
+  automatizacionId: string,
+  entrada: ActualizarConfiguracionReporte,
+): Promise<ConfiguracionReporteDataflow> {
+  return clienteApi.put<ConfiguracionReporteDataflow>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
+    entrada,
+  );
+}
+
+export function obtenerEjecucionesLocalesReporte(
+  automatizacionId: string,
+): Promise<DetalleEjecucionReporte[]> {
+  return clienteApi.get<DetalleEjecucionReporte[]>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/ejecuciones-locales`,
+  );
 }
 
 export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
@@ -98,16 +138,19 @@ export function obtenerConexionesDestino(): Promise<ConexionDestino[]> {
 }
 
 /** Prueba la conexión de un destino */
-export function probarConexionDestino(
-  id: string,
-): Promise<{ exitoso: boolean; mensaje: string; capacidades?: CapacidadesDestino }> {
-  return clienteApi.post(`/destinos/conexiones/${encodeURIComponent(id)}/probar`, {});
+export function probarConexionDestino(id: string): Promise<{
+  exitoso: boolean;
+  mensaje: string;
+  capacidades?: CapacidadesDestino;
+}> {
+  return clienteApi.post(
+    `/destinos/conexiones/${encodeURIComponent(id)}/probar`,
+    {},
+  );
 }
 
 /** Recursos disponibles en una conexión de destino */
-export function obtenerRecursosDestino(
-  id: string,
-): Promise<RecursoDestino[]> {
+export function obtenerRecursosDestino(id: string): Promise<RecursoDestino[]> {
   return clienteApi.get<RecursoDestino[]>(
     `/destinos/conexiones/${encodeURIComponent(id)}/recursos`,
   );
@@ -123,7 +166,11 @@ export function obtenerDetalleRecursoDestino(
   );
 }
 
-export function obtenerVistaPreviaDestino(conexionId: string, recursoId: string, limite = 20) {
+export function obtenerVistaPreviaDestino(
+  conexionId: string,
+  recursoId: string,
+  limite = 20,
+) {
   return clienteApi.get<Array<Record<string, unknown>>>(
     `/destinos/conexiones/${encodeURIComponent(conexionId)}/recursos/${encodeURIComponent(recursoId)}/preview`,
     { parametros: { limite: String(limite) } },

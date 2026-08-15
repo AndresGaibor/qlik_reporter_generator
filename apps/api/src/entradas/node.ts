@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { crearAplicacion } from "../app.js";
+import { iniciarProgramadorReportesAplicacion } from "../modulos/reportes/infraestructura/crear-programador-reportes.js";
 import { cargarConfiguracion } from "../plataforma/configuracion/entorno.js";
 import {
   asegurarEsquemaTablas,
@@ -9,6 +10,7 @@ import {
 const configuracion = cargarConfiguracion();
 await asegurarEsquemaTablas();
 const app = await crearAplicacion({ configuracion });
+const programadorReportes = iniciarProgramadorReportesAplicacion(configuracion);
 const puerto = configuracion.PORT;
 const servidor = serve({ fetch: app.fetch, port: puerto });
 console.info(`API ejecutándose en http://localhost:${puerto}`);
@@ -19,6 +21,7 @@ async function cerrarOrdenadamente(senal: string): Promise<void> {
   cerrando = true;
   console.info(`Recibida ${senal}; cerrando API ordenadamente`);
   const limite = setTimeout(() => process.exit(1), 10_000);
+  programadorReportes.detener();
   try {
     await new Promise<void>((resolver, rechazar) => {
       servidor.close((error) => (error ? rechazar(error) : resolver()));

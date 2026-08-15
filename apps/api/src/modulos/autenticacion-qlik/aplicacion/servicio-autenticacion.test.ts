@@ -21,6 +21,11 @@ function oauthFalso(): PuertoOAuthQlik {
       expiraEnSegundos: 3600,
       scopes: ["user_default"],
     }),
+    refrescarToken: async () => ({
+      tokenAcceso: "token-renovado",
+      expiraEnSegundos: 3600,
+      scopes: ["user_default"],
+    }),
     obtenerUsuario: async () => ({ id: "usuario-qlik" }),
   };
 }

@@ -7,6 +7,7 @@ import {
   configuracionesOauthQlik,
   credencialesQlik,
   destinosCache,
+  ejecucionesReportes,
   espaciosQlikCache,
   eventosOutbox,
   flujosQlikCache,
@@ -116,6 +117,34 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("automatizacion_id_qlik");
     expect(cols).toContain("programar");
     expect(cols).toContain("estado");
+  });
+
+  it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {
+    const cols = colNames(getTableConfig(ejecucionesReportes));
+    expect(cols).toEqual(
+      expect.arrayContaining([
+        "configuracion_id",
+        "flujo_id_qlik",
+        "automatizacion_id_qlik",
+        "hash_dataflow_sha256",
+        "script_dataflow",
+        "sql_bigquery_compilado",
+        "script_exportacion",
+        "uri_base_gcs",
+        "tipo_ejecucion",
+        "estado",
+      ]),
+    );
+  });
+
+  it("la migración 0014 solo introduce auditoría de ejecuciones", async () => {
+    const contenido = await Bun.file(
+      new URL("../drizzle/0014_ejecuciones_reportes_dataflow.sql", import.meta.url),
+    ).text();
+    expect(contenido).toContain('CREATE TABLE "ejecuciones_reportes"');
+    expect(contenido).not.toContain('CREATE TABLE "conexiones_destino"');
+    expect(contenido).not.toContain('CREATE TABLE "conexiones_origen"');
+    expect(contenido).not.toContain('DROP COLUMN "impala_');
   });
 
   it("programacionesAutomatizacion tiene tipo y zonaHoraria", () => {

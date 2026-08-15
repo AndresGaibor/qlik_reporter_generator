@@ -1,0 +1,37 @@
+///$tab Main
+LIB CONNECT TO [Google BigQuery:BigQuery_Produccion];
+
+[ventas]:
+LOAD
+    [Fecha],
+    [TiendaId],
+    [Venta_Neta_USD],
+    Upper([Categoria]) AS [Categoria_Normalizada];
+SQL SELECT
+    Fecha,
+    TiendaId,
+    Venta_Neta_USD,
+    Categoria
+FROM `demo-proyecto.EDWH_REP.VENTAS_COMERCIAL_DIARIAS_D`
+WHERE Fecha >= DATE('2026-06-01');
+
+[ventas_filtradas]:
+NOCONCATENATE
+LOAD
+    [Fecha],
+    [TiendaId],
+    [Venta_Neta_USD],
+    [Categoria_Normalizada]
+RESIDENT [ventas]
+WHERE [Venta_Neta_USD] > 0;
+
+LEFT JOIN ([ventas_filtradas])
+LOAD
+    [TiendaId],
+    [TiendaNombre] AS [Tienda];
+SQL SELECT
+    TiendaId,
+    TiendaNombre
+FROM `demo-proyecto.EDWH_REP.TIENDAS_D`;
+
+DROP TABLE [ventas];

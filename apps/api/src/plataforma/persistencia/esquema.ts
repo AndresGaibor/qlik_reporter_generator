@@ -342,6 +342,48 @@ export const programacionesAutomatizacion = pgTable(
   }),
 );
 
+export const ejecucionesReportes = pgTable(
+  "ejecuciones_reportes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    configuracionId: uuid("configuracion_id")
+      .notNull()
+      .references(() => configuracionesAutomatizacion.id, { onDelete: "cascade" }),
+    flujoIdQlik: text("flujo_id_qlik").notNull(),
+    automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
+    runIdQlik: text("run_id_qlik"),
+    hashDataflowSha256: text("hash_dataflow_sha256").notNull(),
+    scriptDataflow: text("script_dataflow").notNull(),
+    sqlBigQueryCompilado: text("sql_bigquery_compilado").notNull(),
+    scriptExportacion: text("script_exportacion").notNull(),
+    uriBaseGcs: text("uri_base_gcs").notNull(),
+    tipoEjecucion: text("tipo_ejecucion").notNull(),
+    estado: text("estado").notNull().default("preparando"),
+    versionCompilador: integer("version_compilador").notNull().default(1),
+    etapaError: text("etapa_error"),
+    mensajeError: text("mensaje_error"),
+    iniciadoEn: timestamp("iniciado_en"),
+    finalizadoEn: timestamp("finalizado_en"),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    idxConfiguracionFecha: index("idx_ejecuciones_reportes_config_fecha").on(
+      t.configuracionId,
+      t.creadoEn,
+    ),
+    idxRunQlik: index("idx_ejecuciones_reportes_run_qlik").on(t.runIdQlik),
+    ckTipo: check(
+      "ejecuciones_reportes_tipo_check",
+      sql`${t.tipoEjecucion} IN ('manual', 'programada')`,
+    ),
+    ckEstado: check(
+      "ejecuciones_reportes_estado_check",
+      sql`${t.estado} IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')`,
+    ),
+  }),
+);
+
 export const auditoriaEventos = pgTable(
   "auditoria_eventos",
   {

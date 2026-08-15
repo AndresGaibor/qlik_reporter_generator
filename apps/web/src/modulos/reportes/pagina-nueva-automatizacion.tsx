@@ -2,302 +2,119 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { Button } from "@/compartido/componentes/ui/button";
 import { Card, CardContent } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { obtenerSesion } from "@/modulos/autenticacion/api";
-import {
-  crearAutomatizacionDesdePlantilla,
-  estimarConsultaDestino,
-  obtenerConexionesDestino,
-  obtenerDetalleRecursoDestino,
-  obtenerRecursosDestino,
-  obtenerVistaPreviaDestino,
-} from "./api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { type DateRange, DayPicker } from "react-day-picker";
+import { useEffect, useMemo, useState } from "react";
+import {
+  crearAutomatizacionDesdePlantilla,
+  obtenerFlujosConFiltros,
+  preflightDataflowReporte,
+} from "./api";
 
-interface TablaMaqueta {
-  nombre: string;
-  columnas: string[];
+const DESTINO_GCS = "gs://bkt_dwh/POCs/TalendDescargados/";
+
+export function PaginaNuevaAutomatizacion() {
+  return <FormularioDataflow />;
 }
 
-export interface ConfiguracionReporte {
-  nombre?: string;
-  tabla: string;
-  columnas: string[];
-  rango?: DateRange;
-}
-
-interface Props {
-  configuracionInicial?: ConfiguracionReporte;
-  onGuardarCambios?: (configuracion: ConfiguracionReporte) => Promise<void>;
-  onCancelar?: () => void;
-  integrado?: boolean;
-}
-
-export function PaginaNuevaAutomatizacion({
-  configuracionInicial,
-  onGuardarCambios,
-  onCancelar,
-  integrado = false,
-}: Props = {}) {
-  const { data: conexiones = [], isLoading: cargandoConexiones } = useQuery({
-    queryKey: ["destinos-conexiones"],
-    queryFn: obtenerConexionesDestino,
-  });
-  const conexionesBigQuery = conexiones.filter(
-    (conexion) => conexion.tipo === "bigquery",
+function FormularioDataflow() {
+  const { mostrarExito, mostrarError } = useNotificaciones();
+  const parametros = useMemo(
+    () => new URLSearchParams(window.location.search),
+    [],
   );
-  const conexionActiva =
-    conexionesBigQuery.find((conexion) => conexion.esPredeterminada) ??
-    conexionesBigQuery[0];
-  const { data: recursos = [], isLoading: cargandoRecursos } = useQuery({
-    queryKey: ["destinos-recursos", conexionActiva?.id],
-    queryFn: () => obtenerRecursosDestino(conexionActiva?.id ?? ""),
-    enabled: Boolean(conexionActiva),
-  });
-  const parametros = new URLSearchParams(window.location.search);
-  const tablaInicial = configuracionInicial?.tabla ?? parametros.get("tablaId") ?? "";
-  const [nombrePersonalizado, setNombrePersonalizado] = useState(
-    configuracionInicial?.nombre ?? "",
-  );
-  const [tablaSeleccionada, setTablaSeleccionada] = useState(tablaInicial);
-  const [columnasSeleccionadas, setColumnasSeleccionadas] = useState<string[]>(
-    configuracionInicial?.columnas ?? [],
-  );
-  const [rango, setRango] = useState<DateRange | undefined>(
-    configuracionInicial?.rango,
-  );
-  const [selectorRangoAbierto, setSelectorRangoAbierto] = useState(false);
-  const [busquedaColumnas, setBusquedaColumnas] = useState("");
-  const [creado, setCreado] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [flujoId, setFlujoId] = useState(parametros.get("flujoId") ?? "");
+  const [programar, setProgramar] = useState(false);
+  const [cron, setCron] = useState("0 8 * * *");
+  const [zonaHoraria, setZonaHoraria] = useState("America/Guayaquil");
   const [guardando, setGuardando] = useState(false);
 
-  const { data: detalleTabla } = useQuery({
-    queryKey: ["destino-recurso-detalle", conexionActiva?.id, tablaSeleccionada],
-    queryFn: () => obtenerDetalleRecursoDestino(conexionActiva?.id ?? "", tablaSeleccionada),
-    enabled: Boolean(conexionActiva && tablaSeleccionada),
-  });
-
-  const { data: previewFilas = [], isLoading: cargandoPreview } = useQuery({
-    queryKey: ["destino-recurso-preview", conexionActiva?.id, tablaSeleccionada],
-    queryFn: () => obtenerVistaPreviaDestino(conexionActiva!.id, tablaSeleccionada, 10),
-    enabled: Boolean(conexionActiva?.id && tablaSeleccionada),
-  });
-
-  const fechaDesdeStr = formatearFechaLocal(rango?.from);
-  const fechaHastaStr = formatearFechaLocal(rango?.to);
-
-  const { data: estimacionCosto, isLoading: cargandoEstimacion } = useQuery({
-    queryKey: [
-      "destino-recurso-estimacion",
-      conexionActiva?.id,
-      tablaSeleccionada,
-      columnasSeleccionadas.join(","),
-      fechaDesdeStr,
-      fechaHastaStr,
-    ],
+  const {
+    data: flujos = [],
+    isLoading: cargandoFlujos,
+    isError: errorFlujos,
+  } = useQuery({
+    queryKey: ["flujos-reportes"],
     queryFn: () =>
-      estimarConsultaDestino(conexionActiva!.id, {
-        recursoId: tablaSeleccionada,
-        columnas: columnasSeleccionadas,
-        fechaDesde: fechaDesdeStr,
-        fechaHasta: fechaHastaStr,
-      }),
-    enabled:
-      Boolean(conexionActiva?.id) &&
-      Boolean(tablaSeleccionada) &&
-      columnasSeleccionadas.length > 0,
+      obtenerFlujosConFiltros(parametros.get("espacioId") ?? undefined),
   });
 
-  const listaColumnas =
-    detalleTabla?.columnas && detalleTabla.columnas.length > 0
-      ? detalleTabla.columnas
-      : previewFilas[0]
-        ? Object.keys(previewFilas[0]).map((nombre) => ({
-            nombre,
-            tipo: "STRING",
-          }))
-        : [];
-
-  const columnasDeTabla = listaColumnas.map((columna) => columna.nombre);
-
-  const objetosColumnasVisibles = listaColumnas.filter((columna) =>
-    columna.nombre.toLowerCase().includes(busquedaColumnas.toLowerCase()),
-  );
-
-  const [tablaInicializada, setTablaInicializada] = useState<string | null>(null);
-
   useEffect(() => {
-    if (!tablaSeleccionada && recursos[0]) setTablaSeleccionada(recursos[0].nombre);
-  }, [recursos, tablaSeleccionada]);
+    if (!flujoId && flujos[0]) setFlujoId(flujos[0].id);
+  }, [flujoId, flujos]);
 
-  useEffect(() => {
-    if (
-      tablaSeleccionada &&
-      columnasDeTabla.length > 0 &&
-      tablaInicializada !== tablaSeleccionada
-    ) {
-      setTablaInicializada(tablaSeleccionada);
-      if (columnasSeleccionadas.length === 0) {
-        setColumnasSeleccionadas(columnasDeTabla);
-      }
-    }
-  }, [tablaSeleccionada, columnasDeTabla, tablaInicializada, columnasSeleccionadas.length]);
-
-  function cambiarTabla(nombre: string) {
-    setTablaSeleccionada(nombre);
-    setTablaInicializada(null);
-    setColumnasSeleccionadas([]);
-    setBusquedaColumnas("");
-  }
-
-  function alternarColumna(columna: string) {
-    setColumnasSeleccionadas((actuales) =>
-      actuales.includes(columna)
-        ? actuales.filter((actual) => actual !== columna)
-        : [...actuales, columna],
-    );
-  }
-
-  function alternarColumnasVisibles(evento?: React.MouseEvent) {
-    if (evento) {
-      evento.preventDefault();
-      evento.stopPropagation();
-    }
-    const nombresVisibles = objetosColumnasVisibles.map((c) => c.nombre);
-    const todasSeleccionadas =
-      nombresVisibles.length > 0 &&
-      nombresVisibles.every((col) => columnasSeleccionadas.includes(col));
-    setColumnasSeleccionadas((actuales) =>
-      todasSeleccionadas
-        ? actuales.filter((col) => !nombresVisibles.includes(col))
-        : Array.from(new Set([...actuales, ...nombresVisibles])),
-    );
-  }
-
-  function seleccionarRango(nuevoRango: DateRange | undefined) {
-    setRango(nuevoRango);
-    if (
-      nuevoRango?.from &&
-      nuevoRango.to &&
-      nuevoRango.from.getTime() !== nuevoRango.to.getTime()
-    ) {
-      setSelectorRangoAbierto(false);
-    }
-  }
-
-  function mostrarFecha(fecha: Date) {
-    return new Intl.DateTimeFormat("es-ES", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(fecha);
-  }
-
-  const { mostrarExito, mostrarError } = useNotificaciones();
-  const { data: sesionInfo } = useQuery({
-    queryKey: ["sesion"],
-    queryFn: obtenerSesion,
-    staleTime: 5 * 60 * 1000,
+  const flujo = flujos.find((item) => item.id === flujoId);
+  const {
+    data: preflight,
+    isLoading: validando,
+    isError: errorPreflight,
+    error: errorPreflightDetalle,
+  } = useQuery({
+    queryKey: ["preflight-dataflow-reporte", flujoId],
+    queryFn: () => preflightDataflowReporte(flujoId),
+    enabled: Boolean(flujoId),
   });
 
-  const autor =
-    sesionInfo?.usuario?.nombre ||
-    sesionInfo?.identidad?.nombreQlik ||
-    sesionInfo?.usuario?.correo ||
-    "";
-  const nombreSugerido = `Reporte ${tablaSeleccionada}${autor ? ` ${autor}` : ""}`;
-  const nombreFinal = nombrePersonalizado.trim() || nombreSugerido;
+  const nombreFinal = nombre.trim() || `Reporte ${flujo?.nombre ?? "Dataflow"}`;
+  const puedeCrear =
+    Boolean(flujoId) &&
+    preflight?.compatible === true &&
+    (!programar || cron.trim().length >= 9) &&
+    !guardando;
 
-  async function guardarReporte() {
-    const configuracion: ConfiguracionReporte = {
-      nombre: nombreFinal,
-      tabla: tablaSeleccionada,
-      columnas: columnasSeleccionadas,
-      rango,
-    };
-
-    if (onGuardarCambios) {
-      setGuardando(true);
-      try {
-        await onGuardarCambios(configuracion);
-        setCreado(true);
-      } finally {
-        setGuardando(false);
-      }
-      return;
-    }
-
+  async function crearReporte() {
+    if (!flujo || !preflight?.compatible) return;
     setGuardando(true);
     try {
-      const fDesde = formatearFechaLocal(rango?.from);
-      const fHasta = formatearFechaLocal(rango?.to);
       const resultado = await crearAutomatizacionDesdePlantilla({
         nombre: nombreFinal,
-        tablaId: tablaSeleccionada,
-        autor,
-        fechaDesde: fDesde,
-        fechaHasta: fHasta,
-        columnas: columnasSeleccionadas,
-        formatoSalida: "CSV",
-        espacioIdQlik: parametros.get("espacioId") || undefined,
+        flujoId: flujo.id,
+        ...(flujo.espacioId ? { espacioIdQlik: flujo.espacioId } : {}),
         reemplazosWorkspace: [],
+        ...(programar
+          ? {
+              programacion: {
+                activa: true,
+                expresionCron: cron.trim(),
+                zonaHoraria,
+              },
+            }
+          : {}),
       });
-      mostrarExito("Reporte creado y configurado con éxito");
-      if (resultado?.id) {
-        window.location.href = `/reportes/${resultado.id}`;
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al crear el reporte";
-      mostrarError(msg);
+      mostrarExito("Reporte creado y asociado al Dataflow actual");
+      window.location.href = `/reportes/${resultado.id}`;
+    } catch (error) {
+      mostrarError(
+        error instanceof Error ? error.message : "No se pudo crear el reporte",
+      );
     } finally {
       setGuardando(false);
     }
   }
 
   return (
-    <div
-      className={integrado ? "space-y-4" : "mx-auto max-w-5xl space-y-4 pb-4"}
-    >
-      {cargandoConexiones || cargandoRecursos ? (
-        <p className="rounded-lg border border-line-200 bg-surface p-4 text-sm text-ink-500">Cargando tablas de BigQuery…</p>
-      ) : !conexionActiva ? (
-        <p className="rounded-lg border border-line-200 bg-surface p-4 text-sm text-ink-500">No hay una conexión BigQuery predeterminada configurada.</p>
-      ) : null}
-
-      {!integrado && (
-        <Link
-          to="/reportes"
-          className="inline-flex items-center gap-2 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
-        >
-          <Icon name="chev" size="sm" className="rotate-180" />
-          Volver a reportes
-        </Link>
-      )}
-
-      {!integrado && (
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-900">
-            {onGuardarCambios ? "Editar reporte" : "Crear reporte"}
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Elige la información, los campos y el periodo que quieres consultar.
-          </p>
-        </div>
-      )}
-
-      <Card
-        className={
-          integrado
-            ? "border-0 bg-surface shadow-none"
-            : "border-line-200 bg-surface shadow-card"
-        }
+    <div className="mx-auto max-w-5xl space-y-4 pb-4">
+      <Link
+        to="/reportes"
+        className="inline-flex items-center gap-2 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
       >
-        <CardContent
-          className={`space-y-6 p-5 sm:p-6 ${integrado ? "rounded-b-xl" : ""}`}
-        >
-          {/* Nombre del reporte */}
+        <Icon name="chev" size="sm" className="rotate-180" />
+        Volver a reportes
+      </Link>
+
+      <header>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-900">
+          Crear reporte
+        </h1>
+        <p className="mt-1 text-sm text-ink-500">
+          Selecciona el Dataflow de Qlik que define los datos del reporte. La
+          plataforma leerá siempre su versión actual antes de ejecutar.
+        </p>
+      </header>
+
+      <Card className="border-line-200 bg-surface shadow-card">
+        <CardContent className="space-y-6 p-5 sm:p-6">
           <section className="space-y-2">
             <label
               htmlFor="nombre-reporte"
@@ -307,329 +124,146 @@ export function PaginaNuevaAutomatizacion({
             </label>
             <input
               id="nombre-reporte"
-              type="text"
-              value={nombrePersonalizado}
-              onChange={(evento) => setNombrePersonalizado(evento.target.value)}
-              placeholder={nombreSugerido}
-              className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100 placeholder:text-ink-300"
+              value={nombre}
+              onChange={(evento) => setNombre(evento.target.value)}
+              placeholder={nombreFinal}
+              className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
           </section>
 
-          {/* Fila superior: 1. Tabla y 2. Periodo */}
-          <div className="grid gap-5 sm:grid-cols-2">
-            <section className="space-y-2">
-              <label
-                htmlFor="tabla-reporte"
-                className="block text-sm font-semibold text-ink-900"
-              >
-                1. Elige la tabla de datos
-              </label>
-              <select
-                id="tabla-reporte"
-                value={tablaSeleccionada}
-                onChange={(evento) => cambiarTabla(evento.target.value)}
-                className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
-              >
-                {recursos.map((recurso) => (
-                  <option key={recurso.nombre} value={recurso.nombre}>
-                    {recurso.nombre}
-                  </option>
-                ))}
-              </select>
-            </section>
+          <section className="space-y-2">
+            <label
+              htmlFor="dataflow-reporte"
+              className="block text-sm font-semibold text-ink-900"
+            >
+              Dataflow de Qlik
+            </label>
+            <select
+              id="dataflow-reporte"
+              value={flujoId}
+              onChange={(evento) => setFlujoId(evento.target.value)}
+              disabled={cargandoFlujos || flujos.length === 0}
+              className="h-11 w-full rounded-md border border-line-200 bg-surface px-3.5 text-sm font-medium text-ink-900 shadow-card outline-none transition focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+            >
+              <option value="">
+                {cargandoFlujos
+                  ? "Cargando Dataflows…"
+                  : "Selecciona un Dataflow"}
+              </option>
+              {flujos.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nombre} · {item.espacioNombre}
+                </option>
+              ))}
+            </select>
+            {errorFlujos ? (
+              <p className="text-sm text-danger-700">
+                No se pudieron cargar los Dataflows de Qlik.
+              </p>
+            ) : null}
+          </section>
 
-            <section className="relative space-y-2">
+          <EstadoPreflight
+            validando={validando}
+            error={errorPreflight ? errorPreflightDetalle : undefined}
+            preflight={preflight}
+          />
+
+          <section className="rounded-lg border border-line-200 bg-app px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-semibold text-ink-900">
-                  2. Elige el periodo
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                aria-label="Seleccionar rango de fechas"
-                aria-expanded={selectorRangoAbierto}
-                onClick={() => setSelectorRangoAbierto((abierto) => !abierto)}
-                className={`flex h-11 w-full items-center justify-between rounded-md border bg-surface px-3.5 text-left text-sm shadow-card outline-none transition focus:ring-2 focus:ring-brand-100 ${
-                  selectorRangoAbierto
-                    ? "border-brand-600 ring-2 ring-brand-100"
-                    : "border-line-200 hover:border-line-300"
-                }`}
-              >
-                <span className={rango?.from ? "text-ink-900" : "text-ink-400"}>
-                  {rango?.from
-                    ? `${mostrarFecha(rango.from)}${rango.to ? ` - ${mostrarFecha(rango.to)}` : ""}`
-                    : "Selecciona un rango de fechas"}
-                </span>
-                <Icon
-                  name="chev"
-                  size="sm"
-                  className="rotate-90 text-ink-400"
-                />
-              </button>
-
-              {selectorRangoAbierto && (
-                <div className="absolute top-full left-0 z-20 mt-1 rounded-lg border border-line-200 bg-surface p-3 shadow-panel">
-                  <DayPicker
-                    mode="range"
-                    min={1}
-                    resetOnSelect
-                    selected={rango}
-                    onSelect={seleccionarRango}
-                    defaultMonth={rango?.from}
-                    showOutsideDays
-                    formatters={{
-                      formatCaption: (mes) =>
-                        new Intl.DateTimeFormat("es-ES", {
-                          month: "long",
-                          year: "numeric",
-                        }).format(mes),
-                      formatWeekdayName: (dia) =>
-                        new Intl.DateTimeFormat("es-ES", {
-                          weekday: "short",
-                        }).format(dia),
-                    }}
-                    classNames={{
-                      root: "text-sm text-ink-900",
-                      months: "flex",
-                      month: "space-y-3",
-                      month_caption: "flex items-center justify-center px-8",
-                      caption_label: "font-semibold capitalize",
-                      nav: "absolute inset-x-3 top-3 flex justify-between",
-                      button_previous:
-                        "grid h-7 w-7 place-items-center rounded-md text-ink-500 hover:bg-hover hover:text-ink-900",
-                      button_next:
-                        "grid h-7 w-7 place-items-center rounded-md text-ink-500 hover:bg-hover hover:text-ink-900",
-                      month_grid: "w-full border-separate border-spacing-1",
-                      weekdays: "text-xs text-ink-400",
-                      weekday: "h-7 font-medium uppercase",
-                      week: "text-center",
-                      day: "h-8 w-8 p-0 text-center",
-                      day_button:
-                        "h-8 w-8 rounded-md text-sm hover:bg-hover focus:outline-none focus:ring-2 focus:ring-brand-200",
-                      selected: "bg-brand-600 text-white hover:bg-brand-700",
-                      range_start: "rounded-l-md",
-                      range_end: "rounded-r-md",
-                      range_middle: "bg-brand-50 text-brand-900",
-                      today: "font-bold text-brand-700",
-                      outside: "text-ink-300",
-                    }}
-                  />
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* Sección de Vista Previa de Datos y Selección de Columnas */}
-          <section className="space-y-3 pt-2 border-t border-line-200">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-ink-900 flex items-center gap-2">
-                  <Icon name="grid" size="sm" className="text-brand-600" />
-                  3. Vista previa de datos y selección de campos
+                  Programación
                 </h2>
                 <p className="mt-1 text-xs text-ink-500">
-                  Haz clic en el checkbox de la cabecera para incluir o descartar cada columna del reporte final.
+                  Las ejecuciones programadas también releen el Dataflow antes
+                  de iniciar Talend.
                 </p>
               </div>
-              <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-                {columnasSeleccionadas.length} de {columnasDeTabla.length} campos seleccionados
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="relative min-w-0 flex-1">
-                <Icon
-                  name="search"
-                  size="sm"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
-                />
+              <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-ink-700">
                 <input
-                  type="search"
-                  value={busquedaColumnas}
-                  onChange={(evento) =>
-                    setBusquedaColumnas(evento.target.value)
-                  }
-                  placeholder="Filtrar columnas de la vista previa..."
-                  aria-label="Buscar campos"
-                  className="h-10 w-full rounded-md border border-line-200 bg-surface pl-9 pr-3 text-sm text-ink-900 shadow-card outline-none transition placeholder:text-ink-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+                  id="programar-reporte"
+                  type="checkbox"
+                  checked={programar}
+                  onChange={(evento) => setProgramar(evento.target.checked)}
+                  className="h-4 w-4 accent-[var(--color-brand-600)]"
                 />
-              </div>
-              <button
-                type="button"
-                onClick={alternarColumnasVisibles}
-                className="h-10 shrink-0 rounded-md border border-line-200 px-3.5 text-xs font-semibold text-ink-700 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
-              >
-                {objetosColumnasVisibles.length > 0 &&
-                objetosColumnasVisibles.every((col) =>
-                  columnasSeleccionadas.includes(col.nombre),
-                )
-                  ? "Deseleccionar visibles"
-                  : "Seleccionar visibles"}
-              </button>
+                Activar
+              </label>
             </div>
-
-            {/* Tabla con registros de Vista Previa y Checkbox en cada Cabecera */}
-            <div className="rounded-lg border border-line-200 bg-surface shadow-inner overflow-hidden">
-              <div className="max-h-[360px] overflow-auto">
-                {cargandoPreview ? (
-                  <div className="p-8 text-center text-xs text-ink-500">
-                    Cargando datos de vista previa desde BigQuery…
-                  </div>
-                ) : objetosColumnasVisibles.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-ink-400">
-                    No encontramos campos con esa búsqueda.
-                  </div>
-                ) : (
-                  <table className="w-full text-left text-xs font-mono border-collapse">
-                    <thead className="sticky top-0 bg-slate-100/95 backdrop-blur-sm text-ink-900 font-semibold border-b border-line-200 z-10">
-                      <tr>
-                        <th className="px-3 py-2.5 w-10 text-center border-r border-line-200 bg-slate-200/60">
-                          #
-                        </th>
-                        {objetosColumnasVisibles.map((col) => {
-                          const seleccionada = columnasSeleccionadas.includes(col.nombre);
-                          return (
-                            <th
-                              key={col.nombre}
-                              onClick={() => alternarColumna(col.nombre)}
-                              className={`px-3.5 py-2.5 whitespace-nowrap border-r border-line-200 cursor-pointer select-none transition-colors ${
-                                seleccionada
-                                  ? "bg-brand-50/90 text-brand-950"
-                                  : "bg-slate-100/80 text-ink-400"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={seleccionada}
-                                  onChange={() => alternarColumna(col.nombre)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)] cursor-pointer shrink-0"
-                                />
-                                <div>
-                                  <div className={`font-mono text-xs ${seleccionada ? "font-bold text-ink-900" : "font-medium text-slate-400 line-through"}`}>
-                                    {col.nombre}
-                                  </div>
-                                  <div className="text-[10px] font-sans font-normal text-ink-400">
-                                    {col.tipo || "STRING"}
-                                  </div>
-                                </div>
-                              </div>
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line-100">
-                      {previewFilas.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={objetosColumnasVisibles.length + 1}
-                            className="p-6 text-center text-xs text-ink-400"
-                          >
-                            No hay registros para mostrar en esta vista previa.
-                          </td>
-                        </tr>
-                      ) : (
-                        previewFilas.map((fila, i) => (
-                          <tr key={i} className="hover:bg-slate-50/80">
-                            <td className="px-3 py-2 text-center text-ink-400 font-mono text-[11px] border-r border-line-100 bg-slate-50/50">
-                              {i + 1}
-                            </td>
-                            {objetosColumnasVisibles.map((col) => {
-                              const seleccionada = columnasSeleccionadas.includes(col.nombre);
-                              const val = fila[col.nombre];
-                              return (
-                                <td
-                                  key={col.nombre}
-                                  className={`px-3.5 py-2 whitespace-nowrap border-r border-line-100 max-w-[240px] truncate transition-opacity ${
-                                    seleccionada
-                                      ? "bg-white font-medium text-slate-800"
-                                      : "bg-slate-50/60 opacity-35 italic text-slate-400"
-                                  }`}
-                                >
-                                  {val === null || val === undefined ? (
-                                    <span className="text-slate-400 italic">null</span>
-                                  ) : (
-                                    formatearValorCelda(val)
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                )}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="cron-reporte"
+                  className="text-xs font-semibold text-ink-600"
+                >
+                  Expresión cron
+                </label>
+                <input
+                  id="cron-reporte"
+                  value={cron}
+                  disabled={!programar}
+                  onChange={(evento) => setCron(evento.target.value)}
+                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 font-mono text-sm text-ink-900 outline-none focus:border-brand-600 disabled:bg-slate-100 disabled:text-ink-400"
+                />
+                <p className="text-[11px] text-ink-400">
+                  Ejemplo: 0 8 * * * = todos los días a las 08:00.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="zona-reporte"
+                  className="text-xs font-semibold text-ink-600"
+                >
+                  Zona horaria
+                </label>
+                <select
+                  id="zona-reporte"
+                  value={zonaHoraria}
+                  disabled={!programar}
+                  onChange={(evento) => setZonaHoraria(evento.target.value)}
+                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 text-sm text-ink-900 outline-none focus:border-brand-600 disabled:bg-slate-100 disabled:text-ink-400"
+                >
+                  <option value="America/Guayaquil">America/Guayaquil</option>
+                  <option value="America/Bogota">America/Bogota</option>
+                  <option value="UTC">UTC</option>
+                </select>
               </div>
             </div>
           </section>
 
-          {creado && (
-            <p className="rounded-md border border-brand-200 bg-brand-50 px-3.5 py-3 text-sm text-brand-800 lg:col-span-2">
-              El reporte está configurado con la información seleccionada.
+          <section className="rounded-lg border border-line-200 bg-surface px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-400">
+              Destino fijo
             </p>
-          )}
+            <p className="mt-2 break-all font-mono text-sm font-semibold text-ink-900">
+              {DESTINO_GCS}
+            </p>
+            <p className="mt-1 text-xs text-ink-500">
+              CSV comprimido con GZIP · máximo 1.000.000 filas por bloque
+              lógico.
+            </p>
+          </section>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line-200 pt-4">
-            {/* Costo estimado del reporte directamente al lado de la acción */}
-            <div className="flex flex-wrap items-center gap-3 bg-slate-900 text-slate-100 px-4 py-2.5 rounded-xl border border-slate-800 shadow-sm text-xs font-mono">
-              <div className="flex items-center gap-2 font-sans font-semibold text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Costo estimado:
-              </div>
-              {cargandoEstimacion ? (
-                <span className="text-slate-400 animate-pulse">Calculando…</span>
-              ) : estimacionCosto ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="font-bold text-emerald-400 text-sm">
-                    ${estimacionCosto.costoEstimadoUsd.toFixed(8)} USD
-                  </span>
-                  <span className="text-slate-400 text-[11px]">
-                    (~{(estimacionCosto.bytesProcesados / (1024 * 1024)).toFixed(2)} MB)
-                  </span>
-                </div>
-              ) : (
-                <span className="text-slate-400">—</span>
-              )}
-            </div>
-
-            {/* Acciones del formulario */}
-            <div className="flex items-center gap-3 shrink-0">
-              {onCancelar && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  disabled={guardando}
-                  onClick={onCancelar}
-                >
-                  Cancelar
-                </Button>
-              )}
-              <Button
-                type="button"
-                size="lg"
-                className="min-w-44 gap-2 bg-brand-600 hover:bg-brand-700 text-white"
-                disabled={
-                  guardando ||
-                  !tablaSeleccionada ||
-                  columnasSeleccionadas.length === 0 ||
-                  !rango?.from ||
-                  !rango.to
-                }
-                onClick={guardarReporte}
-              >
-                <Icon name="file-text" size="sm" />
-                {guardando
-                  ? "Guardando cambios..."
-                  : onGuardarCambios
-                    ? "Guardar cambios"
-                    : "Crear reporte"}
-              </Button>
-            </div>
+          <div className="flex items-center justify-end gap-3 border-t border-line-200 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.history.back()}
+              disabled={guardando}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              disabled={!puedeCrear}
+              onClick={crearReporte}
+              className="min-w-44 gap-2 bg-brand-600 text-white hover:bg-brand-700"
+            >
+              <Icon name="file-text" size="sm" />
+              {guardando ? "Creando…" : "Crear reporte"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -637,28 +271,119 @@ export function PaginaNuevaAutomatizacion({
   );
 }
 
-function formatearValorCelda(val: unknown): string {
-  if (val === null || val === undefined) return "null";
-  if (typeof val === "object" && val !== null) {
-    if ("value" in val && val.value !== undefined && val.value !== null) {
-      return String(val.value);
-    }
-    if (val instanceof Date) {
-      return val.toISOString().split("T")[0] ?? String(val);
-    }
-    try {
-      return JSON.stringify(val);
-    } catch {
-      return String(val);
-    }
+function EstadoPreflight({
+  validando,
+  error,
+  preflight,
+}: {
+  validando: boolean;
+  error?: unknown;
+  preflight?: Awaited<ReturnType<typeof preflightDataflowReporte>>;
+}) {
+  if (validando) {
+    return (
+      <section className="rounded-lg border border-line-200 bg-app px-4 py-5 text-sm text-ink-500">
+        Analizando el Dataflow actual y validando el SQL en BigQuery…
+      </section>
+    );
   }
-  return String(val);
+  if (error) {
+    return (
+      <section className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-4 text-sm text-danger-800">
+        No se pudo validar el Dataflow:{" "}
+        {error instanceof Error ? error.message : "error de conexión"}
+      </section>
+    );
+  }
+  if (!preflight) {
+    return (
+      <section className="rounded-lg border border-line-200 bg-app px-4 py-5 text-sm text-ink-500">
+        Selecciona un Dataflow para analizar su diseño.
+      </section>
+    );
+  }
+  if (!preflight.compatible) {
+    return (
+      <section className="rounded-lg border border-warning-200 bg-warning-50 px-4 py-4">
+        <p className="text-sm font-semibold text-warning-900">
+          Dataflow no compatible todavía
+        </p>
+        <ul className="mt-2 space-y-1 text-sm text-warning-800">
+          {preflight.operacionesNoSoportadas.map((operacion) => (
+            <li key={operacion}>• {operacion}</li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
+  return (
+    <section className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+            ✓
+          </span>
+          <p className="text-sm font-semibold text-emerald-900">
+            Dataflow compatible
+          </p>
+        </div>
+        <span className="font-mono text-xs text-emerald-800">
+          SHA-256 {preflight.hashDataflowSha256.slice(0, 12)}…
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-4">
+        <Metrica valor={preflight.resumen.fuentes} etiqueta="fuentes" />
+        <Metrica valor={preflight.resumen.filtros} etiqueta="filtros" />
+        <Metrica
+          valor={preflight.resumen.joins}
+          etiqueta="join"
+          plural="joins"
+        />
+        <Metrica
+          valor={preflight.resumen.camposSalida}
+          etiqueta="campo"
+          plural="campos"
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-emerald-200 pt-3 text-xs text-emerald-900">
+        <span>
+          Dry-run: <strong>{formatearBytes(preflight.bytesProcesados)}</strong>{" "}
+          · <strong>${preflight.costoEstimadoUsd.toFixed(6)} USD</strong>
+        </span>
+        <details className="max-w-full">
+          <summary className="cursor-pointer font-semibold">
+            Ver SQL generado
+          </summary>
+          <pre className="mt-2 max-h-56 max-w-3xl overflow-auto rounded-md bg-slate-950 p-3 text-[11px] text-slate-100">
+            {preflight.sqlBigQuery}
+          </pre>
+        </details>
+      </div>
+    </section>
+  );
 }
 
-function formatearFechaLocal(fecha?: Date): string | undefined {
-  if (!fecha) return undefined;
-  const a = fecha.getFullYear();
-  const m = String(fecha.getMonth() + 1).padStart(2, "0");
-  const d = String(fecha.getDate()).padStart(2, "0");
-  return `${a}-${m}-${d}`;
+function Metrica({
+  valor,
+  etiqueta,
+  plural,
+}: {
+  valor: number;
+  etiqueta: string;
+  plural?: string;
+}) {
+  return (
+    <div className="rounded-md border border-emerald-100 bg-white/80 px-3 py-2">
+      <p className="text-sm font-semibold text-ink-900">
+        {valor} {valor === 1 ? etiqueta : (plural ?? `${etiqueta}s`)}
+      </p>
+    </div>
+  );
+}
+
+function formatearBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(2)} KB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }

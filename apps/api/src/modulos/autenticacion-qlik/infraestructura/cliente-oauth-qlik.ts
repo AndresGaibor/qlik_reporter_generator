@@ -107,23 +107,30 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
       );
     }
 
-    const tokenAcceso = datoTexto(datos, "access_token", "accessToken");
-    const expiraEn = datoNumero(datos, "expires_in", "expiresIn");
-    if (!tokenAcceso || expiraEn === undefined) {
-      throw new Error("Respuesta OAuth de Qlik incompleta");
+    return mapearTokensOAuth(datos, this.scopes);
+  }
+
+  async refrescarToken(tokenRefresco: string): Promise<TokensQlik> {
+    const respuesta = await this.fetchFn(new URL("/oauth/token", this.origen), {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      signal: AbortSignal.timeout(this.timeoutMs),
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: tokenRefresco,
+        client_id: this.clienteId,
+        client_secret: this.clienteSecreto,
+      }),
+    });
+    const datos = await leerJsonSeguro(respuesta);
+    if (!respuesta.ok) {
+      throw new ErrorOAuthQlik(
+        "token",
+        respuesta.status,
+        extraerDetalleError(datos),
+      );
     }
-
-    const tokenRefresco = datoTexto(datos, "refresh_token", "refreshToken");
-    const scopes = (datoTexto(datos, "scope") ?? this.scopes)
-      .split(/\s+/)
-      .filter(Boolean);
-
-    return {
-      tokenAcceso,
-      ...(tokenRefresco ? { tokenRefresco } : {}),
-      expiraEnSegundos: expiraEn,
-      scopes,
-    };
+    return mapearTokensOAuth(datos, this.scopes);
   }
 
   async obtenerUsuario(tokenAcceso: string): Promise<UsuarioOAuthQlik> {
@@ -157,6 +164,27 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
       ...(avatarUrl ? { avatarUrl } : {}),
     };
   }
+}
+
+function mapearTokensOAuth(
+  datos: Record<string, unknown>,
+  scopesPredeterminados: string,
+): TokensQlik {
+  const tokenAcceso = datoTexto(datos, "access_token", "accessToken");
+  const expiraEn = datoNumero(datos, "expires_in", "expiresIn");
+  if (!tokenAcceso || expiraEn === undefined) {
+    throw new Error("Respuesta OAuth de Qlik incompleta");
+  }
+  const tokenRefresco = datoTexto(datos, "refresh_token", "refreshToken");
+  const scopes = (datoTexto(datos, "scope") ?? scopesPredeterminados)
+    .split(/\s+/)
+    .filter(Boolean);
+  return {
+    tokenAcceso,
+    ...(tokenRefresco ? { tokenRefresco } : {}),
+    expiraEnSegundos: expiraEn,
+    scopes,
+  };
 }
 
 async function leerJsonSeguro(
