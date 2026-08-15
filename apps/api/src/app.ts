@@ -369,6 +369,8 @@ export async function crearAplicacion(
     crearRutasReportesDataflow({
       resolverQlik,
       resolverBigQuery: resolverBigQueryReporte,
+      resolverSesion,
+      repositorioReportes,
     }),
   );
   aplicacion.route(

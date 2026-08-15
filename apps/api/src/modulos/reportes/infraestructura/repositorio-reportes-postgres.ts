@@ -1,4 +1,4 @@
-import { and, asc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, lte } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   configuracionesAutomatizacion,
@@ -6,6 +6,7 @@ import {
   programacionesAutomatizacion,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
+  ActualizarConfiguracionReportePersistida,
   ConfiguracionReportePersistida,
   CrearConfiguracionReportePersistida,
   CrearEjecucionReportePersistida,
@@ -172,6 +173,110 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .returning({ id: programacionesAutomatizacion.id });
     return filas.length === 1;
   }
+
+  async listarEjecuciones(
+    configuracionId: string,
+    limite = 50,
+  ): Promise<EjecucionReportePersistida[]> {
+    const filas = await this.db.query.ejecucionesReportes.findMany({
+      where: eq(ejecucionesReportes.configuracionId, configuracionId),
+      orderBy: [desc(ejecucionesReportes.creadoEn)],
+      limit: Math.min(Math.max(limite, 1), 200),
+    });
+    return filas.map(mapearEjecucion);
+  }
+
+  async marcarEstadoPorRunQlik(
+    runIdQlik: string,
+    estado: "completada" | "error" | "detenida",
+    finalizadoEn: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        estado,
+        finalizadoEn,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.runIdQlik, runIdQlik));
+  }
+
+  async obtenerProgramacion(
+    configuracionId: string,
+  ): Promise<ProgramacionReportePersistida | null> {
+    const fila = await this.db.query.programacionesAutomatizacion.findFirst({
+      where: eq(programacionesAutomatizacion.configuracionId, configuracionId),
+    });
+    if (!fila?.expresionCron || !fila.proximaEjecucionEn) return null;
+    return {
+      id: fila.id,
+      configuracionId: fila.configuracionId,
+      expresionCron: fila.expresionCron,
+      zonaHoraria: fila.zonaHoraria,
+      proximaEjecucionEn: fila.proximaEjecucionEn,
+      activa: fila.activa,
+    };
+  }
+
+  async actualizarConfiguracion(
+    configuracionId: string,
+    cambios: ActualizarConfiguracionReportePersistida,
+  ): Promise<ConfiguracionReportePersistida> {
+    return this.db.transaction(async (tx) => {
+      const { programacion, ...resto } = cambios;
+      const valores: Partial<
+        typeof configuracionesAutomatizacion.$inferInsert
+      > = {
+        ...resto,
+        ...(Object.prototype.hasOwnProperty.call(cambios, "programacion")
+          ? { programar: programacion?.activa ?? false }
+          : {}),
+        actualizadoEn: new Date(),
+      };
+      const [actualizada] = await tx
+        .update(configuracionesAutomatizacion)
+        .set(valores)
+        .where(eq(configuracionesAutomatizacion.id, configuracionId))
+        .returning();
+      if (!actualizada)
+        throw new Error("No se encontró el reporte a actualizar");
+
+      if (Object.prototype.hasOwnProperty.call(cambios, "programacion")) {
+        if (programacion === null || programacion === undefined) {
+          await tx
+            .delete(programacionesAutomatizacion)
+            .where(
+              eq(programacionesAutomatizacion.configuracionId, configuracionId),
+            );
+        } else {
+          await tx
+            .insert(programacionesAutomatizacion)
+            .values({
+              configuracionId,
+              tipo: "cron",
+              expresionCron: programacion.expresionCron,
+              zonaHoraria: programacion.zonaHoraria,
+              activa: programacion.activa,
+              proximaEjecucionEn: programacion.proximaEjecucionEn,
+              programacionIdQlik: null,
+            })
+            .onConflictDoUpdate({
+              target: programacionesAutomatizacion.configuracionId,
+              set: {
+                tipo: "cron",
+                expresionCron: programacion.expresionCron,
+                zonaHoraria: programacion.zonaHoraria,
+                activa: programacion.activa,
+                proximaEjecucionEn: programacion.proximaEjecucionEn,
+                programacionIdQlik: null,
+                actualizadoEn: new Date(),
+              },
+            });
+        }
+      }
+      return mapearConfiguracion(actualizada);
+    });
+  }
 }
 
 function mapearConfiguracion(
@@ -220,12 +325,13 @@ function mapearEjecucion(
     scriptExportacion: fila.scriptExportacion,
     uriBaseGcs: fila.uriBaseGcs,
     tipoEjecucion: fila.tipoEjecucion as "manual" | "programada",
-    estado: "preparando",
+    estado: fila.estado as EjecucionReportePersistida["estado"],
     versionCompilador: fila.versionCompilador,
     runIdQlik: fila.runIdQlik,
     etapaError: fila.etapaError,
     mensajeError: fila.mensajeError,
     iniciadoEn: fila.iniciadoEn,
     finalizadoEn: fila.finalizadoEn,
+    creadoEn: fila.creadoEn,
   };
 }

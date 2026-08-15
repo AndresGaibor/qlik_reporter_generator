@@ -238,4 +238,98 @@ describe("RepositorioReportesPostgres", () => {
       proximaEjecucionEn: new Date("2026-08-15T13:00:00Z"),
     });
   });
+
+  it("actualiza configuración y hace upsert de la programación", async () => {
+    const sets: Array<Record<string, unknown>> = [];
+    const inserts: Array<Record<string, unknown>> = [];
+    let upsertSet: Record<string, unknown> | undefined;
+    const fila = {
+      id: "44444444-4444-4444-8444-444444444444",
+      ...entrada,
+      nombre: "Ventas v2",
+      programar: true,
+      estado: "activa",
+    };
+    const tx = {
+      update: () => ({
+        set: (valor: Record<string, unknown>) => {
+          sets.push(valor);
+          return {
+            where: () => ({ returning: async () => [fila] }),
+          };
+        },
+      }),
+      insert: () => ({
+        values: (valor: Record<string, unknown>) => {
+          inserts.push(valor);
+          return {
+            onConflictDoUpdate: async (opciones: {
+              set: Record<string, unknown>;
+            }) => {
+              upsertSet = opciones.set;
+            },
+          };
+        },
+      }),
+      delete: () => ({ where: async () => undefined }),
+    };
+    const db = {
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback(tx),
+      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    await repo.actualizarConfiguracion(fila.id, {
+      nombre: "Ventas v2",
+      programacion: {
+        activa: true,
+        expresionCron: "30 7 * * 1-5",
+        zonaHoraria: "America/Guayaquil",
+        proximaEjecucionEn: new Date("2026-08-17T12:30:00Z"),
+      },
+    });
+
+    expect(sets[0]).toMatchObject({ nombre: "Ventas v2", programar: true });
+    expect(inserts[0]).toMatchObject({
+      configuracionId: fila.id,
+      tipo: "cron",
+      expresionCron: "30 7 * * 1-5",
+      activa: true,
+    });
+    expect(upsertSet).toMatchObject({
+      expresionCron: "30 7 * * 1-5",
+      activa: true,
+    });
+  });
+
+  it("elimina la programación al guardar null", async () => {
+    const deletes: string[] = [];
+    const fila = {
+      id: "44444444-4444-4444-8444-444444444444",
+      ...entrada,
+      programar: false,
+      estado: "activa",
+    };
+    const tx = {
+      update: () => ({
+        set: () => ({ where: () => ({ returning: async () => [fila] }) }),
+      }),
+      delete: () => ({
+        where: async () => {
+          deletes.push("schedule");
+        },
+      }),
+    };
+    const db = {
+      transaction: async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback(tx),
+      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    await repo.actualizarConfiguracion(fila.id, { programacion: null });
+
+    expect(deletes).toEqual(["schedule"]);
+  });
 });

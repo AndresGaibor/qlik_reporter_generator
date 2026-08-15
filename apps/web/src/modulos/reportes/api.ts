@@ -1,5 +1,10 @@
 import { clienteApi } from "@/compartido/api/cliente";
-import type { PreflightDataflowReporte } from "@qlik/contratos";
+import type {
+  ActualizarConfiguracionReporte,
+  ConfiguracionReporteDataflow,
+  DetalleEjecucionReporte,
+  PreflightDataflowReporte,
+} from "@qlik/contratos";
 import type {
   CrearDesdePlantilla,
   DetalleAutomatizacion,
@@ -27,6 +32,32 @@ export function preflightDataflowReporte(
 ): Promise<PreflightDataflowReporte> {
   return clienteApi.get<PreflightDataflowReporte>(
     `${RUTA}/dataflows/${encodeURIComponent(flujoId)}/preflight`,
+  );
+}
+
+export function obtenerConfiguracionReporte(
+  automatizacionId: string,
+): Promise<ConfiguracionReporteDataflow> {
+  return clienteApi.get<ConfiguracionReporteDataflow>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
+  );
+}
+
+export function actualizarConfiguracionReporte(
+  automatizacionId: string,
+  entrada: ActualizarConfiguracionReporte,
+): Promise<ConfiguracionReporteDataflow> {
+  return clienteApi.put<ConfiguracionReporteDataflow>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
+    entrada,
+  );
+}
+
+export function obtenerEjecucionesLocalesReporte(
+  automatizacionId: string,
+): Promise<DetalleEjecucionReporte[]> {
+  return clienteApi.get<DetalleEjecucionReporte[]>(
+    `${RUTA}/${encodeURIComponent(automatizacionId)}/ejecuciones-locales`,
   );
 }
 

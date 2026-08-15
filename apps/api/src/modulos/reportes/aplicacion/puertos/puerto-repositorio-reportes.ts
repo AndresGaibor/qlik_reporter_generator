@@ -37,6 +37,13 @@ export interface ConfiguracionReportePersistida
   id: string;
 }
 
+export type EstadoEjecucionReportePersistida =
+  | "preparando"
+  | "iniciada"
+  | "completada"
+  | "error"
+  | "detenida";
+
 export interface CrearEjecucionReportePersistida {
   id: string;
   configuracionId: string;
@@ -53,12 +60,24 @@ export interface CrearEjecucionReportePersistida {
 }
 
 export interface EjecucionReportePersistida
-  extends CrearEjecucionReportePersistida {
+  extends Omit<CrearEjecucionReportePersistida, "estado"> {
+  estado: EstadoEjecucionReportePersistida;
   runIdQlik?: string | null;
   etapaError?: string | null;
   mensajeError?: string | null;
   iniciadoEn?: Date | null;
   finalizadoEn?: Date | null;
+  creadoEn?: Date;
+}
+
+export interface ActualizarConfiguracionReportePersistida {
+  nombre?: string;
+  flujoIdQlik?: string;
+  flujoNombreSnapshot?: string;
+  flujoEspacioIdQlik?: string | null;
+  automatizacionNombreSnapshot?: string;
+  estado?: EstadoConfiguracionReporte;
+  programacion?: NuevaProgramacionReportePersistida | null;
 }
 
 export interface ProgramacionReportePersistida {
@@ -105,4 +124,20 @@ export interface PuertoRepositorioReportes {
     nuevaProxima: Date,
     ejecutadaEn: Date,
   ): Promise<boolean>;
+  listarEjecuciones(
+    configuracionId: string,
+    limite?: number,
+  ): Promise<EjecucionReportePersistida[]>;
+  marcarEstadoPorRunQlik(
+    runIdQlik: string,
+    estado: "completada" | "error" | "detenida",
+    finalizadoEn: Date,
+  ): Promise<void>;
+  obtenerProgramacion(
+    configuracionId: string,
+  ): Promise<ProgramacionReportePersistida | null>;
+  actualizarConfiguracion(
+    configuracionId: string,
+    cambios: ActualizarConfiguracionReportePersistida,
+  ): Promise<ConfiguracionReportePersistida>;
 }

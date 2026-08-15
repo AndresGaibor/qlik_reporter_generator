@@ -10,7 +10,9 @@ export const esquemaEstadoEjecucionReporte = z.enum([
   "error",
   "detenida",
 ]);
-export type EstadoEjecucionReporte = z.infer<typeof esquemaEstadoEjecucionReporte>;
+export type EstadoEjecucionReporte = z.infer<
+  typeof esquemaEstadoEjecucionReporte
+>;
 
 export const esquemaProgramacionReporte = z.object({
   activa: z.boolean(),
@@ -36,7 +38,9 @@ export const esquemaPreflightDataflowReporte = z.object({
   costoEstimadoUsd: z.number().nonnegative(),
   resumen: esquemaResumenDataflowReporte,
 });
-export type PreflightDataflowReporte = z.infer<typeof esquemaPreflightDataflowReporte>;
+export type PreflightDataflowReporte = z.infer<
+  typeof esquemaPreflightDataflowReporte
+>;
 
 export const esquemaDetalleEjecucionReporte = z.object({
   id: z.string().uuid(),
@@ -58,4 +62,41 @@ export const esquemaDetalleEjecucionReporte = z.object({
   finalizadoEn: z.string().datetime().nullable(),
   creadoEn: z.string().datetime(),
 });
-export type DetalleEjecucionReporte = z.infer<typeof esquemaDetalleEjecucionReporte>;
+export type DetalleEjecucionReporte = z.infer<
+  typeof esquemaDetalleEjecucionReporte
+>;
+
+export const esquemaActualizarConfiguracionReporte = z
+  .object({
+    nombre: z.string().trim().min(1).max(255).optional(),
+    flujoIdQlik: z.string().trim().min(1).optional(),
+    programacion: esquemaProgramacionReporte.nullable().optional(),
+    activa: z.boolean().optional(),
+  })
+  .strict();
+export type ActualizarConfiguracionReporte = z.infer<
+  typeof esquemaActualizarConfiguracionReporte
+>;
+
+export const esquemaProgramacionConfiguracionReporte = z.object({
+  activa: z.boolean(),
+  expresionCron: z.string(),
+  zonaHoraria: z.string(),
+  proximaEjecucionEn: z.string().datetime().nullable(),
+});
+
+export const esquemaConfiguracionReporteDataflow = z.object({
+  id: z.string().uuid(),
+  nombre: z.string(),
+  flujoIdQlik: z.string(),
+  flujoNombreSnapshot: z.string(),
+  flujoEspacioIdQlik: z.string().nullable(),
+  automatizacionIdQlik: z.string(),
+  automatizacionNombreSnapshot: z.string(),
+  destinoGcs: z.string().startsWith("gs://"),
+  activa: z.boolean(),
+  programacion: esquemaProgramacionConfiguracionReporte.nullable(),
+});
+export type ConfiguracionReporteDataflow = z.infer<
+  typeof esquemaConfiguracionReporteDataflow
+>;
