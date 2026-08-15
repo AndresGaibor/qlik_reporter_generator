@@ -5,7 +5,6 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import type { DateRange } from "react-day-picker";
 import {
   crearAutomatizacionDesdePlantilla,
   obtenerFlujosConFiltros,
@@ -14,48 +13,7 @@ import {
 
 const DESTINO_GCS = "gs://bkt_dwh/POCs/TalendDescargados/";
 
-/** @deprecated Se conserva hasta completar la migración de la vista de detalle. */
-export interface ConfiguracionReporte {
-  nombre?: string;
-  tabla: string;
-  columnas: string[];
-  rango?: DateRange;
-}
-
-interface Props {
-  configuracionInicial?: ConfiguracionReporte;
-  onGuardarCambios?: (configuracion: ConfiguracionReporte) => Promise<void>;
-  onCancelar?: () => void;
-  integrado?: boolean;
-}
-
-export function PaginaNuevaAutomatizacion({
-  onCancelar,
-  integrado = false,
-}: Props = {}) {
-  if (integrado) {
-    return (
-      <div className="space-y-4 p-5 sm:p-6">
-        <div className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-4">
-          <p className="text-sm font-semibold text-brand-900">
-            El diseño de datos se edita en Qlik Dataflow
-          </p>
-          <p className="mt-1 text-sm text-brand-800">
-            Campos, filtros, joins y cálculos se tomarán del Dataflow actual en
-            la próxima ejecución.
-          </p>
-        </div>
-        {onCancelar ? (
-          <div className="flex justify-end">
-            <Button type="button" variant="outline" onClick={onCancelar}>
-              Cerrar
-            </Button>
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
+export function PaginaNuevaAutomatizacion() {
   return <FormularioDataflow />;
 }
 

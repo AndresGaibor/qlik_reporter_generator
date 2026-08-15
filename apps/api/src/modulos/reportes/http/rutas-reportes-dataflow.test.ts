@@ -217,4 +217,106 @@ describe("rutas reportes Dataflow", () => {
       scriptExportacion: "EXPORT DATA",
     });
   });
+
+  it("sincroniza el nombre local con la copia de Qlik Automate", async () => {
+    const actualizarAutomatizacion = vi.fn(
+      async (_id: string, definicion: Record<string, unknown>) => ({
+        id: "auto-1",
+        name: String(definicion.name ?? "Ventas"),
+        ...definicion,
+      }),
+    );
+    const actualizarConfiguracion = vi.fn(
+      async (_id: string, cambios: Record<string, unknown>) => ({
+        id: "11111111-1111-4111-8111-111111111111",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        creadoPorUsuarioId: "user-1",
+        nombre: String(cambios.nombre ?? "Ventas"),
+        flujoIdQlik: "flujo-1",
+        flujoNombreSnapshot: "Ventas DF",
+        destinoProveedor: "gcs",
+        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
+        destinoNombreSnapshot: "TalendDescargados",
+        automatizacionIdQlik: "auto-1",
+        automatizacionNombreSnapshot: String(
+          cambios.automatizacionNombreSnapshot ?? "Ventas",
+        ),
+        programar: false,
+        estado: "activa" as const,
+      }),
+    );
+    const repo = {
+      obtenerPorAutomatizacion: vi.fn(async () => ({
+        id: "11111111-1111-4111-8111-111111111111",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        creadoPorUsuarioId: "user-1",
+        nombre: "Ventas",
+        flujoIdQlik: "flujo-1",
+        flujoNombreSnapshot: "Ventas DF",
+        destinoProveedor: "gcs",
+        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
+        destinoNombreSnapshot: "TalendDescargados",
+        automatizacionIdQlik: "auto-1",
+        automatizacionNombreSnapshot: "Ventas",
+        programar: false,
+        estado: "activa" as const,
+      })),
+      obtenerProgramacion: vi.fn(async () => null),
+      actualizarConfiguracion,
+    };
+    const qlik = {
+      obtenerAutomatizacion: vi.fn(async () => ({
+        id: "auto-1",
+        name: "Ventas",
+        schedules: [],
+        workspace: { blocks: [] },
+        description: "",
+        maxConcurrentRuns: 1,
+      })),
+      actualizarAutomatizacion,
+    };
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () => qlik as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            }),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: repo as never,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes/auto-1/configuracion", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nombre: "Ventas Comercial v2" }),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(actualizarAutomatizacion).toHaveBeenCalledWith(
+      "auto-1",
+      expect.objectContaining({ name: "Ventas Comercial v2", schedules: [] }),
+    );
+    expect(actualizarConfiguracion).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      expect.objectContaining({
+        nombre: "Ventas Comercial v2",
+        automatizacionNombreSnapshot: "Ventas Comercial v2",
+      }),
+    );
+  });
 });
