@@ -144,20 +144,63 @@ export function crearRutasReportesDataflow(
               ),
             };
 
-    const actualizada =
-      await dependencias.repositorioReportes.actualizarConfiguracion(
-        actual.id,
-        {
-          ...(cambios.nombre ? { nombre: cambios.nombre } : {}),
-          ...(cambios.flujoIdQlik ? { flujoIdQlik: cambios.flujoIdQlik } : {}),
-          ...(flujoNombreSnapshot ? { flujoNombreSnapshot } : {}),
-          ...(flujoEspacioIdQlik !== undefined ? { flujoEspacioIdQlik } : {}),
-          ...(cambios.activa !== undefined
-            ? { estado: cambios.activa ? "activa" : "desactivada" }
-            : {}),
-          ...(cambios.programacion !== undefined ? { programacion } : {}),
-        },
-      );
+    let qlikRenombrado:
+      | {
+          cliente: PuertoQlik;
+          original: Awaited<ReturnType<PuertoQlik["obtenerAutomatizacion"]>>;
+        }
+      | undefined;
+    if (cambios.nombre && cambios.nombre !== actual.nombre) {
+      const qlik = await dependencias.resolverQlik(c);
+      const original = await qlik.obtenerAutomatizacion(automatizacionId);
+      await qlik.actualizarAutomatizacion(automatizacionId, {
+        name: cambios.nombre,
+        schedules: [],
+        workspace: original.workspace ?? {},
+        description: original.description ?? "",
+        maxConcurrentRuns: original.maxConcurrentRuns ?? 1,
+      });
+      qlikRenombrado = { cliente: qlik, original };
+    }
+
+    let actualizada: Awaited<
+      ReturnType<PuertoRepositorioReportes["actualizarConfiguracion"]>
+    >;
+    try {
+      actualizada =
+        await dependencias.repositorioReportes.actualizarConfiguracion(
+          actual.id,
+          {
+            ...(cambios.nombre
+              ? {
+                  nombre: cambios.nombre,
+                  automatizacionNombreSnapshot: cambios.nombre,
+                }
+              : {}),
+            ...(cambios.flujoIdQlik
+              ? { flujoIdQlik: cambios.flujoIdQlik }
+              : {}),
+            ...(flujoNombreSnapshot ? { flujoNombreSnapshot } : {}),
+            ...(flujoEspacioIdQlik !== undefined ? { flujoEspacioIdQlik } : {}),
+            ...(cambios.activa !== undefined
+              ? { estado: cambios.activa ? "activa" : "desactivada" }
+              : {}),
+            ...(cambios.programacion !== undefined ? { programacion } : {}),
+          },
+        );
+    } catch (error) {
+      if (qlikRenombrado) {
+        const { cliente, original } = qlikRenombrado;
+        await cliente.actualizarAutomatizacion(automatizacionId, {
+          name: original.name,
+          schedules: [],
+          workspace: original.workspace ?? {},
+          description: original.description ?? "",
+          maxConcurrentRuns: original.maxConcurrentRuns ?? 1,
+        });
+      }
+      throw error;
+    }
     const programacionActual =
       await dependencias.repositorioReportes.obtenerProgramacion(
         actualizada.id,

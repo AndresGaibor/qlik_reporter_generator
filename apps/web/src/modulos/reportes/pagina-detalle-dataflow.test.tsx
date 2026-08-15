@@ -154,6 +154,7 @@ async function montar() {
   await vi.waitFor(() => {
     expect(container?.textContent).toContain("Ventas Comercial");
     expect(container?.textContent).toContain("SHA-256");
+    expect(container?.textContent).toContain("Dataflow compatible");
   });
   return container;
 }
