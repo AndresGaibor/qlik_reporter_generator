@@ -34,7 +34,7 @@ function calcularRedirectUri(): string {
     const puerto = window.location.port ? `:${window.location.port}` : "";
     return `${protocolo}://${window.location.hostname}${puerto}/api/auth/qlik/callback`;
   }
-  return "http://localhost:3000/api/auth/qlik/callback";
+  return "http://localhost:4523/api/auth/qlik/callback";
 }
 
 function crearEstadoInicial(): FormularioData {

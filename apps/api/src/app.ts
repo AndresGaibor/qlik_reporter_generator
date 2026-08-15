@@ -98,7 +98,7 @@ export async function crearAplicacion(
     frontendUrlGuardado ??
     configuracion?.FRONTEND_URL ??
     process.env.FRONTEND_URL ??
-    "http://localhost:5173";
+    "http://localhost:4525";
   const produccion =
     (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
   const redirectUriConfigurado =
@@ -106,7 +106,7 @@ export async function crearAplicacion(
   const redirectUriOAuth = frontendUrlGuardado
     ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
     : (redirectUriConfigurado ??
-      "http://localhost:3000/api/auth/qlik/callback");
+      "http://localhost:4523/api/auth/qlik/callback");
 
   await servicioCifrado.inicializarConDb({
     async guardar(clave, valor) {

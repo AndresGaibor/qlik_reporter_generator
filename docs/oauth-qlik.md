@@ -73,7 +73,7 @@ Frontend                  Backend                     Qlik Cloud
 |-------|-------|
 | **Name** | Qlik Automate Creator |
 | **Type** | Web Application |
-| **Redirect URIs** | `http://localhost:3000/api/auth/qlik/callback` |
+| **Redirect URIs** | `http://localhost:4523/api/auth/qlik/callback` |
 | **Consent** | Trusted |
 | **Allowed grant types** | Authorization Code |
 | **Allowed auth methods** | Client Secret (Basic o POST) |
@@ -91,7 +91,7 @@ user_default offline_access identity.name:read identity.email:read identity.subj
 ### Allowed Origins
 
 ```
-http://localhost:5173
+http://localhost:4525
 ```
 
 ### Obtener credenciales
@@ -108,13 +108,13 @@ Después de crear la app, copiar:
 # OAuth Qlik Cloud
 QLIK_CLIENT_ID=tu_client_id          # De Qlik Cloud Console
 QLIK_CLIENT_SECRET=tu_client_secret   # De Qlik Cloud Console
-QLIK_REDIRECT_URI=http://localhost:3000/api/auth/qlik/callback
+QLIK_REDIRECT_URI=http://localhost:4523/api/auth/qlik/callback
 
 # Cifrado de tokens
 CIFRADO_CLAVE_PRINCIPAL=...           # openssl rand -base64 32
 
 # Frontend URL (para redirects post-login)
-FRONTEND_URL=http://localhost:5173    # Opcional, default: http://localhost:5173
+FRONTEND_URL=http://localhost:4525    # Opcional, default: http://localhost:4525
 ```
 
 ### Generar `CIFRADO_CLAVE_PRINCIPAL`
@@ -163,7 +163,7 @@ El usuario se autentica en Qlik Cloud. Si la OAuth App tiene consent "Trusted", 
 Qlik redirige a:
 
 ```
-http://localhost:3000/api/auth/qlik/callback?code={authorization_code}&state={state}
+http://localhost:4523/api/auth/qlik/callback?code={authorization_code}&state={state}
 ```
 
 El backend:
@@ -173,7 +173,7 @@ El backend:
 3. **Intercambia código por tokens**: `POST /oauth/token` con `grant_type=authorization_code`
 4. **Obtiene identidad**: `GET /api/v1/users/me` con el access token
 5. **Persiste en DB**: crea/actualiza organización, tenant, usuario, identidad, credenciales, membresía y sesión
-6. **Redirige a frontend**: `http://localhost:5173/` con cookie `sesion_usuario` (httpOnly, 7 días)
+6. **Redirige a frontend**: `http://localhost:4525/` con cookie `sesion_usuario` (httpOnly, 7 días)
 
 ### 4. Sesión verificada
 

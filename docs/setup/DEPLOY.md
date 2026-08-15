@@ -30,7 +30,7 @@ HOST_IP=0.0.0.0
 HOST_IP=0.0.0.0
 ```
 
-Los puertos internos ya vienen configurados con valores no-estándar (3847 para web, 7823 para API). Puedes cambiarlos si lo necesitas.
+Los puertos internos ya vienen configurados con valores no-estándar (4524 para web, 4523 para API). Puedes cambiarlos si lo necesitas.
 
 ## 3. Acceso sin dominio (solo IP)</Para pruebas o uso interno sin dominio:
 
@@ -40,7 +40,7 @@ HOST_IP=0.0.0.0
 
 Accede directamente desde el navegador:
 ```
-http://<ip-del-servidor>:3847
+http://<ip-del-servidor>:4524
 ```
 
 El wizard de setup funciona perfectamente — CORS se resuelve automáticamente con la IP de origen.
@@ -49,7 +49,7 @@ El wizard de setup funciona perfectamente — CORS se resuelve automáticamente 
 
 1. Instala `cloudflared` en tu servidor: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/tunnel-guide/
 2. Crea un túnel en [Cloudflare Dashboard](https://dash.cloudflare.com/)
-3. Apunta el túnel a tu servidor: `http://localhost:3847`
+3. Apunta el túnel a tu servidor: `http://localhost:4524`
 4. Configura el subdomain: `api.midominio.com` → túnel
 
 ## 5. Arrancar
@@ -60,8 +60,8 @@ docker compose up -d
 
 Docker Compose:
 - Levanta **PostgreSQL** automáticamente (puerto interno 5432)
-- Levanta la **API** (backend) en puerto interno 7823
-- Levanta el **Frontend** (nginx + static) en puerto 3847 (externo)
+- Levanta la **API** (backend) en puerto interno 4523
+- Levanta el **Frontend** (nginx + static) en puerto 4524 (externo)
 - Crea las tablas automáticamente al primer inicio
 
 ## 5. Completar el wizard
@@ -103,10 +103,10 @@ docker compose up -d
 
 ```
 cloudflared (túnel)
-    ↓ (http :3847)
+    ↓ (http :4524)
 nginx (proxy inverso)
     ├── /          → frontend (static)
-    └── /api/     → api (Bun :7823)
+    └── /api/     → api (Bun :4523)
                         └── PostgreSQL (:5432)
 ```
 
@@ -118,7 +118,7 @@ PORT_WEB=4000
 PORT_API=9000
 ```
 
-Los puertos externos e internos usan los mismos valores. Nginx siempre conecta al API en el puerto interno 7823 (o el que definas con `PORT_API`).
+Los puertos externos e internos usan los mismos valores. Nginx siempre conecta al API en el puerto interno 4523 (o el que definas con `PORT_API`).
 
 ---
 
@@ -145,7 +145,7 @@ El app siempre corre en HTTP. SSL se maneja en:
 |---|---|---|
 | `SERVER_NAME` | `localhost` | Dominio del servidor |
 | `HOST_IP` | `127.0.0.1` | IP de bind (usa `0.0.0.0` para exponer) |
-| `PORT_WEB` | `3847` | Puerto externo del frontend |
-| `PORT_API` | `7823` | Puerto interno de la API |
+| `PORT_WEB` | `4524` | Puerto externo del frontend |
+| `PORT_API` | `4523` | Puerto interno de la API |
 | `DATABASE_URL` | interno de Docker | Solo cambiar si usas DB externa |
 | `POSTGRES_PASSWORD` | `cambiar_en_produccion` | Contraseña de PostgreSQL |

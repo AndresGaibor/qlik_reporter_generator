@@ -21,12 +21,12 @@ RUN bun run build
 FROM node:22-alpine AS api
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=7823
+ENV PORT=4523
 COPY --from=build-api /app/apps/api/dist ./dist
 COPY --from=build-api /app/apps/api/drizzle ./drizzle
-EXPOSE 7823
+EXPOSE 4523
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:7823/api/salud || exit 1
+  CMD wget -qO- http://127.0.0.1:4523/api/salud || exit 1
 CMD ["node", "dist/node.js"]
 
 FROM nginx:alpine AS web

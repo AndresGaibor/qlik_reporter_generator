@@ -16,7 +16,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Listo. Abre **http://<ip-del-servidor>:3847** y completa el wizard de configuración inicial.
+Listo. Abre **http://<ip-del-servidor>:4524** y completa el wizard de configuración inicial.
 
 ---
 
@@ -24,8 +24,8 @@ Listo. Abre **http://<ip-del-servidor>:3847** y completa el wizard de configurac
 
 | Servicio | Puerto |
 |---|---|
-| Frontend (nginx) | 3847 |
-| API (Bun) | 7823 |
+| Frontend (nginx) | 4524 |
+| API (Bun) | 4523 |
 | PostgreSQL | 5432 (interno) |
 
 ---
@@ -44,15 +44,15 @@ HOST_IP=0.0.0.0
 SERVER_NAME=api.midominio.com
 
 # Cambiar puertos (opcional):
-PORT_WEB=3847
-PORT_API=7823
+PORT_WEB=4524
+PORT_API=4523
 ```
 
 ### Docker Compose levanta todo
 
 - **PostgreSQL** — base de datos con usuario y contraseña por defecto
-- **API** — backend Bun en puerto interno 7823
-- **Frontend** — nginx + static en puerto 3847
+- **API** — backend Bun en puerto interno 4523
+- **Frontend** — nginx + static en puerto 4524
 
 Las tablas se crean automáticamente al primer arranque.
 
@@ -81,11 +81,11 @@ Después del wizard → `/login` → autenticación OAuth con Qlik Cloud.
 SERVER_NAME=api.midominio.com
 HOST_IP=0.0.0.0
 PORT_WEB=80
-PORT_API=7823
+PORT_API=4523
 ```
 
 1. Crea un túnel de Cloudflare en [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. Apunta el túnel a `http://localhost:3847`
+2. Apunta el túnel a `http://localhost:4524`
 3. Configura el DNS: `api.midominio.com` → túnel
 4. `docker compose up -d`
 
@@ -157,8 +157,8 @@ Tecnologías: React 18, Vite, Hono, PostgreSQL, Drizzle ORM, OAuth 2.0 + PKCE, A
 cp .env.example .env
 bun install
 docker compose up -d
-bun run dev:api   # API en http://localhost:7823
-bun run dev       # Frontend en http://localhost:5173
+bun run dev:api   # API en http://localhost:4523
+bun run dev       # Frontend en http://localhost:4525
 ```
 
 ---

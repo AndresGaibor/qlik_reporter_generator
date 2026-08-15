@@ -91,7 +91,7 @@ describe("API", () => {
 
     const respuesta = await app.request("/api/auth/qlik/cerrar-sesion", {
       method: "POST",
-      headers: { Origin: "http://localhost:5173" },
+      headers: { Origin: "http://localhost:4525" },
     });
 
     expect(respuesta.status).toBe(200);
@@ -178,7 +178,7 @@ describe("API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Origin: "http://localhost:5173",
+          Origin: "http://localhost:4525",
         },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
@@ -194,7 +194,7 @@ describe("API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Origin: "http://localhost:5173",
+          Origin: "http://localhost:4525",
         },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
