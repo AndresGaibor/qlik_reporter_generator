@@ -27,7 +27,6 @@ function configuracion() {
     destinoNombreSnapshot: "TalendDescargados",
     automatizacionIdQlik: "auto-1",
     automatizacionNombreSnapshot: "Ventas",
-    programar: false,
     estado: "activa" as const,
   };
 }
@@ -155,4 +154,56 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       expect.objectContaining({ schedules: [] }),
     );
   });
+  it("inyecta en gcp_script el SQL y la ruta GCS derivados del Dataflow real", async () => {
+    const real = new URL(
+      "../fixtures/dataflow-bigquery-filtro-fecha-real.qlik",
+      import.meta.url,
+    );
+    const scriptReal = await Bun.file(real).text();
+    const { qlik, workspaces } = qlikConScripts([scriptReal]);
+    const auditorias: Array<Record<string, unknown>> = [];
+    const repo = {
+      obtenerPorAutomatizacion: async () => configuracion(),
+      crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
+        auditorias.push(entrada);
+        return entrada;
+      }),
+      marcarEjecucionIniciada: vi.fn(async () => undefined),
+      marcarEjecucionError: vi.fn(async () => undefined),
+    };
+    const ejecucionId = "33333333-3333-4333-8333-333333333333";
+    const caso = new EjecutarReporte(
+      qlik,
+      repo as never,
+      {
+        ejecutarExclusivo: async (
+          _clave: string,
+          tarea: () => Promise<unknown>,
+        ) => tarea(),
+      } as never,
+      { projectId: "poc-bigquery-talend", dataset: "demo_lafavorita" },
+      () => ejecucionId,
+    );
+
+    await caso.ejecutar({
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      automatizacionIdQlik: "auto-1",
+    });
+
+    const auditoria = auditorias[0];
+    const gcpScript = extraerKv(workspaces[0] ?? {}, "gcp_script");
+    expect(auditoria?.sqlBigQueryCompilado).toContain(
+      "WHERE `Fecha` = DATE '2026-06-01'",
+    );
+    expect(auditoria?.uriBaseGcs).toBe(
+      `gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/`,
+    );
+    expect(gcpScript).toContain("WHERE `Fecha` = DATE '2026-06-01'");
+    expect(gcpScript).toContain(
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/parte-%s-*.csv.gz'`,
+    );
+    expect(gcpScript).not.toContain("STORE [Filtro 1_DEFAULT]");
+  });
+
 });
