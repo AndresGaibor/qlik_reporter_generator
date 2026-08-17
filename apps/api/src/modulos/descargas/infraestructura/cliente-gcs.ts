@@ -34,7 +34,11 @@ export class ClienteGcs implements PuertoAlmacenamientoDescargas {
       .getFiles({ prefix: prefijo });
 
     return archivos
-      .filter((archivo) => !archivo.name.endsWith("/"))
+      .filter((archivo) => {
+        if (archivo.name.endsWith("/")) return false;
+        const nombre = archivo.name.split("/").at(-1) ?? "";
+        return /^parte-\d{3}-\d{12}\.csv\.gz$/.test(nombre);
+      })
       .map((archivo) => ({
         nombre: archivo.name.split("/").pop() ?? archivo.name,
         rutaCompleta: archivo.name,
@@ -47,10 +51,12 @@ export class ClienteGcs implements PuertoAlmacenamientoDescargas {
       .bucket(BUCKET_GCS_PERMITIDO)
       .file(nombreObjeto);
 
+    const nombre = nombreObjeto.split("/").at(-1) ?? "reporte.csv.gz";
     const [signedUrl] = await archivo.getSignedUrl({
       version: "v4",
       action: "read",
       expires: Date.now() + minutos * 60_000,
+      responseDisposition: `attachment; filename="${nombre}"`,
     });
 
     return signedUrl;

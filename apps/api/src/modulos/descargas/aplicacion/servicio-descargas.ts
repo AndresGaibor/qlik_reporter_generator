@@ -51,7 +51,10 @@ export class ServicioDescargas implements IServicioDescargas {
     }
 
     const objetos = await this.almacenamiento.listar(prefijo);
-    if (!objetos.length) {
+    const objetosExportados = objetos.filter((objeto) =>
+      /^parte-\d{3}-\d{12}\.csv\.gz$/.test(objeto.nombre),
+    );
+    if (!objetosExportados.length) {
       throw new ErrorAplicacion(
         "ARCHIVOS_NO_DISPONIBLES",
         "GCS no contiene resultados para esta ejecución",
@@ -59,7 +62,7 @@ export class ServicioDescargas implements IServicioDescargas {
       );
     }
 
-    const archivos = objetos
+    const archivos = objetosExportados
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
       .map(async (obj) => ({
         nombre: obj.nombre,

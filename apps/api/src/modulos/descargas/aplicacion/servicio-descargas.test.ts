@@ -132,8 +132,8 @@ describe("ServicioDescargas", () => {
       finalizadoEn: new Date(),
     });
     const alm = crearAlmacenamientoMock([
-      { nombre: "reporte-b.csv", tamanoBytes: 2048 },
-      { nombre: "reporte-a.csv", tamanoBytes: 1024 },
+      { nombre: "parte-002-000000000000.csv.gz", tamanoBytes: 2048 },
+      { nombre: "parte-001-000000000000.csv.gz", tamanoBytes: 1024 },
     ]);
     const servicio = new ServicioDescargas(
       repo as unknown as PuertoRepositorioReportes,
@@ -145,8 +145,8 @@ describe("ServicioDescargas", () => {
 
     expect(resultado.descargaId).toBe("e-completa");
     expect(resultado.archivos).toHaveLength(2);
-    expect(resultado.archivos[0].nombre).toBe("reporte-a.csv");
-    expect(resultado.archivos[1].nombre).toBe("reporte-b.csv");
+    expect(resultado.archivos[0].nombre).toBe("parte-001-000000000000.csv.gz");
+    expect(resultado.archivos[1].nombre).toBe("parte-002-000000000000.csv.gz");
     expect(resultado.archivos[0].url).toContain("signed");
     expect(alm.firmar).toHaveBeenCalledTimes(2);
   });
@@ -219,5 +219,34 @@ describe("ServicioDescargas", () => {
     await expect(
       servicio.crearManifiesto("e-invalida", CONTEXTO),
     ).rejects.toMatchObject({ codigo: "PREFIJO_GCS_INVALIDO" });
+  });
+  it("crearManifiesto ignora objetos que no sean partes csv gzip", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-completa",
+      reporteNombre: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "completada",
+      mensajeError: null,
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-completa/",
+      creadoEn: new Date(),
+      finalizadoEn: new Date(),
+    });
+    const alm = crearAlmacenamientoMock([
+      { nombre: "parte-001-000000000000.csv.gz", tamanoBytes: 1024 },
+      { nombre: "metadata.json", tamanoBytes: 12 },
+    ]);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    const resultado = await servicio.crearManifiesto("e-completa", CONTEXTO);
+
+    expect(resultado.archivos.map((archivo) => archivo.nombre)).toEqual([
+      "parte-001-000000000000.csv.gz",
+    ]);
+    expect(alm.firmar).toHaveBeenCalledOnce();
   });
 });

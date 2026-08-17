@@ -45,6 +45,55 @@ describe("parsearUriGcsPermitida", () => {
   test("debe rechazar uri con ruta fuera de POCs/TalendDescargados", () => {
     expect(() => parsearUriGcsPermitida("gs://bkt_dwh/otra-ruta/")).toThrow();
   });
+  test("listar solo expone partes csv gzip generadas por EXPORT DATA", async () => {
+    const { storageFake } = crearFakeStorage([
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
+        metadata: { size: 1024 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/metadata.json",
+        metadata: { size: 10 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo.csv",
+        metadata: { size: 20 },
+      },
+    ]);
+    const cliente = new ClienteGcs({
+      projectId: "test-project",
+      storage: storageFake,
+    });
+
+    const resultado = await cliente.listar(
+      "POCs/TalendDescargados/ventas/e-1/",
+    );
+
+    expect(resultado.map((archivo) => archivo.nombre)).toEqual([
+      "parte-001-000000000000.csv.gz",
+    ]);
+  });
+
+  test("firmar fuerza descarga con el nombre del archivo", async () => {
+    const getSignedUrl = vi.fn(async () => ["https://storage.test/signed"]);
+    const file = vi.fn(() => ({ getSignedUrl }) as unknown as File);
+    const bucket = vi.fn(() => ({ file }) as unknown as Bucket);
+    const storage = { bucket } as unknown as Storage;
+    const cliente = new ClienteGcs({ projectId: "test-project", storage });
+    const objeto =
+      "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz";
+
+    await cliente.firmar(objeto, 15);
+
+    expect(getSignedUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: "v4",
+        action: "read",
+        responseDisposition:
+          'attachment; filename="parte-001-000000000000.csv.gz"',
+      }),
+    );
+  });
 });
 
 describe("URI_BASE_GCS_REPORTES", () => {
@@ -57,11 +106,11 @@ describe("ClienteGcs con fake Storage", () => {
   test("listar debe usar bucket bkt_dwh y getFiles con prefix", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
       {
-        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        name: "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
         metadata: { size: 1024 },
       },
       {
-        name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv",
+        name: "POCs/TalendDescargados/ventas/e-1/parte-002-000000000000.csv.gz",
         metadata: { size: 2048 },
       },
     ];
@@ -84,11 +133,11 @@ describe("ClienteGcs con fake Storage", () => {
   test("listar debe filtrar archivos terminados en /", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
       {
-        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        name: "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
         metadata: { size: 1024 },
       },
       {
-        name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv",
+        name: "POCs/TalendDescargados/ventas/e-1/parte-002-000000000000.csv.gz",
         metadata: { size: 2048 },
       },
       {
@@ -109,13 +158,13 @@ describe("ClienteGcs con fake Storage", () => {
     );
 
     expect(resultado).toHaveLength(2);
-    expect(resultado[0].nombre).toBe("archivo1.csv");
+    expect(resultado[0].nombre).toBe("parte-001-000000000000.csv.gz");
   });
 
   test("listar debe convertir metadata.size a numero", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
       {
-        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        name: "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
         metadata: { size: "1024" },
       },
     ];
