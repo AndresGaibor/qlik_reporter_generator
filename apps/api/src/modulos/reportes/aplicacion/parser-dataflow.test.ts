@@ -48,4 +48,27 @@ describe("parsearDataflow", () => {
       ]),
     );
   });
+  it("usa como salida la tabla almacenada antes del DROP en el Dataflow real", async () => {
+    const real = new URL(
+      "../fixtures/dataflow-bigquery-filtro-fecha-real.qlik",
+      import.meta.url,
+    );
+    const plan = parsearDataflow(await Bun.file(real).text());
+
+    expect(plan.operacionesNoSoportadas).toEqual([]);
+    expect(plan.salida).toEqual({
+      tablaLogica: "Filtro 1_DEFAULT",
+      campos: ["Fecha", "Venta_Neta_USD"],
+    });
+    expect(plan.pasos).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tipo: "filtrar",
+          dialecto: "qlik",
+          condicion: "[Fecha] = '6/1/2026'",
+        }),
+      ]),
+    );
+  });
+
 });

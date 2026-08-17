@@ -91,4 +91,20 @@ describe("compilarPlanABigQuery", () => {
     };
     expect(() => compilarPlanABigQuery(plan)).toThrow("ApplyMap");
   });
+  it("compila el Dataflow real con filtro de fecha y sin STORE/DROP/SET", async () => {
+    const real = new URL(
+      "../fixtures/dataflow-bigquery-filtro-fecha-real.qlik",
+      import.meta.url,
+    );
+    const plan = parsearDataflow(await Bun.file(real).text());
+    const { sql, camposSalida } = compilarPlanABigQuery(plan);
+
+    expect(camposSalida).toEqual(["Fecha", "Venta_Neta_USD"]);
+    expect(sql).toContain(
+      "`poc-bigquery-talend.demo_lafavorita.VENTAS_COMERCIAL_DIARIAS_D`",
+    );
+    expect(sql).toContain("WHERE `Fecha` = DATE '2026-06-01'");
+    expect(sql).not.toMatch(/\b(?:STORE|DROP|SET)\b/i);
+  });
+
 });

@@ -30,6 +30,7 @@ export type PasoDataflow =
       salida: string;
       condicion: string;
       dialecto: DialectoExpresion;
+      formatoFechaQlik?: string;
     }
   | {
       tipo: "proyectar";

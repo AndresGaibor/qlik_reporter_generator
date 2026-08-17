@@ -38,6 +38,8 @@ export function parsearDataflow(script: string): PlanDataflow {
   const tablasActivas = new Set<string>();
   const tablasUsuario: string[] = [];
   let conexionActual: string | undefined;
+  let formatoFechaQlik: string | undefined;
+  let tablaSalidaStore: string | undefined;
   let cargaPendiente: CargaPendiente | undefined;
   let secuencia = 0;
 
@@ -57,6 +59,10 @@ export function parsearDataflow(script: string): PlanDataflow {
       conexionActual = conexion[1]?.trim();
       continue;
     }
+    const setDateFormat = sentencia.match(
+      /^SET\s+DateFormat\s*=\s*'([^']+)'$/i,
+    );
+    if (setDateFormat?.[1]) formatoFechaQlik = setDateFormat[1].trim();
     if (/^(SET|TRACE)\b/i.test(sentencia)) continue;
     if (/^LET\b/i.test(sentencia)) {
       operacionesNoSoportadas.push({
@@ -70,6 +76,10 @@ export function parsearDataflow(script: string): PlanDataflow {
     if (drop) {
       tablasActivas.delete(drop[1] ?? "");
       continue;
+    }
+    const store = sentencia.match(/^STORE\s+\[([^\]]+)\]\s+INTO\b/i);
+    if (store?.[1] && camposPorTabla.has(store[1].trim())) {
+      tablaSalidaStore = store[1].trim();
     }
     if (/^STORE\b/i.test(sentencia)) continue;
 
@@ -154,6 +164,7 @@ export function parsearDataflow(script: string): PlanDataflow {
             salida: filtrada,
             condicion: carga.where,
             dialecto: "qlik",
+            ...(formatoFechaQlik ? { formatoFechaQlik } : {}),
           });
           camposPorTabla.set(filtrada, camposPorTabla.get(relacion) ?? []);
           relacion = filtrada;
@@ -197,7 +208,10 @@ export function parsearDataflow(script: string): PlanDataflow {
     operacionesNoSoportadas.push({ operacion: "LOAD", detalle: "LOAD sin SELECT o RESIDENT asociado" });
   }
 
-  const tablaSalida = [...tablasUsuario].reverse().find((tabla) => tablasActivas.has(tabla))
+  const tablaSalida = (tablaSalidaStore && camposPorTabla.has(tablaSalidaStore)
+    ? tablaSalidaStore
+    : undefined)
+    ?? [...tablasUsuario].reverse().find((tabla) => tablasActivas.has(tabla))
     ?? [...tablasUsuario].reverse()[0]
     ?? fuentes.at(-1)?.id
     ?? "";
@@ -319,7 +333,9 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
 }
 
 function parsearSelectSql(sentencia: string): SelectSql | undefined {
-  const match = sentencia.match(/^(?:SQL\s+)?SELECT\s+([\s\S]+?)\s+FROM\s+(`[^`]+`|\[[^\]]+\]|(?:"[^"]+"\s*\.\s*){1,2}"[^"]+"|[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){1,2})([\s\S]*)$/i);
+  const match = sentencia.match(
+    /^(?:SQL\s+)?SELECT\s+([\s\S]+?)\s+FROM\s+(`[^`]+`(?:\s*\.\s*`[^`]+`){0,2}|\[[^\]]+\]|(?:"[^"]+"\s*\.\s*){1,2}"[^"]+"|[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){1,2})([\s\S]*)$/i,
+  );
   if (!match) return undefined;
   let lista = match[1]?.trim() ?? "";
   const distinct = /^DISTINCT\b/i.test(lista);
@@ -446,8 +462,11 @@ function buscarPalabra(texto: string, palabra: string, desde = 0): number {
 }
 
 function normalizarTabla(tabla: string): string {
-  const limpia = tabla.trim().replace(/^`|`$/g, "").replace(/^\[|\]$/g, "");
-  return limpia.replace(/"\s*\.\s*"/g, ".").replace(/^"|"$/g, "");
+  const limpia = tabla.trim().replace(/^\[|\]$/g, "");
+  return limpia
+    .replace(/`\s*\.\s*`/g, ".")
+    .replace(/"\s*\.\s*"/g, ".")
+    .replace(/[`"]/g, "");
 }
 
 function nombreCampo(expresion: string): string {

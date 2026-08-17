@@ -55,7 +55,11 @@ export function compilarPlanABigQuery(
       const entrada = obtenerRelacion(relaciones, paso.entrada);
       const cte = nuevaCte("filtro");
       ctes.push(
-        `${cte} AS (\n    SELECT *\n    FROM ${entrada.cte}\n    WHERE ${traducirExpresion(paso.condicion, paso.dialecto)}\n  )`,
+        `${cte} AS (\n    SELECT *\n    FROM ${entrada.cte}\n    WHERE ${traducirExpresion(
+          paso.condicion,
+          paso.dialecto,
+          paso.formatoFechaQlik,
+        )}\n  )`,
       );
       relaciones.set(paso.salida, { cte, campos: entrada.campos });
       continue;
@@ -161,15 +165,42 @@ function compilarOrden(campos: OrdenDataflow[]): string {
 export function traducirExpresion(
   expresion: string,
   dialecto: DialectoExpresion,
+  formatoFechaQlik?: string,
 ): string {
   if (dialecto === "bigquery") return expresion.trim();
   let resultado = traducirFunciones(expresion.trim());
+  resultado = traducirLiteralesFechaQlik(resultado, formatoFechaQlik);
   resultado = resultado.replace(/\[([^\]]+)\]/g, (_match, nombre: string) =>
     citarIdentificador(nombre),
   );
   resultado = reemplazarFueraDeComillas(resultado, "<>", "!=");
   resultado = reemplazarAmpersand(resultado);
   return resultado;
+}
+
+function traducirLiteralesFechaQlik(
+  texto: string,
+  formatoFechaQlik?: string,
+): string {
+  if (!formatoFechaQlik) return texto;
+  if (formatoFechaQlik.toUpperCase() !== "M/D/YYYY") return texto;
+  return texto.replace(
+    /'([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})'/g,
+    (_match, mes: string, dia: string, anio: string) => {
+      const mesNumero = Number(mes);
+      const diaNumero = Number(dia);
+      const anioNumero = Number(anio);
+      const fecha = new Date(Date.UTC(anioNumero, mesNumero - 1, diaNumero));
+      if (
+        fecha.getUTCFullYear() !== anioNumero ||
+        fecha.getUTCMonth() !== mesNumero - 1 ||
+        fecha.getUTCDate() !== diaNumero
+      ) {
+        return _match;
+      }
+      return `DATE '${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}'`;
+    },
+  );
 }
 
 function traducirFunciones(texto: string): string {
