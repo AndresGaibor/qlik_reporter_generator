@@ -1,4 +1,4 @@
-CREATE TABLE "ejecuciones_reportes" (
+CREATE TABLE IF NOT EXISTS "ejecuciones_reportes" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "configuracion_id" uuid NOT NULL,
   "flujo_id_qlik" text NOT NULL,
@@ -22,13 +22,20 @@ CREATE TABLE "ejecuciones_reportes" (
   CONSTRAINT "ejecuciones_reportes_estado_check" CHECK ("estado" IN ('preparando', 'iniciada', 'completada', 'error', 'detenida'))
 );
 --> statement-breakpoint
-ALTER TABLE "ejecuciones_reportes"
-  ADD CONSTRAINT "ejecuciones_reportes_configuracion_id_configuraciones_automatizacion_id_fk"
-  FOREIGN KEY ("configuracion_id") REFERENCES "public"."configuraciones_automatizacion"("id")
-  ON DELETE cascade ON UPDATE no action;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'ejecuciones_reportes_configuracion_id_configuraciones_automatizacion_id_fk'
+  ) THEN
+    ALTER TABLE "ejecuciones_reportes"
+      ADD CONSTRAINT "ejecuciones_reportes_configuracion_id_configuraciones_automatizacion_id_fk"
+      FOREIGN KEY ("configuracion_id") REFERENCES "public"."configuraciones_automatizacion"("id")
+      ON DELETE cascade ON UPDATE no action;
+  END IF;
+END $$;
 --> statement-breakpoint
-CREATE INDEX "idx_ejecuciones_reportes_config_fecha"
+CREATE INDEX IF NOT EXISTS "idx_ejecuciones_reportes_config_fecha"
   ON "ejecuciones_reportes" USING btree ("configuracion_id", "creado_en");
 --> statement-breakpoint
-CREATE INDEX "idx_ejecuciones_reportes_run_qlik"
+CREATE INDEX IF NOT EXISTS "idx_ejecuciones_reportes_run_qlik"
   ON "ejecuciones_reportes" USING btree ("run_id_qlik");

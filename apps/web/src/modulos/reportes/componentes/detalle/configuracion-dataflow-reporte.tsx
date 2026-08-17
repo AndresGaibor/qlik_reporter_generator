@@ -3,9 +3,9 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import {
   actualizarConfiguracionReporte,
-  obtenerFlujosConFiltros,
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
+import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
 import type {
   ActualizarConfiguracionReporte,
   ConfiguracionReporteDataflow,

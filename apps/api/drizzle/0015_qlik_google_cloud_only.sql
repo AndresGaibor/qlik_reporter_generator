@@ -1,6 +1,7 @@
-DROP TABLE IF EXISTS "programaciones_automatizacion";
-DROP TABLE IF EXISTS "conexiones_origen";
-DROP TABLE IF EXISTS "destinos_cache";
+DROP TABLE IF EXISTS "programaciones_automatizacion" CASCADE;
+DROP TABLE IF EXISTS "secretos_conexion_origen" CASCADE;
+DROP TABLE IF EXISTS "conexiones_origen" CASCADE;
+DROP TABLE IF EXISTS "destinos_cache" CASCADE;
 ALTER TABLE "configuraciones_automatizacion" DROP COLUMN IF EXISTS "programar";
 ALTER TABLE "tenants_qlik" DROP COLUMN IF EXISTS "destino_api_url", DROP COLUMN IF EXISTS "destino_api_key_cifrada", DROP COLUMN IF EXISTS "destino_base_datos";
 UPDATE "ejecuciones_reportes" SET "tipo_ejecucion" = 'manual' WHERE "tipo_ejecucion" <> 'manual';
