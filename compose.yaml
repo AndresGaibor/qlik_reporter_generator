@@ -24,10 +24,10 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: ${PORT_API:-7823}
+      PORT: ${PORT_API:-4523}
       DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
     ports:
-      - "${HOST_IP:-127.0.0.1}:${PORT_API:-7823}:${PORT_API:-7823}"
+      - "${HOST_IP:-127.0.0.1}:${PORT_API:-4523}:${PORT_API:-4523}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,12 +38,12 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      PORT_API: ${PORT_API:-7823}
+      PORT_API: ${PORT_API:-4523}
     depends_on:
       api:
         condition: service_healthy
     ports:
-      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-3847}:80"
+      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-4524}:80"
 
 volumes:
   postgres_data:

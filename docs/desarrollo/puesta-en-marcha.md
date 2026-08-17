@@ -10,9 +10,9 @@ bun run dev:api
 bun run dev
 ```
 
-API: `http://localhost:3000`
+API: `http://localhost:4523`
 
-Frontend: `http://localhost:5173`
+Frontend: `http://localhost:4525`
 
 ## Variables críticas
 

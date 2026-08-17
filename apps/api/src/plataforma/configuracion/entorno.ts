@@ -11,14 +11,14 @@ const esquemaEntorno = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
+  FRONTEND_URL: z.string().url().default("http://localhost:4525"),
   DATABASE_URL: z.string().min(1),
   QLIK_CLIENT_ID: textoOpcional,
   QLIK_CLIENT_SECRET: textoOpcional,
   QLIK_REDIRECT_URI: z
     .string()
     .url()
-    .default("http://localhost:3000/api/auth/qlik/callback"),
+    .default("http://localhost:4523/api/auth/qlik/callback"),
   QLIK_TENANT_HOST: z.string().min(1).transform(normalizarHostQlik).optional(),
   QLIK_OAUTH_SCOPES: z.string().optional(),
   QLIK_OAUTH_TIMEOUT_MS: z.coerce

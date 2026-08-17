@@ -91,7 +91,7 @@ describe("API", () => {
 
     const respuesta = await app.request("/api/auth/qlik/cerrar-sesion", {
       method: "POST",
-      headers: { Origin: "http://localhost:5173" },
+      headers: { Origin: "http://localhost:4525" },
     });
 
     expect(respuesta.status).toBe(200);
@@ -178,7 +178,7 @@ describe("API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Origin: "http://localhost:5173",
+          Origin: "http://localhost:4525",
         },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
@@ -194,7 +194,7 @@ describe("API", () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Origin: "http://localhost:5173",
+          Origin: "http://localhost:4525",
         },
         body: JSON.stringify({
           automatizacionBaseIdQlik: "auto1",
@@ -203,5 +203,34 @@ describe("API", () => {
       },
     );
     expect(res2.status).toBe(200);
+  });
+  it("monta el preflight Dataflow bajo /api/reportes", async () => {
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik: async () =>
+        ({
+          obtenerScriptApp: async () => ({
+            script:
+              "LIB CONNECT TO [Google BigQuery:Prod]; [x]: LOAD [id]; SQL SELECT id FROM `p.d.t`;",
+          }),
+        }) as never,
+      resolverBigQueryReporte: async () => ({
+        projectId: "p",
+        dataset: "d",
+        estimador: {
+          estimarConsulta: async () => ({
+            bytesProcesados: 10,
+            costoEstimadoUsd: 0,
+          }),
+        },
+      }),
+    } as Parameters<typeof crearAplicacion>[0] & Record<string, unknown>);
+
+    const respuesta = await app.request(
+      "/api/reportes/dataflows/flujo-1/preflight",
+    );
+    const cuerpo = await respuesta.json();
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo.datos.compatible).toBe(true);
   });
 });

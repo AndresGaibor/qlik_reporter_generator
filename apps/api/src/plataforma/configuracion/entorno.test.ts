@@ -18,4 +18,16 @@ describe("configuración de entorno OAuth", () => {
     expect(configuracion.QLIK_CLIENT_ID).toBeUndefined();
     expect(configuracion.QLIK_CLIENT_SECRET).toBeUndefined();
   });
+
+  it("usa por defecto los puertos de desarrollo (frontend 4525, API 4523)", () => {
+    const configuracion = cargarConfiguracion({
+      DATABASE_URL: "postgres://usuario:clave@localhost:5432/app",
+      CIFRADO_CLAVE_PRINCIPAL: "clave-principal-pruebas",
+    });
+
+    expect(configuracion.FRONTEND_URL).toBe("http://localhost:4525");
+    expect(configuracion.QLIK_REDIRECT_URI).toBe(
+      "http://localhost:4523/api/auth/qlik/callback",
+    );
+  });
 });

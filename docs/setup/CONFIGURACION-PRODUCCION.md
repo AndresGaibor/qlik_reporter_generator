@@ -13,10 +13,10 @@ Cloudflare Tunnel y OAuth de Qlik Cloud.
 Navegador
   ↓ HTTPS
 Cloudflare Tunnel
-  ↓ HTTP localhost:3847
+  ↓ HTTP localhost:4524
 Contenedor web (nginx)
   ├── /       → frontend React/Vite
-  └── /api/* → contenedor api:7823
+  └── /api/* → contenedor api:4523
                     ↓
                 PostgreSQL
 ```
@@ -33,8 +33,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
-La aplicación web queda en `http://<servidor>:3847` y la API en el puerto
-interno `7823`.
+La aplicación web queda en `http://<servidor>:4524` y la API en el puerto
+interno `4523`.
 
 Para Cloudflare Tunnel, `.env` no necesita contener el dominio ni las
 credenciales OAuth. El wizard guarda la URL pública y la configuración OAuth
@@ -96,8 +96,8 @@ credentials-file: /home/andresadmin/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
   - hostname: apiqac.andresgaibor.com
-    service: http://127.0.0.1:3847
-  - service: http://127.0.0.1:3847
+    service: http://127.0.0.1:4524
+  - service: http://127.0.0.1:4524
 ```
 
 Asocia el hostname e inicia el túnel:
@@ -120,12 +120,12 @@ su estado con `systemctl status cloudflared`.
 ### Por Qué No Usar Un Registro A Directo
 
 El servidor puede tener Apache/Plesk ocupando el puerto 80, mientras Docker
-publica el frontend en `3847`. Cloudflare no permite indicar `3847` en un
+publica el frontend en `4524`. Cloudflare no permite indicar `4524` en un
 registro A proxied estándar; el acceso directo puede mostrar Plesk, redirigir a
 otro puerto o producir el error 526.
 
 El Tunnel evita ese conflicto porque conecta directamente con
-`127.0.0.1:3847`.
+`127.0.0.1:4524`.
 
 ## Configuración OAuth En Qlik Cloud
 
@@ -137,7 +137,7 @@ En la aplicación OAuth de Qlik Cloud registra:
 https://apiqac.andresgaibor.com
 ```
 
-Para desarrollo local se puede conservar adicionalmente `http://localhost:5173`.
+Para desarrollo local se puede conservar adicionalmente `http://localhost:4525`.
 
 ### Redirect URI
 
@@ -234,7 +234,7 @@ reconstruye `api` sin caché.
 
 Cloudflare está intentando validar HTTPS contra el servidor origen. En esta
 arquitectura el Tunnel termina la conexión pública y reenvía HTTP a
-`127.0.0.1:3847`. Verifica que el túnel esté activo y que el ingress apunte a
+`127.0.0.1:4524`. Verifica que el túnel esté activo y que el ingress apunte a
 ese puerto.
 
 ### Qlik Redirige A Localhost
