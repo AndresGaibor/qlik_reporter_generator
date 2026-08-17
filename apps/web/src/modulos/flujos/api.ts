@@ -17,7 +17,7 @@ export function obtenerFlujosConFiltros(espacioId?: string, busqueda?: string) {
 }
 
 export function obtenerEspacios() {
-  return clienteApi.get<EspacioDisponible[]>("/automatizaciones/espacios");
+  return clienteApi.get<EspacioDisponible[]>("/reportes/espacios");
 }
 
 export interface RespuestaScriptFlujo {
