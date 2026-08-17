@@ -9,13 +9,17 @@ import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { useState } from "react";
 import type { DetalleTenant } from "../api";
+import {
+  FilaUsuario,
+  TarjetaUsuario,
+  type UsuarioTenant,
+} from "./elementos-usuario-tabla";
 import { ModalAgregarUsuario } from "./modal-agregar-usuario";
 import {
   puedeCambiarRolUsuario,
   puedeQuitarUsuario,
 } from "./usuarios-permisos";
 
-type UsuarioTenant = DetalleTenant["usuarios"][number];
 interface Props {
   usuarios: UsuarioTenant[];
   onActualizarRol: (params: {
@@ -189,127 +193,5 @@ export function SeccionUsuarios({
         mensaje={confirmDialog.mensaje}
       />
     </>
-  );
-}
-
-function SelectorRol({
-  usuario,
-  usuarios,
-  ocupado,
-  onRol,
-}: {
-  usuario: UsuarioTenant;
-  usuarios: UsuarioTenant[];
-  ocupado: boolean;
-  onRol: (usuario: UsuarioTenant, rol: "admin" | "usuario") => void;
-}) {
-  const ultimoAdmin =
-    usuario.rol === "admin" &&
-    !puedeCambiarRolUsuario(usuario, "usuario", usuarios);
-  return (
-    <div>
-      <select
-        aria-label={`Rol de ${usuario.nombre}`}
-        value={usuario.rol}
-        disabled={ocupado || ultimoAdmin}
-        onChange={(e) => onRol(usuario, e.target.value as "admin" | "usuario")}
-        className="min-h-10 rounded-md border border-line-200 bg-surface px-3 py-2 text-xs text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <option value="usuario">Usuario final</option>
-        <option value="admin">Administrador</option>
-      </select>
-      {ultimoAdmin && (
-        <p className="mt-1 text-[11px] text-ink-500">Último administrador</p>
-      )}
-    </div>
-  );
-}
-function FilaUsuario({
-  usuario,
-  usuarios,
-  ocupado,
-  onRol,
-  onQuitar,
-}: {
-  usuario: UsuarioTenant;
-  usuarios: UsuarioTenant[];
-  ocupado: boolean;
-  onRol: (usuario: UsuarioTenant, rol: "admin" | "usuario") => void;
-  onQuitar: (usuario: UsuarioTenant) => void;
-}) {
-  const puedeQuitar = puedeQuitarUsuario(usuario, usuarios);
-  return (
-    <tr className="transition-colors hover:bg-hover">
-      <td className="px-4 py-3 font-medium text-ink-900">{usuario.nombre}</td>
-      <td className="px-4 py-3 font-mono text-xs text-ink-600">
-        {usuario.correo || "—"}
-      </td>
-      <td className="px-4 py-3">
-        <SelectorRol
-          usuario={usuario}
-          usuarios={usuarios}
-          ocupado={ocupado}
-          onRol={onRol}
-        />
-      </td>
-      <td className="px-4 py-3 text-right">
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={ocupado || !puedeQuitar}
-          title={
-            !puedeQuitar
-              ? "No puedes quitar al último administrador"
-              : undefined
-          }
-          className="text-danger-600 hover:bg-red-50"
-          onClick={() => onQuitar(usuario)}
-        >
-          Quitar
-        </Button>
-      </td>
-    </tr>
-  );
-}
-function TarjetaUsuario({
-  usuario,
-  usuarios,
-  ocupado,
-  onRol,
-  onQuitar,
-}: {
-  usuario: UsuarioTenant;
-  usuarios: UsuarioTenant[];
-  ocupado: boolean;
-  onRol: (usuario: UsuarioTenant, rol: "admin" | "usuario") => void;
-  onQuitar: (usuario: UsuarioTenant) => void;
-}) {
-  const puedeQuitar = puedeQuitarUsuario(usuario, usuarios);
-  return (
-    <article className="space-y-4 p-4">
-      <div>
-        <p className="font-medium text-ink-900">{usuario.nombre}</p>
-        <p className="mt-1 break-all font-mono text-xs text-ink-500">
-          {usuario.correo || "—"}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <SelectorRol
-          usuario={usuario}
-          usuarios={usuarios}
-          ocupado={ocupado}
-          onRol={onRol}
-        />
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={ocupado || !puedeQuitar}
-          className="text-danger-600"
-          onClick={() => onQuitar(usuario)}
-        >
-          Quitar acceso
-        </Button>
-      </div>
-    </article>
   );
 }
