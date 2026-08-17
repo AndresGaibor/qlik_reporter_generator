@@ -10,6 +10,7 @@ import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
+import { URI_BASE_GCS_REPORTES } from "../../../reportes/dominio/destino-gcs.js";
 import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
   completarIdempotencia,
@@ -17,8 +18,6 @@ import {
   verificarIdempotencia,
 } from "../servicios/servicio-idempotencia.js";
 import { hashCanonico } from "../servicios/utilidades-automatizacion.js";
-
-const DESTINO_GCS_REPORTES = "gs://bkt_dwh/POCs/TalendDescargados/";
 
 export interface ContextoCreacionAutomatizacion {
   tenantId: string;
@@ -131,7 +130,7 @@ export class CrearAutomatizacionDesdePlantilla {
         flujoNombreSnapshot: flujo.name,
         ...(flujo.spaceId ? { flujoEspacioIdQlik: flujo.spaceId } : {}),
         destinoProveedor: "gcs",
-        destinoIdExterno: DESTINO_GCS_REPORTES,
+        destinoIdExterno: URI_BASE_GCS_REPORTES,
         destinoNombreSnapshot: "TalendDescargados",
         automatizacionIdQlik: resultado.id,
         automatizacionNombreSnapshot: resultado.nombre,

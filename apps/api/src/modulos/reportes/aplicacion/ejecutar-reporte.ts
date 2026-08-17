@@ -14,8 +14,7 @@ import {
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
 import { construirScriptExportacionCsv } from "./script-exportacion-csv.js";
 import { inyectarContextoTalend } from "./servicio-contexto-talend.js";
-
-const BASE_GCS = "gs://bkt_dwh/POCs/TalendDescargados/";
+import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 const VERSION_COMPILADOR = 1;
 
 export interface EntradaEjecutarReporte {
@@ -178,5 +177,5 @@ function construirUriEjecucion(
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80) || "reporte";
-  return `${BASE_GCS}${segmento}/${ejecucionId}/`;
+  return `${URI_BASE_GCS_REPORTES}${segmento}/${ejecucionId}/`;
 }
