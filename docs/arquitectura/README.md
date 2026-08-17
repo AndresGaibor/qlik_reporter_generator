@@ -62,7 +62,7 @@ Cada módulo expone únicamente su `publico.ts`. Los consumidores no deben impor
 2. El contrato Zod valida parámetros, query o cuerpo.
 3. La ruta construye la entrada del caso de uso; no consulta repositorios.
 4. El caso de uso coordina dominio y puertos.
-5. Un adaptador implementa PostgreSQL, Qlik o la API remota.
+5. Un adaptador implementa PostgreSQL, Qlik, BigQuery o GCS.
 6. Los helpers HTTP devuelven el contrato común en español.
 7. El manejador central traduce errores de validación, aplicación y Qlik.
 

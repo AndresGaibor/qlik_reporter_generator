@@ -1,10 +1,23 @@
-# Arquitectura — Qlik Automatizaciones
+# Arquitectura — Qlik Reportes Creator
 
 ## Decisión principal
 
-El sistema es un **monolito modular on-premise**. El backend se ejecuta principalmente con Bun, genera una entrada compatible con Node.js y usa PostgreSQL como fuente de verdad. Hono es la capa HTTP; Drizzle queda confinado a adaptadores de persistencia.
+El sistema es un **monolito modular** que persiste en PostgreSQL y se integra con Qlik Cloud, Qlik Automate, Talend, BigQuery y GCS.
 
-Una organización puede conectar varios tenants de Qlik Cloud. PostgreSQL garantiza que como máximo uno esté marcado como principal mediante el índice parcial `uq_tenant_principal_por_organizacion`.
+```
+Usuario → qlik_reportes_creator → Qlik Dataflow (lectura)
+                              → Qlik Automate → Talend → BigQuery → GCS
+                              → BigQuery (preflight/resultados)
+                              → GCS (descargas firmadas)
+PostgreSQL = persistencia interna
+```
+
+- **Qlik Dataflow** define fuentes, campos, filtros, joins y agregaciones. Se relee en cada ejecución.
+- **Qlik Automate** orquesta el Job de Talend. La plataforma actualiza el workspace antes de disparar.
+- **Talend** ejecuta el SQL compilado en BigQuery y exporta a GCS.
+- **BigQuery** es el motor de cálculo y preflight.
+- **GCS** (`bkt_dwh/POCs/TalendDescargados/`) recibe los CSV firmados.
+- **PostgreSQL** solo persiste estado interno: organizaciones, sesiones, reportes y auditoría de ejecuciones.
 
 ## Estructura
 
@@ -49,7 +62,9 @@ Las respuestas usan el contrato común `{ exito, datos }` o `{ exito, error }`. 
 
 ## Integraciones
 
-Qlik Cloud y la API externa de destinos son puertos reemplazables. El frontend nunca consume directamente esas integraciones: todas las llamadas atraviesan el backend.
+Qlik Cloud, BigQuery y GCS son puertos reemplazables. El frontend nunca consume directamente esas integraciones: todas las llamadas atraviesan el backend.
+
+PostgreSQL es exclusivamente persistencia interna.
 
 ## Despliegue
 

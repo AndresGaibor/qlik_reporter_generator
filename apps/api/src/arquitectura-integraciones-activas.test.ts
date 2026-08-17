@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { readdir, readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const RAIZ = join(__dirname, "../../../..");
@@ -57,19 +57,41 @@ describe("arquitectura-integraciones-activas", () => {
     expect(tiene).toBe(false);
   });
 
-  it("no debe tener ssh2-sftp-client como dependencia", async () => {
+  it("no debe tener ssh2-sftp-client ni cron-parser como dependencia", async () => {
     const pkg = await contenidoPackageJson();
     expect(pkg.dependencies).not.toHaveProperty("ssh2-sftp-client");
-    expect(pkg.dependencies).not.toHaveProperty("@types/ssh2-sftp-client");
+    expect(pkg.devDependencies).not.toHaveProperty("ssh2-sftp-client");
+    expect(pkg.dependencies).not.toHaveProperty("cron-parser");
+    expect(pkg.devDependencies).not.toHaveProperty("cron-parser");
   });
 
   it("no debe usar Impala, SFTP, JDBC o Spark en código activo", async () => {
-    const codigo = await contenidoCodigo(dirs);
-    expect(codigo).not.toMatch(/\b(Impala|SFTP|JDBC|Spark)\b/);
+    const codigoActivo = await contenidoCodigo(dirs);
+    for (const termino of [
+      /\bImpala\b/i,
+      /\bSFTP\b/i,
+      /\bJDBC\b/i,
+      /\bSpark\b/,
+    ]) {
+      expect(codigoActivo).not.toMatch(termino);
+    }
   });
 
   it("no debe usar REMOTE_API_URL ni REMOTE_API_KEY en código activo", async () => {
-    const codigo = await contenidoCodigo(dirs);
-    expect(codigo).not.toMatch(/\bREMOTE_API_(URL|KEY)\b/);
+    const codigoActivo = await contenidoCodigo(dirs);
+    expect(codigoActivo).not.toMatch(/REMOTE_API_(URL|KEY)/);
+  });
+
+  it("no debe usar identificadores de legacy en código activo", async () => {
+    const codigoActivo = await contenidoCodigo(dirs);
+    for (const identificador of [
+      "destinoApiUrl",
+      "destinoApiKey",
+      "destinoBaseDatos",
+      "conexionesOrigen",
+      "destinosCache",
+    ]) {
+      expect(codigoActivo).not.toContain(identificador);
+    }
   });
 });

@@ -39,7 +39,3 @@ La migración `0001_arquitectura_modular.sql` incorpora:
 - `eventos_outbox`
 
 La auditoría reutiliza `auditoria_eventos`.
-
-## Cloudflare Worker
-
-`apps/api/src/entradas/worker.ts` expone el handler Hono. El adaptador PostgreSQL actual necesita conectividad compatible con PostgreSQL desde Worker, por ejemplo Hyperdrive, y `nodejs_compat` porque la capa de cifrado y el driver usan APIs de Node. La arquitectura permite sustituir esos adaptadores desde `app.ts` sin tocar dominio ni HTTP.

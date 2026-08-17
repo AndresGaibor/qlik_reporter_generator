@@ -1,5 +1,9 @@
 # Reportes diseñados con Qlik Dataflow y ejecutados con BigQuery
 
+> **SUPERSEDIDA** — Esta especificación fue reemplazada por la spec del 2026-08-17.
+> El contenido histórico se conserva sin modificaciones a efectos de auditoría.
+> No describe el estado actual del producto.
+
 ## Objetivo
 
 Evolucionar `qlik_reportes_creator` para que Qlik Dataflow sea el diseñador visual del reporte, mientras la ejecución continúa orquestada por Qlik Automate y el Job de Talend existente.

@@ -1,6 +1,22 @@
-# Qlik Automate Creator
+# Qlik Reportes Creator
 
-Aplicación web para consultar, ejecutar y crear automatizaciones de Qlik a partir de una automatización base. El backend expone una API REST en español con OAuth 2.0 + PKCE para autenticación con Qlik Cloud.
+Aplicación web para crear y ejecutar reportes basados en Qlik Dataflow. El backend expone una API REST en español con OAuth 2.0 + PKCE para autenticación con Qlik Cloud.
+
+## Arquitectura
+
+```
+Usuario → qlik_reportes_creator → Qlik Dataflow (lectura)
+                              → Qlik Automate → Talend → BigQuery → GCS
+                              → BigQuery (preflight/resultados)
+                              → GCS (descargas firmadas)
+PostgreSQL = persistencia interna
+```
+
+- **Qlik Dataflow** define el diseño visual del reporte; se relee en cada ejecución.
+- **Qlik Automate** orquesta la ejecución del Job de Talend.
+- **Talend** ejecuta el SQL compilado en BigQuery.
+- **BigQuery** procesa y exporta a **GCS** (`bkt_dwh/POCs/TalendDescargados/`).
+- **PostgreSQL** solo persiste estado interno (organizaciones, sesiones, ejecuciones).
 
 ## Requisitos
 
