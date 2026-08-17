@@ -109,9 +109,9 @@ export function FormularioCrearAutomatizacion({
           Crear automatización en Qlik Automate
         </h2>
         <p className="mt-1 text-sm text-ink-500">
-           Elige el Dataflow de Qlik del que vienen tus datos y el recurso de
-          destino al que quieres que lleguen. Nosotros configuramos el resto
-          por ti.
+          Elige el Dataflow de Qlik del que vienen tus datos y el recurso de
+          destino al que quieres que lleguen. Nosotros configuramos el resto por
+          ti.
         </p>
       </div>
 
@@ -137,10 +137,10 @@ export function FormularioCrearAutomatizacion({
 
             <div>
               <SelectBuscable
-                 etiqueta={`2. Recurso destino (${etiquetaDestino})`}
-                 placeholder="Elige dónde guardar el resultado..."
-                 searchPlaceholder="Busca por nombre…"
-                 emptyText="No se encontraron recursos en la conexión seleccionada."
+                etiqueta={`2. Recurso destino (${etiquetaDestino})`}
+                placeholder="Elige dónde guardar el resultado..."
+                searchPlaceholder="Busca por nombre…"
+                emptyText="No se encontraron recursos en la conexión seleccionada."
                 opciones={opcionesTablas}
                 valorSeleccionado={tablaId}
                 onSeleccionar={setTablaId}

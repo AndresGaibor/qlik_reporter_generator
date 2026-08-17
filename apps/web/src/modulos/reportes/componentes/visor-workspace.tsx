@@ -13,10 +13,7 @@ import type { WorkspaceAutomatizacion } from "@/modulos/reportes/api";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  BloqueCard,
-  VariableCard,
-} from "./workspace/bloque-workspace-cards";
+import { BloqueCard, VariableCard } from "./workspace/bloque-workspace-cards";
 import {
   extraerBloques,
   extraerVariables,

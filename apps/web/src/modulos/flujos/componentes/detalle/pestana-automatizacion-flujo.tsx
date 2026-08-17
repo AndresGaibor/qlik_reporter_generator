@@ -1,7 +1,7 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { Link } from "@tanstack/react-router";
 import type { ResumenAutomatizacion } from "@/modulos/reportes/api";
+import { Link } from "@tanstack/react-router";
 import type { ResumenFlujo } from "../../api";
 
 export function PestanaAutomatizacionFlujo({
@@ -19,7 +19,8 @@ export function PestanaAutomatizacionFlujo({
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
               <h4 className="font-semibold text-sm text-gray-900">
-                Este Dataflow ya tiene una automatización activa en Qlik Automate
+                Este Dataflow ya tiene una automatización activa en Qlik
+                Automate
               </h4>
             </div>
             <Button

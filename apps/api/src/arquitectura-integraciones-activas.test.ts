@@ -22,7 +22,6 @@ async function contenidoCodigo(directorios: string[]): Promise<string> {
       for (const entrada of entradas) {
         if (typeof entrada !== "string") continue;
         if (!/\.(ts|tsx|js|jsx)$/.test(entrada)) continue;
-        if (entrada.endsWith(".d.ts")) continue;
         if (entrada.includes(".test.")) continue;
         if (entrada.includes("arquitectura-integraciones-activas")) continue;
         const rutaCompleta = join(rutaAbs, entrada);
@@ -76,6 +75,12 @@ describe("arquitectura-integraciones-activas", () => {
     expect(tiene).toBe(false);
   });
 
+  it("no debe conservar declaraciones TypeScript de SFTP", async () => {
+    expect(
+      await existe("apps/api/src/plataforma/tipos/ssh2-sftp-client.d.ts"),
+    ).toBe(false);
+  });
+
   it("no debe tener ssh2-sftp-client ni cron-parser como dependencia", async () => {
     const pkg = await contenidoPackageJson();
     expect(pkg.dependencies).not.toHaveProperty("ssh2-sftp-client");
@@ -109,6 +114,10 @@ describe("arquitectura-integraciones-activas", () => {
       "destinoBaseDatos",
       "conexionesOrigen",
       "destinosCache",
+      "destino_api_url",
+      "destino_api_key_cifrada",
+      "destino_base_datos",
+      "conexiones_origen",
     ]) {
       expect(codigoActivo).not.toContain(identificador);
     }

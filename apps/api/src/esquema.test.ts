@@ -143,7 +143,9 @@ describe("Esquema Drizzle", () => {
         import.meta.url,
       ),
     ).text();
-    expect(contenido).toMatch(/CREATE TABLE (IF NOT EXISTS )?"ejecuciones_reportes"/);
+    expect(contenido).toMatch(
+      /CREATE TABLE (IF NOT EXISTS )?"ejecuciones_reportes"/,
+    );
     expect(contenido).not.toContain('CREATE TABLE "conexiones_destino"');
     expect(contenido).not.toContain('CREATE TABLE "conexiones_origen"');
     expect(contenido).not.toContain('DROP COLUMN "impala_');

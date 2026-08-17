@@ -1,6 +1,10 @@
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { useState } from "react";
-import type { BloqueInfo, ParamEntry, VariableInfo } from "./parser-workspace-util";
+import type {
+  BloqueInfo,
+  ParamEntry,
+  VariableInfo,
+} from "./parser-workspace-util";
 
 export function BloqueCard({ bloque }: { bloque: BloqueInfo }) {
   const [expandido, setExpandido] = useState(false);

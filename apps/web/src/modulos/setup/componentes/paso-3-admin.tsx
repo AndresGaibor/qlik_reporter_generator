@@ -16,8 +16,7 @@ export function Paso3Admin({
         Administrador inicial
       </legend>
       <p className="-mt-3 text-sm text-ink-600">
-        Esta persona administrará la empresa después de iniciar sesión con
-        Qlik.
+        Esta persona administrará la empresa después de iniciar sesión con Qlik.
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

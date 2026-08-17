@@ -87,8 +87,12 @@ export class ServicioBigQueryAdminPostgres {
       projectId: entrada.projectId,
       clientEmail: entrada.clientEmail,
       dataset: entrada.dataset,
-      ...(entrada.limiteMiB === undefined ? {} : { limiteMiB: entrada.limiteMiB }),
-      ...(entrada.limiteUsd === undefined ? {} : { limiteUsd: entrada.limiteUsd }),
+      ...(entrada.limiteMiB === undefined
+        ? {}
+        : { limiteMiB: entrada.limiteMiB }),
+      ...(entrada.limiteUsd === undefined
+        ? {}
+        : { limiteUsd: entrada.limiteUsd }),
       precioUsdPorTib: entrada.precioUsdPorTib,
     };
 

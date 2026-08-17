@@ -74,12 +74,9 @@ export function aResumenAutomatizacion(
 
   let autorNombre: string | undefined = undefined;
   const descripcion = normalizarTexto(automatizacion.description);
-  if (descripcion && descripcion.startsWith("Creado por ")) {
+  if (descripcion?.startsWith("Creado por ")) {
     autorNombre = descripcion.replace(/^Creado por\s+/, "").trim();
-  } else if (
-    automatizacion.name &&
-    automatizacion.name.startsWith("Reporte ")
-  ) {
+  } else if (automatizacion.name?.startsWith("Reporte ")) {
     const partes = automatizacion.name.split(" ");
     if (partes.length >= 3) {
       autorNombre = partes.slice(2).join(" ");

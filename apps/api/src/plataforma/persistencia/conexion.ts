@@ -1,9 +1,9 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./esquema.js";
-import { readFileSync, readdirSync } from "fs";
-import { join } from "path";
 
 class DbHolder {
   private _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
@@ -80,7 +80,7 @@ export async function ejecutarMigraciones(): Promise<void> {
       await db.execute(sql.raw(contenido));
       console.log("✓ Migración:", archivo);
     } catch (error) {
-      console.warn("✗ Error en migración", archivo + ":", error);
+      console.warn("✗ Error en migración", `${archivo}:`, error);
     }
   }
 }
@@ -105,9 +105,6 @@ export async function asegurarEsquemaTablas(): Promise<void> {
     await db.execute(sql`
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_id_qlik TEXT;
       ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_nombre TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_url TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_api_key_cifrada TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS destino_base_datos TEXT;
     `);
   } catch (error) {
     console.warn("Aviso al asegurar esquema de tenants_qlik:", error);

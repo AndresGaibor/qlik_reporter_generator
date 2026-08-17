@@ -11,7 +11,12 @@ export interface PuertoDestino {
   listarRecursos(): Promise<RecursoDestino[]>;
   obtenerRecurso(id: string): Promise<DetalleRecursoDestino>;
   probarConexion?(): Promise<void>;
-  obtenerVistaPrevia?(id: string, limite: number): Promise<Array<Record<string, unknown>>>;
+  obtenerVistaPrevia?(
+    id: string,
+    limite: number,
+  ): Promise<Array<Record<string, unknown>>>;
   obtenerDdl?(id: string): Promise<string | null>;
-  estimarConsulta?(query: string): Promise<{ bytesProcesados: number; costoEstimadoUsd: number }>;
+  estimarConsulta?(
+    query: string,
+  ): Promise<{ bytesProcesados: number; costoEstimadoUsd: number }>;
 }

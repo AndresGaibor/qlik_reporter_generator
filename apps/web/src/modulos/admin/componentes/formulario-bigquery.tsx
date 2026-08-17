@@ -1,7 +1,7 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ConfiguracionBigQuery } from "../api";
-import { analizarCredencialesBigQuery } from "./bigquery-formulario";
+import type { analizarCredencialesBigQuery } from "./bigquery-formulario";
 import { DatoResumen } from "./dato-resumen";
 
 export function FormularioBigQuery({

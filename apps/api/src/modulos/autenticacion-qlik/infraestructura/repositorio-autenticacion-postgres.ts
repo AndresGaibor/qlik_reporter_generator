@@ -23,12 +23,12 @@ import type {
 import { resolverEsSuperadministrador } from "../dominio/superadministrador.js";
 import { validarYNormalizarHost } from "../dominio/validador-host-qlik.js";
 import { obtenerCredenciales as obtenerCredencialesHelper } from "./consulta-credenciales-postgres.js";
-import { obtenerIdentidadDeSesion } from "./consulta-identidad-sesion-postgres.js";
 import {
   obtenerTenantPorCorreoUsuario,
   obtenerTenantPorHost,
   obtenerTenantPorId,
 } from "./consulta-identidad-postgres.js";
+import { obtenerIdentidadDeSesion } from "./consulta-identidad-sesion-postgres.js";
 import {
   buscarSesionValida,
   revocarSesion as revocarSesionHelper,

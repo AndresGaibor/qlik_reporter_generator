@@ -10,15 +10,23 @@ export interface ConfigConexionDestino {
   secretoRefs?: Record<string, unknown>;
 }
 
-function resolverCredencialesJson(secretoRefs?: Record<string, unknown>): string | undefined {
+function resolverCredencialesJson(
+  secretoRefs?: Record<string, unknown>,
+): string | undefined {
   if (!secretoRefs?.credencialesJson) return undefined;
-  
+
   const ref = secretoRefs.credencialesJson;
   if (typeof ref === "string") {
     return ref;
   }
-  
-  if (typeof ref === "object" && ref !== null && "cifrado" in ref && "iv" in ref && "tag" in ref) {
+
+  if (
+    typeof ref === "object" &&
+    ref !== null &&
+    "cifrado" in ref &&
+    "iv" in ref &&
+    "tag" in ref
+  ) {
     const cifradoObj = ref as { cifrado?: string; iv?: string; tag?: string };
     if (cifradoObj.cifrado && cifradoObj.iv && cifradoObj.tag) {
       return servicioCifrado.descifrar(
@@ -28,7 +36,7 @@ function resolverCredencialesJson(secretoRefs?: Record<string, unknown>): string
       );
     }
   }
-  
+
   return undefined;
 }
 

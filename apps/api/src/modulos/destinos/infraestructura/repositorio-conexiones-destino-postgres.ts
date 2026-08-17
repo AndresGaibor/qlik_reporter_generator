@@ -20,7 +20,10 @@ export class RepositorioConexionesDestinoPostgres
   ): Promise<ConexionDestinoEntidad[]> {
     const filas = await this.db.query.conexionesDestino.findMany({
       where: (t, { eq }) => eq(t.organizacionId, organizacionId),
-      orderBy: (t, { desc }) => [desc(t.esPredeterminada), desc(t.actualizadoEn)],
+      orderBy: (t, { desc }) => [
+        desc(t.esPredeterminada),
+        desc(t.actualizadoEn),
+      ],
     });
 
     return filas.map((f) => ({

@@ -361,8 +361,9 @@ export async function crearAplicacion(
       repositorioReportes,
     }),
   );
-  const repositorioConexionesDestino =
-    new RepositorioConexionesDestinoPostgres(db);
+  const repositorioConexionesDestino = new RepositorioConexionesDestinoPostgres(
+    db,
+  );
 
   aplicacion.route(
     "/api/destinos/conexiones",

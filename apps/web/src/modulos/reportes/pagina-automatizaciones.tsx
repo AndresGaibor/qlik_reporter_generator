@@ -215,7 +215,9 @@ export function PaginaAutomatizaciones() {
           idEjecutando={idEjecutando}
           espacioFiltrado={espacioFiltrado}
           targetHost={tenantActivo?.host}
-          hayFiltros={Boolean(espacioFiltrado || busquedaActiva || autorFiltrado)}
+          hayFiltros={Boolean(
+            espacioFiltrado || busquedaActiva || autorFiltrado,
+          )}
           onEjecutar={(id) => ejecutar.mutate(id)}
         />
 
