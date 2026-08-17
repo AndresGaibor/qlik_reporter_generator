@@ -2,6 +2,7 @@ import type { ArchivoDescarga } from "@qlik/contratos/descargas";
 import { describe, expect, it, vi } from "vitest";
 import {
   type CarpetaDestino,
+  type ProgresoDescargaArchivo,
   descargarArchivosSecuencialmente,
 } from "./descargador-secuencial";
 
@@ -28,7 +29,7 @@ describe("descargarArchivosSecuencialmente", () => {
     const carpeta: CarpetaDestino = {
       getFileHandle: vi.fn(async () => ({
         createWritable: async () => ({
-          write: async (datos) => {
+          write: async (datos: BufferSource | Blob | string) => {
             expect(datos).toBeInstanceOf(Uint8Array);
             escrituras.push(datos as Uint8Array);
           },
@@ -80,7 +81,7 @@ describe("descargarArchivosSecuencialmente", () => {
       respuestaPorChunks([[1, 2, 3]]),
       respuestaPorChunks([[4, 5]]),
     ];
-    const progresos: Array<Record<string, unknown>> = [];
+    const progresos: ProgresoDescargaArchivo[] = [];
 
     await descargarArchivosSecuencialmente({
       archivos: [

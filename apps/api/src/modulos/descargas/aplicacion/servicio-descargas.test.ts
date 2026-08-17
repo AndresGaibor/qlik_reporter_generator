@@ -22,6 +22,7 @@ function crearRepoMock() {
           finalizadoEn: Date | null;
         }>,
     ),
+    marcarEjecucionCompletada: vi.fn(async () => undefined),
     obtenerEjecucionDescarga: vi.fn(
       async () =>
         null as {
@@ -42,6 +43,7 @@ function crearAlmacenamientoMock(
   archivos: Array<{ nombre: string; tamanoBytes: number }> = [],
 ) {
   return {
+    estaFinalizada: vi.fn(async () => false),
     listar: vi.fn(async () =>
       archivos.map((a) => ({
         ...a,
@@ -93,6 +95,40 @@ describe("ServicioDescargas", () => {
     await expect(
       servicio.crearManifiesto("e-activa", CONTEXTO),
     ).rejects.toMatchObject({ codigo: "EJECUCION_NO_COMPLETADA" });
+  });
+
+  it("promueve una ejecución iniciada solo cuando existe el marcador final en GCS", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-lista",
+      reporteNombre: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "iniciada",
+      mensajeError: null,
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-lista/",
+      creadoEn: new Date(),
+      finalizadoEn: null,
+    });
+    const alm = crearAlmacenamientoMock([
+      { nombre: "parte-001-000000000000.csv.gz", tamanoBytes: 1024 },
+    ]);
+    alm.estaFinalizada.mockResolvedValue(true);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    const manifiesto = await servicio.crearManifiesto("e-lista", CONTEXTO);
+
+    expect(manifiesto.archivos).toHaveLength(1);
+    expect(repo.marcarEjecucionCompletada).toHaveBeenCalledWith(
+      "e-lista",
+      expect.any(Date),
+    );
+    expect(alm.estaFinalizada).toHaveBeenCalledWith(
+      "POCs/TalendDescargados/ventas/e-lista/",
+    );
   });
 
   it("crearManifiesto rechaza ejecución sin archivos en GCS", async () => {
@@ -195,6 +231,38 @@ describe("ServicioDescargas", () => {
     );
   });
 
+  it("listarEjecuciones refleja completada cuando GCS ya tiene el marcador final", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-lista",
+        reporteNombre: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "iniciada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-lista/",
+        creadoEn: new Date("2026-08-17T19:00:00Z"),
+        finalizadoEn: null,
+      },
+    ]);
+    const alm = crearAlmacenamientoMock();
+    alm.estaFinalizada.mockResolvedValue(true);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    const resultado = await servicio.listarEjecuciones(CONTEXTO, 10);
+
+    expect(resultado[0]?.estado).toBe("completada");
+    expect(resultado[0]?.finalizadoEn).not.toBeNull();
+    expect(repo.marcarEjecucionCompletada).toHaveBeenCalledWith(
+      "e-lista",
+      expect.any(Date),
+    );
+  });
+
   it("crearManifiesto rechaza prefijo GCS inválido", async () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
@@ -247,6 +315,6 @@ describe("ServicioDescargas", () => {
     expect(resultado.archivos.map((archivo) => archivo.nombre)).toEqual([
       "parte-001-000000000000.csv.gz",
     ]);
-    expect(alm.firmar).toHaveBeenCalledOnce();
+    expect(alm.firmar).toHaveBeenCalledTimes(1);
   });
 });

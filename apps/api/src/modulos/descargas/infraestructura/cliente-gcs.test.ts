@@ -182,4 +182,40 @@ describe("ClienteGcs con fake Storage", () => {
     expect(typeof resultado[0].tamanoBytes).toBe("number");
     expect(resultado[0].tamanoBytes).toBe(1024);
   });
+  test("estaFinalizada busca únicamente el marcador oculto de la ejecución", async () => {
+    const getFilesMock = vi
+      .fn()
+      .mockResolvedValueOnce([
+        [
+          {
+            name: "POCs/TalendDescargados/ventas/e-1/__finalizado__-000000000000.csv.gz",
+            metadata: { size: 3 },
+          },
+        ],
+      ])
+      .mockResolvedValueOnce([[]]);
+    const fileMock = vi.fn();
+    const bucketMock = vi
+      .fn()
+      .mockReturnValue({
+        getFiles: getFilesMock,
+        file: fileMock,
+      } as unknown as Bucket);
+    const storageFake = { bucket: bucketMock } as unknown as Storage;
+    const cliente = new ClienteGcs({
+      projectId: "test-project",
+      storage: storageFake,
+    });
+
+    expect(
+      await cliente.estaFinalizada("POCs/TalendDescargados/ventas/e-1/"),
+    ).toBe(true);
+    expect(
+      await cliente.estaFinalizada("POCs/TalendDescargados/ventas/e-2/"),
+    ).toBe(false);
+    expect(getFilesMock).toHaveBeenNthCalledWith(1, {
+      prefix: "POCs/TalendDescargados/ventas/e-1/__finalizado__-",
+      maxResults: 1,
+    });
+  });
 });

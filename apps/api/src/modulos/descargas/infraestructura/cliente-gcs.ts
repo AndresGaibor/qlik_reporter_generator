@@ -46,6 +46,16 @@ export class ClienteGcs implements PuertoAlmacenamientoDescargas {
       }));
   }
 
+  async estaFinalizada(prefijo: string): Promise<boolean> {
+    const [archivos] = await this.storage
+      .bucket(BUCKET_GCS_PERMITIDO)
+      .getFiles({
+        prefix: `${prefijo}__finalizado__-`,
+        maxResults: 1,
+      });
+    return archivos.some((archivo) => !archivo.name.endsWith("/"));
+  }
+
   async firmar(nombreObjeto: string, minutos: number): Promise<string> {
     const archivo = this.storage
       .bucket(BUCKET_GCS_PERMITIDO)

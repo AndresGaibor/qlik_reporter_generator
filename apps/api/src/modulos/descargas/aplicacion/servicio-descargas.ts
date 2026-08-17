@@ -33,7 +33,20 @@ export class ServicioDescargas implements IServicioDescargas {
       );
     }
 
-    if (ejecucion.estado !== "completada") {
+    const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
+    let estado = ejecucion.estado;
+    if (estado === "preparando" || estado === "iniciada") {
+      const finalizada = await this.almacenamiento.estaFinalizada(prefijo);
+      if (finalizada) {
+        await this.repositorio.marcarEjecucionCompletada(
+          ejecucion.id,
+          new Date(),
+        );
+        estado = "completada";
+      }
+    }
+
+    if (estado !== "completada") {
       throw new ErrorAplicacion(
         "EJECUCION_NO_COMPLETADA",
         "La ejecución aún no tiene archivos descargables",
@@ -41,7 +54,6 @@ export class ServicioDescargas implements IServicioDescargas {
       );
     }
 
-    const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
     if (!prefijo.endsWith(`${ejecucion.id}/`)) {
       throw new ErrorAplicacion(
         "PREFIJO_GCS_INVALIDO",
@@ -88,6 +100,31 @@ export class ServicioDescargas implements IServicioDescargas {
     const ejecuciones = await this.repositorio.listarEjecucionesDescargas(
       contexto,
       limite,
+    );
+
+    await Promise.all(
+      ejecuciones.map(async (ejecucion) => {
+        if (
+          ejecucion.estado !== "preparando" &&
+          ejecucion.estado !== "iniciada"
+        ) {
+          return;
+        }
+        try {
+          const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
+          if (!prefijo.endsWith(`${ejecucion.id}/`)) return;
+          if (!(await this.almacenamiento.estaFinalizada(prefijo))) return;
+          const finalizadoEn = new Date();
+          await this.repositorio.marcarEjecucionCompletada(
+            ejecucion.id,
+            finalizadoEn,
+          );
+          ejecucion.estado = "completada";
+          ejecucion.finalizadoEn = finalizadoEn;
+        } catch {
+          // Una ejecución histórica inválida no debe ocultar el resto de descargas.
+        }
+      }),
     );
 
     return ejecuciones.map((e) => ({

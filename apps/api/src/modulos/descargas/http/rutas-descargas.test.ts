@@ -30,6 +30,7 @@ function crearApp(sesion: {
     resolverAlmacenamiento: async () =>
       ({
         listar: async () => [],
+        estaFinalizada: async () => false,
         firmar: async () => "https://signed.url",
       }) as unknown as PuertoAlmacenamientoDescargas,
     minutosFirma: 15,
@@ -84,6 +85,7 @@ describe("GET /api/descargas", () => {
       resolverAlmacenamiento: async () =>
         ({
           listar: async () => [],
+          estaFinalizada: async () => false,
           firmar: async () => "https://signed.url",
         }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
@@ -121,10 +123,12 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       }),
     };
     const alm = {
+      estaFinalizada: async () => true,
       listar: async () => [
         {
-          nombre: "reporte.csv",
-          rutaCompleta: "POCs/TalendDescargados/ventas/e-1/reporte.csv",
+          nombre: "parte-001-000000000000.csv.gz",
+          rutaCompleta:
+            "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
           tamanoBytes: 1024,
         },
       ],
@@ -168,6 +172,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       resolverAlmacenamiento: async () =>
         ({
           listar: async () => [],
+          estaFinalizada: async () => false,
           firmar: async () => "",
         }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
@@ -210,6 +215,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       resolverAlmacenamiento: async () =>
         ({
           listar: async () => [],
+          estaFinalizada: async () => false,
           firmar: async () => "",
         }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
@@ -250,6 +256,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     };
     const alm = {
       listar: async () => [],
+      estaFinalizada: async () => false,
       firmar: async () => "",
     };
     const rutas = crearRutasDescargas({

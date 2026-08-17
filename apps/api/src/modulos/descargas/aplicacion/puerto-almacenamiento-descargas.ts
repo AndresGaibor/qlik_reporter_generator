@@ -12,6 +12,7 @@ export interface ArchivoGcs {
 
 export interface PuertoAlmacenamientoDescargas {
   listar(prefijo: string): Promise<ArchivoGcs[]>;
+  estaFinalizada(prefijo: string): Promise<boolean>;
   firmar(nombreObjeto: string, minutos: number): Promise<string>;
 }
 

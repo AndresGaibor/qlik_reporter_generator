@@ -9,13 +9,16 @@ import { estaEjecucionEnCurso } from "../../automatizaciones/dominio/estado-ejec
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 import {
+  construirConsultasTalendBigQuery,
+  serializarConsultasTalend,
+} from "./consultas-talend-bigquery.js";
+import {
   type AlcanceBigQueryReporte,
   prepararDataflowActual,
 } from "./preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
-import { construirScriptExportacionCsv } from "./script-exportacion-csv.js";
 import { inyectarContextoTalend } from "./servicio-contexto-talend.js";
-const VERSION_COMPILADOR = 1;
+const VERSION_COMPILADOR = 2;
 
 export interface EntradaEjecutarReporte {
   tenantId: string;
@@ -99,10 +102,14 @@ export class EjecutarReporte {
       configuracion.nombre,
       ejecucionReporteId,
     );
-    const scriptExportacion = construirScriptExportacionCsv({
+    const consultasTalend = construirConsultasTalendBigQuery({
       sql: preparacion.sqlBigQuery,
       uriBase: uriBaseGcs,
+      projectId: this.alcanceBigQuery.projectId,
+      dataset: this.alcanceBigQuery.dataset,
+      ejecucionId: ejecucionReporteId,
     });
+    const scriptExportacion = serializarConsultasTalend(consultasTalend);
 
     let auditoriaCreada = false;
     let etapa = "auditoria";
@@ -129,10 +136,7 @@ export class EjecutarReporte {
       );
       const workspace = inyectarContextoTalend(
         (automatizacion.workspace ?? {}) as Record<string, unknown>,
-        {
-          gcp_script: scriptExportacion,
-          gcp_dataflow_hash: preparacion.hashDataflowSha256,
-        },
+        consultasTalend,
       );
       await this.qlik.actualizarAutomatizacion(entrada.automatizacionIdQlik, {
         name: automatizacion.name,

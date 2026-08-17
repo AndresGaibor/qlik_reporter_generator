@@ -8,9 +8,57 @@ LIB CONNECT TO [Google BigQuery:Prod];
 SQL SELECT id, categoria FROM \`p.d.ventas\` WHERE id > 0;
 `;
 
+async function workspaceTalend(): Promise<Record<string, unknown>> {
+  const fixture = new URL(
+    "../fixtures/automate-talend-workspace.sanitized.json",
+    import.meta.url,
+  );
+  return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
+}
+
+function valorVariable(
+  workspace: Record<string, unknown>,
+  nombre: string,
+): string | undefined {
+  const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
+  const block = blocks.find(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as Record<string, unknown>).name === nombre,
+  ) as Record<string, unknown> | undefined;
+  const operations = Array.isArray(block?.operations) ? block.operations : [];
+  const setValue = operations.find(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as Record<string, unknown>).id === "set_value",
+  ) as Record<string, unknown> | undefined;
+  return typeof setValue?.value === "string" ? setValue.value : undefined;
+}
+
+function configuracion() {
+  return {
+    id: "11111111-1111-4111-8111-111111111111",
+    organizacionId: "org-1",
+    tenantQlikId: "tenant-1",
+    creadoPorUsuarioId: "user-1",
+    nombre: "Ventas Diarias",
+    flujoIdQlik: "flujo-1",
+    flujoNombreSnapshot: "Ventas DF",
+    destinoProveedor: "gcs",
+    destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
+    destinoNombreSnapshot: "TalendDescargados",
+    automatizacionIdQlik: "auto-1",
+    automatizacionNombreSnapshot: "Ventas",
+    estado: "activa" as const,
+  };
+}
+
 describe("EjecutarReporte", () => {
-  it("recompila current, audita, actualiza gcp_script y luego crea el run", async () => {
+  it("recompila current, audita, actualiza las cuatro queries Talend y luego crea el run", async () => {
     const orden: string[] = [];
+    let workspaceActualizado: Record<string, unknown> | undefined;
     const qlik = {
       listarEjecuciones: vi.fn(async () => []),
       obtenerScriptApp: vi.fn(async () => {
@@ -21,20 +69,15 @@ describe("EjecutarReporte", () => {
         id: "auto-1",
         name: "Ventas",
         schedules: [],
-        workspace: {
-          blocks: [
-            {
-              name: "executeTask",
-              type: "EndpointBlock",
-              inputs: [{ mode: "keyValue", value: [] }],
-            },
-          ],
-        },
+        workspace: await workspaceTalend(),
         description: "",
         maxConcurrentRuns: 1,
       })),
       actualizarAutomatizacion: vi.fn(async (_id, definicion) => {
         orden.push("actualizar-automate");
+        workspaceActualizado = (
+          definicion as { workspace: Record<string, unknown> }
+        ).workspace;
         return { id: "auto-1", name: "Ventas", ...definicion };
       }),
       ejecutarAutomatizacion: vi.fn(async () => {
@@ -45,22 +88,7 @@ describe("EjecutarReporte", () => {
 
     const ejecuciones: Array<Record<string, unknown>> = [];
     const repositorio = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
-        id: "11111111-1111-4111-8111-111111111111",
-        organizacionId: "org-1",
-        tenantQlikId: "tenant-1",
-        creadoPorUsuarioId: "user-1",
-        nombre: "Ventas Diarias",
-        flujoIdQlik: "flujo-1",
-        flujoNombreSnapshot: "Ventas DF",
-        destinoProveedor: "gcs",
-        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-        destinoNombreSnapshot: "TalendDescargados",
-        automatizacionIdQlik: "auto-1",
-        automatizacionNombreSnapshot: "Ventas",
-        programar: false,
-        estado: "activa" as const,
-      })),
+      obtenerPorAutomatizacion: vi.fn(async () => configuracion()),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         orden.push("auditar");
         ejecuciones.push(entrada);
@@ -80,12 +108,13 @@ describe("EjecutarReporte", () => {
         return tarea();
       },
     };
+    const ejecucionId = "22222222-2222-4222-8222-222222222222";
     const caso = new EjecutarReporte(
       qlik,
       repositorio as never,
       bloqueos as never,
       { projectId: "p", dataset: "d" },
-      () => "22222222-2222-4222-8222-222222222222",
+      () => ejecucionId,
     );
 
     const resultado = await caso.ejecutar({
@@ -97,7 +126,7 @@ describe("EjecutarReporte", () => {
 
     expect(resultado).toEqual({
       runId: "run-1",
-      ejecucionReporteId: "22222222-2222-4222-8222-222222222222",
+      ejecucionReporteId: ejecucionId,
     });
     expect(orden).toEqual([
       "lock",
@@ -111,18 +140,20 @@ describe("EjecutarReporte", () => {
       hashDataflowSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
       scriptDataflow: SCRIPT,
       sqlBigQueryCompilado: expect.stringContaining("`p.d.ventas`"),
-      scriptExportacion: expect.stringContaining("EXPORT DATA"),
-      uriBaseGcs:
-        "gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/22222222-2222-4222-8222-222222222222/",
+      scriptExportacion: expect.stringContaining("-- bq_export_data"),
+      uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/`,
       tipoEjecucion: "manual",
       estado: "preparando",
+      versionCompilador: 2,
     });
-    expect(qlik.actualizarAutomatizacion).toHaveBeenCalledWith(
-      "auto-1",
-      expect.objectContaining({
-        workspace: expect.any(Object),
-        schedules: [],
-      }),
+    expect(valorVariable(workspaceActualizado ?? {}, "BqSelectData")).toContain(
+      `__qlik_reportes_${ejecucionId.replaceAll("-", "_")}`,
+    );
+    expect(valorVariable(workspaceActualizado ?? {}, "BqExportData")).toContain(
+      `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz`,
+    );
+    expect(valorVariable(workspaceActualizado ?? {}, "Credenciales")).toBe(
+      "CREDENCIAL_SANITIZADA",
     );
   });
 
@@ -154,15 +185,7 @@ describe("EjecutarReporte", () => {
         id: "auto-1",
         name: "Ventas",
         schedules: [],
-        workspace: {
-          blocks: [
-            {
-              name: "executeTask",
-              type: "EndpointBlock",
-              inputs: [{ mode: "keyValue", value: [] }],
-            },
-          ],
-        },
+        workspace: await workspaceTalend(),
         description: "",
         maxConcurrentRuns: 1,
       })),
@@ -172,22 +195,7 @@ describe("EjecutarReporte", () => {
       ejecutarAutomatizacion,
     } as unknown as ServicioQlik;
     const repositorio = {
-      obtenerPorAutomatizacion: async () => ({
-        id: "11111111-1111-4111-8111-111111111111",
-        organizacionId: "org-1",
-        tenantQlikId: "tenant-1",
-        creadoPorUsuarioId: "user-1",
-        nombre: "Ventas Diarias",
-        flujoIdQlik: "flujo-1",
-        flujoNombreSnapshot: "Ventas DF",
-        destinoProveedor: "gcs",
-        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-        destinoNombreSnapshot: "TalendDescargados",
-        automatizacionIdQlik: "auto-1",
-        automatizacionNombreSnapshot: "Ventas",
-        programar: false,
-        estado: "activa" as const,
-      }),
+      obtenerPorAutomatizacion: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: unknown) => entrada),
       marcarEjecucionIniciada: vi.fn(async () => undefined),
       marcarEjecucionError,

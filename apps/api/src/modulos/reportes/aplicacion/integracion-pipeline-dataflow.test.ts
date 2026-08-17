@@ -31,6 +31,35 @@ function configuracion() {
   };
 }
 
+async function workspaceTalend(): Promise<Record<string, unknown>> {
+  const fixture = new URL(
+    "../fixtures/automate-talend-workspace.sanitized.json",
+    import.meta.url,
+  );
+  return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
+}
+
+function valorVariable(
+  workspace: Record<string, unknown>,
+  nombre: string,
+): string | undefined {
+  const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
+  const block = blocks.find(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as Record<string, unknown>).name === nombre,
+  ) as Record<string, unknown> | undefined;
+  const operations = Array.isArray(block?.operations) ? block.operations : [];
+  const setValue = operations.find(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as Record<string, unknown>).id === "set_value",
+  ) as Record<string, unknown> | undefined;
+  return typeof setValue?.value === "string" ? setValue.value : undefined;
+}
+
 function qlikConScripts(scripts: string[]) {
   let indice = 0;
   const workspaces: Record<string, unknown>[] = [];
@@ -43,15 +72,7 @@ function qlikConScripts(scripts: string[]) {
       id: "auto-1",
       name: "Ventas",
       schedules: [],
-      workspace: {
-        blocks: [
-          {
-            name: "executeTask",
-            type: "EndpointBlock",
-            inputs: [{ mode: "keyValue", value: [] }],
-          },
-        ],
-      },
+      workspace: await workspaceTalend(),
       description: "",
       maxConcurrentRuns: 1,
     })),
@@ -66,33 +87,8 @@ function qlikConScripts(scripts: string[]) {
   return { qlik, workspaces };
 }
 
-function extraerKv(
-  workspace: Record<string, unknown>,
-  clave: string,
-): string | undefined {
-  const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
-  for (const block of blocks) {
-    if (typeof block !== "object" || block === null) continue;
-    if ((block as Record<string, unknown>).name !== "executeTask") continue;
-    const inputs = Array.isArray((block as Record<string, unknown>).inputs)
-      ? ((block as Record<string, unknown>).inputs as unknown[])
-      : [];
-    for (const input of inputs) {
-      if (typeof input !== "object" || input === null) continue;
-      const values = Array.isArray((input as Record<string, unknown>).value)
-        ? ((input as Record<string, unknown>).value as Array<
-            Record<string, unknown>
-          >)
-        : [];
-      const item = values.find((valor) => valor.key === clave);
-      if (typeof item?.value === "string") return item.value;
-    }
-  }
-  return undefined;
-}
-
 describe("pipeline Dataflow → Automate → Talend", () => {
-  it("dos ejecuciones releen current y auditan hashes/SQL/scripts distintos", async () => {
+  it("dos ejecuciones releen current y generan queries Talend distintas", async () => {
     const { qlik, workspaces } = qlikConScripts([SCRIPT_V1, SCRIPT_V2]);
     const auditorias: Array<Record<string, unknown>> = [];
     let id = 0;
@@ -139,22 +135,21 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     );
     expect(auditorias[0]?.scriptDataflow).toBe(SCRIPT_V1);
     expect(auditorias[1]?.scriptDataflow).toBe(SCRIPT_V2);
-    expect(extraerKv(workspaces[0] ?? {}, "gcp_script")).toContain(
-      "EXPORT DATA",
+    expect(valorVariable(workspaces[0] ?? {}, "BqSelectData")).toContain(
+      "monto > 0",
     );
-    expect(extraerKv(workspaces[1] ?? {}, "gcp_script")).toContain(
+    expect(valorVariable(workspaces[1] ?? {}, "BqSelectData")).toContain(
       "monto > 100",
     );
-    expect(extraerKv(workspaces[0] ?? {}, "gcp_dataflow_hash")).not.toBe(
-      extraerKv(workspaces[1] ?? {}, "gcp_dataflow_hash"),
+    expect(valorVariable(workspaces[0] ?? {}, "BqSelectData")).not.toBe(
+      valorVariable(workspaces[1] ?? {}, "BqSelectData"),
     );
-    expect(qlik.actualizarAutomatizacion).toHaveBeenNthCalledWith(
-      1,
-      "auto-1",
-      expect.objectContaining({ schedules: [] }),
+    expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
+      "CREDENCIAL_SANITIZADA",
     );
   });
-  it("inyecta en gcp_script el SQL y la ruta GCS derivados del Dataflow real", async () => {
+
+  it("inyecta las cuatro queries Talend derivadas del Dataflow real", async () => {
     const real = new URL(
       "../fixtures/dataflow-bigquery-filtro-fecha-real.qlik",
       import.meta.url,
@@ -192,18 +187,27 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     });
 
     const auditoria = auditorias[0];
-    const gcpScript = extraerKv(workspaces[0] ?? {}, "gcp_script");
+    const workspace = workspaces[0] ?? {};
     expect(auditoria?.sqlBigQueryCompilado).toContain(
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(auditoria?.uriBaseGcs).toBe(
       `gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/`,
     );
-    expect(gcpScript).toContain("WHERE `Fecha` = DATE '2026-06-01'");
-    expect(gcpScript).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/parte-%s-*.csv.gz'`,
+    expect(valorVariable(workspace, "BqSelectData")).toContain(
+      "WHERE `Fecha` = DATE '2026-06-01'",
     );
-    expect(gcpScript).not.toContain("STORE [Filtro 1_DEFAULT]");
+    expect(valorVariable(workspace, "BqExportData")).toContain(
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
+    );
+    expect(valorVariable(workspace, "BqNumberCsv")).toContain(
+      "SELECT DISTINCT export_part",
+    );
+    expect(valorVariable(workspace, "BqDrop")).toContain(
+      "DROP TABLE IF EXISTS",
+    );
+    expect(String(auditoria?.scriptExportacion)).not.toContain(
+      "STORE [Filtro 1_DEFAULT]",
+    );
   });
-
 });

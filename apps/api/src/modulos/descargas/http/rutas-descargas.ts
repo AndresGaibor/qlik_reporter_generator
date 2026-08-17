@@ -30,12 +30,10 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
   rutas.get("/", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
 
+    const almacenamiento = await dependencias.resolverAlmacenamiento(c);
     const servicio = new ServicioDescargas(
       dependencias.repositorioReportes,
-      {
-        listar: async () => [],
-        firmar: async () => "",
-      },
+      almacenamiento,
       dependencias.minutosFirma ?? 15,
     );
 

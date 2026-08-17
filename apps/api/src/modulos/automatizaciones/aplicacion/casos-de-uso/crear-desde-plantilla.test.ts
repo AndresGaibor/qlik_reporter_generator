@@ -13,14 +13,26 @@ function crearQlik() {
     copiarAutomatizacion: vi.fn(async () => ({ id: "copia-1" })),
     cambiarEspacioAutomatizacion: vi.fn(async () => undefined),
     cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
-    obtenerAutomatizacion: vi.fn(async () => ({
-      id: "copia-1",
-      name: "Nueva",
-      schedules: [],
-      workspace: { blocks: [{ settings: { table: "origen" } }] },
-      description: "Plantilla",
-      maxConcurrentRuns: 1,
-    })),
+    obtenerAutomatizacion: vi.fn(async () => {
+      const fixture = new URL(
+        "../../../reportes/fixtures/automate-talend-workspace.sanitized.json",
+        import.meta.url,
+      );
+      const workspace = JSON.parse(await Bun.file(fixture).text()) as Record<
+        string,
+        unknown
+      >;
+      const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
+      workspace.blocks = [{ settings: { table: "origen" } }, ...blocks];
+      return {
+        id: "copia-1",
+        name: "Nueva",
+        schedules: [],
+        workspace,
+        description: "Plantilla",
+        maxConcurrentRuns: 1,
+      };
+    }),
     actualizarAutomatizacion: vi.fn(
       async (_id: string, definicion: unknown) => ({
         id: "copia-1",
@@ -194,7 +206,13 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
     expect(qlik.actualizarAutomatizacion).toHaveBeenCalledWith(
       "copia-1",
       expect.objectContaining({
-        workspace: { blocks: [{ settings: { table: "ventas" } }] },
+        workspace: expect.objectContaining({
+          blocks: expect.arrayContaining([
+            expect.objectContaining({ settings: { table: "ventas" } }),
+            expect.objectContaining({ name: "executeTask" }),
+            expect.objectContaining({ name: "BqSelectData" }),
+          ]),
+        }),
       }),
     );
     expect(outbox.guardar).toHaveBeenCalledTimes(1);

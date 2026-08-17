@@ -5,6 +5,14 @@ import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-ide
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { crearRutasPanelAutomatizaciones } from "./rutas-panel.js";
 
+async function workspaceTalend(): Promise<Record<string, unknown>> {
+  const fixture = new URL(
+    "../../reportes/fixtures/automate-talend-workspace.sanitized.json",
+    import.meta.url,
+  );
+  return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
+}
+
 describe("POST /desde-plantilla", () => {
   it("asigna la automatización al usuario Qlik de la sesión", async () => {
     const cambiarPropietarioAutomatizacion = vi.fn(async () => undefined);
@@ -16,7 +24,7 @@ describe("POST /desde-plantilla", () => {
         id: "copia-1",
         name: "Nueva",
         schedules: [],
-        workspace: {},
+        workspace: await workspaceTalend(),
         description: "",
         maxConcurrentRuns: 1,
       })),
@@ -59,6 +67,7 @@ describe("POST /desde-plantilla", () => {
         crearEjecucion: async (entrada) => entrada as never,
         marcarEjecucionIniciada: async () => undefined,
         marcarEjecucionError: async () => undefined,
+        marcarEjecucionCompletada: async () => undefined,
         obtenerConfiguracionPorId: async () => null,
         listarEjecuciones: async () => [],
         marcarEstadoPorRunQlik: async () => undefined,
@@ -136,15 +145,7 @@ describe("POST /:id/ejecuciones", () => {
         id: "auto-1",
         name: "Reporte",
         schedules: [],
-        workspace: {
-          blocks: [
-            {
-              name: "executeTask",
-              type: "EndpointBlock",
-              inputs: [{ mode: "keyValue", value: [] }],
-            },
-          ],
-        },
+        workspace: await workspaceTalend(),
         description: "",
         maxConcurrentRuns: 1,
       })),
@@ -172,6 +173,7 @@ describe("POST /:id/ejecuciones", () => {
       crearEjecucion: async (entrada: never) => entrada,
       marcarEjecucionIniciada: async () => undefined,
       marcarEjecucionError: async () => undefined,
+      marcarEjecucionCompletada: async () => undefined,
     };
     const rutas = crearRutasPanelAutomatizaciones({
       resolverQlik: async () => qlik,

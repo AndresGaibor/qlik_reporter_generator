@@ -1,6 +1,7 @@
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { validarContratoTalend } from "../../../reportes/aplicacion/servicio-contexto-talend.js";
 import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
 export interface ResultadoCopiaAutomatizacion {
@@ -42,6 +43,7 @@ export async function copiarAutomatizacion(
   >;
 
   try {
+    validarContratoTalend(workspace);
     modificarWorkspaceConMetadatosReporte(workspace, {
       appId: entrada.flujoId?.trim(),
       autor: resolverAutor(entrada),
@@ -54,6 +56,15 @@ export async function copiarAutomatizacion(
     }
   } catch (error) {
     errorReemplazos = error;
+  }
+
+  if (errorReemplazos) {
+    return {
+      id,
+      nombre: entrada.nombre,
+      plantillaIdQlik: entrada.plantillaIdQlik,
+      error: errorReemplazos,
+    };
   }
 
   const autor = resolverAutor(entrada);

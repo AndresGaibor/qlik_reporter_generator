@@ -90,6 +90,20 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .where(eq(ejecucionesReportes.id, id));
   }
 
+  async marcarEjecucionCompletada(
+    id: string,
+    finalizadoEn: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        estado: "completada",
+        finalizadoEn,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, id));
+  }
+
   async obtenerConfiguracionPorId(
     configuracionId: string,
   ): Promise<ConfiguracionReportePersistida | null> {

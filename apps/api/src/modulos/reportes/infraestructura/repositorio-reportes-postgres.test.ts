@@ -126,12 +126,17 @@ describe("RepositorioReportesPostgres", () => {
       "falló",
       new Date("2026-08-14T23:01:00Z"),
     );
+    await repo.marcarEjecucionCompletada(id, new Date("2026-08-14T23:02:00Z"));
 
     expect(sets[0]).toMatchObject({ estado: "iniciada", runIdQlik: "run-1" });
     expect(sets[1]).toMatchObject({
       estado: "error",
       etapaError: "talend",
       mensajeError: "falló",
+    });
+    expect(sets[2]).toMatchObject({
+      estado: "completada",
+      finalizadoEn: new Date("2026-08-14T23:02:00Z"),
     });
   });
 

@@ -137,7 +137,7 @@ describe("rutas reportes Dataflow", () => {
     expect(actualizarConfiguracion).not.toHaveBeenCalled();
   });
 
-  it("sincroniza Qlik y devuelve las ejecuciones locales auditadas", async () => {
+  it("mantiene iniciada hasta que GCS confirme y devuelve las auditorías locales", async () => {
     const marcarEstadoPorRunQlik = vi.fn(async () => undefined);
     const ejecucion = {
       id: "22222222-2222-4222-8222-222222222222",
@@ -198,11 +198,7 @@ describe("rutas reportes Dataflow", () => {
       datos?: Array<Record<string, unknown>>;
     };
     expect(respuesta.status).toBe(200);
-    expect(marcarEstadoPorRunQlik).toHaveBeenCalledWith(
-      "run-1",
-      "completada",
-      new Date("2026-08-14T23:05:00Z"),
-    );
+    expect(marcarEstadoPorRunQlik).not.toHaveBeenCalled();
     expect(body.datos?.[0]).toMatchObject({
       hashDataflowSha256: "a".repeat(64),
       sqlBigQueryCompilado: "SELECT 1",

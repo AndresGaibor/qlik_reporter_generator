@@ -103,6 +103,7 @@ export interface PuertoRepositorioReportes {
     mensajeError: string,
     finalizadoEn: Date,
   ): Promise<void>;
+  marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void>;
   obtenerConfiguracionPorId(
     configuracionId: string,
   ): Promise<ConfiguracionReportePersistida | null>;
