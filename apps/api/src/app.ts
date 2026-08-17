@@ -191,42 +191,19 @@ export async function crearAplicacion(
       return new ClienteHttpQlik(credenciales.host, credenciales.token);
     });
 
+  const resolverGoogle = new ResolverConfiguracionGoogleCloudPostgres(db);
+
   const resolverBigQueryReporte =
     dependencias.resolverBigQueryReporte ??
     (async (c: Context): Promise<ResolucionBigQueryReporte> => {
       const sesion = await resolverSesion(c);
-      const fila = await db.query.conexionesDestino.findFirst({
-        where: (tabla, operadores) =>
-          operadores.and(
-            operadores.eq(tabla.organizacionId, sesion.organizacionId),
-            operadores.eq(tabla.tipo, "bigquery"),
-            operadores.eq(tabla.esPredeterminada, true),
-          ),
-        orderBy: (tabla, operadores) => [operadores.desc(tabla.actualizadoEn)],
-      });
-      if (!fila) {
-        throw new ErrorAplicacion(
-          "BIGQUERY_NO_CONFIGURADO",
-          "La organización no tiene una conexión BigQuery predeterminada",
-          422,
-        );
-      }
-      const config = fila.config as Record<string, unknown>;
-      const projectId =
-        typeof config.projectId === "string" ? config.projectId.trim() : "";
-      const dataset =
-        typeof config.dataset === "string" ? config.dataset.trim() : "";
-      if (!projectId || !dataset) {
-        throw new ErrorAplicacion(
-          "BIGQUERY_INCOMPLETO",
-          "La conexión BigQuery predeterminada requiere proyecto y dataset",
-          422,
-        );
-      }
+      const google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
       const cliente = crearClienteDestino({
         tipo: "bigquery",
-        config,
-        secretoRefs: fila.secretoRefs as Record<string, unknown>,
+        config: { projectId: google.projectId, dataset: google.dataset },
+        secretoRefs: google.credencialesJson
+          ? { credencialesJson: google.credencialesJson }
+          : {},
       });
       const estimarConsulta = cliente.estimarConsulta?.bind(cliente);
       if (!estimarConsulta) {
@@ -237,8 +214,8 @@ export async function crearAplicacion(
         );
       }
       return {
-        projectId,
-        dataset,
+        projectId: google.projectId,
+        dataset: google.dataset,
         estimador: { estimarConsulta },
       };
     });
@@ -585,7 +562,6 @@ export async function crearAplicacion(
     }),
   );
 
-  const resolverGoogle = new ResolverConfiguracionGoogleCloudPostgres(db);
   aplicacion.route(
     "/api/descargas",
     crearRutasDescargas({
