@@ -126,9 +126,12 @@ export function compilarPlanABigQuery(
 
   const salida = obtenerRelacion(relaciones, plan.salida.tablaLogica);
   const camposSalida = plan.salida.campos.length > 0 ? plan.salida.campos : salida.campos;
-  const seleccionFinal = camposSalida.length > 0
-    ? camposSalida.map(citarIdentificador).join(", ")
-    : "*";
+  const seleccionFinal =
+    camposSalida.length === 1 && camposSalida[0] === "*"
+      ? "*"
+      : camposSalida.length > 0
+        ? camposSalida.map(citarIdentificador).join(", ")
+        : "*";
   const ordenFinal = salida.ordenFinal ? `\nORDER BY ${salida.ordenFinal}` : "";
   return {
     sql: `WITH\n  ${ctes.join(",\n  ")}\nSELECT ${seleccionFinal}\nFROM ${salida.cte}${ordenFinal}`,
@@ -150,6 +153,7 @@ function obtenerRelacion(
 }
 
 function compilarCampo(campo: CampoDataflow): string {
+  if (campo.expresion.trim() === "*" && campo.alias === "*") return "*";
   return `${traducirExpresion(campo.expresion, campo.dialecto)} AS ${citarIdentificador(campo.alias)}`;
 }
 

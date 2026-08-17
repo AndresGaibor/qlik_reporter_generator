@@ -107,4 +107,20 @@ describe("compilarPlanABigQuery", () => {
     expect(sql).not.toMatch(/\b(?:STORE|DROP|SET)\b/i);
   });
 
+  it("compila LOAD wildcard y SELECT wildcard sin inventar una columna llamada asterisco", () => {
+    const plan = parsearDataflow(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [salida]: LOAD *;
+      SQL SELECT * FROM \`p.d.t\`;
+    `);
+
+    const { sql, camposSalida } = compilarPlanABigQuery(plan);
+    expect(camposSalida).toEqual(["*"]);
+    expect(sql).toContain("SELECT *\n    FROM `p.d.t`");
+    expect(sql).toContain("SELECT *\n    FROM fuente_1");
+    expect(sql).toMatch(/SELECT \*\nFROM proyeccion_2$/);
+    expect(sql).not.toContain("AS `*`");
+    expect(sql).not.toContain("SELECT `*`");
+  });
+
 });

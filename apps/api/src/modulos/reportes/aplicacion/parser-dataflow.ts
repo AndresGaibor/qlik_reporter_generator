@@ -97,6 +97,17 @@ export function parsearDataflow(script: string): PlanDataflow {
         });
       }
 
+      if (
+        select.campos.length > 1 &&
+        select.campos.some((campo) => campo.expresion.trim() === "*")
+      ) {
+        operacionesNoSoportadas.push({
+          operacion: "WildcardMixto",
+          detalle:
+            "SELECT * combinado con otras expresiones requiere expandir el esquema BigQuery antes de compilar",
+        });
+      }
+
       const fuenteId = nombreInterno("fuente");
       fuentes.push({
         id: fuenteId,
@@ -305,6 +316,16 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
   const residentMatch = texto.match(/\bRESIDENT\s+\[([^\]]+)\]/i);
   const cuerpoCampos = residentMatch ? texto.slice(0, residentMatch.index).trim() : texto;
   const campos = parsearCampos(cuerpoCampos, "qlik");
+  if (
+    campos.length > 1 &&
+    campos.some((campo) => campo.expresion.trim() === "*")
+  ) {
+    noSoportadas.push({
+      operacion: "WildcardMixto",
+      detalle:
+        "LOAD * combinado con otras expresiones requiere expandir el esquema antes de compilar",
+    });
+  }
   detectarFuncionesNoSoportadas(campos.map((campo) => campo.expresion), noSoportadas);
 
   let where: string | undefined;

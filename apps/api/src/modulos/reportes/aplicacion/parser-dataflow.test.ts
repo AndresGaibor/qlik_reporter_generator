@@ -71,4 +71,18 @@ describe("parsearDataflow", () => {
     );
   });
 
+  it("marca incompatible un wildcard mezclado con campos calculados", () => {
+    const plan = parsearDataflow(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [salida]: LOAD *, Upper([categoria]) AS [Categoria];
+      SQL SELECT * FROM \`p.d.t\`;
+    `);
+
+    expect(plan.operacionesNoSoportadas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ operacion: "WildcardMixto" }),
+      ]),
+    );
+  });
+
 });
