@@ -1,55 +1,106 @@
-import type { ManifiestoDescarga } from "@qlik/contratos/descargas";
+import type { ArchivoDescarga } from "@qlik/contratos/descargas";
 import { describe, expect, it, vi } from "vitest";
-import { descargarEnSecuencia } from "./descargador-secuencial";
+import {
+  type CarpetaDestino,
+  descargarArchivosSecuencialmente,
+} from "./descargador-secuencial";
 
-const crearManifiesto = (
-  archivos: Array<{ nombre: string }>,
-): ManifiestoDescarga => ({
-  descargaId: "descarga-1",
-  archivos: archivos.map((a) => ({
-    nombre: a.nombre,
-    url: `https://example.com/${a.nombre}`,
-    tamano: 1024,
-  })),
-});
+function archivo(nombre: string, tamano: number): ArchivoDescarga {
+  return { nombre, tamano, url: `https://storage.test/${nombre}` };
+}
 
-describe("descargador-secuencial", () => {
-  it("descarga archivos en secuencia", async () => {
-    const manifiesto = crearManifiesto([
-      { nombre: "archivo1.csv" },
-      { nombre: "archivo2.csv" },
+function respuestaPorChunks(chunks: number[][]): Response {
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(Uint8Array.from(chunk));
+        controller.close();
+      },
+    }),
+    { status: 200 },
+  );
+}
+
+describe("descargarArchivosSecuencialmente", () => {
+  it("escribe cada archivo por chunks sin materializar un Blob completo", async () => {
+    const escrituras: Uint8Array[] = [];
+    const cerrar = vi.fn(async () => undefined);
+    const carpeta: CarpetaDestino = {
+      getFileHandle: vi.fn(async () => ({
+        createWritable: async () => ({
+          write: async (datos) => {
+            expect(datos).toBeInstanceOf(Uint8Array);
+            escrituras.push(datos as Uint8Array);
+          },
+          close: cerrar,
+          abort: vi.fn(async () => undefined),
+        }),
+      })),
+    };
+    const fetcher = vi.fn(async () =>
+      respuestaPorChunks([
+        [1, 2],
+        [3, 4, 5],
+      ]),
+    );
+    const progresos: Array<{ porcentaje: number; bytesDescargados: number }> =
+      [];
+
+    await descargarArchivosSecuencialmente({
+      archivos: [archivo("parte-001.csv.gz", 5)],
+      carpeta,
+      fetcher,
+      senal: new AbortController().signal,
+      onProgreso: (p) => progresos.push(p),
+    });
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(escrituras.map((chunk) => [...chunk])).toEqual([
+      [1, 2],
+      [3, 4, 5],
     ]);
-    const senal = new AbortController().signal;
-    const onProgreso = vi.fn();
-
-    await descargarEnSecuencia(manifiesto, { senal, onProgreso });
-
-    expect(onProgreso).toHaveBeenCalledTimes(2);
-    expect(onProgreso).toHaveBeenNthCalledWith(1, 1, 2, "archivo1.csv");
-    expect(onProgreso).toHaveBeenNthCalledWith(2, 2, 2, "archivo2.csv");
+    expect(cerrar).toHaveBeenCalledOnce();
+    expect(progresos.at(-1)).toMatchObject({
+      porcentaje: 100,
+      bytesDescargados: 5,
+    });
   });
 
-  it("devuelve resultado con contadores correctos", async () => {
-    const manifiesto = crearManifiesto([{ nombre: "archivo1.csv" }]);
-    const senal = new AbortController().signal;
+  it("mantiene progreso acumulado por bytes entre varios archivos", async () => {
+    const carpeta: CarpetaDestino = {
+      getFileHandle: vi.fn(async () => ({
+        createWritable: async () => ({
+          write: async () => undefined,
+          close: async () => undefined,
+          abort: async () => undefined,
+        }),
+      })),
+    };
+    const respuestas = [
+      respuestaPorChunks([[1, 2, 3]]),
+      respuestaPorChunks([[4, 5]]),
+    ];
+    const progresos: Array<Record<string, unknown>> = [];
 
-    const resultado = await descargarEnSecuencia(manifiesto, { senal });
+    await descargarArchivosSecuencialmente({
+      archivos: [
+        archivo("parte-001.csv.gz", 3),
+        archivo("parte-002.csv.gz", 2),
+      ],
+      carpeta,
+      fetcher: vi.fn(
+        async () => respuestas.shift() ?? new Response(null, { status: 500 }),
+      ),
+      senal: new AbortController().signal,
+      onProgreso: (p) => progresos.push(p),
+    });
 
-    expect(resultado.exitosas).toBeGreaterThanOrEqual(0);
-    expect(resultado.fallidas).toBeGreaterThanOrEqual(0);
-    expect(Array.isArray(resultado.archivosProcesados)).toBe(true);
-  });
-
-  it("llama a onArchivoDescargado por cada archivo", async () => {
-    const manifiesto = crearManifiesto([
-      { nombre: "a.csv" },
-      { nombre: "b.csv" },
-    ]);
-    const senal = new AbortController().signal;
-    const onArchivoDescargado = vi.fn();
-
-    await descargarEnSecuencia(manifiesto, { senal, onArchivoDescargado });
-
-    expect(onArchivoDescargado).toHaveBeenCalledTimes(2);
+    expect(progresos.at(-1)).toMatchObject({
+      porcentaje: 100,
+      indice: 2,
+      total: 2,
+      bytesDescargados: 5,
+      totalBytes: 5,
+    });
   });
 });

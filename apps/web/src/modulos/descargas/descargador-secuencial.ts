@@ -1,55 +1,110 @@
-import type {
-  ArchivoDescarga,
-  ManifiestoDescarga,
-} from "@qlik/contratos/descargas";
-import { descargarArchivos } from "./descargador-navegador";
+import type { ArchivoDescarga } from "@qlik/contratos/descargas";
 
-export interface DescargadorSecuencialOpciones {
+export interface ProgresoDescargaArchivo {
+  porcentaje: number;
+  archivo: string;
+  indice: number;
+  total: number;
+  bytesDescargados: number;
+  totalBytes: number;
+}
+
+interface ArchivoEscribible {
+  write(datos: BufferSource | Blob | string): Promise<void>;
+  close(): Promise<void>;
+  abort?(razon?: unknown): Promise<void>;
+}
+
+export interface CarpetaDestino {
+  getFileHandle(
+    nombre: string,
+    opciones?: { create?: boolean },
+  ): Promise<{ createWritable(): Promise<ArchivoEscribible> }>;
+}
+
+function calcularPorcentaje(
+  totalBytes: number,
+  bytesCompletados: number,
+  bytesActuales: number,
+): number {
+  if (totalBytes <= 0) return 0;
+  return Math.min(
+    100,
+    Math.max(0, ((bytesCompletados + bytesActuales) / totalBytes) * 100),
+  );
+}
+
+export async function descargarArchivosSecuencialmente(entrada: {
+  archivos: ArchivoDescarga[];
+  carpeta: CarpetaDestino;
   senal: AbortSignal;
-  onProgreso?: (
-    archivoActual: number,
-    totalArchivos: number,
-    nombreArchivo: string,
-  ) => void;
-  onArchivoDescargado?: (archivo: ArchivoDescarga) => void;
-}
+  fetcher?: (url: string, init?: RequestInit) => Promise<Response>;
+  onProgreso?: (progreso: ProgresoDescargaArchivo) => void;
+}) {
+  const fetcher =
+    entrada.fetcher ?? ((url: string, init?: RequestInit) => fetch(url, init));
+  const totalBytes = entrada.archivos.reduce(
+    (total, archivo) => total + archivo.tamano,
+    0,
+  );
+  let bytesCompletados = 0;
 
-export interface ResultadoDescargaSecuencial {
-  exitosas: number;
-  fallidas: number;
-  archivosProcesados: ArchivoDescarga[];
-}
+  for (const [indice, archivo] of entrada.archivos.entries()) {
+    if (entrada.senal.aborted) break;
+    const respuesta = await fetcher(archivo.url, { signal: entrada.senal });
+    if (!respuesta.ok || !respuesta.body) {
+      throw new Error(`No se pudo descargar ${archivo.nombre}`);
+    }
 
-export async function descargarEnSecuencia(
-  manifiesto: ManifiestoDescarga,
-  opciones: DescargadorSecuencialOpciones,
-): Promise<ResultadoDescargaSecuencial> {
-  const archivosProcesados: ArchivoDescarga[] = [];
-  let exitosas = 0;
-  let fallidas = 0;
-
-  for (let i = 0; i < manifiesto.archivos.length; i++) {
-    if (opciones.senal.aborted) break;
-
-    const archivo = manifiesto.archivos[i];
-    opciones.onProgreso?.(i + 1, manifiesto.archivos.length, archivo.nombre);
+    const manejador = await entrada.carpeta.getFileHandle(archivo.nombre, {
+      create: true,
+    });
+    const escritor = await manejador.createWritable();
+    const lector = respuesta.body.getReader();
+    let bytesActuales = 0;
+    let ultimaNotificacion = 0;
 
     try {
-      await descargarArchivos(
-        {
-          descargaId: manifiesto.descargaId,
-          archivos: [archivo],
-        },
-        { senal: opciones.senal },
-      );
-      exitosas++;
-      archivosProcesados.push(archivo);
-      opciones.onArchivoDescargado?.(archivo);
+      while (true) {
+        if (entrada.senal.aborted) {
+          throw new DOMException("Descarga cancelada", "AbortError");
+        }
+        const { done, value } = await lector.read();
+        if (done) break;
+        await escritor.write(value);
+        bytesActuales += value.byteLength;
+        const ahora = Date.now();
+        if (ahora - ultimaNotificacion >= 250) {
+          entrada.onProgreso?.({
+            porcentaje: calcularPorcentaje(
+              totalBytes,
+              bytesCompletados,
+              bytesActuales,
+            ),
+            archivo: archivo.nombre,
+            indice: indice + 1,
+            total: entrada.archivos.length,
+            bytesDescargados: bytesCompletados + bytesActuales,
+            totalBytes,
+          });
+          ultimaNotificacion = ahora;
+        }
+      }
+      await escritor.close();
+      bytesCompletados += bytesActuales;
+      entrada.onProgreso?.({
+        porcentaje: calcularPorcentaje(totalBytes, bytesCompletados, 0),
+        archivo: archivo.nombre,
+        indice: indice + 1,
+        total: entrada.archivos.length,
+        bytesDescargados: bytesCompletados,
+        totalBytes,
+      });
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") break;
-      fallidas++;
+      await escritor.abort?.(error);
+      throw error;
+    } finally {
+      lector.releaseLock();
     }
   }
-
-  return { exitosas, fallidas, archivosProcesados };
 }

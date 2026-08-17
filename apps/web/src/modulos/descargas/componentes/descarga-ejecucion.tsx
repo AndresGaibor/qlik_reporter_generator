@@ -1,10 +1,14 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { formatearTamano } from "../presentacion-ejecucion";
 import type { EstadoDescarga } from "../use-descarga-ejecucion";
 
 interface DescargaEjecucionProps {
   estado: EstadoDescarga;
   progreso: number;
+  porcentaje: number;
+  bytesDescargados: number;
+  totalBytes: number;
   totalArchivos: number;
   archivoActual: string;
   error: string | null;
@@ -15,6 +19,9 @@ interface DescargaEjecucionProps {
 export function DescargaEjecucion({
   estado,
   progreso,
+  porcentaje,
+  bytesDescargados,
+  totalBytes,
   totalArchivos,
   archivoActual,
   error,
@@ -27,6 +34,15 @@ export function DescargaEjecucion({
         <Icon name="ext" size="sm" />
         Descargar archivos
       </Button>
+    );
+  }
+
+  if (estado === "seleccionando_destino") {
+    return (
+      <div className="flex items-center gap-2 text-sm text-ink-500">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand-100 border-t-brand-600" />
+        Seleccionando carpeta…
+      </div>
     );
   }
 
@@ -44,7 +60,7 @@ export function DescargaEjecucion({
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between text-xs text-ink-500">
           <span>
-            {progreso} / {totalArchivos}
+            {progreso} / {totalArchivos} · {Math.round(porcentaje)}%
           </span>
           <Button variant="ghost" size="sm" onClick={onCancelar}>
             Cancelar
@@ -52,15 +68,17 @@ export function DescargaEjecucion({
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
           <div
+            data-progreso-descarga
             className="h-full bg-brand-600 transition-all duration-300"
-            style={{
-              width: `${totalArchivos > 0 ? (progreso / totalArchivos) * 100 : 0}%`,
-            }}
+            style={{ width: `${porcentaje}%` }}
           />
         </div>
-        {archivoActual && (
-          <p className="text-xs text-ink-400 truncate">{archivoActual}</p>
-        )}
+        <div className="flex items-center justify-between gap-3 text-xs text-ink-400">
+          <span className="truncate">{archivoActual}</span>
+          <span className="shrink-0">
+            {formatearTamano(bytesDescargados)} / {formatearTamano(totalBytes)}
+          </span>
+        </div>
       </div>
     );
   }

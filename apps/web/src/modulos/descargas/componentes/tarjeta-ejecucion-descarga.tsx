@@ -17,6 +17,9 @@ interface TarjetaEjecucionDescargaProps {
   ejecucion: ResumenDescargaEjecucion;
   estadoDescarga: EstadoDescarga;
   progreso: number;
+  porcentaje: number;
+  bytesDescargados: number;
+  totalBytes: number;
   totalArchivos: number;
   archivoActual: string;
   error: string | null;
@@ -28,6 +31,9 @@ export function TarjetaEjecucionDescarga({
   ejecucion,
   estadoDescarga,
   progreso,
+  porcentaje,
+  bytesDescargados,
+  totalBytes,
   totalArchivos,
   archivoActual,
   error,
@@ -57,6 +63,9 @@ export function TarjetaEjecucionDescarga({
         <DescargaEjecucion
           estado={estadoDescarga}
           progreso={progreso}
+          porcentaje={porcentaje}
+          bytesDescargados={bytesDescargados}
+          totalBytes={totalBytes}
           totalArchivos={totalArchivos}
           archivoActual={archivoActual}
           error={error}

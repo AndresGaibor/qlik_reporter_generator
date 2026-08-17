@@ -86,6 +86,9 @@ function TarjetaConDescarga({
       ejecucion={descarga}
       estadoDescarga={estado.estado}
       progreso={estado.progreso}
+      porcentaje={estado.porcentaje}
+      bytesDescargados={estado.bytesDescargados}
+      totalBytes={estado.totalBytes}
       totalArchivos={estado.totalArchivos}
       archivoActual={estado.archivoActual}
       error={estado.error}
