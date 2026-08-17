@@ -78,6 +78,8 @@ describe("POST /desde-plantilla", () => {
           programar: false,
           estado: "activa",
         }),
+        listarEjecucionesDescargas: async () => [],
+        obtenerEjecucionDescarga: async () => null,
       },
       resolverBigQueryReporte: async () => ({
         projectId: "p",

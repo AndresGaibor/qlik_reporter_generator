@@ -11,6 +11,7 @@ import type {
   CrearEjecucionReportePersistida,
   EjecucionReportePersistida,
   PuertoRepositorioReportes,
+  ResumenEjecucionDescarga,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
 export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
@@ -143,6 +144,77 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     if (!actualizada)
       throw new Error("No se encontró el reporte a actualizar");
     return mapearConfiguracion(actualizada);
+  }
+
+  async listarEjecucionesDescargas(
+    contexto: { tenantQlikId: string; organizacionId: string },
+    limite = 100,
+  ): Promise<ResumenEjecucionDescarga[]> {
+    const filas = await this.db
+      .select({
+        id: ejecucionesReportes.id,
+        reporteNombre: configuracionesAutomatizacion.nombre,
+        automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
+        estado: ejecucionesReportes.estado,
+        mensajeError: ejecucionesReportes.mensajeError,
+        uriBaseGcs: ejecucionesReportes.uriBaseGcs,
+        creadoEn: ejecucionesReportes.creadoEn,
+        finalizadoEn: ejecucionesReportes.finalizadoEn,
+      })
+      .from(ejecucionesReportes)
+      .innerJoin(
+        configuracionesAutomatizacion,
+        eq(ejecucionesReportes.configuracionId, configuracionesAutomatizacion.id),
+      )
+      .where(
+        and(
+          eq(configuracionesAutomatizacion.tenantQlikId, contexto.tenantQlikId),
+          eq(
+            configuracionesAutomatizacion.organizacionId,
+            contexto.organizacionId,
+          ),
+        ),
+      )
+      .orderBy(desc(ejecucionesReportes.creadoEn))
+      .limit(Math.min(Math.max(limite, 1), 100));
+    return filas;
+  }
+
+  async obtenerEjecucionDescarga(
+    contexto: {
+      id: string;
+      tenantQlikId: string;
+      organizacionId: string;
+    },
+  ): Promise<ResumenEjecucionDescarga | null> {
+    const fila = await this.db
+      .select({
+        id: ejecucionesReportes.id,
+        reporteNombre: configuracionesAutomatizacion.nombre,
+        automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
+        estado: ejecucionesReportes.estado,
+        mensajeError: ejecucionesReportes.mensajeError,
+        uriBaseGcs: ejecucionesReportes.uriBaseGcs,
+        creadoEn: ejecucionesReportes.creadoEn,
+        finalizadoEn: ejecucionesReportes.finalizadoEn,
+      })
+      .from(ejecucionesReportes)
+      .innerJoin(
+        configuracionesAutomatizacion,
+        eq(ejecucionesReportes.configuracionId, configuracionesAutomatizacion.id),
+      )
+      .where(
+        and(
+          eq(ejecucionesReportes.id, contexto.id),
+          eq(configuracionesAutomatizacion.tenantQlikId, contexto.tenantQlikId),
+          eq(
+            configuracionesAutomatizacion.organizacionId,
+            contexto.organizacionId,
+          ),
+        ),
+      )
+      .limit(1);
+    return fila[0] ?? null;
   }
 }
 

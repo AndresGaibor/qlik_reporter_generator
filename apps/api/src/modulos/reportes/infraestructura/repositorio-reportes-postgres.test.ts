@@ -160,4 +160,68 @@ describe("RepositorioReportesPostgres", () => {
 
     expect(sets[0]).toMatchObject({ nombre: "Ventas v2" });
   });
+
+  it("listarEjecucionesDescargas hace join y filtra por tenant y organizacion", async () => {
+    const filasMock = [
+      {
+        id: "e-1",
+        reporteNombre: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-1/",
+        creadoEn: new Date(),
+        finalizadoEn: new Date(),
+      },
+    ];
+    const db = {
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: () => ({
+              orderBy: () => ({
+                limit: () => filasMock,
+              }),
+            }),
+          }),
+        }),
+      }),
+      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    const resultado = await repo.listarEjecucionesDescargas(
+      {
+        tenantQlikId: "22222222-2222-4222-8222-222222222222",
+        organizacionId: "11111111-1111-4111-8111-111111111111",
+      },
+      10,
+    );
+
+    expect(resultado).toEqual(filasMock);
+  });
+
+  it("obtenerEjecucionDescarga devuelve null cuando no existe", async () => {
+    const db = {
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: () => ({
+              limit: () => [],
+            }),
+          }),
+        }),
+      }),
+      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+
+    const resultado = await repo.obtenerEjecucionDescarga({
+      id: "no-existe",
+      tenantQlikId: "22222222-2222-4222-8222-222222222222",
+      organizacionId: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(resultado).toBeNull();
+  });
 });

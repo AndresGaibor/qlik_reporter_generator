@@ -10,7 +10,8 @@
     "./autenticacion": "./src/autenticacion/index.ts",
     "./flujos": "./src/flujos/index.ts",
     "./admin": "./src/admin/index.ts",
-    "./destinos": "./src/destinos/index.ts"
+    "./destinos": "./src/destinos/index.ts",
+    "./descargas": "./src/descargas/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

@@ -70,6 +70,17 @@ export interface ActualizarConfiguracionReportePersistida {
   estado?: EstadoConfiguracionReporte;
 }
 
+export interface ResumenEjecucionDescarga {
+  id: string;
+  reporteNombre: string;
+  automatizacionIdQlik: string;
+  estado: string;
+  mensajeError: string | null;
+  uriBaseGcs: string;
+  creadoEn: Date;
+  finalizadoEn: Date | null;
+}
+
 export interface PuertoRepositorioReportes {
   crearConfiguracion(
     entrada: CrearConfiguracionReportePersistida,
@@ -108,4 +119,11 @@ export interface PuertoRepositorioReportes {
     configuracionId: string,
     cambios: ActualizarConfiguracionReportePersistida,
   ): Promise<ConfiguracionReportePersistida>;
+  listarEjecucionesDescargas(
+    contexto: { tenantQlikId: string; organizacionId: string },
+    limite?: number,
+  ): Promise<ResumenEjecucionDescarga[]>;
+  obtenerEjecucionDescarga(
+    contexto: { id: string; tenantQlikId: string; organizacionId: string },
+  ): Promise<ResumenEjecucionDescarga | null>;
 }

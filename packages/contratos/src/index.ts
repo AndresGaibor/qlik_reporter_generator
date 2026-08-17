@@ -6,3 +6,4 @@ export * from "./flujos/index.js";
 export * from "./admin/index.js";
 export * from "./destinos/index.js";
 export * from "./reportes/dataflow.js";
+export * from "./descargas/index.js";
