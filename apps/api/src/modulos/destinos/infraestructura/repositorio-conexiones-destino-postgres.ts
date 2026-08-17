@@ -1,37 +1,18 @@
 import { desc, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { conexionesDestino } from "../../../plataforma/persistencia/esquema.js";
+import type {
+  ConexionDestinoEntidad,
+  EntradaActualizarConexionDestino,
+  EntradaCrearConexionDestino,
+  PuertoRepositorioConexionesDestino,
+} from "../aplicacion/puertos/puerto-repositorio-destinos.js";
 
 type DbType = ConexionDb;
 
-export interface ConexionDestinoEntidad {
-  id: string;
-  tipo: string;
-  nombre: string;
-  estado: string;
-  mensajeError: string | null;
-  config: Record<string, unknown>;
-  secretoRefs: Record<string, unknown>;
-  esPredeterminada: boolean;
-}
-
-export interface EntradaCrearConexionDestino {
-  organizacionId: string;
-  tipo: string;
-  nombre: string;
-  config: Record<string, unknown>;
-  secretoRefs: Record<string, unknown>;
-  esPredeterminada?: boolean;
-}
-
-export interface EntradaActualizarConexionDestino {
-  nombre?: string;
-  config?: Record<string, unknown>;
-  estado?: string;
-  mensajeError?: string | null;
-}
-
-export class RepositorioConexionesDestinoPostgres {
+export class RepositorioConexionesDestinoPostgres
+  implements PuertoRepositorioConexionesDestino
+{
   constructor(private readonly db: DbType) {}
 
   async listarPorOrganizacion(

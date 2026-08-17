@@ -1,5 +1,11 @@
 export type { PuertoDestino } from "./aplicacion/puertos/puerto-destino.js";
 export type {
+  PuertoRepositorioConexionesDestino,
+  ConexionDestinoEntidad,
+  EntradaCrearConexionDestino,
+  EntradaActualizarConexionDestino,
+} from "./aplicacion/puertos/puerto-repositorio-destinos.js";
+export type {
   TipoDestino,
   TipoRecursoDestino,
   CapacidadesDestino,
