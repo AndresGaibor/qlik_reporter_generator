@@ -12,6 +12,19 @@ import {
   crearMapaUsuarios,
 } from "../mapeador-panel.js";
 
+const MARCADORES_REPORTE = ["qlik generator", "qlik generetor"];
+
+function esReporteDeQlikGenerator({
+  name,
+  description,
+}: {
+  name: string;
+  description?: string;
+}): boolean {
+  const texto = `${name} ${description ?? ""}`.toLocaleLowerCase("es");
+  return MARCADORES_REPORTE.some((marcador) => texto.includes(marcador));
+}
+
 export class ConsultarPanelAutomatizaciones {
   constructor(private readonly qlik: PuertoQlik) {}
 
@@ -23,13 +36,14 @@ export class ConsultarPanelAutomatizaciones {
         ? { filter: `spaceId eq ${JSON.stringify(espacioId)}` }
         : {}),
     });
+    const reportes = automatizaciones.filter(esReporteDeQlikGenerator);
     const [espacios, usuarios] = await Promise.all([
       this.obtenerEspaciosSeguro(),
-      this.obtenerPropietarios(automatizaciones.map((item) => item.ownerId)),
+      this.obtenerPropietarios(reportes.map((item) => item.ownerId)),
     ]);
     const mapaEspacios = crearMapaEspacios(espacios);
     const mapaUsuarios = crearMapaUsuarios(usuarios);
-    return automatizaciones.map((automatizacion) =>
+    return reportes.map((automatizacion) =>
       aResumenAutomatizacion(automatizacion, mapaEspacios, mapaUsuarios),
     );
   }
