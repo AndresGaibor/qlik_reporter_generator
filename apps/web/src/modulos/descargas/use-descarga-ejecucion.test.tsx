@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatearFechaISO, formatearTamano, esEstadoActivo, presentarEjecucion } from "./presentacion-ejecucion";
+import {
+  esEstadoActivo,
+  formatearFechaISO,
+  formatearTamano,
+  presentarEjecucion,
+} from "./presentacion-ejecucion";
 
 describe("presentacion-ejecucion", () => {
   describe("presentarEjecucion", () => {

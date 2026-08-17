@@ -1,5 +1,5 @@
+import type { Bucket, File, Storage } from "@google-cloud/storage";
 import { describe, expect, test, vi } from "vitest";
-import type { Storage, Bucket, File } from "@google-cloud/storage";
 import {
   URI_BASE_GCS_REPORTES,
   parsearUriGcsPermitida,
@@ -56,13 +56,23 @@ describe("URI_BASE_GCS_REPORTES", () => {
 describe("ClienteGcs con fake Storage", () => {
   test("listar debe usar bucket bkt_dwh y getFiles con prefix", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
-      { name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv", metadata: { size: 1024 } },
-      { name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv", metadata: { size: 2048 } },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        metadata: { size: 1024 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv",
+        metadata: { size: 2048 },
+      },
     ];
 
-    const { storageFake, bucketMock, getFilesMock } = crearFakeStorage(archivosSimulados);
+    const { storageFake, bucketMock, getFilesMock } =
+      crearFakeStorage(archivosSimulados);
 
-    const clienteGcs = new ClienteGcs({ projectId: "test-project", storage: storageFake });
+    const clienteGcs = new ClienteGcs({
+      projectId: "test-project",
+      storage: storageFake,
+    });
 
     const prefijo = "POCs/TalendDescargados/ventas/e-1/";
     await clienteGcs.listar(prefijo);
@@ -73,16 +83,30 @@ describe("ClienteGcs con fake Storage", () => {
 
   test("listar debe filtrar archivos terminados en /", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
-      { name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv", metadata: { size: 1024 } },
-      { name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv", metadata: { size: 2048 } },
-      { name: "POCs/TalendDescargados/ventas/e-1/subdir/", metadata: { size: 0 } },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        metadata: { size: 1024 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo2.csv",
+        metadata: { size: 2048 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/subdir/",
+        metadata: { size: 0 },
+      },
     ];
 
     const { storageFake } = crearFakeStorage(archivosSimulados);
 
-    const clienteGcs = new ClienteGcs({ projectId: "test-project", storage: storageFake });
+    const clienteGcs = new ClienteGcs({
+      projectId: "test-project",
+      storage: storageFake,
+    });
 
-    const resultado = await clienteGcs.listar("POCs/TalendDescargados/ventas/e-1/");
+    const resultado = await clienteGcs.listar(
+      "POCs/TalendDescargados/ventas/e-1/",
+    );
 
     expect(resultado).toHaveLength(2);
     expect(resultado[0].nombre).toBe("archivo1.csv");
@@ -90,12 +114,18 @@ describe("ClienteGcs con fake Storage", () => {
 
   test("listar debe convertir metadata.size a numero", async () => {
     const archivosSimulados: ArchivoSimulado[] = [
-      { name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv", metadata: { size: "1024" } },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/archivo1.csv",
+        metadata: { size: "1024" },
+      },
     ];
 
     const { storageFake } = crearFakeStorage(archivosSimulados);
 
-    const clienteGcs = new ClienteGcs({ projectId: "test-project", storage: storageFake });
+    const clienteGcs = new ClienteGcs({
+      projectId: "test-project",
+      storage: storageFake,
+    });
 
     const resultado = await clienteGcs.listar("test/");
 

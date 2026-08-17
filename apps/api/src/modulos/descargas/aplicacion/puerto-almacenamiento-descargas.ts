@@ -15,7 +15,10 @@ export interface PuertoAlmacenamientoDescargas {
   firmar(nombreObjeto: string, minutos: number): Promise<string>;
 }
 
-export function parsearUriGcsPermitida(uri: string): { bucket: string; prefijo: string } {
+export function parsearUriGcsPermitida(uri: string): {
+  bucket: string;
+  prefijo: string;
+} {
   const regex = /^gs:\/\/([^/]+)\/(.+)\/?$/;
   const match = uri.match(regex);
 
@@ -30,7 +33,9 @@ export function parsearUriGcsPermitida(uri: string): { bucket: string; prefijo: 
   }
 
   if (!ruta.startsWith(PREFIJO_GCS_PERMITIDO)) {
-    throw new Error(`Ruta no permitida: debe comenzar con ${PREFIJO_GCS_PERMITIDO}`);
+    throw new Error(
+      `Ruta no permitida: debe comenzar con ${PREFIJO_GCS_PERMITIDO}`,
+    );
   }
 
   return { bucket, prefijo: ruta };

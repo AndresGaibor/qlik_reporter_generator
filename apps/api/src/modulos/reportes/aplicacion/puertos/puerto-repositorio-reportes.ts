@@ -123,7 +123,9 @@ export interface PuertoRepositorioReportes {
     contexto: { tenantQlikId: string; organizacionId: string },
     limite?: number,
   ): Promise<ResumenEjecucionDescarga[]>;
-  obtenerEjecucionDescarga(
-    contexto: { id: string; tenantQlikId: string; organizacionId: string },
-  ): Promise<ResumenEjecucionDescarga | null>;
+  obtenerEjecucionDescarga(contexto: {
+    id: string;
+    tenantQlikId: string;
+    organizacionId: string;
+  }): Promise<ResumenEjecucionDescarga | null>;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
-import { ServicioDescargas } from "./servicio-descargas.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
+import { ServicioDescargas } from "./servicio-descargas.js";
 
 const CONTEXTO = {
   tenantQlikId: "22222222-2222-4222-8222-222222222222",
@@ -9,37 +9,48 @@ const CONTEXTO = {
 
 function crearRepoMock() {
   return {
-    listarEjecucionesDescargas: vi.fn(async () => [] as Array<{
-      id: string;
-      reporteNombre: string;
-      automatizacionIdQlik: string;
-      estado: string;
-      mensajeError: string | null;
-      uriBaseGcs: string;
-      creadoEn: Date;
-      finalizadoEn: Date | null;
-    }>),
-    obtenerEjecucionDescarga: vi.fn(async () => null as {
-      id: string;
-      reporteNombre: string;
-      automatizacionIdQlik: string;
-      estado: string;
-      mensajeError: string | null;
-      uriBaseGcs: string;
-      creadoEn: Date;
-      finalizadoEn: Date | null;
-    } | null),
+    listarEjecucionesDescargas: vi.fn(
+      async () =>
+        [] as Array<{
+          id: string;
+          reporteNombre: string;
+          automatizacionIdQlik: string;
+          estado: string;
+          mensajeError: string | null;
+          uriBaseGcs: string;
+          creadoEn: Date;
+          finalizadoEn: Date | null;
+        }>,
+    ),
+    obtenerEjecucionDescarga: vi.fn(
+      async () =>
+        null as {
+          id: string;
+          reporteNombre: string;
+          automatizacionIdQlik: string;
+          estado: string;
+          mensajeError: string | null;
+          uriBaseGcs: string;
+          creadoEn: Date;
+          finalizadoEn: Date | null;
+        } | null,
+    ),
   };
 }
 
-function crearAlmacenamientoMock(archivos: Array<{ nombre: string; tamanoBytes: number }> = []) {
+function crearAlmacenamientoMock(
+  archivos: Array<{ nombre: string; tamanoBytes: number }> = [],
+) {
   return {
-    listar: vi.fn(async () => archivos.map((a) => ({
-      ...a,
-      rutaCompleta: `POCs/TalendDescargados/ventas/e-1/${a.nombre}`,
-    }))),
-    firmar: vi.fn(async (nombreObjeto: string, _minutos: number) =>
-      `https://storage.example.com/${nombreObjeto}?signed`,
+    listar: vi.fn(async () =>
+      archivos.map((a) => ({
+        ...a,
+        rutaCompleta: `POCs/TalendDescargados/ventas/e-1/${a.nombre}`,
+      })),
+    ),
+    firmar: vi.fn(
+      async (nombreObjeto: string, _minutos: number) =>
+        `https://storage.example.com/${nombreObjeto}?signed`,
     ),
   };
 }
@@ -49,7 +60,11 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue(null);
     const alm = crearAlmacenamientoMock();
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     await expect(
       servicio.crearManifiesto("e-ajena", CONTEXTO),
@@ -69,7 +84,11 @@ describe("ServicioDescargas", () => {
       finalizadoEn: null,
     });
     const alm = crearAlmacenamientoMock();
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     await expect(
       servicio.crearManifiesto("e-activa", CONTEXTO),
@@ -89,7 +108,11 @@ describe("ServicioDescargas", () => {
       finalizadoEn: new Date(),
     });
     const alm = crearAlmacenamientoMock([]);
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     await expect(
       servicio.crearManifiesto("e-vacia", CONTEXTO),
@@ -112,7 +135,11 @@ describe("ServicioDescargas", () => {
       { nombre: "reporte-b.csv", tamanoBytes: 2048 },
       { nombre: "reporte-a.csv", tamanoBytes: 1024 },
     ]);
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     const resultado = await servicio.crearManifiesto("e-completa", CONTEXTO);
 
@@ -149,7 +176,11 @@ describe("ServicioDescargas", () => {
       },
     ]);
     const alm = crearAlmacenamientoMock();
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     const resultado = await servicio.listarEjecuciones(CONTEXTO, 10);
 
@@ -176,8 +207,14 @@ describe("ServicioDescargas", () => {
       creadoEn: new Date(),
       finalizadoEn: new Date(),
     });
-    const alm = crearAlmacenamientoMock([{ nombre: "archivo.csv", tamanoBytes: 1024 }]);
-    const servicio = new ServicioDescargas(repo as unknown as PuertoRepositorioReportes, alm, 15);
+    const alm = crearAlmacenamientoMock([
+      { nombre: "archivo.csv", tamanoBytes: 1024 },
+    ]);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
 
     await expect(
       servicio.crearManifiesto("e-invalida", CONTEXTO),

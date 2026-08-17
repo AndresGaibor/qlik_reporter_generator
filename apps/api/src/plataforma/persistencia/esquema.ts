@@ -286,7 +286,9 @@ export const ejecucionesReportes = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     configuracionId: uuid("configuracion_id")
       .notNull()
-      .references(() => configuracionesAutomatizacion.id, { onDelete: "cascade" }),
+      .references(() => configuracionesAutomatizacion.id, {
+        onDelete: "cascade",
+      }),
     flujoIdQlik: text("flujo_id_qlik").notNull(),
     automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
     runIdQlik: text("run_id_qlik"),

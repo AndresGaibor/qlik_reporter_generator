@@ -57,9 +57,7 @@ function FormularioDataflow() {
 
   const nombreFinal = nombre.trim() || `Reporte ${flujo?.nombre ?? "Dataflow"}`;
   const puedeCrear =
-    Boolean(flujoId) &&
-    preflight?.compatible === true &&
-    !guardando;
+    Boolean(flujoId) && preflight?.compatible === true && !guardando;
 
   async function crearReporte() {
     if (!flujo || !preflight?.compatible) return;

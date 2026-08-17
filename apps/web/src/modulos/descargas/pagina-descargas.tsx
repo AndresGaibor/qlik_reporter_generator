@@ -4,10 +4,13 @@ import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useManejoError } from "@/compartido/hooks/use-manejo-error";
-import { listarDescargas, type ResumenDescargaEjecucion } from "@/modulos/descargas/api";
+import {
+  type ResumenDescargaEjecucion,
+  listarDescargas,
+} from "@/modulos/descargas/api";
 import { TarjetaEjecucionDescarga } from "@/modulos/descargas/componentes/tarjeta-ejecucion-descarga";
-import { useDescargaEjecucion } from "@/modulos/descargas/use-descarga-ejecucion";
 import { esEstadoActivo } from "@/modulos/descargas/presentacion-ejecucion";
+import { useDescargaEjecucion } from "@/modulos/descargas/use-descarga-ejecucion";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -63,10 +66,7 @@ export function PaginaDescargas() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {descargas.map((descarga) => (
-            <TarjetaConDescarga
-              key={descarga.id}
-              descarga={descarga}
-            />
+            <TarjetaConDescarga key={descarga.id} descarga={descarga} />
           ))}
         </div>
       )}

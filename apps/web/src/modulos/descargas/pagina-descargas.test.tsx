@@ -18,7 +18,13 @@ vi.mock("@/modulos/descargas/api", () => ({
   ]),
   solicitarManifiesto: vi.fn().mockResolvedValue({
     descargaId: "e-1",
-    archivos: [{ nombre: "reporte.csv", url: "https://example.com/reporte.csv", tamano: 1024 }],
+    archivos: [
+      {
+        nombre: "reporte.csv",
+        url: "https://example.com/reporte.csv",
+        tamano: 1024,
+      },
+    ],
   }),
 }));
 

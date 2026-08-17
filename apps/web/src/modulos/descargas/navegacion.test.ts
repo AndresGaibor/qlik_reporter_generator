@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { NAVEGACION } from "@/app/navegacion";
+import { describe, expect, it } from "vitest";
 
 describe("navegacion", () => {
   it("incluye /descargas en navegación", () => {

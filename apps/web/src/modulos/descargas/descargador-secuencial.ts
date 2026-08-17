@@ -1,9 +1,16 @@
-import type { ArchivoDescarga, ManifiestoDescarga } from "@qlik/contratos/descargas";
+import type {
+  ArchivoDescarga,
+  ManifiestoDescarga,
+} from "@qlik/contratos/descargas";
 import { descargarArchivos } from "./descargador-navegador";
 
 export interface DescargadorSecuencialOpciones {
   senal: AbortSignal;
-  onProgreso?: (archivoActual: number, totalArchivos: number, nombreArchivo: string) => void;
+  onProgreso?: (
+    archivoActual: number,
+    totalArchivos: number,
+    nombreArchivo: string,
+  ) => void;
   onArchivoDescargado?: (archivo: ArchivoDescarga) => void;
 }
 

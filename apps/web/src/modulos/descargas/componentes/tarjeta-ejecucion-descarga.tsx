@@ -1,9 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/compartido/componentes/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenDescargaEjecucion } from "@qlik/contratos/descargas";
-import { formatearFechaISO, presentarEjecucion } from "../presentacion-ejecucion";
-import { DescargaEjecucion } from "./descarga-ejecucion";
+import {
+  formatearFechaISO,
+  presentarEjecucion,
+} from "../presentacion-ejecucion";
 import type { EstadoDescarga } from "../use-descarga-ejecucion";
+import { DescargaEjecucion } from "./descarga-ejecucion";
 
 interface TarjetaEjecucionDescargaProps {
   ejecucion: ResumenDescargaEjecucion;

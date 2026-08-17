@@ -53,7 +53,9 @@ export function DescargaEjecucion({
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
           <div
             className="h-full bg-brand-600 transition-all duration-300"
-            style={{ width: `${totalArchivos > 0 ? (progreso / totalArchivos) * 100 : 0}%` }}
+            style={{
+              width: `${totalArchivos > 0 ? (progreso / totalArchivos) * 100 : 0}%`,
+            }}
           />
         </div>
         {archivoActual && (

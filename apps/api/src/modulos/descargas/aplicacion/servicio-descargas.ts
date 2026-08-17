@@ -1,13 +1,13 @@
-import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type {
   ContextoDescarga,
+  ServicioDescargas as IServicioDescargas,
   ManifiestoDescarga,
   ResumenDescargaEjecucion,
-  ServicioDescargas as IServicioDescargas,
 } from "@qlik/contratos/descargas";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
+import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { parsearUriGcsPermitida } from "./puerto-almacenamiento-descargas.js";
 import type { PuertoAlmacenamientoDescargas } from "./puerto-almacenamiento-descargas.js";
-import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 
 export class ServicioDescargas implements IServicioDescargas {
   constructor(
@@ -64,7 +64,10 @@ export class ServicioDescargas implements IServicioDescargas {
       .map(async (obj) => ({
         nombre: obj.nombre,
         tamano: obj.tamanoBytes,
-        url: await this.almacenamiento.firmar(obj.rutaCompleta, this.minutosFirma),
+        url: await this.almacenamiento.firmar(
+          obj.rutaCompleta,
+          this.minutosFirma,
+        ),
       }));
 
     const resueltos = await Promise.all(archivos);

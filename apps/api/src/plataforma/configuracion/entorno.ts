@@ -29,12 +29,7 @@ const esquemaEntorno = z.object({
     .default(10_000),
   CIFRADO_CLAVE_PRINCIPAL: z.string().optional(),
   SUPERADMINMAIL: z.string().optional(),
-  GOOGLE_SIGNED_URL_MINUTOS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(60)
-    .default(15),
+  GOOGLE_SIGNED_URL_MINUTOS: z.coerce.number().int().min(1).max(60).default(15),
 });
 
 export type ConfiguracionAplicacion = z.infer<typeof esquemaEntorno>;

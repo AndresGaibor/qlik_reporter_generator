@@ -1,8 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
 import type { ManifiestoDescarga } from "@qlik/contratos/descargas";
+import { describe, expect, it, vi } from "vitest";
 import { descargarEnSecuencia } from "./descargador-secuencial";
 
-const crearManifiesto = (archivos: Array<{ nombre: string }>): ManifiestoDescarga => ({
+const crearManifiesto = (
+  archivos: Array<{ nombre: string }>,
+): ManifiestoDescarga => ({
   descargaId: "descarga-1",
   archivos: archivos.map((a) => ({
     nombre: a.nombre,

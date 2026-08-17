@@ -7,6 +7,7 @@ import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import { estaEjecucionEnCurso } from "../../automatizaciones/dominio/estado-ejecucion.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 import {
   type AlcanceBigQueryReporte,
   prepararDataflowActual,
@@ -14,7 +15,6 @@ import {
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
 import { construirScriptExportacionCsv } from "./script-exportacion-csv.js";
 import { inyectarContextoTalend } from "./servicio-contexto-talend.js";
-import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 const VERSION_COMPILADOR = 1;
 
 export interface EntradaEjecutarReporte {

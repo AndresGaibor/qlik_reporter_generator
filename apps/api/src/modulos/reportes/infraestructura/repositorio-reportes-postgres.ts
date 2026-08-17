@@ -130,19 +130,17 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     configuracionId: string,
     cambios: ActualizarConfiguracionReportePersistida,
   ): Promise<ConfiguracionReportePersistida> {
-    const valores: Partial<
-      typeof configuracionesAutomatizacion.$inferInsert
-    > = {
-      ...cambios,
-      actualizadoEn: new Date(),
-    };
+    const valores: Partial<typeof configuracionesAutomatizacion.$inferInsert> =
+      {
+        ...cambios,
+        actualizadoEn: new Date(),
+      };
     const [actualizada] = await this.db
       .update(configuracionesAutomatizacion)
       .set(valores)
       .where(eq(configuracionesAutomatizacion.id, configuracionId))
       .returning();
-    if (!actualizada)
-      throw new Error("No se encontró el reporte a actualizar");
+    if (!actualizada) throw new Error("No se encontró el reporte a actualizar");
     return mapearConfiguracion(actualizada);
   }
 
@@ -164,7 +162,10 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .from(ejecucionesReportes)
       .innerJoin(
         configuracionesAutomatizacion,
-        eq(ejecucionesReportes.configuracionId, configuracionesAutomatizacion.id),
+        eq(
+          ejecucionesReportes.configuracionId,
+          configuracionesAutomatizacion.id,
+        ),
       )
       .where(
         and(
@@ -180,13 +181,11 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     return filas;
   }
 
-  async obtenerEjecucionDescarga(
-    contexto: {
-      id: string;
-      tenantQlikId: string;
-      organizacionId: string;
-    },
-  ): Promise<ResumenEjecucionDescarga | null> {
+  async obtenerEjecucionDescarga(contexto: {
+    id: string;
+    tenantQlikId: string;
+    organizacionId: string;
+  }): Promise<ResumenEjecucionDescarga | null> {
     const fila = await this.db
       .select({
         id: ejecucionesReportes.id,
@@ -201,7 +200,10 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .from(ejecucionesReportes)
       .innerJoin(
         configuracionesAutomatizacion,
-        eq(ejecucionesReportes.configuracionId, configuracionesAutomatizacion.id),
+        eq(
+          ejecucionesReportes.configuracionId,
+          configuracionesAutomatizacion.id,
+        ),
       )
       .where(
         and(

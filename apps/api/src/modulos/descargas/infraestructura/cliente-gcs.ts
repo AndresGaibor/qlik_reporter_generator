@@ -1,7 +1,7 @@
-import { Storage, type Bucket, type File } from "@google-cloud/storage";
+import { type Bucket, type File, Storage } from "@google-cloud/storage";
 import {
-  BUCKET_GCS_PERMITIDO,
   type ArchivoGcs,
+  BUCKET_GCS_PERMITIDO,
   type PuertoAlmacenamientoDescargas,
 } from "../aplicacion/puerto-almacenamiento-descargas.js";
 

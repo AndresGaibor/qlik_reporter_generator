@@ -1,4 +1,7 @@
-import type { ArchivoDescarga, ManifiestoDescarga } from "@qlik/contratos/descargas";
+import type {
+  ArchivoDescarga,
+  ManifiestoDescarga,
+} from "@qlik/contratos/descargas";
 
 declare global {
   interface Window {
@@ -17,7 +20,10 @@ export interface ResultadoDescarga {
 }
 
 function puedeUsarFileSystemAccess(): boolean {
-  return typeof window !== "undefined" && typeof window.showDirectoryPicker === "function";
+  return (
+    typeof window !== "undefined" &&
+    typeof window.showDirectoryPicker === "function"
+  );
 }
 
 async function descargarConFileSystemAccess(
@@ -37,7 +43,9 @@ async function descargarConFileSystemAccess(
       const respuesta = await fetch(archivo.url, { signal: opciones.senal });
       if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
       const contenido = await respuesta.blob();
-      const fileHandle = await dirHandle.getFileHandle(archivo.nombre, { create: true });
+      const fileHandle = await dirHandle.getFileHandle(archivo.nombre, {
+        create: true,
+      });
       const writable = await fileHandle.createWritable();
       await writable.write(contenido);
       await writable.close();
@@ -108,7 +116,9 @@ export async function descargarArchivoIndividual(
       const showPicker = window.showDirectoryPicker;
       if (!showPicker) throw new Error("File System Access no disponible");
       const dirHandle = await showPicker();
-      const fileHandle = await dirHandle.getFileHandle(archivo.nombre, { create: true });
+      const fileHandle = await dirHandle.getFileHandle(archivo.nombre, {
+        create: true,
+      });
       const writable = await fileHandle.createWritable();
       await writable.write(contenido);
       await writable.close();

@@ -1,11 +1,14 @@
 import { type Context, Hono } from "hono";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { SincronizarEjecucionesReporte } from "../../reportes/aplicacion/sincronizar-ejecuciones-reporte.js";
 import type { PuertoAlmacenamientoDescargas } from "../aplicacion/puerto-almacenamiento-descargas.js";
 import { ServicioDescargas } from "../aplicacion/servicio-descargas.js";
-import { responderError, responderExito } from "../../../nucleo/http/respuestas.js";
 
 interface SesionDescarga {
   tenantId: string;
@@ -91,10 +94,15 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       return responderExito(c, manifiesto);
     } catch (error) {
       if (error instanceof ErrorAplicacion) {
-        return responderError(c, error.message, error.estadoHttp as Parameters<typeof responderError>[2], {
-          codigo: error.codigo,
-          detalles: error.detalles,
-        });
+        return responderError(
+          c,
+          error.message,
+          error.estadoHttp as Parameters<typeof responderError>[2],
+          {
+            codigo: error.codigo,
+            detalles: error.detalles,
+          },
+        );
       }
       throw error;
     }

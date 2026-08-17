@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
-import { crearRutasDescargas } from "./rutas-descargas.js";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { PuertoAlmacenamientoDescargas } from "../aplicacion/puerto-almacenamiento-descargas.js";
+import { crearRutasDescargas } from "./rutas-descargas.js";
 
 function crearSesionHeaders(sesion: {
   tenantId: string;
@@ -11,7 +11,7 @@ function crearSesionHeaders(sesion: {
   usuarioId: string;
 }) {
   return {
-    Cookie: `sesion_usuario=test-session-token`,
+    Cookie: "sesion_usuario=test-session-token",
   };
 }
 
@@ -22,15 +22,16 @@ function crearApp(sesion: {
 }) {
   const rutas = crearRutasDescargas({
     resolverSesion: async () => sesion,
-    resolverQlik: async () => ({} as unknown as ServicioQlik),
+    resolverQlik: async () => ({}) as unknown as ServicioQlik,
     repositorioReportes: {
       listarEjecucionesDescargas: async () => [],
       obtenerEjecucionDescarga: async () => null,
     } as unknown as PuertoRepositorioReportes,
-    resolverAlmacenamiento: async () => ({
-      listar: async () => [],
-      firmar: async () => "https://signed.url",
-    }) as unknown as PuertoAlmacenamientoDescargas,
+    resolverAlmacenamiento: async () =>
+      ({
+        listar: async () => [],
+        firmar: async () => "https://signed.url",
+      }) as unknown as PuertoAlmacenamientoDescargas,
     minutosFirma: 15,
   });
   const app = new Hono();
@@ -78,10 +79,13 @@ describe("GET /api/descargas", () => {
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
-      resolverQlik: async () => ({} as unknown as ServicioQlik),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
       repositorioReportes: repo as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
-        ({ listar: async () => [], firmar: async () => "https://signed.url" }) as unknown as PuertoAlmacenamientoDescargas,
+        ({
+          listar: async () => [],
+          firmar: async () => "https://signed.url",
+        }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
     });
     const app = new Hono();
@@ -118,15 +122,20 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     };
     const alm = {
       listar: async () => [
-        { nombre: "reporte.csv", rutaCompleta: "POCs/TalendDescargados/ventas/e-1/reporte.csv", tamanoBytes: 1024 },
+        {
+          nombre: "reporte.csv",
+          rutaCompleta: "POCs/TalendDescargados/ventas/e-1/reporte.csv",
+          tamanoBytes: 1024,
+        },
       ],
       firmar: async () => "https://storage.example.com/signed",
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
-      resolverQlik: async () => ({} as unknown as ServicioQlik),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
       repositorioReportes: repo as unknown as PuertoRepositorioReportes,
-      resolverAlmacenamiento: async () => alm as unknown as PuertoAlmacenamientoDescargas,
+      resolverAlmacenamiento: async () =>
+        alm as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
     });
     const app = new Hono();
@@ -154,10 +163,13 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
-      resolverQlik: async () => ({} as unknown as ServicioQlik),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
       repositorioReportes: repo as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
-        ({ listar: async () => [], firmar: async () => "" }) as unknown as PuertoAlmacenamientoDescargas,
+        ({
+          listar: async () => [],
+          firmar: async () => "",
+        }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
     });
     const app = new Hono();
@@ -193,18 +205,24 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
-      resolverQlik: async () => ({} as unknown as ServicioQlik),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
       repositorioReportes: repo as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
-        ({ listar: async () => [], firmar: async () => "" }) as unknown as PuertoAlmacenamientoDescargas,
+        ({
+          listar: async () => [],
+          firmar: async () => "",
+        }) as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
     });
     const app = new Hono();
     app.route("/api/descargas", rutas);
-    const respuesta = await app.request("/api/descargas/e-iniciada/manifiesto", {
-      method: "POST",
-      headers: crearSesionHeaders(sesion),
-    });
+    const respuesta = await app.request(
+      "/api/descargas/e-iniciada/manifiesto",
+      {
+        method: "POST",
+        headers: crearSesionHeaders(sesion),
+      },
+    );
     expect(respuesta.status).toBe(409);
     const json = await respuesta.json();
     expect(json.exito).toBe(false);
@@ -236,9 +254,10 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
-      resolverQlik: async () => ({} as unknown as ServicioQlik),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
       repositorioReportes: repo as unknown as PuertoRepositorioReportes,
-      resolverAlmacenamiento: async () => alm as unknown as PuertoAlmacenamientoDescargas,
+      resolverAlmacenamiento: async () =>
+        alm as unknown as PuertoAlmacenamientoDescargas,
       minutosFirma: 15,
     });
     const app = new Hono();

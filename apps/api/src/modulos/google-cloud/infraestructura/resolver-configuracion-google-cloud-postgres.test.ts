@@ -1,14 +1,11 @@
 import { describe, expect, it, vi } from "bun:test";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./resolver-configuracion-google-cloud-postgres.js";
 
-vi.mock(
-  "../../../plataforma/seguridad/servicio-cifrado.js",
-  () => ({
-    servicioCifrado: {
-      descifrar: vi.fn(() => '{"type":"service_account"}'),
-    },
-  }),
-);
+vi.mock("../../../plataforma/seguridad/servicio-cifrado.js", () => ({
+  servicioCifrado: {
+    descifrar: vi.fn(() => '{"type":"service_account"}'),
+  },
+}));
 
 describe("ResolverConfiguracionGoogleCloudPostgres", () => {
   it("devuelve projectId, dataset y credencialesJson descifradas con secretoRefs", async () => {

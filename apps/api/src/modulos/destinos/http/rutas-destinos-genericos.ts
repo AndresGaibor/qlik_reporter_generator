@@ -24,9 +24,9 @@ export function crearRutasDestinosGenericas(
       nombre: string;
       estado: string;
       mensajeError: string | null;
-     config: Record<string, unknown>;
+      config: Record<string, unknown>;
       secretoRefs: Record<string, unknown>;
-       esPredeterminada: boolean;
+      esPredeterminada: boolean;
     }>
   >,
   guardarConexion: (
@@ -61,8 +61,8 @@ export function crearRutasDestinosGenericas(
     estado: string;
     mensajeError: string | null;
     config: Record<string, unknown>;
-      secretoRefs: Record<string, unknown>;
-      esPredeterminada: boolean;
+    secretoRefs: Record<string, unknown>;
+    esPredeterminada: boolean;
   } | null>,
   resolverOrganizacion?: (c: Context) => Promise<string>,
 ) {
@@ -90,7 +90,10 @@ export function crearRutasDestinosGenericas(
       ? await resolverOrganizacion(c)
       : c.req.header("x-organizacion-id");
     if (!orgId) {
-      return c.json({ success: false, error: "No se encontró la organización" }, 401);
+      return c.json(
+        { success: false, error: "No se encontró la organización" },
+        401,
+      );
     }
     const result = await guardarConexion(c, {
       organizacionId: orgId,
@@ -218,31 +221,52 @@ export function crearRutasDestinosGenericas(
 
   rutas.get("/:id/recursos/:recursoId/preview", async (c) => {
     const conn = await obtenerConexion(c, c.req.param("id"));
-    if (!conn) return c.json({ success: false, error: "Conexión no encontrada" }, 404);
-    const cliente = crearClienteDestino({ tipo: conn.tipo as TipoDestino, config: conn.config, secretoRefs: conn.secretoRefs });
-    if (!cliente.obtenerVistaPrevia) return c.json({ success: false, error: "Preview no disponible" }, 400);
+    if (!conn)
+      return c.json({ success: false, error: "Conexión no encontrada" }, 404);
+    const cliente = crearClienteDestino({
+      tipo: conn.tipo as TipoDestino,
+      config: conn.config,
+      secretoRefs: conn.secretoRefs,
+    });
+    if (!cliente.obtenerVistaPrevia)
+      return c.json({ success: false, error: "Preview no disponible" }, 400);
     const limite = Number(c.req.query("limite") ?? 20);
-    return responderExito(c, await cliente.obtenerVistaPrevia(c.req.param("recursoId"), limite));
+    return responderExito(
+      c,
+      await cliente.obtenerVistaPrevia(c.req.param("recursoId"), limite),
+    );
   });
 
   rutas.get("/:id/recursos/:recursoId/ddl", async (c) => {
     const conn = await obtenerConexion(c, c.req.param("id"));
-    if (!conn) return c.json({ success: false, error: "Conexión no encontrada" }, 404);
-    const cliente = crearClienteDestino({ tipo: conn.tipo as TipoDestino, config: conn.config, secretoRefs: conn.secretoRefs });
-    if (!cliente.obtenerDdl) return c.json({ success: false, error: "DDL no disponible" }, 400);
-    return responderExito(c, { ddl: await cliente.obtenerDdl(c.req.param("recursoId")) });
+    if (!conn)
+      return c.json({ success: false, error: "Conexión no encontrada" }, 404);
+    const cliente = crearClienteDestino({
+      tipo: conn.tipo as TipoDestino,
+      config: conn.config,
+      secretoRefs: conn.secretoRefs,
+    });
+    if (!cliente.obtenerDdl)
+      return c.json({ success: false, error: "DDL no disponible" }, 400);
+    return responderExito(c, {
+      ddl: await cliente.obtenerDdl(c.req.param("recursoId")),
+    });
   });
 
   rutas.post("/:id/estimar", async (c) => {
     const conn = await obtenerConexion(c, c.req.param("id"));
-    if (!conn) return c.json({ success: false, error: "Conexión no encontrada" }, 404);
+    if (!conn)
+      return c.json({ success: false, error: "Conexión no encontrada" }, 404);
     const cliente = crearClienteDestino({
       tipo: conn.tipo as TipoDestino,
       config: conn.config,
       secretoRefs: conn.secretoRefs,
     });
     if (!cliente.estimarConsulta) {
-      return c.json({ success: false, error: "Estimación de costos no disponible" }, 400);
+      return c.json(
+        { success: false, error: "Estimación de costos no disponible" },
+        400,
+      );
     }
     const body = await c.req.json<{
       query?: string;
@@ -257,22 +281,39 @@ export function crearRutasDestinosGenericas(
       const configObj = (conn.config ?? {}) as Record<string, unknown>;
       const dataset = String(configObj.dataset ?? "");
       const project = String(configObj.projectId ?? "");
-      const cols = body.columnas && body.columnas.length > 0 ? body.columnas.join(", ") : "*";
-      const tablaFq = project && dataset ? `\`${project}.${dataset}.${body.recursoId}\`` : `\`${body.recursoId}\``;
+      const cols =
+        body.columnas && body.columnas.length > 0
+          ? body.columnas.join(", ")
+          : "*";
+      const tablaFq =
+        project && dataset
+          ? `\`${project}.${dataset}.${body.recursoId}\``
+          : `\`${body.recursoId}\``;
 
       const condiciones: string[] = [];
-      if (body.fechaDesde && body.fechaHasta && body.fechaDesde === body.fechaHasta) {
+      if (
+        body.fechaDesde &&
+        body.fechaHasta &&
+        body.fechaDesde === body.fechaHasta
+      ) {
         condiciones.push(`Fecha = DATE("${body.fechaDesde}")`);
       } else {
-        if (body.fechaDesde) condiciones.push(`Fecha >= DATE("${body.fechaDesde}")`);
-        if (body.fechaHasta) condiciones.push(`Fecha <= DATE("${body.fechaHasta}")`);
+        if (body.fechaDesde)
+          condiciones.push(`Fecha >= DATE("${body.fechaDesde}")`);
+        if (body.fechaHasta)
+          condiciones.push(`Fecha <= DATE("${body.fechaHasta}")`);
       }
 
-      const whereClause = condiciones.length > 0 ? ` WHERE ${condiciones.join(" AND ")}` : "";
+      const whereClause =
+        condiciones.length > 0 ? ` WHERE ${condiciones.join(" AND ")}` : "";
       sql = `SELECT ${cols} FROM ${tablaFq}${whereClause}`;
     }
 
-    if (!sql) return c.json({ success: false, error: "Consulta o recurso obligatorios" }, 400);
+    if (!sql)
+      return c.json(
+        { success: false, error: "Consulta o recurso obligatorios" },
+        400,
+      );
 
     try {
       const resultado = await cliente.estimarConsulta(sql);

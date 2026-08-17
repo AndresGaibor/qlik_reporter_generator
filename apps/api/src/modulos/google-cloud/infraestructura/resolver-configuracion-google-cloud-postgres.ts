@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { conexionesDestino } from "../../../plataforma/persistencia/esquema.js";
 import { servicioCifrado } from "../../../plataforma/seguridad/servicio-cifrado.js";
-import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 
 export interface ConfiguracionGoogleCloud {
   projectId: string;
