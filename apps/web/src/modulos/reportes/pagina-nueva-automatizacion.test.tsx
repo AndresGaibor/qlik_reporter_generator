@@ -94,9 +94,25 @@ async function montar() {
   });
   await vi.waitFor(() => {
     expect(container?.textContent).toContain("Ventas Comercial");
-    expect(container?.textContent).toContain("Dataflow compatible");
   });
   return container;
+}
+
+async function seleccionarDataflow(id = "flujo-1") {
+  const select =
+    container?.querySelector<HTMLSelectElement>("#dataflow-reporte");
+  if (!select) throw new Error("No se encontró el selector Dataflow");
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLSelectElement.prototype,
+    "value",
+  )?.set;
+  setter?.call(select, id);
+  await act(async () => {
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await vi.waitFor(() => {
+    expect(container?.textContent).toContain("Dataflow compatible");
+  });
 }
 
 function boton(texto: string) {
@@ -105,8 +121,24 @@ function boton(texto: string) {
   );
 }
 
+test("no preselecciona ni ejecuta preflight hasta que el usuario elige un Dataflow", async () => {
+  await montar();
+  const select =
+    container?.querySelector<HTMLSelectElement>("#dataflow-reporte");
+
+  expect(select?.value).toBe("");
+  expect(preflight).not.toHaveBeenCalled();
+  expect(container?.textContent).toContain(
+    "Selecciona un Dataflow para analizar su diseño.",
+  );
+
+  await seleccionarDataflow();
+  expect(preflight).toHaveBeenCalledWith("flujo-1");
+});
+
 test("diseña el reporte desde un Dataflow y no desde tabla/campos/fechas", async () => {
   const vista = await montar();
+  await seleccionarDataflow();
 
   expect(vista.textContent).toContain("Dataflow de Qlik");
   expect(vista.textContent).toContain("34 campos");
@@ -121,6 +153,7 @@ test("diseña el reporte desde un Dataflow y no desde tabla/campos/fechas", asyn
 
 test("envía solo flujoId sin programacion", async () => {
   await montar();
+  await seleccionarDataflow();
   Object.defineProperty(window, "location", {
     value: { ...originalLocation, href: "http://localhost/reportes/nuevo" },
     configurable: true,

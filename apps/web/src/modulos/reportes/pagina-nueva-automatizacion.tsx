@@ -7,7 +7,7 @@ import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight
 import { extraerMensajeError } from "@/modulos/reportes/utiles-presentacion-reporte";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   crearAutomatizacionDesdePlantilla,
   preflightDataflowReporte,
@@ -39,10 +39,6 @@ function FormularioDataflow() {
     queryFn: () =>
       obtenerFlujosConFiltros(parametros.get("espacioId") ?? undefined),
   });
-
-  useEffect(() => {
-    if (!flujoId && flujos[0]) setFlujoId(flujos[0].id);
-  }, [flujoId, flujos]);
 
   const flujo = flujos.find((item) => item.id === flujoId);
   const {
