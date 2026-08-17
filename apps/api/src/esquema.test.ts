@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import { getTableConfig } from "drizzle-orm/pg-core";
+import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
   auditoriaEventos,
   automatizacionesQlikCache,
   configuracionesAutomatizacion,
   configuracionesOauthQlik,
   credencialesQlik,
-  destinosCache,
   ejecucionesReportes,
   espaciosQlikCache,
   eventosOutbox,
@@ -15,7 +15,6 @@ import {
   intentosOauthQlik,
   membresiasOrganizacion,
   organizaciones,
-  programacionesAutomatizacion,
   sesionesUsuario,
   solicitudesIdempotentes,
   tenantsQlik,
@@ -111,11 +110,11 @@ describe("Esquema Drizzle", () => {
     expect(idxs).toContain("idx_sesiones_usuario_expira");
   });
 
-  it("configuracionesAutomatizacion tiene las columnas esperadas", () => {
+  it("configuracionesAutomatizacion tiene las columnas esperadas sin programar", () => {
     const cols = colNames(getTableConfig(configuracionesAutomatizacion));
     expect(cols).toContain("flujo_id_qlik");
     expect(cols).toContain("automatizacion_id_qlik");
-    expect(cols).toContain("programar");
+    expect(cols).not.toContain("programar");
     expect(cols).toContain("estado");
   });
 
@@ -145,13 +144,6 @@ describe("Esquema Drizzle", () => {
     expect(contenido).not.toContain('CREATE TABLE "conexiones_destino"');
     expect(contenido).not.toContain('CREATE TABLE "conexiones_origen"');
     expect(contenido).not.toContain('DROP COLUMN "impala_');
-  });
-
-  it("programacionesAutomatizacion tiene tipo y zonaHoraria", () => {
-    const cols = colNames(getTableConfig(programacionesAutomatizacion));
-    expect(cols).toContain("tipo");
-    expect(cols).toContain("zona_horaria");
-    expect(cols).toContain("activa");
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {
@@ -201,5 +193,40 @@ describe("Esquema Drizzle", () => {
   it("intentosOauthQlik tiene indice en expiraEn", () => {
     const idxs = idxNames(getTableConfig(intentosOauthQlik));
     expect(idxs).toContain("idx_intentos_oauth_expira");
+  });
+
+  it("no exporta programacionesAutomatizacion (legacy)", () => {
+    expect(esquema).not.toHaveProperty("programacionesAutomatizacion");
+  });
+
+  it("no exporta conexionesOrigen (legacy)", () => {
+    expect(esquema).not.toHaveProperty("conexionesOrigen");
+  });
+
+  it("no exporta destinosCache (legacy)", () => {
+    expect(esquema).not.toHaveProperty("destinosCache");
+  });
+
+  it("tenantsQlik no tiene columnas destinoApi ni destinoBaseDatos", () => {
+    const cols = colNames(getTableConfig(tenantsQlik));
+    expect(cols).not.toContain("destino_api_url");
+    expect(cols).not.toContain("destino_api_key_cifrada");
+    expect(cols).not.toContain("destino_base_datos");
+  });
+
+  it("ejecucionesReportes.tipoEjecucion solo permite 'manual'", () => {
+    const config = getTableConfig(ejecucionesReportes);
+    const checks = config.checks as unknown as Array<{ name: string; value: { queryChunks: Array<{ value?: string[]; name?: string }> } }>;
+    const tipoCheck = checks?.find(
+      (c) => c.name === "ejecuciones_reportes_tipo_check",
+    );
+    expect(tipoCheck).toBeDefined();
+    const chunks = tipoCheck?.value?.queryChunks ?? [];
+    const chunkValues = chunks
+      .filter((ch) => ch.value)
+      .flatMap((ch) => ch.value ?? []);
+    const constraintDef = chunkValues.join("");
+    expect(constraintDef).toContain("'manual'");
+    expect(constraintDef).not.toContain("'programada'");
   });
 });

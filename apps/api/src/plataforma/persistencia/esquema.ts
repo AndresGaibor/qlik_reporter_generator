@@ -86,9 +86,6 @@ export const tenantsQlik = pgTable(
     esPrincipal: boolean("es_principal").notNull().default(false),
     automatizacionBaseIdQlik: text("automatizacion_base_id_qlik"),
     automatizacionBaseNombre: text("automatizacion_base_nombre"),
-    destinoApiUrl: text("destino_api_url"),
-    destinoApiKeyCifrada: text("destino_api_key_cifrada"),
-    destinoBaseDatos: text("destino_base_datos"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
@@ -238,36 +235,6 @@ export const intentosOauthQlik = pgTable(
   }),
 );
 
-export const destinosCache = pgTable(
-  "destinos_cache",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizacionId: uuid("organizacion_id")
-      .notNull()
-      .references(() => organizaciones.id, { onDelete: "cascade" }),
-    proveedor: text("proveedor").notNull(),
-    idExterno: text("id_externo").notNull(),
-    conexionExternaId: text("conexion_externa_id"),
-    nombreConexion: text("nombre_conexion"),
-    baseDatos: text("base_datos"),
-    esquema: text("esquema"),
-    tabla: text("tabla").notNull(),
-    nombreMostrado: text("nombre_mostrado").notNull(),
-    metadatos: jsonb("metadatos").notNull().default({}),
-    hashContenido: text("hash_contenido"),
-    activo: boolean("activo").notNull().default(true),
-    sincronizadoEn: timestamp("sincronizado_en").notNull().defaultNow(),
-    expiraCacheEn: timestamp("expira_cache_en"),
-  },
-  (t) => ({
-    uqDestino: unique("destinos_unique").on(
-      t.organizacionId,
-      t.proveedor,
-      t.idExterno,
-    ),
-  }),
-);
-
 export const configuracionesAutomatizacion = pgTable(
   "configuraciones_automatizacion",
   {
@@ -290,7 +257,6 @@ export const configuracionesAutomatizacion = pgTable(
     destinoNombreSnapshot: text("destino_nombre_snapshot").notNull(),
     automatizacionIdQlik: text("automatizacion_id_qlik"),
     automatizacionNombreSnapshot: text("automatizacion_nombre_snapshot"),
-    programar: boolean("programar").notNull().default(false),
     estado: text("estado").notNull().default("pendiente"),
     mensajeError: text("mensaje_error"),
     claveIdempotencia: text("clave_idempotencia").unique(),
@@ -310,34 +276,6 @@ export const configuracionesAutomatizacion = pgTable(
     ckEstado: check(
       "configuraciones_estado_check",
       sql`${t.estado} IN ('pendiente', 'creando', 'activa', 'error', 'desactivada', 'eliminada')`,
-    ),
-  }),
-);
-
-export const programacionesAutomatizacion = pgTable(
-  "programaciones_automatizacion",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    configuracionId: uuid("configuracion_id")
-      .notNull()
-      .unique()
-      .references(() => configuracionesAutomatizacion.id, {
-        onDelete: "cascade",
-      }),
-    tipo: text("tipo").notNull(),
-    expresionCron: text("expresion_cron"),
-    zonaHoraria: text("zona_horaria").notNull().default("America/Guayaquil"),
-    programacionIdQlik: text("programacion_id_qlik"),
-    activa: boolean("activa").notNull().default(true),
-    proximaEjecucionEn: timestamp("proxima_ejecucion_en"),
-    ultimaEjecucionEn: timestamp("ultima_ejecucion_en"),
-    creadoEn: timestamp("creado_en").notNull().defaultNow(),
-    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
-  },
-  (t) => ({
-    ckTipo: check(
-      "programaciones_tipo_check",
-      sql`${t.tipo} IN ('manual', 'intervalo', 'cron', 'qlik')`,
     ),
   }),
 );
@@ -375,7 +313,7 @@ export const ejecucionesReportes = pgTable(
     idxRunQlik: index("idx_ejecuciones_reportes_run_qlik").on(t.runIdQlik),
     ckTipo: check(
       "ejecuciones_reportes_tipo_check",
-      sql`${t.tipoEjecucion} IN ('manual', 'programada')`,
+      sql`${t.tipoEjecucion} = 'manual'`,
     ),
     ckEstado: check(
       "ejecuciones_reportes_estado_check",
@@ -563,31 +501,6 @@ export const conexionesDestino = pgTable(
     ),
     idxTipo: index("idx_conexiones_tipo").on(t.tipo),
     idxEstado: index("idx_conexiones_estado").on(t.estado),
-  }),
-);
-
-export const conexionesOrigen = pgTable(
-  "conexiones_origen",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizacionId: uuid("organizacion_id")
-      .notNull()
-      .references(() => organizaciones.id, { onDelete: "cascade" }),
-    tipo: text("tipo").notNull(),
-    nombre: text("nombre").notNull(),
-    config: jsonb("config").notNull().default({}),
-    creadoEn: timestamp("creado_en").notNull().defaultNow(),
-    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
-  },
-  (t) => ({
-    uqNombrePorOrg: unique("uq_conexion_origen_por_org_nombre").on(
-      t.organizacionId,
-      t.tipo,
-      t.nombre,
-    ),
-    idxOrganizacion: index("idx_conexiones_origen_organizacion").on(
-      t.organizacionId,
-    ),
   }),
 );
 
