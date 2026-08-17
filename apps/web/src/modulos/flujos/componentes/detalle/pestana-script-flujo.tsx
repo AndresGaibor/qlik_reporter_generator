@@ -7,7 +7,7 @@ export function PestanaScriptFlujo({
   errorScript,
   errorScriptMsg,
 }: {
-  datosScript?: { script?: string; versionMessage?: string };
+  datosScript?: { script?: string; versionMessage?: string | null };
   cargandoScript: boolean;
   errorScript: boolean;
   errorScriptMsg?: unknown;

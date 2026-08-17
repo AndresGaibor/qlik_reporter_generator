@@ -277,13 +277,13 @@ export function PaginaSetup() {
               {paso < PASOS.length ? (
                 <Button
                   type="button"
-                  variant="primary"
+                  variant="default"
                   onClick={handleSiguiente}
                 >
                   Siguiente
                 </Button>
               ) : (
-                <Button type="submit" variant="primary" disabled={enviando}>
+                <Button type="submit" variant="default" disabled={enviando}>
                   {enviando ? "Guardando…" : "Completar configuración"}
                 </Button>
               )}

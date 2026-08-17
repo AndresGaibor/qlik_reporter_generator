@@ -128,7 +128,7 @@ export function TarjetaUsuario({
             onClick={() => onQuitar(usuario)}
             className="text-danger-600 hover:bg-danger-50 hover:text-danger-700 text-xs"
           >
-            <Icon name="trash" size="sm" /> Quitar
+            <Icon name="x" size="sm" /> Quitar
           </Button>
         ) : null}
       </div>

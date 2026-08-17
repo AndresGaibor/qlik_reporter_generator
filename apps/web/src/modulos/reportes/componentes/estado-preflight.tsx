@@ -1,4 +1,4 @@
-import type { preflightDataflowReporte } from "../../api";
+import type { preflightDataflowReporte } from "../api";
 
 export function EstadoPreflight({
   validando,

@@ -9,9 +9,25 @@ import type {
 } from "../dominio/plan-dataflow.js";
 
 const FUNCIONES_QLIK_SOPORTADAS = new Set([
-  "Upper", "Lower", "Trim", "Len", "Year", "Month", "If", "Num", "Date",
-  "Timestamp", "Sum", "Count", "Min", "Max", "Avg", "IsNull", "Round",
-  "Floor", "Ceil",
+  "Upper",
+  "Lower",
+  "Trim",
+  "Len",
+  "Year",
+  "Month",
+  "If",
+  "Num",
+  "Date",
+  "Timestamp",
+  "Sum",
+  "Count",
+  "Min",
+  "Max",
+  "Avg",
+  "IsNull",
+  "Round",
+  "Floor",
+  "Ceil",
 ]);
 
 interface CargaPendiente {
@@ -67,7 +83,8 @@ export function parsearDataflow(script: string): PlanDataflow {
     if (/^LET\b/i.test(sentencia)) {
       operacionesNoSoportadas.push({
         operacion: "LET",
-        detalle: "Las variables LET deben resolverse antes de compilar el Dataflow",
+        detalle:
+          "Las variables LET deben resolverse antes de compilar el Dataflow",
       });
       continue;
     }
@@ -86,7 +103,10 @@ export function parsearDataflow(script: string): PlanDataflow {
     if (/^(?:SQL\s+)?SELECT\b/i.test(sentencia)) {
       const select = parsearSelectSql(sentencia);
       if (!select) {
-        operacionesNoSoportadas.push({ operacion: "SELECT", detalle: "SELECT BigQuery no reconocido" });
+        operacionesNoSoportadas.push({
+          operacion: "SELECT",
+          detalle: "SELECT BigQuery no reconocido",
+        });
         cargaPendiente = undefined;
         continue;
       }
@@ -120,7 +140,10 @@ export function parsearDataflow(script: string): PlanDataflow {
         orden: select.orden,
       });
       let relacion = fuenteId;
-      camposPorTabla.set(relacion, select.campos.map((campo) => campo.alias));
+      camposPorTabla.set(
+        relacion,
+        select.campos.map((campo) => campo.alias),
+      );
 
       if (select.where) {
         const filtrada = nombreInterno("filtro_sql");
@@ -155,7 +178,10 @@ export function parsearDataflow(script: string): PlanDataflow {
     if (/\bLOAD\b/i.test(sentencia)) {
       const carga = parsearCarga(sentencia, operacionesNoSoportadas);
       if (!carga) {
-        operacionesNoSoportadas.push({ operacion: "LOAD", detalle: "LOAD no reconocido" });
+        operacionesNoSoportadas.push({
+          operacion: "LOAD",
+          detalle: "LOAD no reconocido",
+        });
         continue;
       }
 
@@ -193,9 +219,15 @@ export function parsearDataflow(script: string): PlanDataflow {
         );
         if (carga.orden.length > 0 && salida) {
           const ordenada = carga.join ? nombreInterno("orden") : salida;
-          pasos.push({ tipo: "ordenar", entrada: salida, salida: ordenada, campos: carga.orden });
+          pasos.push({
+            tipo: "ordenar",
+            entrada: salida,
+            salida: ordenada,
+            campos: carga.orden,
+          });
           camposPorTabla.set(ordenada, camposPorTabla.get(salida) ?? []);
-          if (!carga.join && carga.etiqueta) registrarTabla(carga.etiqueta, camposPorTabla.get(ordenada) ?? []);
+          if (!carga.join && carga.etiqueta)
+            registrarTabla(carga.etiqueta, camposPorTabla.get(ordenada) ?? []);
         }
       } else {
         cargaPendiente = {
@@ -216,21 +248,28 @@ export function parsearDataflow(script: string): PlanDataflow {
   }
 
   if (cargaPendiente) {
-    operacionesNoSoportadas.push({ operacion: "LOAD", detalle: "LOAD sin SELECT o RESIDENT asociado" });
+    operacionesNoSoportadas.push({
+      operacion: "LOAD",
+      detalle: "LOAD sin SELECT o RESIDENT asociado",
+    });
   }
 
-  const tablaSalida = (tablaSalidaStore && camposPorTabla.has(tablaSalidaStore)
-    ? tablaSalidaStore
-    : undefined)
-    ?? [...tablasUsuario].reverse().find((tabla) => tablasActivas.has(tabla))
-    ?? [...tablasUsuario].reverse()[0]
-    ?? fuentes.at(-1)?.id
-    ?? "";
+  const tablaSalida =
+    (tablaSalidaStore && camposPorTabla.has(tablaSalidaStore)
+      ? tablaSalidaStore
+      : undefined) ??
+    [...tablasUsuario].reverse().find((tabla) => tablasActivas.has(tabla)) ??
+    [...tablasUsuario].reverse()[0] ??
+    fuentes.at(-1)?.id ??
+    "";
 
   return {
     fuentes,
     pasos,
-    salida: { tablaLogica: tablaSalida, campos: camposPorTabla.get(tablaSalida) ?? [] },
+    salida: {
+      tablaLogica: tablaSalida,
+      campos: camposPorTabla.get(tablaSalida) ?? [],
+    },
     operacionesNoSoportadas,
   };
 }
@@ -246,7 +285,9 @@ function aplicarCarga(
   agrupacion: string[] = [],
   _orden: OrdenDataflow[] = [],
 ): string {
-  const salidaProyeccion = carga.join ? nombreInterno("join_derecha") : (carga.etiqueta ?? nombreInterno("carga"));
+  const salidaProyeccion = carga.join
+    ? nombreInterno("join_derecha")
+    : (carga.etiqueta ?? nombreInterno("carga"));
   pasos.push({
     tipo: "proyectar",
     entrada,
@@ -265,7 +306,9 @@ function aplicarCarga(
   }
 
   const camposIzquierda = camposPorTabla.get(carga.join.objetivo) ?? [];
-  const claves = camposIzquierda.filter((campo) => camposSalida.includes(campo));
+  const claves = camposIzquierda.filter((campo) =>
+    camposSalida.includes(campo),
+  );
   if (claves.length === 0) {
     noSoportadas.push({
       operacion: "JOIN",
@@ -280,10 +323,10 @@ function aplicarCarga(
     salida: carga.join.objetivo,
     claves,
   });
-  registrarTabla(
-    carga.join.objetivo,
-    [...camposIzquierda, ...camposSalida.filter((campo) => !camposIzquierda.includes(campo))],
-  );
+  registrarTabla(carga.join.objetivo, [
+    ...camposIzquierda,
+    ...camposSalida.filter((campo) => !camposIzquierda.includes(campo)),
+  ]);
   return carga.join.objetivo;
 }
 
@@ -297,10 +340,16 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
   }
 
   let join: CargaPendiente["join"];
-  const matchJoin = texto.match(/^(?:(INNER|LEFT|RIGHT|FULL)\s+)?JOIN\s*\(\s*\[([^\]]+)\]\s*\)\s*/i);
+  const matchJoin = texto.match(
+    /^(?:(INNER|LEFT|RIGHT|FULL)\s+)?JOIN\s*\(\s*\[([^\]]+)\]\s*\)\s*/i,
+  );
   if (matchJoin) {
     join = {
-      tipo: ((matchJoin[1] ?? "inner").toLowerCase()) as "inner" | "left" | "right" | "full",
+      tipo: (matchJoin[1] ?? "inner").toLowerCase() as
+        | "inner"
+        | "left"
+        | "right"
+        | "full",
       objetivo: matchJoin[2]?.trim() ?? "",
     };
     texto = texto.slice(matchJoin[0].length).trim();
@@ -314,7 +363,9 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
   if (distinct) texto = texto.replace(/^DISTINCT\b/i, "").trim();
 
   const residentMatch = texto.match(/\bRESIDENT\s+\[([^\]]+)\]/i);
-  const cuerpoCampos = residentMatch ? texto.slice(0, residentMatch.index).trim() : texto;
+  const cuerpoCampos = residentMatch
+    ? texto.slice(0, residentMatch.index).trim()
+    : texto;
   const campos = parsearCampos(cuerpoCampos, "qlik");
   if (
     campos.length > 1 &&
@@ -326,13 +377,18 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
         "LOAD * combinado con otras expresiones requiere expandir el esquema antes de compilar",
     });
   }
-  detectarFuncionesNoSoportadas(campos.map((campo) => campo.expresion), noSoportadas);
+  detectarFuncionesNoSoportadas(
+    campos.map((campo) => campo.expresion),
+    noSoportadas,
+  );
 
   let where: string | undefined;
   let agrupacion: string[] = [];
   let orden: OrdenDataflow[] = [];
   if (residentMatch) {
-    const despues = texto.slice((residentMatch.index ?? 0) + residentMatch[0].length);
+    const despues = texto.slice(
+      (residentMatch.index ?? 0) + residentMatch[0].length,
+    );
     where = extraerClausula(despues, "WHERE", ["GROUP BY", "ORDER BY"]);
     const grupo = extraerClausula(despues, "GROUP BY", ["ORDER BY"]);
     agrupacion = grupo ? dividirLista(grupo) : [];
@@ -375,44 +431,71 @@ function parsearSelectSql(sentencia: string): SelectSql | undefined {
   };
 }
 
-function parsearCampos(texto: string, dialecto: DialectoExpresion): CampoDataflow[] {
-  return dividirLista(texto).filter(Boolean).map((parte) => {
-    const alias = parte.match(/\s+AS\s+\[([^\]]+)\]\s*$/i)
-      ?? parte.match(/\s+AS\s+`([^`]+)`\s*$/i)
-      ?? parte.match(/\s+AS\s+([A-Za-z_][\w]*)\s*$/i);
-    const expresion = alias ? parte.slice(0, alias.index).trim() : parte.trim();
-    return {
-      expresion,
-      alias: alias?.[1]?.trim() ?? nombreCampo(expresion),
-      dialecto,
-    };
-  });
+function parsearCampos(
+  texto: string,
+  dialecto: DialectoExpresion,
+): CampoDataflow[] {
+  return dividirLista(texto)
+    .filter(Boolean)
+    .map((parte) => {
+      const alias =
+        parte.match(/\s+AS\s+\[([^\]]+)\]\s*$/i) ??
+        parte.match(/\s+AS\s+`([^`]+)`\s*$/i) ??
+        parte.match(/\s+AS\s+([A-Za-z_][\w]*)\s*$/i);
+      const expresion = alias
+        ? parte.slice(0, alias.index).trim()
+        : parte.trim();
+      return {
+        expresion,
+        alias: alias?.[1]?.trim() ?? nombreCampo(expresion),
+        dialecto,
+      };
+    });
 }
 
-function parsearOrden(texto: string, dialecto: DialectoExpresion): OrdenDataflow[] {
+function parsearOrden(
+  texto: string,
+  dialecto: DialectoExpresion,
+): OrdenDataflow[] {
   return dividirLista(texto).map((parte) => {
     const match = parte.match(/^(.*?)(?:\s+(ASC|DESC))?$/i);
     return {
       expresion: match?.[1]?.trim() ?? parte.trim(),
-      direccion: (match?.[2]?.toLowerCase() === "desc" ? "desc" : "asc") as "asc" | "desc",
+      direccion: (match?.[2]?.toLowerCase() === "desc" ? "desc" : "asc") as
+        | "asc"
+        | "desc",
       dialecto,
     };
   });
 }
 
-function detectarFuncionesNoSoportadas(expresiones: string[], salida: OperacionNoSoportada[]) {
+function detectarFuncionesNoSoportadas(
+  expresiones: string[],
+  salida: OperacionNoSoportada[],
+) {
   for (const expresion of expresiones) {
-    for (const match of expresion.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g)) {
+    for (const match of expresion.matchAll(
+      /\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g,
+    )) {
       const funcion = match[1] ?? "";
-      if (!FUNCIONES_QLIK_SOPORTADAS.has(funcion) && !salida.some((item) => item.operacion === funcion)) {
-        salida.push({ operacion: funcion, detalle: `Función Qlik no soportada: ${funcion}`, contexto: expresion });
+      if (
+        !FUNCIONES_QLIK_SOPORTADAS.has(funcion) &&
+        !salida.some((item) => item.operacion === funcion)
+      ) {
+        salida.push({
+          operacion: funcion,
+          detalle: `Función Qlik no soportada: ${funcion}`,
+          contexto: expresion,
+        });
       }
     }
   }
 }
 
 function limpiarScript(script: string): string {
-  return script.replace(/^\uFEFF/, "").split(/\r?\n/)
+  return script
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
     .filter((linea) => !linea.trimStart().startsWith("//"))
     .join("\n");
 }
@@ -424,8 +507,11 @@ function dividirSentencias(script: string): string[] {
   for (let i = 0; i < script.length; i += 1) {
     const caracter = script[i] ?? "";
     const previo = script[i - 1] ?? "";
-    if ((caracter === "'" || caracter === '"' || caracter === "`") && previo !== "\\") {
-      if (!comilla) comilla = caracter as "\'" | '"' | "`";
+    if (
+      (caracter === "'" || caracter === '"' || caracter === "`") &&
+      previo !== "\\"
+    ) {
+      if (!comilla) comilla = caracter as "'" | '"' | "`";
       else if (comilla === caracter) comilla = undefined;
     }
     if (caracter === ";" && !comilla) {
@@ -464,7 +550,11 @@ function dividirLista(texto: string): string[] {
   return partes;
 }
 
-function extraerClausula(texto: string, inicio: string, finales: string[]): string | undefined {
+function extraerClausula(
+  texto: string,
+  inicio: string,
+  finales: string[],
+): string | undefined {
   const indice = buscarPalabra(texto, inicio);
   if (indice < 0) return undefined;
   const desde = indice + inicio.length;
@@ -495,7 +585,11 @@ function nombreCampo(expresion: string): string {
   if (bracket?.[1]) return bracket[1];
   const tick = expresion.match(/^`([^`]+)`$/);
   if (tick?.[1]) return tick[1].split(".").at(-1) ?? tick[1];
-  const simple = expresion.trim().split(".").at(-1)?.replace(/^["`\[]|["`\]]$/g, "");
+  const simple = expresion
+    .trim()
+    .split(".")
+    .at(-1)
+    ?.replace(/^["`\[]|["`\]]$/g, "");
   return simple || expresion.trim();
 }
 

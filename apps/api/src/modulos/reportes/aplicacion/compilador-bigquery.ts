@@ -1,7 +1,7 @@
 import {
-  ErrorDataflowNoCompatible,
   type CampoDataflow,
   type DialectoExpresion,
+  ErrorDataflowNoCompatible,
   type OrdenDataflow,
   type PlanDataflow,
 } from "../dominio/plan-dataflow.js";
@@ -12,15 +12,19 @@ interface RelacionCompilada {
   ordenFinal?: string;
 }
 
-export function compilarPlanABigQuery(
-  plan: PlanDataflow,
-): { sql: string; camposSalida: string[] } {
+export function compilarPlanABigQuery(plan: PlanDataflow): {
+  sql: string;
+  camposSalida: string[];
+} {
   if (plan.operacionesNoSoportadas.length > 0) {
     throw new ErrorDataflowNoCompatible(plan.operacionesNoSoportadas);
   }
   if (plan.fuentes.length === 0) {
     throw new ErrorDataflowNoCompatible([
-      { operacion: "Fuente", detalle: "El Dataflow no contiene fuentes BigQuery" },
+      {
+        operacion: "Fuente",
+        detalle: "El Dataflow no contiene fuentes BigQuery",
+      },
     ]);
   }
 
@@ -46,7 +50,9 @@ export function compilarPlanABigQuery(
     relaciones.set(fuente.id, {
       cte,
       campos: fuente.campos.map((campo) => campo.alias),
-      ...(fuente.orden?.length ? { ordenFinal: compilarOrden(fuente.orden) } : {}),
+      ...(fuente.orden?.length
+        ? { ordenFinal: compilarOrden(fuente.orden) }
+        : {}),
     });
   }
 
@@ -90,7 +96,11 @@ export function compilarPlanABigQuery(
       ctes.push(
         `${cte} AS (\n    SELECT *\n    FROM ${entrada.cte}\n    ORDER BY ${orden}\n  )`,
       );
-      relaciones.set(paso.salida, { cte, campos: entrada.campos, ordenFinal: orden });
+      relaciones.set(paso.salida, {
+        cte,
+        campos: entrada.campos,
+        ordenFinal: orden,
+      });
       continue;
     }
 
@@ -99,7 +109,10 @@ export function compilarPlanABigQuery(
       const derecha = obtenerRelacion(relaciones, paso.derecha);
       if (paso.claves.length === 0) {
         throw new ErrorDataflowNoCompatible([
-          { operacion: "JOIN", detalle: "Un JOIN requiere al menos una clave común" },
+          {
+            operacion: "JOIN",
+            detalle: "Un JOIN requiere al menos una clave común",
+          },
         ]);
       }
       const cte = nuevaCte("join");
@@ -108,11 +121,20 @@ export function compilarPlanABigQuery(
         (campo) => !izquierda.campos.includes(campo),
       );
       const seleccion = [
-        ...izquierda.campos.map((campo) => `l.${citarIdentificador(campo)} AS ${citarIdentificador(campo)}`),
-        ...camposDerecha.map((campo) => `r.${citarIdentificador(campo)} AS ${citarIdentificador(campo)}`),
+        ...izquierda.campos.map(
+          (campo) =>
+            `l.${citarIdentificador(campo)} AS ${citarIdentificador(campo)}`,
+        ),
+        ...camposDerecha.map(
+          (campo) =>
+            `r.${citarIdentificador(campo)} AS ${citarIdentificador(campo)}`,
+        ),
       ].join(",\n      ");
       const condicion = paso.claves
-        .map((clave) => `l.${citarIdentificador(clave)} = r.${citarIdentificador(clave)}`)
+        .map(
+          (clave) =>
+            `l.${citarIdentificador(clave)} = r.${citarIdentificador(clave)}`,
+        )
         .join(" AND ");
       ctes.push(
         `${cte} AS (\n    SELECT ${seleccion}\n    FROM ${izquierda.cte} AS l\n    ${tipoJoin} ${derecha.cte} AS r ON ${condicion}\n  )`,
@@ -125,7 +147,8 @@ export function compilarPlanABigQuery(
   }
 
   const salida = obtenerRelacion(relaciones, plan.salida.tablaLogica);
-  const camposSalida = plan.salida.campos.length > 0 ? plan.salida.campos : salida.campos;
+  const camposSalida =
+    plan.salida.campos.length > 0 ? plan.salida.campos : salida.campos;
   const seleccionFinal =
     camposSalida.length === 1 && camposSalida[0] === "*"
       ? "*"
@@ -236,7 +259,9 @@ function traducirFunciones(texto: string): string {
         { operacion: nombre, detalle: `Paréntesis sin cerrar en ${nombre}` },
       ]);
     }
-    const argumentos = dividirArgumentos(texto.slice(cursor + 1, cierre)).map(traducirFunciones);
+    const argumentos = dividirArgumentos(texto.slice(cursor + 1, cierre)).map(
+      traducirFunciones,
+    );
     salida += compilarFuncion(nombre, argumentos);
     i = cierre + 1;
   }
@@ -249,7 +274,20 @@ function compilarFuncion(nombreOriginal: string, args: string[]): string {
     if (args.length !== 1) throw aridad(nombreOriginal, 1, args.length);
     return args[0] ?? "";
   };
-  if (["upper", "lower", "trim", "sum", "count", "min", "max", "avg", "round", "floor"].includes(nombre)) {
+  if (
+    [
+      "upper",
+      "lower",
+      "trim",
+      "sum",
+      "count",
+      "min",
+      "max",
+      "avg",
+      "round",
+      "floor",
+    ].includes(nombre)
+  ) {
     return `${nombre.toUpperCase()}(${args.join(", ")})`;
   }
   if (nombre === "len") return `LENGTH(${uno()})`;
@@ -265,13 +303,23 @@ function compilarFuncion(nombreOriginal: string, args: string[]): string {
     return `CASE WHEN ${args[0]} THEN ${args[1]} ELSE ${args[2]} END`;
   }
   throw new ErrorDataflowNoCompatible([
-    { operacion: nombreOriginal, detalle: `Función Qlik no soportada: ${nombreOriginal}` },
+    {
+      operacion: nombreOriginal,
+      detalle: `Función Qlik no soportada: ${nombreOriginal}`,
+    },
   ]);
 }
 
-function aridad(nombre: string, esperada: number, recibida: number): ErrorDataflowNoCompatible {
+function aridad(
+  nombre: string,
+  esperada: number,
+  recibida: number,
+): ErrorDataflowNoCompatible {
   return new ErrorDataflowNoCompatible([
-    { operacion: nombre, detalle: `${nombre} requiere ${esperada} argumentos y recibió ${recibida}` },
+    {
+      operacion: nombre,
+      detalle: `${nombre} requiere ${esperada} argumentos y recibió ${recibida}`,
+    },
   ]);
 }
 
@@ -323,10 +371,14 @@ function dividirArgumentos(texto: string): string[] {
   return salida;
 }
 
-function reemplazarFueraDeComillas(texto: string, buscar: string, reemplazo: string): string {
+function reemplazarFueraDeComillas(
+  texto: string,
+  buscar: string,
+  reemplazo: string,
+): string {
   let salida = "";
   let comilla: string | undefined;
-  for (let i = 0; i < texto.length;) {
+  for (let i = 0; i < texto.length; ) {
     const c = texto[i] ?? "";
     const previo = texto[i - 1] ?? "";
     if ((c === "'" || c === '"' || c === "`") && previo !== "\\") {
@@ -354,7 +406,10 @@ function reemplazarAmpersand(texto: string): string {
 function citarIdentificador(nombre: string): string {
   if (!nombre || nombre.includes("`")) {
     throw new ErrorDataflowNoCompatible([
-      { operacion: "Identificador", detalle: `Identificador BigQuery inválido: ${nombre}` },
+      {
+        operacion: "Identificador",
+        detalle: `Identificador BigQuery inválido: ${nombre}`,
+      },
     ]);
   }
   return `\`${nombre}\``;
@@ -363,7 +418,10 @@ function citarIdentificador(nombre: string): string {
 function citarTablaBigQuery(tabla: string): string {
   if (!/^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){0,2}$/.test(tabla)) {
     throw new ErrorDataflowNoCompatible([
-      { operacion: "FuenteBigQuery", detalle: `Tabla BigQuery inválida: ${tabla}` },
+      {
+        operacion: "FuenteBigQuery",
+        detalle: `Tabla BigQuery inválida: ${tabla}`,
+      },
     ]);
   }
   return `\`${tabla}\``;

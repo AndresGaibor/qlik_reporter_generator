@@ -205,7 +205,7 @@ export function LayoutPrincipal() {
 
             <BarraUsuario
               nombre={nombre}
-              avatarUrl={sesion.usuario?.avatarUrl}
+              avatarUrl={sesion.usuario?.avatarUrl ?? undefined}
               esAdmin={esAdmin}
               modoUsuarioFinal={modoUsuarioFinal}
               onCambiarModoUsuarioFinal={setModoUsuarioFinal}

@@ -195,12 +195,10 @@ describe("ClienteGcs con fake Storage", () => {
       ])
       .mockResolvedValueOnce([[]]);
     const fileMock = vi.fn();
-    const bucketMock = vi
-      .fn()
-      .mockReturnValue({
-        getFiles: getFilesMock,
-        file: fileMock,
-      } as unknown as Bucket);
+    const bucketMock = vi.fn().mockReturnValue({
+      getFiles: getFilesMock,
+      file: fileMock,
+    } as unknown as Bucket);
     const storageFake = { bucket: bucketMock } as unknown as Storage;
     const cliente = new ClienteGcs({
       projectId: "test-project",

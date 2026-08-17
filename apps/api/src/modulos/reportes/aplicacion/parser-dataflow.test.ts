@@ -30,7 +30,11 @@ describe("parsearDataflow", () => {
     const join = plan.pasos.find((paso) => paso.tipo === "join");
 
     expect(filtroResident).toMatchObject({ entrada: "ventas" });
-    expect(join).toMatchObject({ tipo: "join", join: "left", izquierda: "ventas_filtradas" });
+    expect(join).toMatchObject({
+      tipo: "join",
+      join: "left",
+      izquierda: "ventas_filtradas",
+    });
     if (join?.tipo === "join") expect(join.claves).toContain("TiendaId");
   });
 
@@ -84,5 +88,4 @@ describe("parsearDataflow", () => {
       ]),
     );
   });
-
 });
