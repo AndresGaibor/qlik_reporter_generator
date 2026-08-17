@@ -10,6 +10,28 @@ export interface ConfigConexionDestino {
   secretoRefs?: Record<string, unknown>;
 }
 
+function resolverCredencialesJson(secretoRefs?: Record<string, unknown>): string | undefined {
+  if (!secretoRefs?.credencialesJson) return undefined;
+  
+  const ref = secretoRefs.credencialesJson;
+  if (typeof ref === "string") {
+    return ref;
+  }
+  
+  if (typeof ref === "object" && ref !== null && "cifrado" in ref && "iv" in ref && "tag" in ref) {
+    const cifradoObj = ref as { cifrado?: string; iv?: string; tag?: string };
+    if (cifradoObj.cifrado && cifradoObj.iv && cifradoObj.tag) {
+      return servicioCifrado.descifrar(
+        cifradoObj.cifrado,
+        cifradoObj.iv,
+        cifradoObj.tag,
+      );
+    }
+  }
+  
+  return undefined;
+}
+
 export function crearClienteDestino(
   conexion: ConfigConexionDestino,
 ): PuertoDestino {
@@ -20,14 +42,7 @@ export function crearClienteDestino(
   return new ClienteBigQuery({
     projectId: opts.projectId ?? "",
     dataset: opts.dataset ?? "",
-    credencialesJson: conexion.secretoRefs?.credencialesJson
-      ? servicioCifrado.descifrar(
-          (conexion.secretoRefs.credencialesJson as { cifrado: string })
-            .cifrado,
-          (conexion.secretoRefs.credencialesJson as { iv: string }).iv,
-          (conexion.secretoRefs.credencialesJson as { tag: string }).tag,
-        )
-      : undefined,
+    credencialesJson: resolverCredencialesJson(conexion.secretoRefs),
     limiteMiB: typeof opts.limiteMiB === "number" ? opts.limiteMiB : undefined,
     limiteUsd: typeof opts.limiteUsd === "number" ? opts.limiteUsd : undefined,
     precioUsdPorTib:
