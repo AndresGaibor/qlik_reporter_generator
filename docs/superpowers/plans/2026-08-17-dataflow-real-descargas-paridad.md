@@ -1,10 +1,10 @@
 # Dataflow Real and Download Parity Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Hacer confiable el traductor de scripts Qlik Dataflow reales y llevar `/descargas` al comportamiento robusto ya probado en `bq_reportes_creator`.
 
-**Architecture:** El parser/compilador sigue siendo fail-closed y genera solo BigQuery SQL. La ejecución conserva `current → SQL → EXPORT DATA → gcp_script → Automate → Talend`. Descargas descubre únicamente partes CSV GZIP bajo el prefijo auditado y las transmite al navegador con streaming.
+**Architecture:** El parser/compilador sigue siendo fail-closed y genera solo BigQuery SQL. La ejecución conserva `current → SQL → cuatro queries Talend → VariableBlocks Qlik Automate → Talend`. El contrato real probado usa `bq_select_data`, `bq_number_csv`, `bq_export_data` y `bq_drop`; GCS confirma finalización mediante un marcador oculto antes de habilitar descargas.
 
 **Tech Stack:** Bun, TypeScript, Hono, React, Vitest/Bun test, Qlik Cloud API, `@google-cloud/storage`, BigQuery.
 
@@ -30,11 +30,11 @@
 
 **Interfaces:** `parsearDataflow(script): PlanDataflow`; `compilarPlanABigQuery(plan): { sql, camposSalida }`.
 
-- [ ] Añadir fixture sanitizado equivalente al script real y tests que exijan salida `Fecha, Venta_Neta_USD`, filtro `Fecha = '6/1/2026'` y ausencia de `STORE`, `DROP`, `SET` en SQL.
-- [ ] Ejecutar los tests y confirmar el fallo por semántica actual.
-- [ ] Corregir únicamente parser/compilador para preservar la última relación almacenada como salida lógica aunque luego exista `DROP TABLE`.
-- [ ] Ejecutar parser + compilador + preflight y confirmar verde.
-- [ ] Commit `fix: compilar dataflow real con filtro resident`.
+- [x] Añadir fixture sanitizado equivalente al script real y tests que exijan salida `Fecha, Venta_Neta_USD`, filtro `Fecha = '6/1/2026'` y ausencia de `STORE`, `DROP`, `SET` en SQL.
+- [x] Ejecutar los tests y confirmar el fallo por semántica actual.
+- [x] Corregir únicamente parser/compilador para preservar la última relación almacenada como salida lógica aunque luego exista `DROP TABLE`.
+- [x] Ejecutar parser + compilador + preflight y confirmar verde.
+- [x] Commit `fix: compilar dataflow real con filtro resident`.
 
 ### Task 2: Soportar wildcards Qlik/BigQuery correctamente
 
@@ -43,11 +43,11 @@
 - Modify: `apps/api/src/modulos/reportes/aplicacion/compilador-bigquery.test.ts`
 - Modify: `apps/api/src/modulos/reportes/aplicacion/compilador-bigquery.ts`
 
-- [ ] Escribir test rojo con `LOAD *; SQL SELECT * FROM ...`.
-- [ ] Confirmar que hoy genera ``* AS `*` `` o equivalente inválido.
-- [ ] Modelar `*` como wildcard, no alias; generar `SELECT *` en fuente/proyección/final.
-- [ ] Añadir caso `LOAD *, Upper([x]) AS [y]` solo si el IR actual puede representarlo sin ambigüedad; de lo contrario marcarlo incompatible explícitamente.
-- [ ] Ejecutar suite de compilador y commit `fix: soportar wildcard en dataflows`.
+- [x] Escribir test rojo con `LOAD *; SQL SELECT * FROM ...`.
+- [x] Confirmar que hoy genera ``* AS `*` `` o equivalente inválido.
+- [x] Modelar `*` como wildcard, no alias; generar `SELECT *` en fuente/proyección/final.
+- [x] Añadir caso `LOAD *, Upper([x]) AS [y]` solo si el IR actual puede representarlo sin ambigüedad; de lo contrario marcarlo incompatible explícitamente.
+- [x] Ejecutar suite de compilador y commit `fix: soportar wildcard en dataflows`.
 
 ### Task 3: Validar SQL real con BigQuery preflight
 
@@ -55,11 +55,11 @@
 - Modify: `apps/api/src/modulos/reportes/aplicacion/preflight-dataflow.test.ts`
 - Modify: `apps/api/src/modulos/reportes/aplicacion/integracion-pipeline-dataflow.test.ts`
 
-- [ ] Añadir test que use el fixture real completo y compruebe que el estimador recibe SQL compilado sin `STORE`.
-- [ ] Añadir invariantes para ruta GCS generada y `gcp_script` con el filtro real.
-- [ ] Ejecutar tests focalizados.
-- [ ] Si existe sesión Qlik/Google válida local, ejecutar preflight real sin mutar Automate; si no, dejar el smoke test documentado.
-- [ ] Commit `test: validar pipeline con dataflow real`.
+- [x] Añadir test que use el fixture real completo y compruebe que el estimador recibe SQL compilado sin `STORE`.
+- [x] Añadir invariantes para ruta GCS y las cuatro queries Talend con el filtro real.
+- [x] Ejecutar tests focalizados.
+- [x] No ejecutar BigQuery desde el agente. Validar compilación local y dejar la ejecución BigQuery real para el usuario.
+- [x] Commit `test: validar pipeline con dataflow real`.
 
 ### Task 4: Portar descarga streaming de `bq_reportes_creator`
 
@@ -70,12 +70,12 @@
 - Modify: `apps/web/src/modulos/descargas/descargador-navegador.ts`
 - Modify: `apps/web/src/modulos/descargas/use-descarga-ejecucion.ts`
 
-- [ ] Escribir test rojo: `showDirectoryPicker` se llama una sola vez para N archivos.
-- [ ] Escribir test rojo: cada `ReadableStream` se escribe chunk a chunk y no se llama `response.blob()`.
-- [ ] Escribir test rojo para progreso por bytes acumulados.
-- [ ] Portar el patrón de `bq_reportes_creator`: seleccionar carpeta una vez, `getReader()`, `createWritable()`, escribir chunks, abortar escritor ante error.
-- [ ] Mantener fallback con anchors espaciados cuando File System Access no existe.
-- [ ] Ejecutar tests de descargas y commit `fix: descargar archivos gcs por streaming`.
+- [x] Escribir test rojo: `showDirectoryPicker` se llama una sola vez para N archivos.
+- [x] Escribir test rojo: cada `ReadableStream` se escribe chunk a chunk y no se llama `response.blob()`.
+- [x] Escribir test rojo para progreso por bytes acumulados.
+- [x] Portar el patrón de `bq_reportes_creator`: seleccionar carpeta una vez, `getReader()`, `createWritable()`, escribir chunks, abortar escritor ante error.
+- [x] Mantener fallback con anchors espaciados cuando File System Access no existe.
+- [x] Ejecutar tests de descargas y commit `fix: descargar archivos gcs por streaming`.
 
 ### Task 5: Endurecer manifests y signed URLs GCS
 
@@ -85,10 +85,10 @@
 - Modify: `apps/api/src/modulos/descargas/infraestructura/cliente-gcs.ts`
 - Modify: `apps/api/src/modulos/descargas/aplicacion/servicio-descargas.ts`
 
-- [ ] Test rojo: objetos ajenos a `parte-*.csv.gz` no aparecen en el manifest.
-- [ ] Test rojo: `getSignedUrl` recibe `version: v4`, `action: read` y `responseDisposition` con filename.
-- [ ] Implementar filtro estricto y `Content-Disposition`.
-- [ ] Ejecutar backend descargas y commit `fix: restringir y nombrar descargas gcs`.
+- [x] Test rojo: objetos ajenos a `parte-*.csv.gz` no aparecen en el manifest.
+- [x] Test rojo: `getSignedUrl` recibe `version: v4`, `action: read` y `responseDisposition` con filename.
+- [x] Implementar filtro estricto y `Content-Disposition`.
+- [x] Ejecutar backend descargas y commit `fix: restringir y nombrar descargas gcs`.
 
 ### Task 6: Validar workspace real de Qlik Automate
 
@@ -97,12 +97,12 @@
 - Modify: `apps/api/src/modulos/reportes/aplicacion/servicio-contexto-talend.test.ts`
 - Modify: `apps/api/src/modulos/reportes/aplicacion/integracion-pipeline-dataflow.test.ts`
 
-- [ ] Buscar credenciales/sesión local sin imprimir secretos; usar `~/Downloads/browser-agent-playbook` solo si hace falta autenticación interactiva.
-- [ ] Obtener GET de la automatización base y guardar únicamente estructura sanitizada necesaria para `executeTask`.
-- [ ] Testear `inyectarContextoTalend` contra esa estructura real y SQL multilínea largo.
-- [ ] Verificar que PUT del workspace ocurre antes de POST `/runs`.
-- [ ] Si es seguro ejecutar el POC real, comprobar que `finished` coincide con archivos ya presentes en GCS.
-- [ ] Commit `test: validar contrato real automate talend`.
+- [x] Buscar credenciales/sesión local sin imprimir secretos; usar `~/Downloads/browser-agent-playbook` solo si hace falta autenticación interactiva.
+- [x] Obtener GET de la automatización base y guardar únicamente estructura sanitizada necesaria para `executeTask`.
+- [x] Testear el inyector contra la estructura real de `Test_BanCol_qlik_generator` y sus cuatro VariableBlocks.
+- [x] Verificar que PUT del workspace ocurre antes de POST `/runs`.
+- [x] Documentar que `finished` de Automate no prueba finalización de GCS y usar marcador `__finalizado__-*` como señal de descarga lista.
+- [x] Commit `test: validar contrato real automate talend`.
 
 ### Task 7: Cerrar integración frontend relacionada y verificación
 
@@ -111,8 +111,8 @@
 - Modify only if still failing: `apps/web/src/modulos/reportes/componentes/detalle/configuracion-dataflow-reporte.tsx`
 - Modify only if still failing: `apps/web/src/modulos/reportes/componentes/estado-preflight.tsx`
 
-- [ ] Corregir solo errores TypeScript vinculados a Dataflow moviendo imports a `@/modulos/flujos/api` y aceptando `versionMessage: string | null | undefined`.
-- [ ] Ejecutar API reportes/descargas, web descargas/reportes/flujos y typecheck por workspace.
-- [ ] No tocar errores baseline de Admin/Setup salvo que hayan sido resueltos por `main` al integrar.
-- [ ] Ejecutar `git diff --check`, Biome focalizado y build focalizado.
-- [ ] Commit `fix: cerrar integracion dataflow y descargas`.
+- [x] Corregir solo errores TypeScript vinculados a Dataflow moviendo imports a `@/modulos/flujos/api` y aceptando `versionMessage: string | null | undefined`.
+- [x] Ejecutar API reportes/descargas, web descargas/reportes/flujos y typecheck por workspace.
+- [x] No tocar errores baseline de Admin/Setup salvo que hayan sido resueltos por `main` al integrar.
+- [x] Ejecutar `git diff --check`, Biome focalizado y build focalizado.
+- [x] Commit `fix: cerrar integracion dataflow y descargas`.

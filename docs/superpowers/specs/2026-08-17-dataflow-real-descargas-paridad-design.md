@@ -13,8 +13,8 @@ Qlik Dataflow /scripts/current
   → parser estricto
   → IR
   → BigQuery SELECT equivalente
-  → EXPORT DATA ≤ 1.000.000 filas
-  → gcp_script en executeTask
+  → cuatro queries Talend (staging / partes / export / drop)
+  → VariableBlocks BqSelectData / BqNumberCsv / BqExportData / BqDrop
   → Qlik Automate
   → Talend tBigQuerySQLRow
   → BigQuery
@@ -42,17 +42,21 @@ El backend solo incluye objetos `parte-*.csv.gz` bajo el prefijo auditado de la 
 
 ## Contrato Automate/Talend
 
-Antes de cada run se lee `scripts/current`, se recompila y se actualiza únicamente el bloque `executeTask` con `gcp_script` y `gcp_dataflow_hash`. El run se crea solo después del PUT exitoso. Se conserva un fixture sanitizado del workspace real cuando pueda obtenerse desde Qlik.
+La inspección real de `Test_BanCol_qlik_generator` confirmó que el Job Talend `Prueba_BigQuery` ya acepta un contrato probado de cuatro contextos: `bq_select_data`, `bq_number_csv`, `bq_export_data` y `bq_drop`, alimentados por los VariableBlocks `BqSelectData`, `BqNumberCsv`, `BqExportData` y `BqDrop`. La plataforma actualiza esos VariableBlocks y conserva intacto `credenciales`; no inventa parámetros nuevos en `executeTask`.
 
-Debe validarse con una ejecución real que `finished` de Qlik Automate ocurre después de que Talend/BigQuery/GCS termina. Si Automate termina antes, la descarga no podrá marcarse completada solo por el estado de Qlik; deberá comprobarse la presencia de objetos GCS.
+`bq_select_data` crea una staging única por ejecución con `export_part`; `bq_number_csv` enumera las particiones; `bq_export_data` usa `__PART__` y `__PART_PADDED__` para exportar CSV GZIP de máximo 1.000.000 filas; `bq_drop` elimina la staging y escribe un marcador oculto `__finalizado__-*` en el mismo prefijo GCS. El hash SHA-256 permanece únicamente en auditoría local.
+
+Los runs reales de `Test_BanCol_qlik_generator` terminan en Qlik en 0–1 segundos, por lo que `finished` significa que Automate entregó la tarea a Talend, no que GCS ya esté listo. El estado local solo pasa a `completada` al detectar el marcador GCS `__finalizado__-*`; `failed` y `stopped` sí se sincronizan desde Qlik.
+
+Por indicación del usuario, el agente no ejecuta consultas ni dry-runs en BigQuery. Toda prueba de SQL es local; la ejecución BigQuery end-to-end queda como paso manual del usuario.
 
 ## Pruebas y aceptación
 
 - El script real entregado compila a SQL válido y conserva `Fecha = '6/1/2026'`.
 - `SET`, `STORE` y `DROP TABLE` no contaminan el SQL final.
 - `LOAD * / SELECT *` produce wildcard válido.
-- El export mantiene CSV GZIP, `|` y máximo 1.000.000 filas.
+- El export mantiene CSV GZIP, `|` y máximo 1.000.000 filas, con staging única por ejecución y marcador GCS final.
 - Un picker de carpeta sirve para todos los archivos y el flujo escribe por chunks.
 - Las signed URLs fuerzan nombre de descarga y solo se firman `parte-*.csv.gz`.
-- Cada ejecución vuelve a leer `current` y reemplaza `gcp_script` antes del run.
+- Cada ejecución vuelve a leer `current` y reemplaza las cuatro queries Talend antes del run.
 - Tests focalizados pasan; los fallos baseline ajenos en Admin/Setup se documentan y no se atribuyen a esta feature.
