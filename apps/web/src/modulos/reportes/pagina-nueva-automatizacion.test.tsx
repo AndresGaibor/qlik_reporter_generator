@@ -164,3 +164,27 @@ test("envía flujoId y programación, sin configuración manual BigQuery", async
   expect(entrada).not.toHaveProperty("columnas");
   expect(entrada).not.toHaveProperty("fechaDesde");
 });
+
+test("muestra el mensaje de error de Qlik cuando la sesión es requerida", async () => {
+  const { obtenerFlujosConFiltros } = await import("@/modulos/flujos/api");
+  vi.mocked(obtenerFlujosConFiltros).mockRejectedValueOnce(
+    new Error("Sesión requerida"),
+  );
+
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <QueryClientProvider client={queryClient}>
+        <PaginaNuevaAutomatizacion />
+      </QueryClientProvider>,
+    );
+  });
+  await vi.waitFor(() => {
+    expect(container?.textContent).toContain("Sesión requerida");
+  });
+});
