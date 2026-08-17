@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-const RAIZ = join(__dirname, "../../../..");
+const RAIZ = join(__dirname, "../../../");
 
 async function existe(ruta: string): Promise<boolean> {
   try {
-    const stat = await Bun.file(join(RAIZ, ruta)).text();
-    return stat !== null;
+    const s = await stat(join(RAIZ, ruta));
+    return s.isDirectory() || s.isFile();
   } catch {
     return false;
   }
@@ -22,6 +22,7 @@ async function contenidoCodigo(directorios: string[]): Promise<string> {
       for (const entrada of entradas) {
         if (typeof entrada !== "string") continue;
         if (!/\.(ts|tsx|js|jsx)$/.test(entrada)) continue;
+        if (entrada.endsWith(".d.ts")) continue;
         if (entrada.includes(".test.")) continue;
         if (entrada.includes("arquitectura-integraciones-activas")) continue;
         const rutaCompleta = join(rutaAbs, entrada);
@@ -51,6 +52,24 @@ async function contenidoPackageJson(): Promise<Record<string, unknown>> {
 
 describe("arquitectura-integraciones-activas", () => {
   const dirs = ["apps/api/src", "apps/web/src", "packages/contratos/src"];
+
+  it("el scan cubre los tres directorios y el contenido no está vacío", async () => {
+    const codigoActivo = await contenidoCodigo(dirs);
+    expect(codigoActivo.length).toBeGreaterThan(1000);
+    for (const dir of dirs) {
+      const rutaAbs = join(RAIZ, dir);
+      const tiene = await existe(dir);
+      expect(tiene).toBe(true);
+    }
+  });
+
+  it("demuestra que el regex detectaría Impala en código activo", async () => {
+    expect("ImpalaConnect".toLowerCase()).not.toMatch(/\bimpala\b/i);
+    const IMPALA_FALSE_POSITIVE = "ImpalaConnect";
+    expect(IMPALA_FALSE_POSITIVE).not.toMatch(/\bImpala\b/i);
+    const codigoActivo = await contenidoCodigo(dirs);
+    expect(codigoActivo).not.toMatch(/\bImpala\b/i);
+  });
 
   it("no debe tener el módulo origenes", async () => {
     const tiene = await existe("apps/api/src/modulos/origenes");

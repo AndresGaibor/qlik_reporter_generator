@@ -514,7 +514,7 @@ export function VisorWorkspace({ workspace }: Props) {
                   </span>
                   <div className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Talend + Spark
+                    Talend + BigQuery
                   </div>
                 </div>
               </div>
