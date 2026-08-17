@@ -8,11 +8,11 @@ Repositorio: `qlik_reportes_creator`
 
 Mejorar seguridad, mantenibilidad, claridad arquitectónica, capacidad de prueba y escalabilidad del sistema sin reescribirlo ni cambiar innecesariamente su comportamiento funcional.
 
-La arquitectura objetivo continúa siendo un **monolito modular** con principios de Clean Architecture y arquitectura hexagonal. El trabajo se ejecutará de forma incremental y verificable.
+El producto está diseñado para **una sola empresa**. No se diseñará ni optimizará para multi-tenancy. La arquitectura objetivo continúa siendo un **monolito modular** con principios de Clean Architecture y arquitectura hexagonal. El trabajo se ejecutará de forma incremental y verificable.
 
 ## 2. Principios de ejecución
 
-1. Seguridad y aislamiento multi-tenant antes que refactors cosméticos.
+1. Seguridad, autenticación y protección de recursos antes que refactors cosméticos.
 2. Cada cambio funcional o de seguridad relevante comienza con una prueba que demuestre el problema o la regla esperada.
 3. Cada fase debe dejar el repositorio en estado ejecutable y verificable.
 4. Los módulos se comunican mediante contratos públicos explícitos; no mediante imports profundos de detalles internos.
@@ -20,24 +20,33 @@ La arquitectura objetivo continúa siendo un **monolito modular** con principios
 6. No se ejecutarán consultas BigQuery potencialmente facturables durante el refactor; las pruebas usarán dobles, mocks o fakes.
 7. Los archivos se dividirán por responsabilidad, no únicamente por cantidad de líneas.
 
+## 2.1. Modelo de despliegue y tenancy
+
+- Una instalación corresponde a una sola empresa.
+- Puede haber múltiples usuarios, roles y tenants Qlik si el negocio lo requiere, pero todos pertenecen a la misma empresa.
+- `organizacionId` no se usará como abstracción para vender o alojar múltiples clientes en la misma instancia.
+- No se introducirá selector de organización ni autorización por organización.
+- Si retirar `organizacionId` del esquema implica una migración amplia sin beneficio inmediato, se conservará temporalmente como singleton y su eliminación se evaluará como limpieza posterior.
+
 ## 3. Alcance del programa
 
 El programa se divide en ocho subproyectos. Cada uno tendrá posteriormente su propio plan de implementación detallado y puede producir varios commits pequeños.
 
-### Fase 1 — Seguridad multi-tenant y secretos
+### Fase 1 — Seguridad de acceso y secretos
 
-Objetivo: cerrar vulnerabilidades antes de mover responsabilidades internas.
+Objetivo: cerrar fallos de autenticación/autorización y de gestión de secretos antes de mover responsabilidades internas.
 
 Incluye:
-- exigir contexto autenticado y `organizacionId` en todas las operaciones de conexiones de destino por ID;
-- aplicar `WHERE id = ? AND organizacion_id = ?` en lectura, actualización y eliminación;
-- cubrir también probar conexión, capacidades, recursos, preview, DDL y estimación;
-- añadir pruebas Organización A / Organización B que demuestren aislamiento;
-- devolver 404 para recursos pertenecientes a otra organización;
+- exigir sesión autenticada en todas las operaciones sensibles de conexiones de destino por ID;
+- impedir acceso anónimo a probar conexión, capacidades, recursos, preview, DDL, estimación, actualización y eliminación;
+- definir explícitamente qué roles pueden modificar conexiones y cuáles sólo pueden consultarlas;
+- añadir pruebas HTTP de acceso anónimo, usuario autorizado y usuario sin privilegios;
 - retirar `.env.production` y `apps/api/local.db` del versionado;
 - documentar como checkpoint operativo la rotación manual de secretos reales que hayan quedado en el historial Git, sin imprimir ni registrar sus valores;
 - eliminar el almacenamiento de la clave maestra de cifrado junto al ciphertext en PostgreSQL;
 - exigir una clave maestra externa en producción y fallar de forma explícita si falta.
+
+La aplicación es de una sola empresa. No se añadirán pruebas Organización A / Organización B ni scoping multi-tenant. Si `organizacionId` sigue existiendo en persistencia durante el refactor, se tratará como un identificador singleton interno y no como una frontera de aislamiento entre clientes.
 
 No incluye: reestructuración general de rutas, parser, UI o migraciones.
 
@@ -162,7 +171,7 @@ Incluye:
 HTTP
   → middleware global
   → validación Zod/contrato
-  → contexto autenticado { usuario, organizacionId, tenantQlikId }
+  → contexto autenticado { usuario, roles, tenantQlikId }
   → caso de uso del módulo propietario
   → puertos de dominio/aplicación
   → adaptadores PostgreSQL/Qlik/BigQuery/GCS
@@ -191,7 +200,6 @@ Las páginas coordinan la experiencia de usuario; no deben concentrar lógica de
 - Backend: todas las rutas devolverán el envelope común `{ exito, datos }` o `{ exito, error }`.
 - Los errores de infraestructura se traducirán a errores de aplicación en la frontera del adaptador o caso de uso apropiado.
 - No se filtrarán detalles internos, credenciales, SQL sensible ni respuestas crudas de proveedores.
-- Un recurso de otra organización se tratará como inexistente para el consumidor.
 - Las migraciones y configuración crítica de seguridad fallarán de forma explícita; no habrá fallbacks silenciosos que comprometan integridad o cifrado.
 
 ## 7. Estrategia de pruebas
@@ -199,9 +207,9 @@ Las páginas coordinan la experiencia de usuario; no deben concentrar lógica de
 Cada subproyecto debe combinar pruebas de comportamiento y reglas estructurales.
 
 Prioridades:
-- tests multi-tenant para toda operación por ID;
+- tests de autenticación y autorización para toda operación sensible por ID;
 - tests unitarios de casos de uso con puertos falsos;
-- tests de adaptadores para queries correctamente scopeadas;
+- tests de adaptadores para queries parametrizadas y filtros esperados;
 - tests HTTP para envelope, autenticación, autorización y códigos de estado;
 - tests arquitectónicos que recorran imports y fallen ante dependencias prohibidas;
 - Vitest/Testing Library para comportamiento frontend y hooks;
@@ -233,7 +241,7 @@ Este programa no pretende:
 
 ## 10. Dependencias y orden
 
-La fase 1 y la fase 2 son bloqueantes para el resto: seguridad crítica y red de pruebas fiable.
+La fase 1 y la fase 2 son bloqueantes para el resto: seguridad crítica y red de pruebas fiable. La fase 1 se diseña explícitamente para una sola empresa, sin aislamiento multi-tenant.
 
 La fase 3 establece los límites que la fase 4 debe respetar. La fase 4 aclara ownership antes de reducir `app.ts` y persistencia en la fase 5. La fase 6 puede ejecutarse después de 2 y 3, pero se mantendrá detrás de la fase 5 para reducir trabajo paralelo sobre contratos. La fase 7 depende de límites estabilizados. La fase 8 se realiza al final porque contiene optimizaciones y decisiones operativas que deben apoyarse en una arquitectura ya limpia.
 
@@ -250,11 +258,12 @@ No se realizará un commit monolítico con las ocho fases.
 ## 12. Criterios de éxito del programa
 
 El programa se considera completado cuando:
-- ninguna ruta multi-tenant puede operar por ID fuera de la organización autenticada;
+- ninguna operación sensible de destinos puede ejecutarse sin sesión válida y permisos suficientes;
 - no existen secretos reales ni bases locales versionadas;
 - el pipeline raíz de calidad pasa de forma reproducible;
 - las reglas de arquitectura están automatizadas y no dependen sólo de documentación;
 - no existen imports internos entre bounded contexts salvo excepciones explícitas y documentadas;
+- el sistema no contiene complejidad añadida exclusivamente para soportar múltiples empresas;
 - `reportes`, `automatizaciones` y `destinos` tienen ownership comprensible sin ciclos conceptuales;
 - composition, configuración y persistencia usan dependencias explícitas;
 - las migraciones no se ejecutan silenciosamente en cada réplica al arrancar;
