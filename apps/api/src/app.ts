@@ -22,14 +22,14 @@ import {
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
+import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
+import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import {
   crearClienteDestino,
   crearRutasDestinosGenericas,
 } from "./modulos/destinos/publico.js";
-import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
-import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
-import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
+import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
@@ -199,7 +199,10 @@ export async function crearAplicacion(
       const sesion = await resolverSesion(c);
       let google: Awaited<ReturnType<typeof resolverGoogle.resolver>>;
       try {
-        google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
+        google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
       } catch (error) {
         if (error instanceof ErrorAplicacion) {
           if (error.codigo === "GOOGLE_CLOUD_NO_CONFIGURADO") {
@@ -347,7 +350,7 @@ export async function crearAplicacion(
       registrador,
     }),
   );
-  
+
   const repositorioReportes = new RepositorioReportesPostgres(db);
   aplicacion.route(
     "/api/reportes",
@@ -591,7 +594,10 @@ export async function crearAplicacion(
       repositorioReportes,
       resolverAlmacenamiento: async (c) => {
         const sesion = await resolverSesion(c);
-        const google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
+        const google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
         return new ClienteGcs({
           projectId: google.projectId,
           credencialesJson: google.credencialesJson,

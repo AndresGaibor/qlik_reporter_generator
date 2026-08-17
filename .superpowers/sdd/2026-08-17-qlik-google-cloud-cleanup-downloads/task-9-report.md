@@ -127,6 +127,56 @@ rg -n '\b(Impala|SFTP|JDBC|Spark)\b|REMOTE_API_(URL|KEY)|destinoApiUrl|destinoAp
 4. **Tests de regresión legítimos**: Los términos encontrados en `tenant-qlik.test.ts`, `helpers-admin.test.ts`, `entorno.test.ts`, `esquema.test.ts`, `configuracion-secreta.test.ts` son **asersiones que verifican ausencia** — son exactamente los guards que el brief exige.
 5. **`ssh2-sftp-client.d.ts`**: Stub de tipos legacy excluido del scan con filtro `.d.ts`. La librería `ssh2-sftp-client` no está en `package.json`.
 
+## Fix Round 2 — Fix wave final
+
+### Finding 1: `GOOGLE_SIGNED_URL_MINUTOS` ausente en mock de app.test.ts
+
+**Problema**: `app.test.ts` mock config no incluía `GOOGLE_SIGNED_URL_MINUTOS` (typecheck fallaba).
+
+**Fix**: Añadido `GOOGLE_SIGNED_URL_MINUTOS: 15` al mock de configuración en `apps/api/src/app.test.ts`.
+
+### Finding 2: `esquemaConfigurarDestinoTenant` importado en test obsoleto
+
+**Problema**: `configuracion-secreta.test.ts` importaba `esquemaConfigurarDestinoTenant` eliminado intencionalmente por Task 3.
+
+**Fix**: Reescrito el test para cubrir `esquemaCredencialesBigQuery` — contrato vigente de secretos/admin. Se mantienen 2 expectativas: credenciales válidas son aceptadas y clave sin formato PEM es rechazada.
+
+### Biome — archivos del branch
+
+**Problema**: Errores de formato/import ordering en archivos tocados por el branch.
+
+**Fix**: Aplicado `biome check --write` a:
+- `apps/api/src/app.ts` (import ordering, wrap de argumentos largos)
+- `apps/api/src/esquema.test.ts` (formato)
+- `packages/contratos/src/destinos/index.ts` (formato)
+- `packages/contratos/src/destinos/index.test.ts` (import ordering)
+
+**Nota**: Errores Biome pre-existentes en archivos no tocados por el branch NO fueron corregidos (no属于本次更改范围).
+
+## Matriz completa (post fix round 2)
+
+| Comando | Resultado |
+|---------|-----------|
+| `bun test apps/api/src/app.test.ts packages/contratos/src/admin/configuracion-secreta.test.ts` | 12 tests, **0 fail** |
+| `tsc --noEmit` (contratos) | OK |
+| `tsc --noEmit` (api) | OK |
+| `tsc --noEmit` (web) | OK |
+| `bun run build` (api) | OK |
+| `biome check apps/api/src apps/web/src packages/contratos/src` | Limpio para archivos del branch |
+
+## Commit
+
+```
+fix: añadir GOOGLE_SIGNED_URL_MINUTOS al mock y reescribir test de secretos obsoleto
+```
+
+6 archivos cambiados, 44 inserciones, 15 eliminaciones.
+
+## Preocupaciones
+
+1. **Biome errores pre-existentes**: Los errores Biome en archivos no tocados por este branch (75 errores original) no fueron corregidos — están fuera del alcance.
+2. **Test de secretos reescrito**: `configuracion-secreta.test.ts` ahora cubre `esquemaCredencialesBigQuery` en lugar del schema eliminado. Mantiene cobertura útil de secretos/admin.
+
 ## Resumen
 
-Documentación actualizada, guard endurecido con scan verificado (contenido > 1000 chars, 3 dirs), referencia `Talend + Spark` corregida a `Talend + BigQuery`, commits hechos, worktree limpio. Tests de regresión existentes evitan reintroducción de legacy. Los fallos pre-existentes no son bloqueantes.
+Fix wave final completado. Mock de `app.test.ts` incluye `GOOGLE_SIGNED_URL_MINUTOS`. Test de `configuracion-secreta` reescrito para cubrir `esquemaCredencialesBigQuery`. Biome aplicado a archivos del branch únicamente. Typechecks OK, tests OK, build OK, worktree limpio.

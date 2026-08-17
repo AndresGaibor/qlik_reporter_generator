@@ -138,7 +138,10 @@ describe("Esquema Drizzle", () => {
 
   it("la migración 0014 solo introduce auditoría de ejecuciones", async () => {
     const contenido = await Bun.file(
-      new URL("../drizzle/0014_ejecuciones_reportes_dataflow.sql", import.meta.url),
+      new URL(
+        "../drizzle/0014_ejecuciones_reportes_dataflow.sql",
+        import.meta.url,
+      ),
     ).text();
     expect(contenido).toContain('CREATE TABLE "ejecuciones_reportes"');
     expect(contenido).not.toContain('CREATE TABLE "conexiones_destino"');
@@ -216,7 +219,10 @@ describe("Esquema Drizzle", () => {
 
   it("ejecucionesReportes.tipoEjecucion solo permite 'manual'", () => {
     const config = getTableConfig(ejecucionesReportes);
-    const checks = config.checks as unknown as Array<{ name: string; value: { queryChunks: Array<{ value?: string[]; name?: string }> } }>;
+    const checks = config.checks as unknown as Array<{
+      name: string;
+      value: { queryChunks: Array<{ value?: string[]; name?: string }> };
+    }>;
     const tipoCheck = checks?.find(
       (c) => c.name === "ejecuciones_reportes_tipo_check",
     );

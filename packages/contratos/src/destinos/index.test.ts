@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { esquemaTipoDestino, esquemaRecursoDestino } from "./index.js";
+import { esquemaRecursoDestino, esquemaTipoDestino } from "./index.js";
 
 describe("destinos/index", () => {
   it("esquemaTipoDestino solo debe aceptar bigquery", () => {

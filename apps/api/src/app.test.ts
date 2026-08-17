@@ -52,6 +52,7 @@ describe("API", () => {
         DATABASE_URL: "postgres://usuario:clave@localhost:5432/app",
         QLIK_REDIRECT_URI: "https://api.example.com/api/auth/qlik/callback",
         QLIK_OAUTH_TIMEOUT_MS: 10_000,
+        GOOGLE_SIGNED_URL_MINUTOS: 15,
       },
     });
 

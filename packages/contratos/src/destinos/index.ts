@@ -29,7 +29,9 @@ export const esquemaDetalleRecursoDestino = esquemaRecursoDestino.extend({
   totalFilas: z.number().optional(),
   actualizadoEn: z.string(),
 });
-export type DetalleRecursoDestino = z.infer<typeof esquemaDetalleRecursoDestino>;
+export type DetalleRecursoDestino = z.infer<
+  typeof esquemaDetalleRecursoDestino
+>;
 
 export const esquemaConexionDestino = z.object({
   id: z.string(),
