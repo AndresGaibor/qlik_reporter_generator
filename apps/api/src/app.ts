@@ -2,7 +2,10 @@ import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { and, desc, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
-import { RepositorioAdministracionPostgres } from "./modulos/admin/infraestructura/publico.js";
+import {
+  RepositorioAdministracionPostgres,
+  ServicioBigQueryAdminPostgres,
+} from "./modulos/admin/infraestructura/publico.js";
 import {
   type ContextoSesion,
   type RepositorioAdministracion,
@@ -25,6 +28,7 @@ import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publ
 import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import {
+  RepositorioConexionesDestinoPostgres,
   crearClienteDestino,
   crearRutasDestinosGenericas,
 } from "./modulos/destinos/publico.js";
@@ -124,26 +128,8 @@ export async function crearAplicacion(
     : (redirectUriConfigurado ??
       "http://localhost:4523/api/auth/qlik/callback");
 
-  await servicioCifrado.inicializarConDb({
-    async guardar(clave, valor) {
-      await db
-        .insert(appConfig)
-        .values({ clave, valor: valor as Record<string, unknown> })
-        .onConflictDoUpdate({
-          target: appConfig.clave,
-          set: {
-            valor: valor as Record<string, unknown>,
-            actualizadoEn: new Date(),
-          },
-        });
-    },
-    async obtener(clave) {
-      const fila = await db.query.appConfig.findFirst({
-        where: (tc, { eq }) => eq(tc.clave, clave),
-      });
-      return fila?.valor ?? null;
-    },
-  });
+  const configuracionApp = new ConfiguracionAppPostgres(db);
+  await servicioCifrado.inicializarConDb(configuracionApp);
 
   const repositorioAutenticacion =
     dependencias.repositorioAutenticacion ??
@@ -375,91 +361,33 @@ export async function crearAplicacion(
       repositorioReportes,
     }),
   );
+  const repositorioConexionesDestino =
+    new RepositorioConexionesDestinoPostgres(db);
+
   aplicacion.route(
     "/api/destinos/conexiones",
     crearRutasDestinosGenericas(
       async (c: Context) => {
         const sesion = await resolverSesion(c);
-        const filas = await db.query.conexionesDestino.findMany({
-          where: (t, { eq }) => eq(t.organizacionId, sesion.organizacionId),
-          orderBy: (t, { desc }) => [
-            desc(t.esPredeterminada),
-            desc(t.actualizadoEn),
-          ],
-        });
-        return filas.map((f) => ({
-          id: f.id,
-          tipo: f.tipo,
-          nombre: f.nombre,
-          estado: f.estado,
-          mensajeError: f.mensajeError,
-          config: f.config as Record<string, unknown>,
-          secretoRefs: f.secretoRefs as Record<string, unknown>,
-          esPredeterminada: f.esPredeterminada,
-        }));
+        return repositorioConexionesDestino.listarPorOrganizacion(
+          sesion.organizacionId,
+        );
       },
-      async (
-        c: Context,
-        conexion: {
-          organizacionId: string;
-          tipo: string;
-          nombre: string;
-          config: Record<string, unknown>;
-          secretoRefs: Record<string, unknown>;
-          esPredeterminada?: boolean;
-        },
-      ) => {
+      async (c: Context, conexion) => {
         const sesion = await resolverSesion(c);
-        const [creada] = await db
-          .insert(conexionesDestino)
-          .values({
-            organizacionId: sesion.organizacionId,
-            tipo: conexion.tipo,
-            nombre: conexion.nombre,
-            config: conexion.config,
-            secretoRefs: conexion.secretoRefs,
-            estado: "activo",
-            esPredeterminada: conexion.esPredeterminada ?? false,
-          })
-          .returning({ id: conexionesDestino.id });
-        return { id: creada.id };
-      },
-      async (
-        c: Context,
-        id: string,
-        cambios: {
-          nombre?: string;
-          config?: Record<string, unknown>;
-          estado?: string;
-          mensajeError?: string | null;
-        },
-      ) => {
-        await db
-          .update(conexionesDestino)
-          .set({
-            ...cambios,
-            ...(cambios.config ? { config: cambios.config } : {}),
-          })
-          .where(eq(conexionesDestino.id, id));
-      },
-      async (c: Context, id: string) => {
-        await db.delete(conexionesDestino).where(eq(conexionesDestino.id, id));
-      },
-      async (c: Context, id: string) => {
-        const fila = await db.query.conexionesDestino.findFirst({
-          where: (t, { eq }) => eq(t.id, id),
+        return repositorioConexionesDestino.crear({
+          ...conexion,
+          organizacionId: sesion.organizacionId,
         });
-        if (!fila) return null;
-        return {
-          id: fila.id,
-          tipo: fila.tipo,
-          nombre: fila.nombre,
-          estado: fila.estado,
-          mensajeError: fila.mensajeError,
-          config: fila.config as Record<string, unknown>,
-          secretoRefs: fila.secretoRefs as Record<string, unknown>,
-          esPredeterminada: fila.esPredeterminada,
-        };
+      },
+      async (_c: Context, id: string, cambios) => {
+        await repositorioConexionesDestino.actualizar(id, cambios);
+      },
+      async (_c: Context, id: string) => {
+        await repositorioConexionesDestino.eliminar(id);
+      },
+      async (_c: Context, id: string) => {
+        return repositorioConexionesDestino.obtenerPorId(id);
       },
       async (c: Context) => (await resolverSesion(c)).organizacionId,
     ),
@@ -472,108 +400,22 @@ export async function crearAplicacion(
       resolverQlik,
     ),
   );
+  const servicioBigQueryAdmin = new ServicioBigQueryAdminPostgres(
+    db,
+    servicioCifrado,
+  );
+
   aplicacion.route(
     "/api/admin",
     crearRutasAdmin({
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
-      obtenerBigQuery: async (organizacionId, tenantQlikId) => {
-        const fila = await db.query.conexionesDestino.findFirst({
-          where: (tabla, { and, eq }) =>
-            and(
-              eq(tabla.organizacionId, organizacionId),
-              eq(tabla.tenantQlikId, tenantQlikId),
-              eq(tabla.tipo, "bigquery"),
-              eq(tabla.esPredeterminada, true),
-            ),
-        });
-        if (!fila) {
-          return { configurada: false, credencialesConfiguradas: false };
-        }
-        const config = fila.config as Record<string, unknown>;
-        const secretos = fila.secretoRefs as Record<string, unknown>;
-        return {
-          configurada: true,
-          id: fila.id,
-          estado: fila.estado as "activo" | "error" | "desconectado",
-          projectId:
-            typeof config.projectId === "string" ? config.projectId : undefined,
-          dataset:
-            typeof config.dataset === "string" ? config.dataset : undefined,
-          clientEmail:
-            typeof config.clientEmail === "string"
-              ? config.clientEmail
-              : undefined,
-          credencialesConfiguradas: Boolean(secretos.credencialesJson),
-          mensajeError: fila.mensajeError,
-        };
-      },
-      guardarBigQuery: async (entrada) => {
-        const existente = await db.query.conexionesDestino.findFirst({
-          where: (tabla, { and, eq }) =>
-            and(
-              eq(tabla.organizacionId, entrada.organizacionId),
-              eq(tabla.tenantQlikId, entrada.tenantQlikId),
-              eq(tabla.tipo, "bigquery"),
-              eq(tabla.esPredeterminada, true),
-            ),
-        });
-        const secretosExistentes =
-          (existente?.secretoRefs as Record<string, unknown> | undefined) ?? {};
-        const secretoRefs = entrada.credencialesJson
-          ? {
-              ...secretosExistentes,
-              credencialesJson: servicioCifrado.cifrar(
-                entrada.credencialesJson,
-              ),
-            }
-          : secretosExistentes;
-        if (!secretoRefs.credencialesJson) {
-          throw new Error("La cuenta de servicio BigQuery es obligatoria");
-        }
-        const config = {
-          projectId: entrada.projectId,
-          clientEmail: entrada.clientEmail,
-          dataset: entrada.dataset,
-          ...(entrada.limiteMiB === undefined
-            ? {}
-            : { limiteMiB: entrada.limiteMiB }),
-          ...(entrada.limiteUsd === undefined
-            ? {}
-            : { limiteUsd: entrada.limiteUsd }),
-          precioUsdPorTib: entrada.precioUsdPorTib,
-        };
-        const valores = {
-          organizacionId: entrada.organizacionId,
-          tenantQlikId: entrada.tenantQlikId,
-          tipo: "bigquery",
-          nombre: existente?.nombre ?? "BigQuery principal",
-          config,
-          secretoRefs,
-          estado: "desconectado",
-          mensajeError: null,
-          esPredeterminada: true,
-          actualizadoEn: new Date(),
-        };
-        const [fila] = existente
-          ? await db
-              .update(conexionesDestino)
-              .set(valores)
-              .where(eq(conexionesDestino.id, existente.id))
-              .returning()
-          : await db.insert(conexionesDestino).values(valores).returning();
-        if (!fila) throw new Error("No se pudo guardar BigQuery");
-        return {
-          configurada: true,
-          id: fila.id,
-          estado: "desconectado" as const,
-          projectId: entrada.projectId,
-          dataset: entrada.dataset,
-          clientEmail: entrada.clientEmail,
-          credencialesConfiguradas: true,
-          mensajeError: null,
-        };
-      },
+      obtenerBigQuery: servicioBigQueryAdmin.obtenerBigQuery.bind(
+        servicioBigQueryAdmin,
+      ),
+      guardarBigQuery: servicioBigQueryAdmin.guardarBigQuery.bind(
+        servicioBigQueryAdmin,
+      ),
       redirectUri: redirectUriOAuth,
       configuracionHeredada: {
         clienteId: configuracion?.QLIK_CLIENT_ID ?? process.env.QLIK_CLIENT_ID,

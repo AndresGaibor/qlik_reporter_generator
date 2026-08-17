@@ -8,3 +8,4 @@ export type {
 } from "./dominio/tipos-destino.js";
 export { crearRutasDestinosGenericas } from "./http/rutas-destinos-genericos.js";
 export { crearClienteDestino } from "./aplicacion/fabrica-destinos.js";
+export { RepositorioConexionesDestinoPostgres } from "./infraestructura/repositorio-conexiones-destino-postgres.js";
