@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { esquemaIdQlik } from "../qlik/comunes.js";
-import { esquemaProgramacionReporte } from "../reportes/dataflow.js";
 
 export const esquemaResumenAutomatizacion = z.object({
   id: esquemaIdQlik,
@@ -35,27 +34,28 @@ export const esquemaReemplazoWorkspace = z.object({
   valor: z.unknown(),
 });
 
-export const esquemaCrearDesdePlantilla = z.object({
-  nombre: z.string().trim().min(1).max(255),
-  plantillaIdQlik: esquemaIdQlik,
-  espacioIdQlik: esquemaIdQlik.optional(),
-  propietarioIdQlik: esquemaIdQlik.optional(),
-  flujoId: z.string().trim().min(1),
-  tablaId: z.string().optional(),
-  autor: z.string().optional(),
-  fechaDesde: z.string().optional(),
-  fechaHasta: z.string().optional(),
-  columnas: z.array(z.string()).optional(),
-  formatoSalida: z.string().optional(),
-  destinoId: z.string().uuid().optional(),
-  programacion: esquemaProgramacionReporte.optional(),
-  reemplazosWorkspace: z
-    .array(esquemaReemplazoWorkspace)
-    .max(100)
-    .optional()
-    .default([]),
-  claveIdempotencia: z.string().trim().min(8).max(255).optional(),
-});
+export const esquemaCrearDesdePlantilla = z
+  .object({
+    nombre: z.string().trim().min(1).max(255),
+    plantillaIdQlik: esquemaIdQlik,
+    espacioIdQlik: esquemaIdQlik.optional(),
+    propietarioIdQlik: esquemaIdQlik.optional(),
+    flujoId: z.string().trim().min(1),
+    tablaId: z.string().optional(),
+    autor: z.string().optional(),
+    fechaDesde: z.string().optional(),
+    fechaHasta: z.string().optional(),
+    columnas: z.array(z.string()).optional(),
+    formatoSalida: z.string().optional(),
+    destinoId: z.string().uuid().optional(),
+    reemplazosWorkspace: z
+      .array(esquemaReemplazoWorkspace)
+      .max(100)
+      .optional()
+      .default([]),
+    claveIdempotencia: z.string().trim().min(8).max(255).optional(),
+  })
+  .strict();
 export type CrearDesdePlantilla = z.infer<typeof esquemaCrearDesdePlantilla>;
 
 export const esquemaResultadoCrearDesdePlantilla = z.object({

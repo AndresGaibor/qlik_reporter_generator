@@ -93,7 +93,6 @@ describe("EjecutarReporte", () => {
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
       usuarioId: "user-1",
-      tipo: "manual",
     });
 
     expect(resultado).toEqual({
@@ -139,7 +138,6 @@ describe("EjecutarReporte", () => {
         tenantId: "tenant-1",
         organizacionId: "org-1",
         automatizacionIdQlik: "auto-1",
-        tipo: "manual",
       }),
     ).rejects.toThrow("solicitud de ejecución");
   });
@@ -212,7 +210,6 @@ describe("EjecutarReporte", () => {
         tenantId: "tenant-1",
         organizacionId: "org-1",
         automatizacionIdQlik: "auto-1",
-        tipo: "manual",
       }),
     ).rejects.toThrow("Qlik no aceptó");
 

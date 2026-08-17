@@ -12,20 +12,13 @@ describe("creación de reportes desde Dataflow", () => {
     ).toThrow();
   });
 
-  it("acepta programación cron opcional", () => {
-    const entrada = esquemaCrearDesdePlantilla.parse({
+  it("rechaza programacion en esquemaCrearDesdePlantilla", () => {
+    expect(esquemaCrearDesdePlantilla.safeParse({
       nombre: "Ventas",
       plantillaIdQlik: "plantilla-1",
       flujoId: "flujo-1",
       reemplazosWorkspace: [],
-      programacion: {
-        activa: true,
-        expresionCron: "0 8 * * *",
-        zonaHoraria: "America/Guayaquil",
-      },
-    });
-
-    expect(entrada.flujoId).toBe("flujo-1");
-    expect(entrada.programacion?.expresionCron).toBe("0 8 * * *");
+      programacion: { activa: true, expresionCron: "0 8 * * *", zonaHoraria: "UTC" },
+    }).success).toBe(false);
   });
 });

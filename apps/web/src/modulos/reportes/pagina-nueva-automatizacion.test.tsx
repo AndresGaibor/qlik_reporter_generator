@@ -119,27 +119,8 @@ test("diseña el reporte desde un Dataflow y no desde tabla/campos/fechas", asyn
   expect(vista.textContent).not.toContain("selección de campos");
 });
 
-test("envía flujoId y programación, sin configuración manual BigQuery", async () => {
+test("envía solo flujoId sin programacion", async () => {
   await montar();
-  const checkbox =
-    container?.querySelector<HTMLInputElement>("#programar-reporte");
-  const cron = container?.querySelector<HTMLInputElement>("#cron-reporte");
-  expect(checkbox).toBeDefined();
-
-  await act(async () => {
-    checkbox?.click();
-  });
-  expect(cron?.disabled).toBe(false);
-  await act(async () => {
-    if (cron) {
-      const setter = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        "value",
-      )?.set;
-      setter?.call(cron, "30 7 * * 1-5");
-      cron.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-  });
   Object.defineProperty(window, "location", {
     value: { ...originalLocation, href: "http://localhost/reportes/nuevo" },
     configurable: true,
@@ -155,11 +136,7 @@ test("envía flujoId y programación, sin configuración manual BigQuery", async
     unknown
   >;
   expect(entrada.flujoId).toBe("flujo-1");
-  expect(entrada.programacion).toMatchObject({
-    activa: true,
-    expresionCron: "30 7 * * 1-5",
-    zonaHoraria: "America/Guayaquil",
-  });
+  expect(entrada).not.toHaveProperty("programacion");
   expect(entrada).not.toHaveProperty("tablaId");
   expect(entrada).not.toHaveProperty("columnas");
   expect(entrada).not.toHaveProperty("fechaDesde");

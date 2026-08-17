@@ -256,7 +256,6 @@ export function crearRutasPanelAutomatizaciones(
       organizacionId: sesion.organizacionId,
       automatizacionIdQlik: id,
       usuarioId: sesion.usuarioId,
-      tipo: "manual",
     });
     return responderExito(c, resultado, 201);
   });

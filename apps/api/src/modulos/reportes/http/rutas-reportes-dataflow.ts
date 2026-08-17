@@ -7,7 +7,6 @@ import {
   type EstimadorBigQueryReporte,
   PreflightDataflow,
 } from "../aplicacion/preflight-dataflow.js";
-import { calcularProximaEjecucion } from "../aplicacion/programacion-reporte.js";
 import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
 
@@ -60,14 +59,7 @@ export function crearRutasReportesDataflow(
       c.req.param("automatizacionId"),
     );
     if (!configuracion) return respuestaNoEncontrada(c);
-    const programacion =
-      await dependencias.repositorioReportes.obtenerProgramacion(
-        configuracion.id,
-      );
-    return responderExito(
-      c,
-      serializarConfiguracion(configuracion, programacion),
-    );
+    return responderExito(c, serializarConfiguracion(configuracion));
   });
 
   rutas.put("/:automatizacionId/configuracion", async (c) => {
@@ -128,22 +120,6 @@ export function crearRutasReportesDataflow(
       flujoEspacioIdQlik = flujo.spaceId ?? null;
     }
 
-    const programacion =
-      cambios.programacion === undefined
-        ? undefined
-        : cambios.programacion === null
-          ? null
-          : {
-              activa: cambios.programacion.activa,
-              expresionCron: cambios.programacion.expresionCron,
-              zonaHoraria: cambios.programacion.zonaHoraria,
-              proximaEjecucionEn: calcularProximaEjecucion(
-                cambios.programacion.expresionCron,
-                cambios.programacion.zonaHoraria,
-                new Date(),
-              ),
-            };
-
     let qlikRenombrado:
       | {
           cliente: PuertoQlik;
@@ -185,7 +161,6 @@ export function crearRutasReportesDataflow(
             ...(cambios.activa !== undefined
               ? { estado: cambios.activa ? "activa" : "desactivada" }
               : {}),
-            ...(cambios.programacion !== undefined ? { programacion } : {}),
           },
         );
     } catch (error) {
@@ -201,14 +176,7 @@ export function crearRutasReportesDataflow(
       }
       throw error;
     }
-    const programacionActual =
-      await dependencias.repositorioReportes.obtenerProgramacion(
-        actualizada.id,
-      );
-    return responderExito(
-      c,
-      serializarConfiguracion(actualizada, programacionActual),
-    );
+    return responderExito(c, serializarConfiguracion(actualizada));
   });
 
   rutas.get("/:automatizacionId/ejecuciones-locales", async (c) => {
@@ -260,9 +228,6 @@ async function obtenerConfiguracionAutorizada(
 function serializarConfiguracion(
   configuracion: Awaited<
     ReturnType<PuertoRepositorioReportes["obtenerPorAutomatizacion"]>
-  > & {},
-  programacion: Awaited<
-    ReturnType<PuertoRepositorioReportes["obtenerProgramacion"]>
   >,
 ) {
   if (!configuracion) throw new Error("Configuración ausente");
@@ -276,14 +241,6 @@ function serializarConfiguracion(
     automatizacionNombreSnapshot: configuracion.automatizacionNombreSnapshot,
     destinoGcs: configuracion.destinoIdExterno,
     activa: configuracion.estado === "activa",
-    programacion: programacion
-      ? {
-          activa: programacion.activa,
-          expresionCron: programacion.expresionCron,
-          zonaHoraria: programacion.zonaHoraria,
-          proximaEjecucionEn: programacion.proximaEjecucionEn.toISOString(),
-        }
-      : null,
   };
 }
 

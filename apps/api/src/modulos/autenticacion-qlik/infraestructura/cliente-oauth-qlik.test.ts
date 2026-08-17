@@ -74,42 +74,4 @@ describe("ClienteOAuthQlik", () => {
 
     expect(senal).toBeInstanceOf(AbortSignal);
   });
-
-  it("renueva el access token con refresh_token", async () => {
-    let body = "";
-    const fetchFn = vi.fn(
-      async (_url: RequestInfo | URL, init?: RequestInit) => {
-        body = String(init?.body ?? "");
-        return new Response(
-          JSON.stringify({
-            access_token: "acceso-renovado",
-            refresh_token: "refresco-nuevo",
-            expires_in: 3600,
-            scope: "automations apps:read",
-          }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        );
-      },
-    );
-    const cliente = new ClienteOAuthQlik(
-      "cliente",
-      "secreto",
-      "https://app.example.com/api/auth/qlik/callback",
-      "tenant.eu.qlikcloud.com",
-      undefined,
-      fetchFn as unknown as typeof fetch,
-    );
-
-    const tokens = await cliente.refrescarToken("refresco-anterior");
-
-    expect(new URLSearchParams(body).get("grant_type")).toBe("refresh_token");
-    expect(new URLSearchParams(body).get("refresh_token")).toBe(
-      "refresco-anterior",
-    );
-    expect(tokens).toMatchObject({
-      tokenAcceso: "acceso-renovado",
-      tokenRefresco: "refresco-nuevo",
-      expiraEnSegundos: 3600,
-    });
-  });
 });

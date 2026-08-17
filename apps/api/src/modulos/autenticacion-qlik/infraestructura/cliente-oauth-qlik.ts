@@ -110,29 +110,6 @@ export class ClienteOAuthQlik implements PuertoOAuthQlik {
     return mapearTokensOAuth(datos, this.scopes);
   }
 
-  async refrescarToken(tokenRefresco: string): Promise<TokensQlik> {
-    const respuesta = await this.fetchFn(new URL("/oauth/token", this.origen), {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: tokenRefresco,
-        client_id: this.clienteId,
-        client_secret: this.clienteSecreto,
-      }),
-    });
-    const datos = await leerJsonSeguro(respuesta);
-    if (!respuesta.ok) {
-      throw new ErrorOAuthQlik(
-        "token",
-        respuesta.status,
-        extraerDetalleError(datos),
-      );
-    }
-    return mapearTokensOAuth(datos, this.scopes);
-  }
-
   async obtenerUsuario(tokenAcceso: string): Promise<UsuarioOAuthQlik> {
     const respuesta = await this.fetchFn(
       new URL("/api/v1/users/me", this.origen),

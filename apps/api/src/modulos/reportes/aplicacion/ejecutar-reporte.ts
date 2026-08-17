@@ -23,7 +23,6 @@ export interface EntradaEjecutarReporte {
   organizacionId: string;
   automatizacionIdQlik: string;
   usuarioId?: string;
-  tipo: "manual" | "programada";
 }
 
 export class EjecutarReporte {
@@ -119,7 +118,7 @@ export class EjecutarReporte {
         sqlBigQueryCompilado: preparacion.sqlBigQuery,
         scriptExportacion,
         uriBaseGcs,
-        tipoEjecucion: entrada.tipo,
+        tipoEjecucion: "manual",
         estado: "preparando",
         versionCompilador: VERSION_COMPILADOR,
       });

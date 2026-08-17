@@ -164,7 +164,6 @@ test("muestra configuración Dataflow y auditoría por ejecución", async () => 
   expect(vista.textContent).toContain("Dataflow actual");
   expect(vista.textContent).toContain("Dataflow compatible");
   expect(vista.textContent).toContain("gs://bkt_dwh/POCs/TalendDescargados/");
-  expect(vista.textContent).toContain("0 8 * * *");
   expect(vista.textContent).toContain("34 campos");
   expect(vista.textContent).toContain("SHA-256");
   expect(vista.textContent).toContain("Script Dataflow utilizado");
@@ -183,7 +182,6 @@ test("permite editar solo propiedades del reporte", async () => {
   await act(async () => editar?.click());
 
   expect(container?.textContent).toContain("Cambiar Dataflow");
-  expect(container?.querySelector("#editar-cron-reporte")).not.toBeNull();
   expect(container?.textContent).not.toContain("gcp_script");
   expect(container?.textContent).not.toContain("Seleccionar columnas");
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const esquemaTipoEjecucionReporte = z.enum(["manual", "programada"]);
+export const esquemaTipoEjecucionReporte = z.enum(["manual"]);
 export type TipoEjecucionReporte = z.infer<typeof esquemaTipoEjecucionReporte>;
 
 export const esquemaEstadoEjecucionReporte = z.enum([
@@ -13,13 +13,6 @@ export const esquemaEstadoEjecucionReporte = z.enum([
 export type EstadoEjecucionReporte = z.infer<
   typeof esquemaEstadoEjecucionReporte
 >;
-
-export const esquemaProgramacionReporte = z.object({
-  activa: z.boolean(),
-  expresionCron: z.string().trim().min(9).max(100),
-  zonaHoraria: z.string().trim().min(1).default("America/Guayaquil"),
-});
-export type ProgramacionReporte = z.infer<typeof esquemaProgramacionReporte>;
 
 export const esquemaResumenDataflowReporte = z.object({
   fuentes: z.number().int().nonnegative(),
@@ -70,7 +63,6 @@ export const esquemaActualizarConfiguracionReporte = z
   .object({
     nombre: z.string().trim().min(1).max(255).optional(),
     flujoIdQlik: z.string().trim().min(1).optional(),
-    programacion: esquemaProgramacionReporte.nullable().optional(),
     activa: z.boolean().optional(),
   })
   .strict();
@@ -78,25 +70,19 @@ export type ActualizarConfiguracionReporte = z.infer<
   typeof esquemaActualizarConfiguracionReporte
 >;
 
-export const esquemaProgramacionConfiguracionReporte = z.object({
-  activa: z.boolean(),
-  expresionCron: z.string(),
-  zonaHoraria: z.string(),
-  proximaEjecucionEn: z.string().datetime().nullable(),
-});
-
-export const esquemaConfiguracionReporteDataflow = z.object({
-  id: z.string().uuid(),
-  nombre: z.string(),
-  flujoIdQlik: z.string(),
-  flujoNombreSnapshot: z.string(),
-  flujoEspacioIdQlik: z.string().nullable(),
-  automatizacionIdQlik: z.string(),
-  automatizacionNombreSnapshot: z.string(),
-  destinoGcs: z.string().startsWith("gs://"),
-  activa: z.boolean(),
-  programacion: esquemaProgramacionConfiguracionReporte.nullable(),
-});
+export const esquemaConfiguracionReporteDataflow = z
+  .object({
+    id: z.string().uuid(),
+    nombre: z.string(),
+    flujoIdQlik: z.string(),
+    flujoNombreSnapshot: z.string(),
+    flujoEspacioIdQlik: z.string().nullable(),
+    automatizacionIdQlik: z.string(),
+    automatizacionNombreSnapshot: z.string(),
+    destinoGcs: z.string().startsWith("gs://"),
+    activa: z.boolean(),
+  })
+  .strict();
 export type ConfiguracionReporteDataflow = z.infer<
   typeof esquemaConfiguracionReporteDataflow
 >;

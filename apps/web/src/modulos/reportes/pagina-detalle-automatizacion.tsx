@@ -262,15 +262,6 @@ function ConfiguracionDataflowReporte({
   const [nombre, setNombre] = useState(configuracion.nombre);
   const [flujoId, setFlujoId] = useState(configuracion.flujoIdQlik);
   const [activa, setActiva] = useState(configuracion.activa);
-  const [programar, setProgramar] = useState(
-    Boolean(configuracion.programacion),
-  );
-  const [cron, setCron] = useState(
-    configuracion.programacion?.expresionCron ?? "0 8 * * *",
-  );
-  const [zonaHoraria, setZonaHoraria] = useState(
-    configuracion.programacion?.zonaHoraria ?? "America/Guayaquil",
-  );
 
   const { data: flujos = [] } = useQuery({
     queryKey: ["flujos-edicion-reporte"],
@@ -289,11 +280,6 @@ function ConfiguracionDataflowReporte({
       setNombre(configuracion.nombre);
       setFlujoId(configuracion.flujoIdQlik);
       setActiva(configuracion.activa);
-      setProgramar(Boolean(configuracion.programacion));
-      setCron(configuracion.programacion?.expresionCron ?? "0 8 * * *");
-      setZonaHoraria(
-        configuracion.programacion?.zonaHoraria ?? "America/Guayaquil",
-      );
     }
   }, [configuracion, editando]);
 
@@ -303,13 +289,6 @@ function ConfiguracionDataflowReporte({
         nombre: nombre.trim(),
         flujoIdQlik: flujoId,
         activa,
-        programacion: programar
-          ? {
-              activa: true,
-              expresionCron: cron.trim(),
-              zonaHoraria,
-            }
-          : null,
       };
       return actualizarConfiguracionReporte(automatizacionId, cambios);
     },
@@ -399,41 +378,6 @@ function ConfiguracionDataflowReporte({
               />
               Reporte activo
             </label>
-            <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink-800">
-              <input
-                type="checkbox"
-                checked={programar}
-                onChange={(evento) => setProgramar(evento.target.checked)}
-                className="h-4 w-4 accent-[var(--color-brand-600)]"
-              />
-              Ejecutar con programación
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-semibold text-ink-800">
-              Cron
-              <input
-                id="editar-cron-reporte"
-                value={cron}
-                disabled={!programar}
-                onChange={(evento) => setCron(evento.target.value)}
-                className="h-10 w-full rounded-md border border-line-200 px-3 font-mono font-normal outline-none focus:border-brand-600 disabled:bg-slate-100"
-              />
-            </label>
-            <label className="space-y-1.5 text-sm font-semibold text-ink-800">
-              Zona horaria
-              <select
-                value={zonaHoraria}
-                disabled={!programar}
-                onChange={(evento) => setZonaHoraria(evento.target.value)}
-                className="h-10 w-full rounded-md border border-line-200 px-3 font-normal outline-none focus:border-brand-600 disabled:bg-slate-100"
-              >
-                <option value="America/Guayaquil">America/Guayaquil</option>
-                <option value="America/Bogota">America/Bogota</option>
-                <option value="UTC">UTC</option>
-              </select>
-            </label>
           </div>
 
           <div className="flex justify-end gap-3 border-t border-line-200 pt-4">
@@ -450,8 +394,7 @@ function ConfiguracionDataflowReporte({
                 guardar.isPending ||
                 validandoEdicion ||
                 !compatible ||
-                !nombre.trim() ||
-                (programar && cron.trim().length < 9)
+                !nombre.trim()
               }
               onClick={() => guardar.mutate()}
             >
@@ -506,11 +449,6 @@ function ConfiguracionDataflowReporte({
             {configuracion.destinoGcs}
           </span>
         </Dato>
-        <Dato etiqueta="Programación">
-          {configuracion.programacion
-            ? `${configuracion.programacion.expresionCron} · ${configuracion.programacion.zonaHoraria}`
-            : "Solo manual"}
-        </Dato>
       </div>
 
       {preflight?.compatible ? (
@@ -562,9 +500,7 @@ function HistorialAuditoriaReporte({
                   <div className="flex flex-wrap items-center gap-2">
                     <EstadoAuditoria estado={ejecucion.estado} />
                     <span className="rounded-full bg-app px-2.5 py-1 text-xs font-semibold text-ink-600">
-                      {ejecucion.tipoEjecucion === "programada"
-                        ? "Programada"
-                        : "Manual"}
+                      Manual
                     </span>
                   </div>
                   <p className="mt-2 text-sm font-medium text-ink-800">

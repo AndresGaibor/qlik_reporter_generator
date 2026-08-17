@@ -6,6 +6,5 @@ export interface PuertoOAuthQlik {
   generarDesafioPkce(verificador: string): Promise<string>;
   obtenerUrlAutorizacion(estado: string, desafio: string): string;
   intercambiarCodigo(codigo: string, verificador: string): Promise<TokensQlik>;
-  refrescarToken(tokenRefresco: string): Promise<TokensQlik>;
   obtenerUsuario(tokenAcceso: string): Promise<UsuarioOAuthQlik>;
 }

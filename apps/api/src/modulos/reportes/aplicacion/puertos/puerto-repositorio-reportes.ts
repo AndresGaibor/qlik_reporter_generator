@@ -6,13 +6,6 @@ export type EstadoConfiguracionReporte =
   | "desactivada"
   | "eliminada";
 
-export interface NuevaProgramacionReportePersistida {
-  expresionCron: string;
-  zonaHoraria: string;
-  proximaEjecucionEn: Date;
-  activa: boolean;
-}
-
 export interface CrearConfiguracionReportePersistida {
   organizacionId: string;
   tenantQlikId: string;
@@ -26,14 +19,12 @@ export interface CrearConfiguracionReportePersistida {
   destinoNombreSnapshot: string;
   automatizacionIdQlik: string;
   automatizacionNombreSnapshot: string;
-  programar: boolean;
-  programacion?: NuevaProgramacionReportePersistida;
   estado: EstadoConfiguracionReporte;
   claveIdempotencia?: string;
 }
 
 export interface ConfiguracionReportePersistida
-  extends Omit<CrearConfiguracionReportePersistida, "programacion"> {
+  extends CrearConfiguracionReportePersistida {
   id: string;
 }
 
@@ -54,7 +45,7 @@ export interface CrearEjecucionReportePersistida {
   sqlBigQueryCompilado: string;
   scriptExportacion: string;
   uriBaseGcs: string;
-  tipoEjecucion: "manual" | "programada";
+  tipoEjecucion: "manual";
   estado: "preparando";
   versionCompilador: number;
 }
@@ -77,16 +68,6 @@ export interface ActualizarConfiguracionReportePersistida {
   flujoEspacioIdQlik?: string | null;
   automatizacionNombreSnapshot?: string;
   estado?: EstadoConfiguracionReporte;
-  programacion?: NuevaProgramacionReportePersistida | null;
-}
-
-export interface ProgramacionReportePersistida {
-  id: string;
-  configuracionId: string;
-  expresionCron: string;
-  zonaHoraria: string;
-  proximaEjecucionEn: Date;
-  activa: boolean;
 }
 
 export interface PuertoRepositorioReportes {
@@ -114,16 +95,6 @@ export interface PuertoRepositorioReportes {
   obtenerConfiguracionPorId(
     configuracionId: string,
   ): Promise<ConfiguracionReportePersistida | null>;
-  listarProgramacionesVencidas(
-    ahora: Date,
-    limite?: number,
-  ): Promise<ProgramacionReportePersistida[]>;
-  intentarReclamarProgramacion(
-    programacionId: string,
-    proximaEsperada: Date,
-    nuevaProxima: Date,
-    ejecutadaEn: Date,
-  ): Promise<boolean>;
   listarEjecuciones(
     configuracionId: string,
     limite?: number,
@@ -133,9 +104,6 @@ export interface PuertoRepositorioReportes {
     estado: "completada" | "error" | "detenida",
     finalizadoEn: Date,
   ): Promise<void>;
-  obtenerProgramacion(
-    configuracionId: string,
-  ): Promise<ProgramacionReportePersistida | null>;
   actualizarConfiguracion(
     configuracionId: string,
     cambios: ActualizarConfiguracionReportePersistida,

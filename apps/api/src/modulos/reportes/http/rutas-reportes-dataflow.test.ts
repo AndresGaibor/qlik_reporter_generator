@@ -49,7 +49,7 @@ describe("rutas reportes Dataflow", () => {
     expect(estimarConsulta).toHaveBeenCalledTimes(1);
   });
 
-  it("devuelve la configuración local y su programación", async () => {
+  it("devuelve la configuración local sin programación", async () => {
     const repo = {
       obtenerPorAutomatizacion: vi.fn(async () => ({
         id: "11111111-1111-4111-8111-111111111111",
@@ -65,16 +65,8 @@ describe("rutas reportes Dataflow", () => {
         destinoNombreSnapshot: "TalendDescargados",
         automatizacionIdQlik: "auto-1",
         automatizacionNombreSnapshot: "Ventas",
-        programar: true,
+        programar: false,
         estado: "activa",
-      })),
-      obtenerProgramacion: vi.fn(async () => ({
-        id: "prog-1",
-        configuracionId: "11111111-1111-4111-8111-111111111111",
-        expresionCron: "0 8 * * *",
-        zonaHoraria: "America/Guayaquil",
-        proximaEjecucionEn: new Date("2026-08-15T13:00:00Z"),
-        activa: true,
       })),
     };
     const app = new Hono().route(
@@ -112,8 +104,8 @@ describe("rutas reportes Dataflow", () => {
       flujoIdQlik: "flujo-1",
       destinoGcs: "gs://bkt_dwh/POCs/TalendDescargados/",
       activa: true,
-      programacion: expect.objectContaining({ expresionCron: "0 8 * * *" }),
     });
+    expect(body.datos).not.toHaveProperty("programacion");
   });
 
   it("rechaza campos de edición que pertenecen al SQL o workspace", async () => {

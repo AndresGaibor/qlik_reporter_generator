@@ -26,9 +26,6 @@ function FormularioDataflow() {
   );
   const [nombre, setNombre] = useState("");
   const [flujoId, setFlujoId] = useState(parametros.get("flujoId") ?? "");
-  const [programar, setProgramar] = useState(false);
-  const [cron, setCron] = useState("0 8 * * *");
-  const [zonaHoraria, setZonaHoraria] = useState("America/Guayaquil");
   const [guardando, setGuardando] = useState(false);
 
   const {
@@ -62,7 +59,6 @@ function FormularioDataflow() {
   const puedeCrear =
     Boolean(flujoId) &&
     preflight?.compatible === true &&
-    (!programar || cron.trim().length >= 9) &&
     !guardando;
 
   async function crearReporte() {
@@ -74,15 +70,6 @@ function FormularioDataflow() {
         flujoId: flujo.id,
         ...(flujo.espacioId ? { espacioIdQlik: flujo.espacioId } : {}),
         reemplazosWorkspace: [],
-        ...(programar
-          ? {
-              programacion: {
-                activa: true,
-                expresionCron: cron.trim(),
-                zonaHoraria,
-              },
-            }
-          : {}),
       });
       mostrarExito("Reporte creado y asociado al Dataflow actual");
       window.location.href = `/reportes/${resultado.id}`;
@@ -171,69 +158,6 @@ function FormularioDataflow() {
             error={errorPreflight ? errorPreflightDetalle : undefined}
             preflight={preflight}
           />
-
-          <section className="rounded-lg border border-line-200 bg-app px-4 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-sm font-semibold text-ink-900">
-                  Programación
-                </h2>
-                <p className="mt-1 text-xs text-ink-500">
-                  Las ejecuciones programadas también releen el Dataflow antes
-                  de iniciar Talend.
-                </p>
-              </div>
-              <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-ink-700">
-                <input
-                  id="programar-reporte"
-                  type="checkbox"
-                  checked={programar}
-                  onChange={(evento) => setProgramar(evento.target.checked)}
-                  className="h-4 w-4 accent-[var(--color-brand-600)]"
-                />
-                Activar
-              </label>
-            </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="cron-reporte"
-                  className="text-xs font-semibold text-ink-600"
-                >
-                  Expresión cron
-                </label>
-                <input
-                  id="cron-reporte"
-                  value={cron}
-                  disabled={!programar}
-                  onChange={(evento) => setCron(evento.target.value)}
-                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 font-mono text-sm text-ink-900 outline-none focus:border-brand-600 disabled:bg-slate-100 disabled:text-ink-400"
-                />
-                <p className="text-[11px] text-ink-400">
-                  Ejemplo: 0 8 * * * = todos los días a las 08:00.
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="zona-reporte"
-                  className="text-xs font-semibold text-ink-600"
-                >
-                  Zona horaria
-                </label>
-                <select
-                  id="zona-reporte"
-                  value={zonaHoraria}
-                  disabled={!programar}
-                  onChange={(evento) => setZonaHoraria(evento.target.value)}
-                  className="h-10 w-full rounded-md border border-line-200 bg-surface px-3 text-sm text-ink-900 outline-none focus:border-brand-600 disabled:bg-slate-100 disabled:text-ink-400"
-                >
-                  <option value="America/Guayaquil">America/Guayaquil</option>
-                  <option value="America/Bogota">America/Bogota</option>
-                  <option value="UTC">UTC</option>
-                </select>
-              </div>
-            </div>
-          </section>
 
           <section className="rounded-lg border border-line-200 bg-surface px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-400">

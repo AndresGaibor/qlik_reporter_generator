@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { EjecutarReporte } from "./ejecutar-reporte.js";
-import { ProgramadorReportes } from "./programador-reportes.js";
 
 const SCRIPT_V1 = `
 LIB CONNECT TO [Google BigQuery:Prod];
@@ -28,7 +27,7 @@ function configuracion() {
     destinoNombreSnapshot: "TalendDescargados",
     automatizacionIdQlik: "auto-1",
     automatizacionNombreSnapshot: "Ventas",
-    programar: true,
+    programar: false,
     estado: "activa" as const,
   };
 }
@@ -44,7 +43,7 @@ function qlikConScripts(scripts: string[]) {
     obtenerAutomatizacion: vi.fn(async () => ({
       id: "auto-1",
       name: "Ventas",
-      schedules: [{ legacy: true }],
+      schedules: [],
       workspace: {
         blocks: [
           {
@@ -124,13 +123,11 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
-      tipo: "manual",
     });
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
-      tipo: "manual",
     });
 
     expect(qlik.obtenerScriptApp).toHaveBeenCalledTimes(2);
@@ -156,77 +153,6 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       1,
       "auto-1",
       expect.objectContaining({ schedules: [] }),
-    );
-  });
-
-  it("manual y programada llegan al mismo formato de auditoría y gcp_script", async () => {
-    const manual = qlikConScripts([SCRIPT_V1]);
-    const programada = qlikConScripts([SCRIPT_V1]);
-    const tipos: string[] = [];
-    const repoBase = {
-      obtenerPorAutomatizacion: async () => configuracion(),
-      crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
-        tipos.push(String(entrada.tipoEjecucion));
-        expect(String(entrada.scriptExportacion)).toContain("EXPORT DATA");
-        expect(String(entrada.uriBaseGcs)).toMatch(
-          /^gs:\/\/bkt_dwh\/POCs\/TalendDescargados\//,
-        );
-        return entrada;
-      }),
-      marcarEjecucionIniciada: vi.fn(async () => undefined),
-      marcarEjecucionError: vi.fn(async () => undefined),
-    };
-    const lock = {
-      ejecutarExclusivo: async (
-        _clave: string,
-        tarea: () => Promise<unknown>,
-      ) => tarea(),
-    } as never;
-
-    await new EjecutarReporte(
-      manual.qlik,
-      repoBase as never,
-      lock,
-      { projectId: "p", dataset: "d" },
-      () => "33333333-3333-4333-8333-333333333333",
-    ).ejecutar({
-      tenantId: "tenant-1",
-      organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
-      tipo: "manual",
-    });
-
-    const repoProgramado = {
-      ...repoBase,
-      listarProgramacionesVencidas: async () => [
-        {
-          id: "prog-1",
-          configuracionId: configuracion().id,
-          expresionCron: "0 8 * * *",
-          zonaHoraria: "America/Guayaquil",
-          proximaEjecucionEn: new Date("2026-08-14T13:00:00Z"),
-          activa: true,
-        },
-      ],
-      intentarReclamarProgramacion: async () => true,
-      obtenerConfiguracionPorId: async () => configuracion(),
-    };
-    await new ProgramadorReportes(
-      repoProgramado as never,
-      lock,
-      async () => ({
-        qlik: programada.qlik,
-        alcanceBigQuery: { projectId: "p", dataset: "d" },
-      }),
-      () => "44444444-4444-4444-8444-444444444444",
-    ).ejecutarPendientes(new Date("2026-08-14T18:00:00Z"));
-
-    expect(tipos).toEqual(["manual", "programada"]);
-    expect(extraerKv(manual.workspaces[0] ?? {}, "gcp_script")).toContain(
-      "EXPORT DATA",
-    );
-    expect(extraerKv(programada.workspaces[0] ?? {}, "gcp_script")).toContain(
-      "EXPORT DATA",
     );
   });
 });

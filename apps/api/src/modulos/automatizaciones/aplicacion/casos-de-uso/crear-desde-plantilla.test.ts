@@ -340,47 +340,4 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       }),
     );
   });
-
-  it("persiste la programación cron junto con el reporte", async () => {
-    const qlik = crearQlik();
-    const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
-    const auditoria = crearAuditoria();
-    const repositorio = crearRepositorioReportes();
-    const caso = new CrearAutomatizacionDesdePlantilla(
-      qlik,
-      idempotencia.puerto,
-      outbox.puerto,
-      auditoria.puerto,
-      repositorio.puerto as never,
-      crearPreflight() as never,
-    );
-
-    await caso.ejecutar(
-      {
-        nombre: "Ventas 8am",
-        plantillaIdQlik: "plantilla-1",
-        flujoId: "flujo-1",
-        reemplazosWorkspace: [],
-        programacion: {
-          activa: true,
-          expresionCron: "0 8 * * *",
-          zonaHoraria: "America/Guayaquil",
-        },
-      },
-      contexto,
-    );
-
-    expect(repositorio.crearConfiguracion).toHaveBeenCalledWith(
-      expect.objectContaining({
-        programar: true,
-        programacion: expect.objectContaining({
-          activa: true,
-          expresionCron: "0 8 * * *",
-          zonaHoraria: "America/Guayaquil",
-          proximaEjecucionEn: expect.any(Date),
-        }),
-      }),
-    );
-  });
 });

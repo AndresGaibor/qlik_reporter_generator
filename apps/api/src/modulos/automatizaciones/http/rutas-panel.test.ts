@@ -60,11 +60,8 @@ describe("POST /desde-plantilla", () => {
         marcarEjecucionIniciada: async () => undefined,
         marcarEjecucionError: async () => undefined,
         obtenerConfiguracionPorId: async () => null,
-        listarProgramacionesVencidas: async () => [],
-        intentarReclamarProgramacion: async () => false,
         listarEjecuciones: async () => [],
         marcarEstadoPorRunQlik: async () => undefined,
-        obtenerProgramacion: async () => null,
         actualizarConfiguracion: async (_id, cambios) => ({
           id: "config-1",
           organizacionId: "organizacion-1",
