@@ -22,6 +22,17 @@ const { crear, preflight } = vi.hoisted(() => ({
   })),
 }));
 
+vi.mock("@/modulos/flujos/api", () => ({
+  obtenerFlujosConFiltros: vi.fn(async () => [
+    {
+      id: "flujo-1",
+      nombre: "Ventas Comercial",
+      espacioId: "espacio-1",
+      espacioNombre: "Finanzas",
+    },
+  ]),
+}));
+
 vi.mock("./api", () => ({
   obtenerConexionesDestino: vi.fn(async () => []),
   obtenerRecursosDestino: vi.fn(async () => []),
@@ -31,14 +42,6 @@ vi.mock("./api", () => ({
     bytesProcesados: 0,
     costoEstimadoUsd: 0,
   })),
-  obtenerFlujosConFiltros: vi.fn(async () => [
-    {
-      id: "flujo-1",
-      nombre: "Ventas Comercial",
-      espacioId: "espacio-1",
-      espacioNombre: "Finanzas",
-    },
-  ]),
   preflightDataflowReporte: preflight,
   crearAutomatizacionDesdePlantilla: crear,
 }));

@@ -26,6 +26,8 @@ import {
   crearClienteDestino,
   crearRutasDestinosGenericas,
 } from "./modulos/destinos/publico.js";
+import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasConexionesOrigen } from "./modulos/origenes/publico.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
@@ -463,6 +465,13 @@ export async function crearAplicacion(
     ),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
+  aplicacion.route(
+    "/api/flujos",
+    crearRutasFlujos(
+      async (c) => new ConsultaFlujosQlik(await resolverQlik(c)),
+      resolverQlik,
+    ),
+  );
   aplicacion.route(
     "/api/admin",
     crearRutasAdmin({

@@ -2,6 +2,7 @@ import type { IconName } from "@/compartido/componentes/ui/icon";
 
 export type RutaNav =
   | "/"
+  | "/flujos"
   | "/reportes"
   | "/tablas"
   | "/configuracion"
@@ -15,6 +16,7 @@ export const NAVEGACION: readonly {
   superadmin?: boolean;
 }[] = [
   { to: "/", etiqueta: "Inicio", icono: "home" },
+  { to: "/flujos", etiqueta: "Dataflows", icono: "flow" },
   { to: "/reportes", etiqueta: "Reportes", icono: "file-text" },
   {
     to: "/tablas",

@@ -2,12 +2,13 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { Button } from "@/compartido/componentes/ui/button";
 import { Card, CardContent } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
+import { extraerMensajeError } from "@/modulos/reportes/utiles-presentacion-reporte";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   crearAutomatizacionDesdePlantilla,
-  obtenerFlujosConFiltros,
   preflightDataflowReporte,
 } from "./api";
 
@@ -34,6 +35,7 @@ function FormularioDataflow() {
     data: flujos = [],
     isLoading: cargandoFlujos,
     isError: errorFlujos,
+    error: errorFlujosDetalle,
   } = useQuery({
     queryKey: ["flujos-reportes"],
     queryFn: () =>
@@ -158,7 +160,8 @@ function FormularioDataflow() {
             </select>
             {errorFlujos ? (
               <p className="text-sm text-danger-700">
-                No se pudieron cargar los Dataflows de Qlik.
+                {extraerMensajeError(errorFlujosDetalle) ??
+                  "No se pudieron cargar los Dataflows de Qlik."}
               </p>
             ) : null}
           </section>

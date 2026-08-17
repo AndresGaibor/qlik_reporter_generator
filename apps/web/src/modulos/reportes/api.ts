@@ -217,12 +217,6 @@ export function crearConexionDestino(
   return clienteApi.post("/destinos/conexiones", entrada);
 }
 
-export function obtenerFlujosConFiltros(espacioId?: string) {
-  return clienteApi.get<import("@qlik/contratos").ResumenFlujo[]>("/flujos", {
-    parametros: espacioId ? { espacioId } : undefined,
-  });
-}
-
 export interface WorkspaceAutomatizacion {
   id: string;
   nombre: string;

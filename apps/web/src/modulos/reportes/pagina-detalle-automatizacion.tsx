@@ -4,6 +4,7 @@ import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { estaEnCurso } from "@/compartido/utiles/estados-ejecucion";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
+import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
 import {
   type DetalleAutomatizacion,
   type EjecucionResumen,
@@ -14,7 +15,6 @@ import {
   obtenerConfiguracionReporte,
   obtenerDetalleAutomatizacion,
   obtenerEjecucionesLocalesReporte,
-  obtenerFlujosConFiltros,
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
 import { ModalClonarAutomatizacion } from "@/modulos/reportes/componentes/modal-clonar-automatizacion";

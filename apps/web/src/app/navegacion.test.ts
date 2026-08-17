@@ -10,3 +10,9 @@ test("la navegación administrativa usa Configuración sin Organizaciones", () =
     false,
   );
 });
+
+test("incluye /flujos en navegación como punto de entrada Dataflows", () => {
+  expect(NAVEGACION.some((item) => item.to === "/flujos")).toBe(true);
+  const item = NAVEGACION.find((item) => item.to === "/flujos");
+  expect(item?.etiqueta).toBe("Dataflows");
+});

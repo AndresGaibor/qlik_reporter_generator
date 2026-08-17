@@ -204,6 +204,43 @@ describe("API", () => {
     );
     expect(res2.status).toBe(200);
   });
+  it("monta GET /api/flujos con datos de Qlik", async () => {
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik: async () =>
+        ({
+          listarFlujos: async () => [
+            { id: "flow-1", name: "Ventas Comercial", spaceId: undefined },
+          ],
+          listarEspacios: async () => [],
+        }) as never,
+    } as Parameters<typeof crearAplicacion>[0] & Record<string, unknown>);
+
+    const respuesta = await app.request("/api/flujos");
+    const cuerpo = await respuesta.json();
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo).toMatchObject({
+      exito: true,
+      datos: [{ id: "flow-1", nombre: "Ventas Comercial" }],
+    });
+  });
+
+  it("rechaza GET /api/flujos cuando la sesión no tiene Qlik", async () => {
+    const { ErrorNoAutorizado } = await import(
+      "./nucleo/errores/error-aplicacion.js"
+    );
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik: async () => {
+        throw new ErrorNoAutorizado("Sesión requerida");
+      },
+    } as Parameters<typeof crearAplicacion>[0] & Record<string, unknown>);
+
+    const respuesta = await app.request("/api/flujos");
+    expect(respuesta.status).toBe(401);
+  });
+
   it("monta el preflight Dataflow bajo /api/reportes", async () => {
     const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
