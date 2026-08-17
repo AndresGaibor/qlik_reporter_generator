@@ -1,13 +1,8 @@
 import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { Avatar, inicialesDe } from "@/compartido/componentes/ui/avatar";
 import { Button } from "@/compartido/componentes/ui/button";
 import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
-import {
-  Icon,
-  type IconName,
-  IconSprite,
-} from "@/compartido/componentes/ui/icon";
+import { Icon, IconSprite } from "@/compartido/componentes/ui/icon";
 import {
   cambiarTenantActivo,
   cerrarSesion,
@@ -15,40 +10,11 @@ import {
 } from "@/modulos/autenticacion/api";
 import { obtenerEstadoSetup } from "@/modulos/setup/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BarraUsuario, HeaderLink } from "./componentes-header";
 import { VistaContext } from "./contexto-vista";
-import { NAVEGACION, type RutaNav } from "./navegacion";
-
-function HeaderLink({
-  to,
-  etiqueta,
-  icono,
-}: { to: RutaNav; etiqueta: string; icono: IconName }) {
-  const { pathname } = useLocation();
-  const activo =
-    to === "/"
-      ? pathname === "/"
-      : pathname === to || pathname.startsWith(`${to}/`);
-  return (
-    <Link
-      to={to}
-      className={[
-        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ease-soft font-medium",
-        activo
-          ? "bg-brand-50 text-brand-700 font-semibold"
-          : "text-ink-700 hover:bg-hover hover:text-ink-900",
-      ].join(" ")}
-    >
-      <Icon
-        name={icono}
-        size="sm"
-        className={activo ? "text-brand-600" : "text-ink-500"}
-      />
-      <span>{etiqueta}</span>
-    </Link>
-  );
-}
+import { NAVEGACION } from "./navegacion";
 
 export function LayoutPrincipal() {
   const navegar = useNavigate();
@@ -205,9 +171,7 @@ export function LayoutPrincipal() {
     <div className="ambient min-h-screen overflow-x-hidden bg-app text-ink-900">
       <IconSprite />
       <div className="flex min-h-screen flex-col">
-        {/* ── Topbar / Header completo ── */}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line-200 bg-surface/95 px-4 shadow-sm backdrop-blur sm:px-8">
-          {/* Logo / Marca */}
           <div className="flex items-center gap-3 shrink-0 pr-4 border-r border-line-200">
             <Icon name="brand" className="text-brand-600" size="lg" />
             <span className="font-display text-[18px] font-semibold tracking-tight text-ink-900">
@@ -215,7 +179,6 @@ export function LayoutPrincipal() {
             </span>
           </div>
 
-          {/* Navegación horizontal centrada / limpia */}
           <nav
             className="hidden items-center gap-1.5 md:flex"
             aria-label="Navegación principal"
@@ -230,7 +193,6 @@ export function LayoutPrincipal() {
             ))}
           </nav>
 
-          {/* Acciones del extremo derecho (Tenant selector + usuario + logout) */}
           <div className="ml-auto hidden items-center gap-4 md:flex">
             {tenantsDisponibles.length > 1 && (
               <ContextSwitcher
@@ -241,43 +203,16 @@ export function LayoutPrincipal() {
               />
             )}
 
-            {esAdmin && (
-              <label
-                className="flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-600"
-                title="Oculta las opciones administrativas para previsualizar la vista del usuario final"
-              >
-                <input
-                  type="checkbox"
-                  checked={modoUsuarioFinal}
-                  onChange={(evento) =>
-                    setModoUsuarioFinal(evento.target.checked)
-                  }
-                  className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)]"
-                />
-                <span className="hidden xl:inline">Vista usuario final</span>
-              </label>
-            )}
-
-            <div className="flex items-center gap-2.5 border-l border-line-200 pl-4">
-              <Avatar
-                iniciales={inicialesDe(nombre)}
-                src={sesion.usuario?.avatarUrl}
-                tam="md"
-              />
-              <span className="hidden text-sm font-semibold text-ink-900 lg:inline-block">
-                {nombre}
-              </span>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              data-accion="cerrar-sesion"
-              onClick={() => cerrar.mutate()}
-            >
-              Cerrar sesión
-            </Button>
+            <BarraUsuario
+              nombre={nombre}
+              avatarUrl={sesion.usuario?.avatarUrl}
+              esAdmin={esAdmin}
+              modoUsuarioFinal={modoUsuarioFinal}
+              onCambiarModoUsuarioFinal={setModoUsuarioFinal}
+              onCerrarSesion={() => cerrar.mutate()}
+            />
           </div>
+
           <button
             type="button"
             className="ml-auto grid h-10 w-10 place-items-center rounded-md text-ink-700 hover:bg-hover md:hidden"
@@ -337,7 +272,6 @@ export function LayoutPrincipal() {
           </div>
         )}
 
-        {/* ── Contenido Principal (Full width aprovechando la pantalla) ── */}
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 sm:py-10 lg:px-16">
           <VistaContext.Provider value={{ modoUsuarioFinal }}>
             <Outlet />
