@@ -55,8 +55,6 @@ test("la sección configurada inicia en resumen y oculta el ID técnico", () => 
             nombre: "Producción",
             estado: "activo",
             esPrincipal: true,
-            tieneDestinoApiKey: false,
-            destinoApiKeyMascara: null,
             creadoEn: "2026-07-25",
             automatizacionBaseIdQlik: "ac8fa98d-92c6-4b60-9378-b5d921b07e09",
             automatizacionBaseNombre: "Automatización Base Ventas",

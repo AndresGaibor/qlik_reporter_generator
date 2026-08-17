@@ -65,8 +65,6 @@ test("Qlik Cloud muestra conexiones y abre el formulario bajo demanda", () => {
           nombre: "Producción",
           estado: "activo",
           esPrincipal: true,
-          tieneDestinoApiKey: false,
-          destinoApiKeyMascara: null,
           creadoEn: "2026-07-25",
         },
       ]}
@@ -103,8 +101,6 @@ test("Qlik Cloud evita repetir una URL usada como nombre", () => {
           nombre: `https://${host}`,
           estado: "activo",
           esPrincipal: true,
-          tieneDestinoApiKey: false,
-          destinoApiKeyMascara: null,
           creadoEn: "2026-07-25",
         },
       ]}

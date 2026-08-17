@@ -19,10 +19,6 @@ export interface TenantQlikAdministrable {
   esPrincipal: boolean;
   automatizacionBaseIdQlik?: string | null;
   automatizacionBaseNombre?: string | null;
-  destinoApiUrl?: string | null;
-  tieneDestinoApiKey: boolean;
-  destinoApiKeyMascara: string | null;
-  destinoBaseDatos?: string | null;
   creadoEn: Date;
 }
 
@@ -124,13 +120,6 @@ export interface RepositorioAdministracion {
     tenantQlikId: string,
     automatizacionBaseIdQlik: string,
     automatizacionBaseNombre?: string,
-  ): Promise<TenantQlikAdministrable | null>;
-  configurarDestinoTenant(
-    organizacionId: string,
-    tenantQlikId: string,
-    destinoApiUrl: string,
-    destinoApiKey?: string,
-    destinoBaseDatos?: string,
   ): Promise<TenantQlikAdministrable | null>;
   eliminarTenantQlik(
     organizacionId: string,

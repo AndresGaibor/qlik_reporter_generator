@@ -18,9 +18,6 @@ export interface DependenciasRutasAdmin extends OpcionesConfiguracionOAuth {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
   auditoria: PuertoAuditoria;
-  guardarConexionDestino?: Parameters<
-    typeof crearRutasConfiguracionTenant
-  >[0]["guardarConexionDestino"];
   obtenerBigQuery?: Parameters<
     typeof crearRutasConfiguracionTenant
   >[0]["obtenerBigQuery"];
@@ -35,7 +32,6 @@ export function crearRutasAdmin({
   redirectUri,
   configuracionHeredada,
   auditoria,
-  guardarConexionDestino,
   obtenerBigQuery,
   guardarBigQuery,
 }: DependenciasRutasAdmin) {
@@ -49,7 +45,6 @@ export function crearRutasAdmin({
     crearRutasConfiguracionTenant({
       repositorio,
       resolverContexto,
-      guardarConexionDestino,
       obtenerBigQuery,
       guardarBigQuery,
     }),

@@ -129,17 +129,6 @@ export function eliminarTenantQlik(
   );
 }
 
-export function configurarConexionDestinoTenant(
-  organizacionId: string,
-  tenantQlikId: string,
-  entrada: import("@qlik/contratos/admin").ConfigurarConexionDestino,
-) {
-  return clienteApi.put<{ id: string }>(
-    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/destino-generico`,
-    entrada,
-  );
-}
-
 function rutaBigQuery(organizacionId: string, tenantQlikId: string) {
   return `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/bigquery`;
 }

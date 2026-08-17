@@ -28,7 +28,6 @@ import {
 } from "./modulos/destinos/publico.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
-import { crearRutasConexionesOrigen } from "./modulos/origenes/publico.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -347,10 +346,7 @@ export async function crearAplicacion(
       registrador,
     }),
   );
-  aplicacion.route(
-    "/api/conexiones-origen",
-    crearRutasConexionesOrigen(resolverSesion),
-  );
+  
   const repositorioReportes = new RepositorioReportesPostgres(db);
   aplicacion.route(
     "/api/reportes",
@@ -573,48 +569,6 @@ export async function crearAplicacion(
           credencialesConfiguradas: true,
           mensajeError: null,
         };
-      },
-      guardarConexionDestino: async (entrada) => {
-        const credencialesJson =
-          typeof entrada.config.credentialJson === "string"
-            ? entrada.config.credentialJson
-            : undefined;
-        const config = Object.fromEntries(
-          Object.entries(entrada.config).filter(
-            ([clave]) => clave !== "credentialJson",
-          ),
-        );
-        const secretoRefs = credencialesJson
-          ? { credencialesJson: servicioCifrado.cifrar(credencialesJson) }
-          : (entrada.secretoRefs ?? {});
-        const [conexion] = await db
-          .insert(conexionesDestino)
-          .values({
-            organizacionId: entrada.organizacionId,
-            tenantQlikId: entrada.tenantQlikId,
-            tipo: entrada.tipo,
-            nombre: entrada.nombre,
-            config,
-            secretoRefs,
-            estado: "activo",
-            esPredeterminada: entrada.esPredeterminada ?? true,
-          })
-          .onConflictDoUpdate({
-            target: [
-              conexionesDestino.organizacionId,
-              conexionesDestino.tipo,
-              conexionesDestino.nombre,
-            ],
-            set: {
-              tenantQlikId: entrada.tenantQlikId,
-              config,
-              secretoRefs,
-              actualizadoEn: new Date(),
-              esPredeterminada: entrada.esPredeterminada ?? true,
-            },
-          })
-          .returning({ id: conexionesDestino.id });
-        return conexion;
       },
       redirectUri: redirectUriOAuth,
       configuracionHeredada: {

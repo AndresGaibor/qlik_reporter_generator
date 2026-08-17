@@ -30,4 +30,15 @@ describe("configuración de entorno OAuth", () => {
       "http://localhost:4523/api/auth/qlik/callback",
     );
   });
+
+  it("REMOTE_API_URL y REMOTE_API_KEY deben ser ignorados y no existir en el tipo", () => {
+    const configuracion = cargarConfiguracion({
+      ...base,
+      REMOTE_API_URL: "https://api.ejemplo.com",
+      REMOTE_API_KEY: "secret-key-123",
+    });
+
+    expect(configuracion).not.toHaveProperty("REMOTE_API_URL");
+    expect(configuracion).not.toHaveProperty("REMOTE_API_KEY");
+  });
 });

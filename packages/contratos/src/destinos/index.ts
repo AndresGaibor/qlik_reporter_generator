@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-export const esquemaTipoDestino = z.enum([
-  "bigquery",
-  "postgres",
-  "sftp",
-]);
+export const esquemaTipoDestino = z.enum(["bigquery"]);
 export type TipoDestino = z.infer<typeof esquemaTipoDestino>;
 
 export const esquemaCapacidadesDestino = z.object({
@@ -19,7 +15,7 @@ export type CapacidadesDestino = z.infer<typeof esquemaCapacidadesDestino>;
 export const esquemaRecursoDestino = z.object({
   id: z.string(),
   nombre: z.string(),
-  tipo: z.enum(["tabla", "dataset", "archivo", "carpeta"]),
+  tipo: z.enum(["tabla", "dataset"]),
   espacioDeNombres: z.string().optional(),
   ruta: z.string().optional(),
   columnas: z
@@ -52,29 +48,10 @@ export const esquemaCrearConexionDestino = z.object({
 });
 export type CrearConexionDestino = z.infer<typeof esquemaCrearConexionDestino>;
 
-export const esquemaConfigPostgres = z.object({
-  host: z.string().min(1),
-  port: z.number().int().min(1).max(65535).default(5432),
-  ssl: z.boolean().default(false),
-  database: z.string().min(1),
-  user: z.string().min(1),
-  password: z.string(),
-  schema: z.string().default("public"),
-});
-
 export const esquemaConfigBigQuery = z.object({
   projectId: z.string().min(1),
   dataset: z.string().min(1),
   limiteMiB: z.number().positive().optional(),
   limiteUsd: z.number().positive().optional(),
   precioUsdPorTib: z.number().positive().default(6.25),
-});
-
-export const esquemaConfigSftp = z.object({
-  host: z.string().min(1),
-  port: z.number().int().min(1).max(65535).default(22),
-  user: z.string().min(1),
-  password: z.string().optional(),
-  privateKey: z.string().optional(),
-  rutaBase: z.string().default("/"),
 });

@@ -1,12 +1,8 @@
-export const TIPOS_DESTINO = [
-  "postgres",
-  "bigquery",
-  "sftp",
-] as const;
+export const TIPOS_DESTINO = ["bigquery"] as const;
 
 export type TipoDestino = (typeof TIPOS_DESTINO)[number];
 
-export type TipoRecursoDestino = "tabla" | "dataset" | "archivo" | "carpeta";
+export type TipoRecursoDestino = "tabla" | "dataset";
 
 export interface CapacidadesDestino {
   listarRecursos: boolean;

@@ -31,8 +31,6 @@ test("resume una conexión OAuth verificada y ofrece acciones claras", () => {
           nombre: "Producción",
           estado: "activo",
           esPrincipal: true,
-          tieneDestinoApiKey: false,
-          destinoApiKeyMascara: null,
           creadoEn: "2026-07-25",
         }}
         configuracion={{

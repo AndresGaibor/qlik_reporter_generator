@@ -5,7 +5,7 @@ import { crearClienteDestino } from "../aplicacion/fabrica-destinos.js";
 import type { TipoDestino } from "../dominio/tipos-destino.js";
 
 const esquemaCrearDestino = z.object({
-  tipo: z.enum(["postgres", "bigquery", "sftp"]),
+  tipo: z.enum(["bigquery"]),
   nombre: z.string().min(1).max(255),
   config: z.record(z.unknown()),
 });

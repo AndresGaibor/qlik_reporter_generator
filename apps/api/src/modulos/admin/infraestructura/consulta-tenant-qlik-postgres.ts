@@ -1,11 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { tenantsQlik } from "../../../plataforma/persistencia/esquema.js";
-import { cifrarSecretoParaPersistencia } from "../../../plataforma/seguridad/secreto-cifrado.js";
 import type {
   EstadoTenantQlik,
   ResultadoEliminarTenantQlik,
-  ServicioCifradoAdministracion,
   TenantQlikAdministrable,
 } from "../aplicacion/puertos/repositorio-administracion.js";
 import {
@@ -98,48 +96,6 @@ export const ConsultaTenantQlik = {
       .set({
         automatizacionBaseIdQlik,
         automatizacionBaseNombre: automatizacionBaseNombre ?? null,
-        actualizadoEn: new Date(),
-      })
-      .where(
-        and(
-          eq(tenantsQlik.id, tenantQlikId),
-          eq(tenantsQlik.organizacionId, organizacionId),
-        ),
-      )
-      .returning();
-
-    return fila ? mapearTenantQlik(fila) : null;
-  },
-
-  async configurarDestinoTenant(
-    db: DbType,
-    cifrado: ServicioCifradoAdministracion,
-    organizacionId: string,
-    tenantQlikId: string,
-    destinoApiUrl: string,
-    destinoApiKey?: string,
-    destinoBaseDatos?: string,
-  ) {
-    const existente = await db.query.tenantsQlik.findFirst({
-      where: and(
-        eq(tenantsQlik.id, tenantQlikId),
-        eq(tenantsQlik.organizacionId, organizacionId),
-      ),
-    });
-    if (!existente) return null;
-    const secretoNuevo = destinoApiKey?.trim();
-    const destinoApiKeyCifrada = secretoNuevo
-      ? cifrarSecretoParaPersistencia(cifrado, secretoNuevo)
-      : existente.destinoApiKeyCifrada;
-    if (!destinoApiKeyCifrada) {
-      throw new Error("Debes ingresar la API key inicial del destino");
-    }
-    const [fila] = await db
-      .update(tenantsQlik)
-      .set({
-        destinoApiUrl,
-        destinoApiKeyCifrada,
-        destinoBaseDatos: destinoBaseDatos ?? "default",
         actualizadoEn: new Date(),
       })
       .where(

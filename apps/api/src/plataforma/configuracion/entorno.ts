@@ -28,8 +28,6 @@ const esquemaEntorno = z.object({
     .max(60_000)
     .default(10_000),
   CIFRADO_CLAVE_PRINCIPAL: z.string().optional(),
-  REMOTE_API_URL: z.string().url().optional(),
-  REMOTE_API_KEY: z.string().optional(),
   SUPERADMINMAIL: z.string().optional(),
 });
 

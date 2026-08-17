@@ -8,14 +8,12 @@ export function mapearTenantParaAutomatizaciones(
     host: string;
     automatizacionBaseIdQlik?: string | null;
     automatizacionBaseNombre?: string | null;
-    destinoApiUrl?: string | null;
   } & Record<string, unknown>,
 ) {
   return {
     host: fila.host,
     automatizacionBaseIdQlik: fila.automatizacionBaseIdQlik,
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
-    destinoApiUrl: fila.destinoApiUrl,
   };
 }
 

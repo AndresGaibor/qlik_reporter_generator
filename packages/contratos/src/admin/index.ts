@@ -62,10 +62,6 @@ export const esquemaTenantQlik = z.object({
   esPrincipal: z.boolean(),
   automatizacionBaseIdQlik: z.string().nullable().optional(),
   automatizacionBaseNombre: z.string().nullable().optional(),
-  destinoApiUrl: z.string().nullable().optional(),
-  tieneDestinoApiKey: z.boolean(),
-  destinoApiKeyMascara: z.string().nullable(),
-  destinoBaseDatos: z.string().nullable().optional(),
   creadoEn: z.string(),
 });
 
@@ -80,29 +76,10 @@ export const esquemaConfigurarAutomatizacionBase = z.object({
   automatizacionBaseNombre: z.string().optional(),
 });
 
-export const esquemaConfigurarDestinoTenant = z.object({
-  destinoApiUrl: z.string().trim().url().max(2048),
-  destinoApiKey: z.string().trim().max(2000).optional(),
-  destinoBaseDatos: z.string().optional(),
-});
-
-export const esquemaConfigurarConexionDestino = z.object({
-  tipo: esquemaTipoDestino,
-  nombre: z.string().trim().min(1).max(255),
-  config: z.record(z.unknown()),
-  esPredeterminada: z.boolean().default(true),
-});
-
 export type TenantQlik = z.infer<typeof esquemaTenantQlik>;
 export type CrearTenantQlik = z.infer<typeof esquemaCrearTenantQlik>;
 export type ConfigurarAutomatizacionBase = z.infer<
   typeof esquemaConfigurarAutomatizacionBase
->;
-export type ConfigurarDestinoTenant = z.infer<
-  typeof esquemaConfigurarDestinoTenant
->;
-export type ConfigurarConexionDestino = z.infer<
-  typeof esquemaConfigurarConexionDestino
 >;
 
 export const esquemaCredencialesBigQuery = z.object({

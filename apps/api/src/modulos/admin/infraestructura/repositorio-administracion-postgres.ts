@@ -134,24 +134,6 @@ export class RepositorioAdministracionPostgres
     );
   }
 
-  async configurarDestinoTenant(
-    organizacionId: string,
-    tenantQlikId: string,
-    destinoApiUrl: string,
-    destinoApiKey?: string,
-    destinoBaseDatos?: string,
-  ): Promise<TenantQlikAdministrable | null> {
-    return ConsultaTenantQlik.configurarDestinoTenant(
-      this.db,
-      this.cifrado,
-      organizacionId,
-      tenantQlikId,
-      destinoApiUrl,
-      destinoApiKey,
-      destinoBaseDatos,
-    );
-  }
-
   async eliminarTenantQlik(organizacionId: string, tenantQlikId: string) {
     return ConsultaTenantQlik.eliminarTenantQlik(
       this.db,

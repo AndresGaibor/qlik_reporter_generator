@@ -2,8 +2,6 @@ import {
   type ConfiguracionBigQuery,
   esquemaConfigurarAutomatizacionBase,
   esquemaConfigurarBigQuery,
-  esquemaConfigurarConexionDestino,
-  esquemaConfigurarDestinoTenant,
   esquemaCredencialesBigQuery,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
@@ -22,15 +20,6 @@ import {
 export interface DependenciasRutasConfiguracionTenant {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
-  guardarConexionDestino?: (entrada: {
-    organizacionId: string;
-    tenantQlikId: string;
-    tipo: string;
-    nombre: string;
-    config: Record<string, unknown>;
-    esPredeterminada?: boolean;
-    secretoRefs?: Record<string, unknown>;
-  }) => Promise<{ id: string }>;
   obtenerBigQuery?: (
     organizacionId: string,
     tenantQlikId: string,
@@ -51,7 +40,6 @@ export interface DependenciasRutasConfiguracionTenant {
 export function crearRutasConfiguracionTenant({
   repositorio,
   resolverContexto,
-  guardarConexionDestino,
   obtenerBigQuery,
   guardarBigQuery,
 }: DependenciasRutasConfiguracionTenant) {
@@ -94,42 +82,6 @@ export function crearRutasConfiguracionTenant({
     "/tenants/:id/qlik/:tenantQlikId/automatizacion-base",
     handlerAutomatizacionBase,
   );
-
-  const handlerDestino = async (c: Context) => {
-    try {
-      const organizacionId = obtenerParametroRequerido(c, "id");
-      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
-      const contexto = await resolverContexto(c);
-      exigirAccesoOrganizacion(contexto, organizacionId);
-
-      const cuerpo = await c.req.json();
-      const entrada = esquemaConfigurarDestinoTenant.parse(cuerpo);
-
-      const resultado = await repositorio.configurarDestinoTenant(
-        organizacionId,
-        tenantQlikId,
-        entrada.destinoApiUrl,
-        entrada.destinoApiKey,
-        entrada.destinoBaseDatos,
-      );
-
-      if (!resultado) {
-        return responderError(c, "Tenant Qlik no encontrado", 404, {
-          codigo: "NO_ENCONTRADO",
-        });
-      }
-
-      return responderExito(c, resultado);
-    } catch (error) {
-      return responderErrorAdmin(c, error);
-    }
-  };
-
-  rutas.put(
-    "/organizaciones/:id/tenants-qlik/:tenantQlikId/destino",
-    handlerDestino,
-  );
-  rutas.put("/tenants/:id/qlik/:tenantQlikId/destino", handlerDestino);
 
   const handlerObtenerBigQuery = async (c: Context) => {
     try {
@@ -221,38 +173,6 @@ export function crearRutasConfiguracionTenant({
     rutas.get(ruta, handlerObtenerBigQuery);
     rutas.put(ruta, handlerGuardarBigQuery);
   }
-
-  rutas.put(
-    "/organizaciones/:id/tenants-qlik/:tenantQlikId/destino-generico",
-    async (c) => {
-      try {
-        if (!guardarConexionDestino) {
-          return responderError(
-            c,
-            "Configuración de destinos no disponible",
-            503,
-          );
-        }
-        const organizacionId = obtenerParametroRequerido(c, "id");
-        const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
-        const contexto = await resolverContexto(c);
-        exigirAccesoOrganizacion(contexto, organizacionId);
-        const entrada = esquemaConfigurarConexionDestino.parse(
-          await c.req.json(),
-        );
-        return responderExito(
-          c,
-          await guardarConexionDestino({
-            organizacionId,
-            tenantQlikId,
-            ...entrada,
-          }),
-        );
-      } catch (error) {
-        return responderErrorAdmin(c, error);
-      }
-    },
-  );
 
   return rutas;
 }
