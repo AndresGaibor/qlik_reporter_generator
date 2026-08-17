@@ -28,6 +28,9 @@ import {
 } from "./modulos/destinos/publico.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
+import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
+import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
+import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -579,6 +582,25 @@ export async function crearAplicacion(
         scopes: scopesOAuthHeredados,
       },
       auditoria,
+    }),
+  );
+
+  const resolverGoogle = new ResolverConfiguracionGoogleCloudPostgres(db);
+  aplicacion.route(
+    "/api/descargas",
+    crearRutasDescargas({
+      resolverSesion,
+      resolverQlik,
+      repositorioReportes,
+      resolverAlmacenamiento: async (c) => {
+        const sesion = await resolverSesion(c);
+        const google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
+        return new ClienteGcs({
+          projectId: google.projectId,
+          credencialesJson: google.credencialesJson,
+        });
+      },
+      minutosFirma: configuracion?.GOOGLE_SIGNED_URL_MINUTOS ?? 15,
     }),
   );
 
