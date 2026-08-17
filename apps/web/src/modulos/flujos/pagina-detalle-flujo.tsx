@@ -4,7 +4,6 @@ import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
-import { VisorJsonInteractivo } from "@/compartido/componentes/ui/visor-json-interactivo";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import {
@@ -19,14 +18,15 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
+import { PestanaAutomatizacionFlujo } from "./componentes/detalle/pestana-automatizacion-flujo";
+import { PestanaMetadataFlujo } from "./componentes/detalle/pestana-metadata-flujo";
+import { PestanaScriptFlujo } from "./componentes/detalle/pestana-script-flujo";
 
 export function PaginaDetalleFlujo() {
   const { id } = useParams({ strict: false }) as { id: string };
   const [pestana, setPestana] = useState<
     "script" | "metadata" | "automatizaciones"
   >("script");
-  const [copiadoScript, setCopiadoScript] = useState(false);
-  const [copiadoMeta, setCopiadoMeta] = useState(false);
 
   const { tenant: tenantActivo } = useTenantActivo();
 
@@ -91,34 +91,8 @@ export function PaginaDetalleFlujo() {
     );
   }
 
-  const metadataDataflow = {
-    id: flujo.id,
-    name: flujo.nombre,
-    resourceType: "app",
-    resourceSubType: "qix-df",
-    spaceId: flujo.espacioId || null,
-    spaceName: flujo.espacioNombre || "Personal",
-    updatedAt: flujo.modificadoEn || null,
-    engine: "QIX Data Pipeline Engine",
-  };
-
-  const copiarScript = () => {
-    if (datosScript?.script) {
-      navigator.clipboard.writeText(datosScript.script);
-      setCopiadoScript(true);
-      setTimeout(() => setCopiadoScript(false), 2000);
-    }
-  };
-
-  const copiarMetadata = () => {
-    navigator.clipboard.writeText(JSON.stringify(metadataDataflow, null, 2));
-    setCopiadoMeta(true);
-    setTimeout(() => setCopiadoMeta(false), 2000);
-  };
-
   return (
     <PageLayout>
-      {/* Botón Volver */}
       <div>
         <Link
           to="/flujos"
@@ -182,7 +156,6 @@ export function PaginaDetalleFlujo() {
         }
       />
 
-      {/* Tabs */}
       <div className="flex rounded-xl bg-line-200/60 p-1 text-sm max-w-fit shadow-xs">
         <button
           type="button"
@@ -222,197 +195,23 @@ export function PaginaDetalleFlujo() {
         </button>
       </div>
 
-      {/* Contenido principal */}
       <div className="space-y-6">
         {pestana === "script" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm text-xs">
-              <span className="text-slate-600 font-medium flex items-center gap-2">
-                <Icon name="sparkles" size="sm" className="text-brand-600" />
-                Este script se trae directo desde Qlik Cloud y siempre muestra
-                la versión más reciente.
-              </span>
-
-              <button
-                type="button"
-                onClick={copiarScript}
-                disabled={!datosScript?.script}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-line-300 text-ink-800 hover:bg-app text-xs font-semibold transition-colors shadow-sm disabled:opacity-50"
-              >
-                <Icon name="copy" size="sm" className="text-brand-600" />
-                {copiadoScript ? "¡Script copiado!" : "Copiar script"}
-              </button>
-            </div>
-
-            {cargandoScript && (
-              <div className="flex min-h-[300px] flex-col items-center justify-center gap-2 bg-white rounded-xl border p-8">
-                <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
-                <p className="text-sm text-ink-500 font-medium">
-                  Cargando script de carga desde Qlik Cloud...
-                </p>
-              </div>
-            )}
-
-            {errorScript && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-xs text-amber-900 space-y-2">
-                <p className="font-semibold text-sm">
-                  No se pudo cargar el script de este Dataflow.
-                  {errorScriptMsg instanceof Error && (
-                    <span className="block mt-1 font-normal text-xs opacity-75">
-                      {errorScriptMsg.message}
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs opacity-80">
-                  Este Dataflow puede haberse creado con transformación visual
-                  en Qlik Cloud (sin escribir código), en cuyo caso la
-                  automatización funciona igual de bien.
-                </p>
-              </div>
-            )}
-
-            {!cargandoScript && !errorScript && datosScript && (
-              <div className="relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                {datosScript.versionMessage && (
-                  <div className="text-xs text-slate-500 font-mono border-b border-slate-100 pb-2">
-                    Mensaje de versión: {datosScript.versionMessage}
-                  </div>
-                )}
-
-                <pre className="font-mono text-xs text-slate-800 bg-slate-50 p-4 rounded-xl border border-slate-200 overflow-x-auto whitespace-pre-wrap leading-relaxed min-h-[400px]">
-                  {datosScript.script ||
-                    "Este Dataflow todavía no tiene un script de carga para mostrar."}
-                </pre>
-              </div>
-            )}
-          </div>
+          <PestanaScriptFlujo
+            datosScript={datosScript}
+            cargandoScript={cargandoScript}
+            errorScript={errorScript}
+            errorScriptMsg={errorScriptMsg}
+          />
         )}
 
-        {pestana === "metadata" && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-line-200 bg-surface p-5 shadow-sm space-y-4">
-              <h4 className="font-semibold text-sm text-ink-900">
-                Detalles del Dataflow
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                <div className="p-3 bg-app/50 rounded-lg border border-line-200">
-                  <span className="text-ink-400 block mb-1">
-                    ID del Dataflow:
-                  </span>
-                  <span className="font-mono font-semibold text-ink-900">
-                    {flujo.id}
-                  </span>
-                </div>
-                <div className="p-3 bg-app/50 rounded-lg border border-line-200">
-                  <span className="text-ink-400 block mb-1">
-                    Espacio en Qlik Cloud:
-                  </span>
-                  <span className="font-semibold text-ink-900">
-                    {flujo.espacioNombre || "Personal"}
-                  </span>
-                </div>
-                <div className="p-3 bg-app/50 rounded-lg border border-line-200">
-                  <span className="text-ink-400 block mb-1">
-                    Última actualización:
-                  </span>
-                  <span className="font-mono text-ink-900">
-                    {flujo.modificadoEn
-                      ? new Date(flujo.modificadoEn).toLocaleString()
-                      : "—"}
-                  </span>
-                </div>
-                <div className="p-3 bg-app/50 rounded-lg border border-line-200">
-                  <span className="text-ink-400 block mb-1">
-                    Tipo de Dataflow:
-                  </span>
-                  <span className="font-mono text-brand-600 font-semibold">
-                    Dataflow de Qlik
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <details className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-              <summary className="cursor-pointer font-medium text-xs text-brand-600 hover:underline">
-                Ver JSON avanzado (para usuarios con experiencia técnica)
-              </summary>
-              <div className="mt-3 text-[11px] font-mono text-slate-500 border-t border-slate-200 pt-3 flex justify-between items-center">
-                <span>METADATA_JSON_DATAFLOW</span>
-                <button
-                  type="button"
-                  onClick={copiarMetadata}
-                  className="text-xs text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded transition-colors font-medium"
-                >
-                  {copiadoMeta ? "¡JSON Copiado!" : "Copiar JSON"}
-                </button>
-              </div>
-              <VisorJsonInteractivo data={metadataDataflow} />
-            </details>
-          </div>
-        )}
+        {pestana === "metadata" && <PestanaMetadataFlujo flujo={flujo} />}
 
         {pestana === "automatizaciones" && (
-          <div className="space-y-4">
-            {automatizacionVinculada ? (
-              <div className="p-5 bg-white rounded-xl border border-emerald-200 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
-                    <h4 className="font-semibold text-sm text-gray-900">
-                      Este Dataflow ya tiene una automatización activa en Qlik
-                      Automate
-                    </h4>
-                  </div>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 text-xs"
-                  >
-                    <Link
-                      to="/reportes/$id"
-                      params={{ id: automatizacionVinculada.id }}
-                    >
-                      Ver automatización completa
-                    </Link>
-                  </Button>
-                </div>
-                <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100 text-xs space-y-1">
-                  <p className="font-semibold text-emerald-900">
-                    {automatizacionVinculada.nombre}
-                  </p>
-                  <p className="text-emerald-700 font-mono">
-                    ID Automate: {automatizacionVinculada.id}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 bg-white rounded-xl border border-dashed border-slate-300 text-center space-y-3">
-                <Icon
-                  name="robot"
-                  size="lg"
-                  className="mx-auto text-slate-400"
-                />
-                <h4 className="font-semibold text-sm text-slate-800">
-                  Este Dataflow todavía no tiene una automatización
-                </h4>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Créala en Qlik Automate para que la extracción y carga hacia
-                  el destino ocurran solas, sin que tengas que hacerlo
-                  manualmente.
-                </p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="bg-brand-600 hover:bg-brand-700 text-white gap-1.5 text-xs"
-                >
-                  <Link to="/reportes/nueva" search={{ flujoId: flujo.id }}>
-                    <Icon name="zap" size="sm" />
-                    Crear automatización en Qlik Automate
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
+          <PestanaAutomatizacionFlujo
+            flujo={flujo}
+            automatizacionVinculada={automatizacionVinculada}
+          />
         )}
       </div>
     </PageLayout>
