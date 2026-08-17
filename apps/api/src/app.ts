@@ -197,13 +197,34 @@ export async function crearAplicacion(
     dependencias.resolverBigQueryReporte ??
     (async (c: Context): Promise<ResolucionBigQueryReporte> => {
       const sesion = await resolverSesion(c);
-      const google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
+      let google: Awaited<ReturnType<typeof resolverGoogle.resolver>>;
+      try {
+        google = await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId);
+      } catch (error) {
+        if (error instanceof ErrorAplicacion) {
+          if (error.codigo === "GOOGLE_CLOUD_NO_CONFIGURADO") {
+            throw new ErrorAplicacion(
+              "BIGQUERY_NO_CONFIGURADO",
+              "La organización no tiene una conexión BigQuery predeterminada",
+              422,
+            );
+          }
+          if (error.codigo === "GOOGLE_CLOUD_INCOMPLETO") {
+            throw new ErrorAplicacion(
+              "BIGQUERY_INCOMPLETO",
+              "La conexión BigQuery predeterminada requiere proyecto y dataset",
+              422,
+            );
+          }
+        }
+        throw error;
+      }
       const cliente = crearClienteDestino({
         tipo: "bigquery",
         config: { projectId: google.projectId, dataset: google.dataset },
         secretoRefs: google.credencialesJson
           ? { credencialesJson: google.credencialesJson }
-          : {},
+          : google.secretoRefs,
       });
       const estimarConsulta = cliente.estimarConsulta?.bind(cliente);
       if (!estimarConsulta) {

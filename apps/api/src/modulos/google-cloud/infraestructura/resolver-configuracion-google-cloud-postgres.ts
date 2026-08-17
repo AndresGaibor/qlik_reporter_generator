@@ -8,6 +8,7 @@ export interface ConfiguracionGoogleCloud {
   projectId: string;
   dataset: string;
   credencialesJson: string;
+  secretoRefs: Record<string, unknown>;
 }
 
 export class ResolverConfiguracionGoogleCloudPostgres {
@@ -68,6 +69,6 @@ export class ResolverConfiguracionGoogleCloudPostgres {
       );
     }
 
-    return { projectId, dataset, credencialesJson };
+    return { projectId, dataset, credencialesJson, secretoRefs };
   }
 }

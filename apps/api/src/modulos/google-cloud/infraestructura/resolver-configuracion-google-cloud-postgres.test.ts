@@ -11,7 +11,7 @@ vi.mock(
 );
 
 describe("ResolverConfiguracionGoogleCloudPostgres", () => {
-  it("devuelve projectId, dataset y credencialesJson descifradas", async () => {
+  it("devuelve projectId, dataset y credencialesJson descifradas con secretoRefs", async () => {
     const mockDb = {
       query: {
         conexionesDestino: {
@@ -31,6 +31,7 @@ describe("ResolverConfiguracionGoogleCloudPostgres", () => {
                 iv: "def",
                 tag: "ghi",
               },
+              otroSecreto: "valor",
             },
             esPredeterminada: true,
           })),
@@ -47,6 +48,47 @@ describe("ResolverConfiguracionGoogleCloudPostgres", () => {
     expect(resultado.projectId).toBe("proyecto-test");
     expect(resultado.dataset).toBe("dataset_test");
     expect(resultado.credencialesJson).toBe('{"type":"service_account"}');
+    expect(resultado.secretoRefs).toEqual({
+      credencialesJson: {
+        cifrado: "abc",
+        iv: "def",
+        tag: "ghi",
+      },
+      otroSecreto: "valor",
+    });
+  });
+
+  it("devuelve secretoRefs original cuando credencialesJson está ausente", async () => {
+    const mockDb = {
+      query: {
+        conexionesDestino: {
+          findFirst: vi.fn(async () => ({
+            id: "conn-1",
+            organizacionId: "org-1",
+            tenantQlikId: "tenant-1",
+            tipo: "bigquery",
+            nombre: "BigQuery principal",
+            config: {
+              projectId: "proyecto-test",
+              dataset: "dataset_test",
+            },
+            secretoRefs: {
+              otroSecreto: "valor",
+            },
+            esPredeterminada: true,
+          })),
+        },
+      },
+    };
+
+    const resolver = new ResolverConfiguracionGoogleCloudPostgres(
+      mockDb as never,
+    );
+
+    const resultado = await resolver.resolver("org-1", "tenant-1");
+
+    expect(resultado.credencialesJson).toBe("");
+    expect(resultado.secretoRefs).toEqual({ otroSecreto: "valor" });
   });
 
   it("lanza error cuando no existe conexión bigquery", async () => {
