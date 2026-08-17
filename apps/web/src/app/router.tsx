@@ -1,6 +1,7 @@
 import { EstadoRuta } from "@/compartido/componentes/feedback/estado-ruta";
 import { crearRutasAdmin } from "@/modulos/admin/publico";
 import { crearRutasAutenticacion } from "@/modulos/autenticacion/publico";
+import { crearRutasDescargas } from "@/modulos/descargas/publico";
 import { crearRutasFlujos } from "@/modulos/flujos/publico";
 import { crearRutasInicio } from "@/modulos/inicio/publico";
 import { crearRutasReportes } from "@/modulos/reportes/publico";
@@ -24,6 +25,7 @@ const arbolRutas = rutaRaiz.addChildren([
   ...crearRutasTablas(rutaRaiz),
   ...crearRutasAdmin(rutaRaiz),
   ...crearRutasSetup(rutaRaiz),
+  ...crearRutasDescargas(rutaRaiz),
 ]);
 
 export const router = createRouter({ routeTree: arbolRutas });
