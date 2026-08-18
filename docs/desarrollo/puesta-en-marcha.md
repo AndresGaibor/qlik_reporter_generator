@@ -21,9 +21,6 @@ bun run build
 
 ## PostgreSQL
 
-La migración `0001_arquitectura_modular.sql` incorpora:
+El esquema vigente parte de `0000_tan_zeigeist.sql`. `0001_spooky_marvel_apes.sql` retira tablas y columnas históricas, normaliza roles a `admin | usuario` y limpia sesiones/idempotencias expiradas. `0002_absent_thing.sql` elimina campos redundantes de configuración y ejecución de reportes.
 
-- `solicitudes_idempotentes`
-- `eventos_outbox`
-
-La auditoría reutiliza `auditoria_eventos`.
+La persistencia activa incluye organizaciones, usuarios, tenants Qlik, OAuth/sesiones, configuración BigQuery, reportes, ejecuciones, auditoría e idempotencia.

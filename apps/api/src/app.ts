@@ -27,13 +27,9 @@ import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestruc
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
 import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
-import {
-  RepositorioConexionesDestinoPostgres,
-  crearClienteDestino,
-  crearRutasDestinosGenericas,
-} from "./modulos/destinos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
@@ -52,7 +48,6 @@ import {
   ErrorAplicacion,
   ErrorNoAutorizado,
 } from "./nucleo/errores/error-aplicacion.js";
-import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "./nucleo/valores/generar-uuid.js";
 import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
@@ -84,7 +79,6 @@ import {
   tenantsQlik,
 } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
-import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
 import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 
 export interface DependenciasAplicacion {
@@ -102,7 +96,6 @@ export interface DependenciasAplicacion {
   }>;
 
   idempotencia?: PuertoIdempotencia;
-  outbox?: PuertoOutbox;
   auditoria?: PuertoAuditoria;
   repositorioAdministracion?: RepositorioAdministracion;
   resolverContextoAdmin?: ResolverContextoAdmin;
@@ -157,6 +150,8 @@ export async function crearAplicacion(
         usuarioId: contexto.usuarioId,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,
+        esSuperadmin: contexto.esSuperadmin ?? false,
+        roles: contexto.roles ?? [],
       };
     });
   const resolverQlik =
@@ -208,30 +203,21 @@ export async function crearAplicacion(
         }
         throw error;
       }
-      const cliente = crearClienteDestino({
-        tipo: "bigquery",
-        config: { projectId: google.projectId, dataset: google.dataset },
-        secretoRefs: google.credencialesJson
-          ? { credencialesJson: google.credencialesJson }
-          : google.secretoRefs,
+      const estimador = new EstimadorBigQuery({
+        projectId: google.projectId,
+        dataset: google.dataset,
+        credencialesJson: google.credencialesJson || undefined,
       });
-      const estimarConsulta = cliente.estimarConsulta?.bind(cliente);
-      if (!estimarConsulta) {
-        throw new ErrorAplicacion(
-          "BIGQUERY_SIN_ESTIMACION",
-          "La conexión BigQuery no permite estimar consultas",
-          422,
-        );
-      }
       return {
         projectId: google.projectId,
         dataset: google.dataset,
-        estimador: { estimarConsulta },
+        estimador: {
+          estimarConsulta: estimador.estimarConsulta.bind(estimador),
+        },
       };
     });
 
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
-  const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
   const repositorioAdministracion =
     dependencias.repositorioAdministracion ??
@@ -346,7 +332,6 @@ export async function crearAplicacion(
       consultaTenant: new ConsultaTenantQlikPostgres(),
       bloqueos: new BloqueoEjecucionPostgres(db),
       idempotencia,
-      outbox,
       auditoria,
       repositorioReportes,
       resolverBigQueryReporte,
@@ -360,38 +345,6 @@ export async function crearAplicacion(
       resolverSesion,
       repositorioReportes,
     }),
-  );
-  const repositorioConexionesDestino = new RepositorioConexionesDestinoPostgres(
-    db,
-  );
-
-  aplicacion.route(
-    "/api/destinos/conexiones",
-    crearRutasDestinosGenericas(
-      async (c: Context) => {
-        const sesion = await resolverSesion(c);
-        return repositorioConexionesDestino.listarPorOrganizacion(
-          sesion.organizacionId,
-        );
-      },
-      async (c: Context, conexion) => {
-        const sesion = await resolverSesion(c);
-        return repositorioConexionesDestino.crear({
-          ...conexion,
-          organizacionId: sesion.organizacionId,
-        });
-      },
-      async (_c: Context, id: string, cambios) => {
-        await repositorioConexionesDestino.actualizar(id, cambios);
-      },
-      async (_c: Context, id: string) => {
-        await repositorioConexionesDestino.eliminar(id);
-      },
-      async (_c: Context, id: string) => {
-        return repositorioConexionesDestino.obtenerPorId(id);
-      },
-      async (c: Context) => (await resolverSesion(c)).organizacionId,
-    ),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
   aplicacion.route(

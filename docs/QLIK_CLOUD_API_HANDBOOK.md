@@ -80,7 +80,7 @@ GET /api/v1/apps/c354be8c-9ed9-4467-ba2f-bfb00f19b4a5/scripts/current
 **Respuesta JSON**:
 ```json
 {
-  "script": "///$tab Main\r\nSET ThousandSep=',';\r\n...\r\n///$tab Generated\r\nLIB CONNECT TO [Bancolombia prueba:Postgres_BanColombia_Prueba];\r\n...",
+  "script": "///$tab Main\r\nSET ThousandSep=',';\r\n...\r\nLIB CONNECT TO [Bancolombia prueba:Google_BigQuery_poc-bigquery-talend];\r\n...",
   "versionMessage": "Carga incremental"
 }
 ```
@@ -91,8 +91,8 @@ POST /api/v1/apps/{appId}/scripts
 Content-Type: application/json
 
 {
-  "script": "///$tab Main\nSET DateFormat='YYYY-MM-DD';\n\n///$tab Transformacion\nLIB CONNECT TO [Bancolombia prueba:Postgres_BanColombia_Prueba];\n[ventas]:\nLOAD *;\nSELECT * FROM \"public\".\"ventas\";\nSTORE [ventas] INTO [lib://Bancolombia prueba:SFTP//upload/ventas.csv] (txt);\nDROP TABLE [ventas];\n",
-  "versionMessage": "Script modificado vía API REST"
+  "script": "///$tab Main\nSET DateFormat='M/D/YYYY';\n\nLIB CONNECT TO [Bancolombia prueba:Google_BigQuery_poc-bigquery-talend];\n[VENTAS]:\nLOAD [Fecha], [Venta_Neta_USD];\nSELECT Fecha, `Venta_Neta_USD` FROM `poc-bigquery-talend`.`demo_lafavorita`.`VENTAS_COMERCIAL_DIARIAS_D`;\n",
+  "versionMessage": "Script BigQuery modificado vía API REST"
 }
 ```
 
@@ -190,27 +190,18 @@ Content-Type: application/json
 ```
 Retorna `HTTP 204 No Content`.
 
-### 5.3 Modificar Definición, Horario (Schedule) y Variables (`PUT /api/v1/automations/{id}`)
-Permite cambiar el modo de ejecución (`runMode`), la programación temporal (`schedules`) y los bloques de trabajo (`workspace`).
+### 5.3 Modificar Definición y Variables (`PUT /api/v1/automations/{id}`)
+La API permite actualizar la definición completa y el `workspace`. **Qlik Reportes Creator no implementa programación propia y conserva `schedules: []`** al actualizar las copias de la plantilla.
 
 ```http
 PUT /api/v1/automations/cd035fef-2e74-4832-b869-8b73fb027187
 Content-Type: application/json
 
 {
-  "name": "Automation_Programada_API",
-  "description": "Automatización con horario actualizado vía API REST",
+  "name": "Reporte_Dataflow",
+  "description": "Automatización gestionada por Qlik Reportes Creator",
   "spaceId": "6a57a14cf89e2c4d4b4d83af",
-  "runMode": "scheduled",
-  "schedules": [
-    {
-      "type": "interval",
-      "interval": 120,
-      "startAt": "2026-07-25 08:00:00",
-      "stopAt": "2026-12-31 23:59:59",
-      "timezone": "America/Bogota"
-    }
-  ],
+  "schedules": [],
   "workspace": {
     "blocks": [ ... ],
     "variables": [ ... ]
@@ -273,4 +264,4 @@ Content-Type: application/json
 1. **Redirecciones HTTP**: Endpoints como `/api/v1/users/me` devuelven HTTP 301. Asegurar que las librerías cliente sigan la cabecera `Location`.
 2. **Contexto Obligatorio en Runs de Automatización**: Llamar a `/api/v1/automations/{id}/runs` sin `{ "context": "api" }` retornará un HTTP 422 Unprocessable Entity.
 3. **Sintaxis de TRACE en Qlik Scripts**: Al escribir scripts programáticamente, evitar caracteres especiales sueltos (ej. `TRACE ***`) sin comillas dobles, ya que la Engine lanzará un error `EngineReloadScriptError`.
-4. **Deshabilitar Automatizaciones**: Usar `/actions/disable` detiene temporalmente la ejecución programada sin alterar la configuración del flujo ni los conectores.
+4. **Sin programación propia**: la plataforma dispara ejecuciones manuales y mantiene `schedules: []`; no usa cron ni schedules como parte del producto.

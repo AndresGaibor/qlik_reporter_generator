@@ -4,7 +4,6 @@ export type RutaNav =
   | "/"
   | "/flujos"
   | "/reportes"
-  | "/tablas"
   | "/descargas"
   | "/configuracion"
   | "/admin/superadmins";
@@ -20,12 +19,6 @@ export const NAVEGACION: readonly {
   { to: "/flujos", etiqueta: "Dataflows", icono: "flow" },
   { to: "/reportes", etiqueta: "Reportes", icono: "file-text" },
   { to: "/descargas", etiqueta: "Descargas", icono: "cloud" },
-  {
-    to: "/tablas",
-    etiqueta: "Resultados",
-    icono: "db",
-    admin: true,
-  },
   {
     to: "/configuracion",
     etiqueta: "Configuración",

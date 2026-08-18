@@ -26,6 +26,7 @@ interface Props {
   mutationEjecutar: { mutate: () => void; isPending: boolean };
   mutationDetener: { mutate: (runId: string) => void; isPending: boolean };
   mostrarWorkspace: boolean;
+  ejecucionDesdePlataformaHabilitada?: boolean;
 }
 
 const CLASES_TONO: Record<TonoEstadoEjecucion, string> = {
@@ -71,6 +72,7 @@ export function TarjetaDetalleAutomatizacion({
   mutationEjecutar,
   mutationDetener,
   mostrarWorkspace,
+  ejecucionDesdePlataformaHabilitada = true,
 }: Props) {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const enEjecucion = auto.ejecucionActiva || mutationEjecutar.isPending;
@@ -105,7 +107,9 @@ export function TarjetaDetalleAutomatizacion({
           <p className="mt-1 max-w-2xl text-sm text-ink-500">
             {enEjecucion
               ? "Qlik Cloud está procesando el reporte. El estado se actualizará automáticamente."
-              : "El reporte está listo para ejecutarse con la configuración guardada."}
+              : ejecucionDesdePlataformaHabilitada
+                ? "El reporte está listo para ejecutarse con la configuración guardada."
+                : "La automatización está disponible en Qlik Cloud, pero requiere una configuración local antes de ejecutarse desde esta plataforma."}
           </p>
         </div>
 
@@ -124,7 +128,11 @@ export function TarjetaDetalleAutomatizacion({
           ) : (
             <Button
               size="default"
-              disabled={!auto.puedeEjecutar || enEjecucion}
+              disabled={
+                !auto.puedeEjecutar ||
+                enEjecucion ||
+                !ejecucionDesdePlataformaHabilitada
+              }
               onClick={onEjecutar}
               className="gap-2 px-5"
             >

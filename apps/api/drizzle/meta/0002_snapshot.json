@@ -1,6 +1,6 @@
 {
-  "id": "42de4a8f-9506-419f-8bf9-8903e12aa253",
-  "prevId": "ac4b10b2-c2c2-4c24-a225-ae153a5f30f3",
+  "id": "21a19b7b-cac3-4167-b8a6-06b880f5fb66",
+  "prevId": "42de4a8f-9506-419f-8bf9-8903e12aa253",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -491,24 +491,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "destino_proveedor": {
-          "name": "destino_proveedor",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "destino_id_externo": {
-          "name": "destino_id_externo",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "destino_nombre_snapshot": {
-          "name": "destino_nombre_snapshot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "automatizacion_id_qlik": {
           "name": "automatizacion_id_qlik",
           "type": "text",
@@ -530,12 +512,6 @@
         },
         "mensaje_error": {
           "name": "mensaje_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "clave_idempotencia": {
-          "name": "clave_idempotencia",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -656,15 +632,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "configuraciones_automatizacion_clave_idempotencia_unique": {
-          "name": "configuraciones_automatizacion_clave_idempotencia_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "clave_idempotencia"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
         "configuraciones_estado_check": {
@@ -995,12 +963,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "tipo_ejecucion": {
-          "name": "tipo_ejecucion",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "estado": {
           "name": "estado",
           "type": "text",
@@ -1111,10 +1073,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "ejecuciones_reportes_tipo_check": {
-          "name": "ejecuciones_reportes_tipo_check",
-          "value": "\"ejecuciones_reportes\".\"tipo_ejecucion\" = 'manual'"
-        },
         "ejecuciones_reportes_estado_check": {
           "name": "ejecuciones_reportes_estado_check",
           "value": "\"ejecuciones_reportes\".\"estado\" IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')"

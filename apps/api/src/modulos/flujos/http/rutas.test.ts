@@ -68,11 +68,10 @@ describe("rutas de flujos", () => {
     });
 
     expect(respuesta.status).toBe(201);
-    expect(copiarDataflow).toHaveBeenCalledWith(
-      "app-real-1",
-      "Copia ventas",
-      { espacioId: "space-1", descripcion: "qlik generator" },
-    );
+    expect(copiarDataflow).toHaveBeenCalledWith("app-real-1", "Copia ventas", {
+      espacioId: "space-1",
+      descripcion: "qlik generator",
+    });
   });
 
   it("expone un resumen seguro validado por Qlik", async () => {

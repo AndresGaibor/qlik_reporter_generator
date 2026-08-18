@@ -12,7 +12,7 @@ import type {
 type DbType = ConexionDb;
 
 const normalizarRol = (rol: string): RolAdministracion =>
-  rol === "admin" || rol === "administrador" ? "admin" : "usuario";
+  rol === "admin" ? "admin" : "usuario";
 
 export const ConsultaUsuario = {
   async listarUsuarios(db: DbType, organizacionId: string) {

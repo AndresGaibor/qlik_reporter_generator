@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { PuertoAuditoria } from "../../../../nucleo/auditoria/puerto-auditoria.js";
-import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type {
   PuertoIdempotencia,
   RegistroIdempotencia,
@@ -101,19 +100,6 @@ function crearIdempotencia() {
   return { puerto, registros };
 }
 
-function crearOutbox() {
-  const guardar = vi.fn(async () => undefined);
-  return {
-    puerto: {
-      guardar,
-      listarPendientes: async () => [],
-      marcarPublicado: async () => undefined,
-      registrarFallo: async () => undefined,
-    } satisfies PuertoOutbox,
-    guardar,
-  };
-}
-
 function crearAuditoria() {
   const registrar = vi.fn(async () => undefined);
   return {
@@ -164,12 +150,10 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
   it("copia, reubica y reemplaza únicamente rutas existentes", async () => {
     const qlik = crearQlik();
     const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
     const auditoria = crearAuditoria();
     const caso = new CrearAutomatizacionDesdePlantilla(
       qlik,
       idempotencia.puerto,
-      outbox.puerto,
       auditoria.puerto,
       crearRepositorioReportes().puerto as never,
       crearPreflight() as never,
@@ -215,7 +199,6 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
         }),
       }),
     );
-    expect(outbox.guardar).toHaveBeenCalledTimes(1);
     expect(auditoria.registrar).toHaveBeenCalledWith(
       expect.objectContaining({ resultado: "exito", entidadId: "copia-1" }),
     );
@@ -224,12 +207,10 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
   it("devuelve la respuesta guardada al repetir la misma clave", async () => {
     const qlik = crearQlik();
     const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
     const auditoria = crearAuditoria();
     const caso = new CrearAutomatizacionDesdePlantilla(
       qlik,
       idempotencia.puerto,
-      outbox.puerto,
       auditoria.puerto,
       crearRepositorioReportes().puerto as never,
       crearPreflight() as never,
@@ -252,12 +233,10 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
   it("elimina la copia cuando un reemplazo no existe", async () => {
     const qlik = crearQlik();
     const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
     const auditoria = crearAuditoria();
     const caso = new CrearAutomatizacionDesdePlantilla(
       qlik,
       idempotencia.puerto,
-      outbox.puerto,
       auditoria.puerto,
       crearRepositorioReportes().puerto as never,
       crearPreflight() as never,
@@ -285,13 +264,11 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
   it("rechaza una creación nueva sin Dataflow", async () => {
     const qlik = crearQlik();
     const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
     const auditoria = crearAuditoria();
     const repositorio = crearRepositorioReportes();
     const caso = new CrearAutomatizacionDesdePlantilla(
       qlik,
       idempotencia.puerto,
-      outbox.puerto,
       auditoria.puerto,
       repositorio.puerto as never,
       crearPreflight() as never,
@@ -321,13 +298,11 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       },
     );
     const idempotencia = crearIdempotencia();
-    const outbox = crearOutbox();
     const auditoria = crearAuditoria();
     const repositorio = crearRepositorioReportes();
     const caso = new CrearAutomatizacionDesdePlantilla(
       qlik,
       idempotencia.puerto,
-      outbox.puerto,
       auditoria.puerto,
       repositorio.puerto as never,
       crearPreflight(orden) as never,
@@ -352,8 +327,6 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas Dataflow",
         automatizacionIdQlik: "copia-1",
-        destinoProveedor: "gcs",
-        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
         estado: "activa",
       }),
     );

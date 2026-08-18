@@ -82,7 +82,6 @@ export function LayoutPrincipal() {
       esSuperadmin || sesion.membresias.some((m) => m.rol === "admin");
     const puedeVerAdministracion = esAdmin && !modoUsuarioFinal;
     const estaEnRutaAdministrativa =
-      ubicacion.pathname === "/tablas" ||
       ubicacion.pathname === "/configuracion" ||
       ubicacion.pathname.startsWith("/admin/");
 

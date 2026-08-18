@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
-import type { PuertoOutbox } from "../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { crearRutasPanelAutomatizaciones } from "./rutas-panel.js";
@@ -54,12 +53,6 @@ describe("POST /desde-plantilla", () => {
       },
       bloqueos: {} as never,
       idempotencia: {} as unknown as PuertoIdempotencia,
-      outbox: {
-        guardar: async () => undefined,
-        listarPendientes: async () => [],
-        marcarPublicado: async () => undefined,
-        registrarFallo: async () => undefined,
-      } satisfies PuertoOutbox,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
       repositorioReportes: {
         crearConfiguracion: async (entrada) => ({ id: "config-1", ...entrada }),
@@ -79,9 +72,6 @@ describe("POST /desde-plantilla", () => {
           nombre: String(cambios.nombre ?? "Reporte"),
           flujoIdQlik: String(cambios.flujoIdQlik ?? "flujo-1"),
           flujoNombreSnapshot: String(cambios.flujoNombreSnapshot ?? "Flujo"),
-          destinoProveedor: "gcs",
-          destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-          destinoNombreSnapshot: "TalendDescargados",
           automatizacionIdQlik: "auto-1",
           automatizacionNombreSnapshot: "Reporte",
           programar: false,
@@ -162,9 +152,6 @@ describe("POST /:id/ejecuciones", () => {
         nombre: "Reporte",
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Flujo",
-        destinoProveedor: "gcs",
-        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-        destinoNombreSnapshot: "TalendDescargados",
         automatizacionIdQlik: "auto-1",
         automatizacionNombreSnapshot: "Reporte",
         programar: false,
@@ -191,12 +178,6 @@ describe("POST /:id/ejecuciones", () => {
         ) => tarea(),
       } as never,
       idempotencia: {} as unknown as PuertoIdempotencia,
-      outbox: {
-        guardar: async () => undefined,
-        listarPendientes: async () => [],
-        marcarPublicado: async () => undefined,
-        registrarFallo: async () => undefined,
-      } satisfies PuertoOutbox,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
       repositorioReportes: repositorioReportes as never,
       resolverBigQueryReporte: async () => ({
@@ -222,5 +203,112 @@ describe("POST /:id/ejecuciones", () => {
     expect(cuerpo.datos?.runId).toBe("run-1");
     expect(cuerpo.datos?.ejecucionReporteId).toBeDefined();
     expect(orden).toEqual(["current", "actualizar", "run"]);
+  });
+});
+
+describe("GET /:id/workspace", () => {
+  it("deniega el script de Qlik Automate a usuarios no administradores", async () => {
+    const obtenerAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      schedules: [],
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ obtenerAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "usuario-1",
+        organizacionId: "organizacion-1",
+        usuarioIdQlik: "usuario-qlik-id",
+      }),
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace");
+
+    expect(respuesta.status).toBe(403);
+    expect(obtenerAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("permite consultar el workspace a un administrador", async () => {
+    const obtenerAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      schedules: [],
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ obtenerAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () =>
+        ({
+          tenantId: "tenant-1",
+          usuarioId: "admin-1",
+          organizacionId: "organizacion-1",
+          usuarioIdQlik: "admin-qlik-id",
+          esSuperadmin: false,
+          roles: ["admin"],
+        }) as never,
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace");
+
+    expect(respuesta.status).toBe(200);
+    expect(obtenerAutomatizacion).toHaveBeenCalledWith("auto-1");
+  });
+
+  it("mantiene el workspace en solo lectura incluso para administradores", async () => {
+    const actualizarAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ actualizarAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () =>
+        ({
+          tenantId: "tenant-1",
+          usuarioId: "admin-1",
+          organizacionId: "organizacion-1",
+          usuarioIdQlik: "admin-qlik-id",
+          esSuperadmin: false,
+          roles: ["admin"],
+        }) as never,
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace: { blocks: [] } }),
+    });
+
+    expect(respuesta.status).toBe(405);
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
   });
 });
