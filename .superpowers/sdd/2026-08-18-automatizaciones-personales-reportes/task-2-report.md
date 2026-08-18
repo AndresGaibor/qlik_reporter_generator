@@ -96,4 +96,4 @@ Se migraron los consumidores actuales a UUID de reporte y alcance local. La ejec
 
 ### Commit
 
-Se creará un commit nuevo, sin modificar `4b5bd1d`.
+Commit nuevo: `b41a8ce8c213b1df2f91522372b58c7422f4401d` (`fix: corregir migracion y contratos de reportes`). No se modificó `4b5bd1d`.
