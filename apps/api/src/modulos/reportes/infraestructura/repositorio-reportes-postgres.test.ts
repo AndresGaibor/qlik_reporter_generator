@@ -9,218 +9,66 @@ const entrada = {
   flujoIdQlik: "flujo-1",
   flujoNombreSnapshot: "Ventas Dataflow",
   flujoEspacioIdQlik: "espacio-1",
-  automatizacionIdQlik: "auto-1",
-  automatizacionNombreSnapshot: "Ventas",
   estado: "activa" as const,
 };
 
 describe("RepositorioReportesPostgres", () => {
-  it("persiste la asociación Dataflow-Automate-GCS", async () => {
-    let valores: unknown;
+  it("crea un reporte sin persistir propiedad de Qlik Automate", async () => {
+    let valores: Record<string, unknown> | undefined;
     const db = {
       insert: () => ({
-        values: (entradaInsert: unknown) => {
-          valores = entradaInsert;
+        values: (recibidos: Record<string, unknown>) => {
+          valores = recibidos;
+          return { returning: async () => [{ id: "reporte-1", ...recibidos }] };
+        },
+      }),
+    };
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).crearReporte(entrada);
+    expect(resultado.id).toBe("reporte-1");
+    expect(valores).not.toHaveProperty("automatizacionIdQlik");
+    expect(valores).not.toHaveProperty("automatizacionNombreSnapshot");
+  });
+
+  it("crea la ejecución con reporte y worker históricos nullable", async () => {
+    let valores: Record<string, unknown> | undefined;
+    const db = {
+      insert: () => ({
+        values: (recibidos: Record<string, unknown>) => {
+          valores = recibidos;
           return {
             returning: async () => [
               {
-                id: "44444444-4444-4444-8444-444444444444",
-                ...(entradaInsert as object),
+                ...recibidos,
+                ejecutadoPorUsuarioId: null,
+                automatizacionPersonalId: null,
               },
             ],
           };
         },
       }),
-      update: () => ({
-        set: () => ({ where: () => ({ returning: async () => [entrada] }) }),
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    const resultado = await repo.crearConfiguracion(entrada);
-
-    expect(valores).toMatchObject({
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).crearEjecucion({
+      id: "ejecucion-1",
+      reporteId: "reporte-1",
       flujoIdQlik: "flujo-1",
-      automatizacionIdQlik: "auto-1",
-    });
-    expect(resultado.id).toBe("44444444-4444-4444-8444-444444444444");
-  });
-
-  it("resuelve el reporte por tenant y automatización", async () => {
-    let consultaRecibida = false;
-    const fila = { id: "config-1", ...entrada };
-    const db = {
-      query: {
-        configuracionesAutomatizacion: {
-          findFirst: async (opciones: unknown) => {
-            consultaRecibida = Boolean(opciones);
-            return fila;
-          },
-        },
-      },
-    };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    expect(
-      await repo.obtenerPorAutomatizacion(entrada.tenantQlikId, "auto-1"),
-    ).toEqual(fila);
-    expect(consultaRecibida).toBe(true);
-  });
-
-  it("crea la auditoría y actualiza sus estados", async () => {
-    const sets: Array<Record<string, unknown>> = [];
-    const db = {
-      insert: () => ({
-        values: (valor: Record<string, unknown>) => ({
-          returning: async () => [
-            {
-              ...valor,
-              runIdQlik: null,
-              etapaError: null,
-              mensajeError: null,
-              iniciadoEn: null,
-              finalizadoEn: null,
-            },
-          ],
-        }),
-      }),
-      update: () => ({
-        set: (valor: Record<string, unknown>) => {
-          sets.push(valor);
-          return { where: async () => undefined };
-        },
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
-    };
-    const repo = new RepositorioReportesPostgres(db as never);
-    const id = "55555555-5555-4555-8555-555555555555";
-
-    await repo.crearEjecucion({
-      id,
-      configuracionId: "44444444-4444-4444-8444-444444444444",
-      flujoIdQlik: "flujo-1",
-      automatizacionIdQlik: "auto-1",
+      automatizacionIdQlik: "legacy-auto",
       hashDataflowSha256: "a".repeat(64),
       scriptDataflow: "script",
       sqlBigQueryCompilado: "SELECT 1",
       scriptExportacion: "EXPORT DATA",
-      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/r/e/",
+      uriBaseGcs: "gs://bkt/ejecucion-1/",
       estado: "preparando",
       versionCompilador: 1,
     });
-    await repo.marcarEjecucionIniciada(
-      id,
-      "run-1",
-      new Date("2026-08-14T23:00:00Z"),
-    );
-    await repo.marcarEjecucionError(
-      id,
-      "talend",
-      "falló",
-      new Date("2026-08-14T23:01:00Z"),
-    );
-    await repo.marcarEjecucionCompletada(id, new Date("2026-08-14T23:02:00Z"));
-
-    expect(sets[0]).toMatchObject({ estado: "iniciada", runIdQlik: "run-1" });
-    expect(sets[1]).toMatchObject({
-      estado: "error",
-      etapaError: "talend",
-      mensajeError: "falló",
+    expect(valores).toMatchObject({
+      reporteId: "reporte-1",
+      automatizacionIdQlik: "legacy-auto",
     });
-    expect(sets[2]).toMatchObject({
-      estado: "completada",
-      finalizadoEn: new Date("2026-08-14T23:02:00Z"),
-    });
-  });
-
-  it("actualiza configuración sin programacion", async () => {
-    const sets: Array<Record<string, unknown>> = [];
-    const fila = {
-      id: "44444444-4444-4444-8444-444444444444",
-      ...entrada,
-      nombre: "Ventas v2",
-      estado: "activa",
-    };
-    const db = {
-      update: () => ({
-        set: (valor: Record<string, unknown>) => {
-          sets.push(valor);
-          return {
-            where: () => ({ returning: async () => [fila] }),
-          };
-        },
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
-    };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    await repo.actualizarConfiguracion(fila.id, { nombre: "Ventas v2" });
-
-    expect(sets[0]).toMatchObject({ nombre: "Ventas v2" });
-  });
-
-  it("listarEjecucionesDescargas hace join y filtra por tenant y organizacion", async () => {
-    const filasMock = [
-      {
-        id: "e-1",
-        reporteNombre: "Ventas",
-        automatizacionIdQlik: "auto-1",
-        estado: "completada",
-        mensajeError: null,
-        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-1/",
-        creadoEn: new Date(),
-        finalizadoEn: new Date(),
-      },
-    ];
-    const db = {
-      select: () => ({
-        from: () => ({
-          innerJoin: () => ({
-            where: () => ({
-              orderBy: () => ({
-                limit: () => filasMock,
-              }),
-            }),
-          }),
-        }),
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
-    };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    const resultado = await repo.listarEjecucionesDescargas(
-      {
-        tenantQlikId: "22222222-2222-4222-8222-222222222222",
-        organizacionId: "11111111-1111-4111-8111-111111111111",
-      },
-      10,
-    );
-
-    expect(resultado).toEqual(filasMock);
-  });
-
-  it("obtenerEjecucionDescarga devuelve null cuando no existe", async () => {
-    const db = {
-      select: () => ({
-        from: () => ({
-          innerJoin: () => ({
-            where: () => ({
-              limit: () => [],
-            }),
-          }),
-        }),
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
-    };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    const resultado = await repo.obtenerEjecucionDescarga({
-      id: "no-existe",
-      tenantQlikId: "22222222-2222-4222-8222-222222222222",
-      organizacionId: "11111111-1111-4111-8111-111111111111",
-    });
-
-    expect(resultado).toBeNull();
+    expect(resultado.ejecutadoPorUsuarioId).toBeNull();
+    expect(resultado.automatizacionPersonalId).toBeNull();
   });
 });

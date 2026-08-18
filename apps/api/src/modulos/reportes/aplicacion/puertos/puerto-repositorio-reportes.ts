@@ -1,4 +1,4 @@
-export type EstadoConfiguracionReporte =
+export type EstadoReportePersistido =
   | "pendiente"
   | "creando"
   | "activa"
@@ -6,7 +6,7 @@ export type EstadoConfiguracionReporte =
   | "desactivada"
   | "eliminada";
 
-export interface CrearConfiguracionReportePersistida {
+export interface CrearReportePersistido {
   organizacionId: string;
   tenantQlikId: string;
   creadoPorUsuarioId: string;
@@ -14,14 +14,22 @@ export interface CrearConfiguracionReportePersistida {
   flujoIdQlik: string;
   flujoNombreSnapshot: string;
   flujoEspacioIdQlik?: string;
-  automatizacionIdQlik: string;
-  automatizacionNombreSnapshot: string;
-  estado: EstadoConfiguracionReporte;
+  estado: EstadoReportePersistido;
 }
 
-export interface ConfiguracionReportePersistida
-  extends CrearConfiguracionReportePersistida {
+export interface ReportePersistido extends CrearReportePersistido {
   id: string;
+  /** Campos legacy solo para consumidores aún no migrados; no existen en la fila nueva. */
+  automatizacionIdQlik?: string;
+  automatizacionNombreSnapshot?: string;
+}
+
+export interface ActualizarReportePersistido {
+  nombre?: string;
+  flujoIdQlik?: string;
+  flujoNombreSnapshot?: string;
+  flujoEspacioIdQlik?: string | null;
+  estado?: EstadoReportePersistido;
 }
 
 export type EstadoEjecucionReportePersistida =
@@ -33,7 +41,10 @@ export type EstadoEjecucionReportePersistida =
 
 export interface CrearEjecucionReportePersistida {
   id: string;
-  configuracionId: string;
+  reporteId?: string;
+  ejecutadoPorUsuarioId?: string | null;
+  automatizacionPersonalId?: string | null;
+  configuracionId?: string;
   flujoIdQlik: string;
   automatizacionIdQlik: string;
   hashDataflowSha256: string;
@@ -48,21 +59,15 @@ export interface CrearEjecucionReportePersistida {
 export interface EjecucionReportePersistida
   extends Omit<CrearEjecucionReportePersistida, "estado"> {
   estado: EstadoEjecucionReportePersistida;
+  ejecutadoPorUsuarioId?: string | null;
+  automatizacionPersonalId?: string | null;
+  configuracionId?: string;
   runIdQlik?: string | null;
   etapaError?: string | null;
   mensajeError?: string | null;
   iniciadoEn?: Date | null;
   finalizadoEn?: Date | null;
   creadoEn?: Date;
-}
-
-export interface ActualizarConfiguracionReportePersistida {
-  nombre?: string;
-  flujoIdQlik?: string;
-  flujoNombreSnapshot?: string;
-  flujoEspacioIdQlik?: string | null;
-  automatizacionNombreSnapshot?: string;
-  estado?: EstadoConfiguracionReporte;
 }
 
 export interface ResumenEjecucionDescarga {
@@ -77,13 +82,20 @@ export interface ResumenEjecucionDescarga {
 }
 
 export interface PuertoRepositorioReportes {
-  crearConfiguracion(
-    entrada: CrearConfiguracionReportePersistida,
-  ): Promise<ConfiguracionReportePersistida>;
-  obtenerPorAutomatizacion(
-    tenantQlikId: string,
-    automatizacionIdQlik: string,
-  ): Promise<ConfiguracionReportePersistida | null>;
+  crearReporte?(entrada: CrearReportePersistido): Promise<ReportePersistido>;
+  obtenerPorId?(
+    reporteId: string,
+    tenantQlikId?: string,
+    organizacionId?: string,
+  ): Promise<ReportePersistido | null>;
+  listar?(contexto: { tenantQlikId: string; organizacionId: string }): Promise<
+    ReportePersistido[]
+  >;
+  actualizarReporte?(
+    id: string,
+    cambios: ActualizarReportePersistido,
+  ): Promise<ReportePersistido>;
+  clonarReporte?(id: string, nombre: string): Promise<ReportePersistido>;
   crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
   ): Promise<EjecucionReportePersistida>;
@@ -99,11 +111,8 @@ export interface PuertoRepositorioReportes {
     finalizadoEn: Date,
   ): Promise<void>;
   marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void>;
-  obtenerConfiguracionPorId(
-    configuracionId: string,
-  ): Promise<ConfiguracionReportePersistida | null>;
   listarEjecuciones(
-    configuracionId: string,
+    reporteId: string,
     limite?: number,
   ): Promise<EjecucionReportePersistida[]>;
   marcarEstadoPorRunQlik(
@@ -111,10 +120,6 @@ export interface PuertoRepositorioReportes {
     estado: "completada" | "error" | "detenida",
     finalizadoEn: Date,
   ): Promise<void>;
-  actualizarConfiguracion(
-    configuracionId: string,
-    cambios: ActualizarConfiguracionReportePersistida,
-  ): Promise<ConfiguracionReportePersistida>;
   listarEjecucionesDescargas(
     contexto: { tenantQlikId: string; organizacionId: string },
     limite?: number,
@@ -124,4 +129,20 @@ export interface PuertoRepositorioReportes {
     tenantQlikId: string;
     organizacionId: string;
   }): Promise<ResumenEjecucionDescarga | null>;
+
+  /** Compatibilidad temporal para consumidores migrados en tareas posteriores. */
+  crearConfiguracion: (
+    entrada: CrearReportePersistido & Record<string, unknown>,
+  ) => Promise<ReportePersistido>;
+  obtenerPorAutomatizacion: (
+    tenantQlikId: string,
+    automatizacionIdQlik: string,
+  ) => Promise<ReportePersistido | null>;
+  obtenerConfiguracionPorId: (
+    reporteId: string,
+  ) => Promise<ReportePersistido | null>;
+  actualizarConfiguracion: (
+    id: string,
+    cambios: ActualizarReportePersistido,
+  ) => Promise<ReportePersistido>;
 }

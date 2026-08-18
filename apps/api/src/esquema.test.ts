@@ -4,7 +4,7 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
   auditoriaEventos,
-  configuracionesAutomatizacion,
+  automatizacionesPersonalesQlik,
   configuracionesOauthQlik,
   credencialesQlik,
   ejecucionesReportes,
@@ -183,11 +183,12 @@ describe("Esquema Drizzle", () => {
     expect(idxs).toContain("idx_sesiones_usuario_expira");
   });
 
-  it("configuracionesAutomatizacion solo persiste Dataflow, Automate y estado", () => {
-    const cols = colNames(getTableConfig(configuracionesAutomatizacion));
+  it("reportes no persiste propiedad de Qlik Automate", () => {
+    const cols = colNames(getTableConfig(esquema.reportes));
     expect(cols).toContain("flujo_id_qlik");
-    expect(cols).toContain("automatizacion_id_qlik");
     expect(cols).toContain("estado");
+    expect(cols).not.toContain("automatizacion_id_qlik");
+    expect(cols).not.toContain("automatizacion_nombre_snapshot");
     for (const legacy of [
       "programar",
       "destino_proveedor",
@@ -199,13 +200,32 @@ describe("Esquema Drizzle", () => {
     }
   });
 
+  it("automatizaciones personales son únicas por usuario y tenant", () => {
+    const config = getTableConfig(automatizacionesPersonalesQlik);
+    expect(colNames(config)).toEqual(
+      expect.arrayContaining([
+        "usuario_id",
+        "tenant_qlik_id",
+        "automatizacion_id_qlik",
+      ]),
+    );
+    expect(
+      config.uniqueConstraints.some(
+        (item) =>
+          item.name === "automatizaciones_personales_usuario_tenant_unique",
+      ),
+    ).toBe(true);
+  });
+
   it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {
     const cols = colNames(getTableConfig(ejecucionesReportes));
     expect(cols).toEqual(
       expect.arrayContaining([
-        "configuracion_id",
+        "reporte_id",
         "flujo_id_qlik",
         "automatizacion_id_qlik",
+        "ejecutado_por_usuario_id",
+        "automatizacion_personal_id",
         "hash_dataflow_sha256",
         "script_dataflow",
         "sql_bigquery_compilado",
@@ -214,6 +234,7 @@ describe("Esquema Drizzle", () => {
         "estado",
       ]),
     );
+    expect(cols).not.toContain("configuracion_id");
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {

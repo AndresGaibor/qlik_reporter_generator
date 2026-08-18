@@ -1,56 +1,88 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
-  configuracionesAutomatizacion,
   ejecucionesReportes,
+  reportes,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
-  ActualizarConfiguracionReportePersistida,
-  ConfiguracionReportePersistida,
-  CrearConfiguracionReportePersistida,
+  ActualizarReportePersistido,
   CrearEjecucionReportePersistida,
+  CrearReportePersistido,
   EjecucionReportePersistida,
   PuertoRepositorioReportes,
+  ReportePersistido,
   ResumenEjecucionDescarga,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
 export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   constructor(private readonly db: ConexionDb) {}
 
-  async crearConfiguracion(
-    entrada: CrearConfiguracionReportePersistida,
-  ): Promise<ConfiguracionReportePersistida> {
-    const [fila] = await this.db
-      .insert(configuracionesAutomatizacion)
-      .values(entrada)
-      .returning();
-    if (!fila)
-      throw new Error("No se pudo persistir la configuración del reporte");
-    return mapearConfiguracion(fila);
+  async crearReporte(
+    entrada: CrearReportePersistido,
+  ): Promise<ReportePersistido> {
+    const [fila] = await this.db.insert(reportes).values(entrada).returning();
+    if (!fila) throw new Error("No se pudo persistir el reporte");
+    return mapearReporte(fila);
   }
 
-  async obtenerPorAutomatizacion(
-    tenantQlikId: string,
-    automatizacionIdQlik: string,
-  ): Promise<ConfiguracionReportePersistida | null> {
-    const fila = await this.db.query.configuracionesAutomatizacion.findFirst({
-      where: and(
-        eq(configuracionesAutomatizacion.tenantQlikId, tenantQlikId),
-        eq(
-          configuracionesAutomatizacion.automatizacionIdQlik,
-          automatizacionIdQlik,
-        ),
-      ),
+  async obtenerPorId(
+    reporteId: string,
+    tenantQlikId?: string,
+    organizacionId?: string,
+  ): Promise<ReportePersistido | null> {
+    const condiciones = [eq(reportes.id, reporteId)];
+    if (tenantQlikId) condiciones.push(eq(reportes.tenantQlikId, tenantQlikId));
+    if (organizacionId)
+      condiciones.push(eq(reportes.organizacionId, organizacionId));
+    const fila = await this.db.query.reportes.findFirst({
+      where: and(...condiciones),
     });
-    return fila ? mapearConfiguracion(fila) : null;
+    return fila ? mapearReporte(fila) : null;
+  }
+
+  async listar(contexto: {
+    tenantQlikId: string;
+    organizacionId: string;
+  }): Promise<ReportePersistido[]> {
+    const filas = await this.db.query.reportes.findMany({
+      where: and(
+        eq(reportes.tenantQlikId, contexto.tenantQlikId),
+        eq(reportes.organizacionId, contexto.organizacionId),
+      ),
+      orderBy: [desc(reportes.creadoEn)],
+    });
+    return filas.map(mapearReporte);
+  }
+
+  async actualizarReporte(
+    id: string,
+    cambios: ActualizarReportePersistido,
+  ): Promise<ReportePersistido> {
+    const [fila] = await this.db
+      .update(reportes)
+      .set({ ...cambios, actualizadoEn: new Date() })
+      .where(eq(reportes.id, id))
+      .returning();
+    if (!fila) throw new Error("No se encontró el reporte a actualizar");
+    return mapearReporte(fila);
+  }
+
+  async clonarReporte(id: string, nombre: string): Promise<ReportePersistido> {
+    const origen = await this.obtenerPorId(id);
+    if (!origen) throw new Error("No se encontró el reporte a clonar");
+    const { id: _id, ...entrada } = origen;
+    return this.crearReporte({ ...entrada, nombre });
   }
 
   async crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
   ): Promise<EjecucionReportePersistida> {
+    const { configuracionId, ...resto } = entrada;
+    const reporteId = entrada.reporteId ?? configuracionId;
+    if (!reporteId) throw new Error("La ejecución requiere un reporte");
     const [fila] = await this.db
       .insert(ejecucionesReportes)
-      .values(entrada)
+      .values({ ...resto, reporteId })
       .returning();
     if (!fila) throw new Error("No se pudo crear la auditoría de ejecución");
     return mapearEjecucion(fila);
@@ -96,29 +128,16 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
-      .set({
-        estado: "completada",
-        finalizadoEn,
-        actualizadoEn: new Date(),
-      })
+      .set({ estado: "completada", finalizadoEn, actualizadoEn: new Date() })
       .where(eq(ejecucionesReportes.id, id));
   }
 
-  async obtenerConfiguracionPorId(
-    configuracionId: string,
-  ): Promise<ConfiguracionReportePersistida | null> {
-    const fila = await this.db.query.configuracionesAutomatizacion.findFirst({
-      where: eq(configuracionesAutomatizacion.id, configuracionId),
-    });
-    return fila ? mapearConfiguracion(fila) : null;
-  }
-
   async listarEjecuciones(
-    configuracionId: string,
+    reporteId: string,
     limite = 50,
   ): Promise<EjecucionReportePersistida[]> {
     const filas = await this.db.query.ejecucionesReportes.findMany({
-      where: eq(ejecucionesReportes.configuracionId, configuracionId),
+      where: eq(ejecucionesReportes.reporteId, reporteId),
       orderBy: [desc(ejecucionesReportes.creadoEn)],
       limit: Math.min(Math.max(limite, 1), 200),
     });
@@ -132,30 +151,8 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
-      .set({
-        estado,
-        finalizadoEn,
-        actualizadoEn: new Date(),
-      })
+      .set({ estado, finalizadoEn, actualizadoEn: new Date() })
       .where(eq(ejecucionesReportes.runIdQlik, runIdQlik));
-  }
-
-  async actualizarConfiguracion(
-    configuracionId: string,
-    cambios: ActualizarConfiguracionReportePersistida,
-  ): Promise<ConfiguracionReportePersistida> {
-    const valores: Partial<typeof configuracionesAutomatizacion.$inferInsert> =
-      {
-        ...cambios,
-        actualizadoEn: new Date(),
-      };
-    const [actualizada] = await this.db
-      .update(configuracionesAutomatizacion)
-      .set(valores)
-      .where(eq(configuracionesAutomatizacion.id, configuracionId))
-      .returning();
-    if (!actualizada) throw new Error("No se encontró el reporte a actualizar");
-    return mapearConfiguracion(actualizada);
   }
 
   async listarEjecucionesDescargas(
@@ -165,7 +162,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     const filas = await this.db
       .select({
         id: ejecucionesReportes.id,
-        reporteNombre: configuracionesAutomatizacion.nombre,
+        reporteNombre: reportes.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -174,20 +171,11 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
-      .innerJoin(
-        configuracionesAutomatizacion,
-        eq(
-          ejecucionesReportes.configuracionId,
-          configuracionesAutomatizacion.id,
-        ),
-      )
+      .innerJoin(reportes, eq(ejecucionesReportes.reporteId, reportes.id))
       .where(
         and(
-          eq(configuracionesAutomatizacion.tenantQlikId, contexto.tenantQlikId),
-          eq(
-            configuracionesAutomatizacion.organizacionId,
-            contexto.organizacionId,
-          ),
+          eq(reportes.tenantQlikId, contexto.tenantQlikId),
+          eq(reportes.organizacionId, contexto.organizacionId),
         ),
       )
       .orderBy(desc(ejecucionesReportes.creadoEn))
@@ -200,10 +188,10 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     tenantQlikId: string;
     organizacionId: string;
   }): Promise<ResumenEjecucionDescarga | null> {
-    const fila = await this.db
+    const [fila] = await this.db
       .select({
         id: ejecucionesReportes.id,
-        reporteNombre: configuracionesAutomatizacion.nombre,
+        reporteNombre: reportes.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -212,36 +200,50 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
-      .innerJoin(
-        configuracionesAutomatizacion,
-        eq(
-          ejecucionesReportes.configuracionId,
-          configuracionesAutomatizacion.id,
-        ),
-      )
+      .innerJoin(reportes, eq(ejecucionesReportes.reporteId, reportes.id))
       .where(
         and(
           eq(ejecucionesReportes.id, contexto.id),
-          eq(configuracionesAutomatizacion.tenantQlikId, contexto.tenantQlikId),
-          eq(
-            configuracionesAutomatizacion.organizacionId,
-            contexto.organizacionId,
-          ),
+          eq(reportes.tenantQlikId, contexto.tenantQlikId),
+          eq(reportes.organizacionId, contexto.organizacionId),
         ),
       )
       .limit(1);
-    return fila[0] ?? null;
+    return fila ?? null;
+  }
+
+  async crearConfiguracion(
+    entrada: CrearReportePersistido & Record<string, unknown>,
+  ): Promise<ReportePersistido> {
+    const {
+      automatizacionIdQlik: _id,
+      automatizacionNombreSnapshot: _nombre,
+      ...reporte
+    } = entrada;
+    return this.crearReporte(reporte);
+  }
+
+  async obtenerPorAutomatizacion(
+    _tenantQlikId: string,
+    _automatizacionIdQlik: string,
+  ): Promise<ReportePersistido | null> {
+    throw new Error("Los reportes ya no se resuelven por Qlik Automate");
+  }
+
+  async obtenerConfiguracionPorId(
+    id: string,
+  ): Promise<ReportePersistido | null> {
+    return this.obtenerPorId(id);
+  }
+  async actualizarConfiguracion(
+    id: string,
+    cambios: ActualizarReportePersistido,
+  ): Promise<ReportePersistido> {
+    return this.actualizarReporte(id, cambios);
   }
 }
 
-function mapearConfiguracion(
-  fila: typeof configuracionesAutomatizacion.$inferSelect,
-): ConfiguracionReportePersistida {
-  if (!fila.automatizacionIdQlik || !fila.automatizacionNombreSnapshot) {
-    throw new Error(
-      "La configuración del reporte no tiene Qlik Automate asociado",
-    );
-  }
+function mapearReporte(fila: typeof reportes.$inferSelect): ReportePersistido {
   return {
     id: fila.id,
     organizacionId: fila.organizacionId,
@@ -253,9 +255,7 @@ function mapearConfiguracion(
     ...(fila.flujoEspacioIdQlik
       ? { flujoEspacioIdQlik: fila.flujoEspacioIdQlik }
       : {}),
-    automatizacionIdQlik: fila.automatizacionIdQlik,
-    automatizacionNombreSnapshot: fila.automatizacionNombreSnapshot,
-    estado: fila.estado as ConfiguracionReportePersistida["estado"],
+    estado: fila.estado as ReportePersistido["estado"],
   };
 }
 
@@ -263,22 +263,11 @@ function mapearEjecucion(
   fila: typeof ejecucionesReportes.$inferSelect,
 ): EjecucionReportePersistida {
   return {
-    id: fila.id,
-    configuracionId: fila.configuracionId,
-    flujoIdQlik: fila.flujoIdQlik,
-    automatizacionIdQlik: fila.automatizacionIdQlik,
-    hashDataflowSha256: fila.hashDataflowSha256,
-    scriptDataflow: fila.scriptDataflow,
-    sqlBigQueryCompilado: fila.sqlBigQueryCompilado,
-    scriptExportacion: fila.scriptExportacion,
-    uriBaseGcs: fila.uriBaseGcs,
+    ...fila,
+    reporteId: fila.reporteId,
+    configuracionId: fila.reporteId,
+    ejecutadoPorUsuarioId: fila.ejecutadoPorUsuarioId,
+    automatizacionPersonalId: fila.automatizacionPersonalId,
     estado: fila.estado as EjecucionReportePersistida["estado"],
-    versionCompilador: fila.versionCompilador,
-    runIdQlik: fila.runIdQlik,
-    etapaError: fila.etapaError,
-    mensajeError: fila.mensajeError,
-    iniciadoEn: fila.iniciadoEn,
-    finalizadoEn: fila.finalizadoEn,
-    creadoEn: fila.creadoEn,
   };
 }
