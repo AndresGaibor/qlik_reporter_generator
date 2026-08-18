@@ -36,7 +36,10 @@ export class ServicioDescargas implements IServicioDescargas {
     const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
     let estado = ejecucion.estado;
     if (estado === "preparando" || estado === "iniciada") {
-      const finalizada = await this.almacenamiento.estaFinalizada(prefijo);
+      const finalizada = await ejecutarOperacionGcs(
+        () => this.almacenamiento.estaFinalizada(prefijo),
+        "listar",
+      );
       if (finalizada) {
         await this.repositorio.marcarEjecucionCompletada(
           ejecucion.id,
@@ -62,10 +65,12 @@ export class ServicioDescargas implements IServicioDescargas {
       );
     }
 
-    const objetos = await this.almacenamiento.listar(prefijo);
-    const objetosExportados = objetos.filter((objeto) =>
-      /^parte-\d{3}-\d{12}\.csv\.gz$/.test(objeto.nombre),
-    );
+    const objetosExportados = (
+      await ejecutarOperacionGcs(
+        () => this.almacenamiento.listar(prefijo),
+        "listar",
+      )
+    ).filter(esArchivoDescargable);
     if (!objetosExportados.length) {
       throw new ErrorAplicacion(
         "ARCHIVOS_NO_DISPONIBLES",
@@ -78,10 +83,18 @@ export class ServicioDescargas implements IServicioDescargas {
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
       .map(async (obj) => ({
         nombre: obj.nombre,
+        formato:
+          obj.formato ??
+          (obj.nombre.toLowerCase().endsWith(".parquet")
+            ? "PARQUET"
+            : obj.nombre.toLowerCase().endsWith(".csv.gz")
+              ? "CSV.GZ"
+              : "CSV"),
         tamano: obj.tamanoBytes,
-        url: await this.almacenamiento.firmar(
-          obj.rutaCompleta,
-          this.minutosFirma,
+        fecha: obj.fecha ?? null,
+        url: await ejecutarOperacionGcs(
+          () => this.almacenamiento.firmar(obj.rutaCompleta, this.minutosFirma),
+          "firmar",
         ),
       }));
 
@@ -113,7 +126,13 @@ export class ServicioDescargas implements IServicioDescargas {
         try {
           const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
           if (!prefijo.endsWith(`${ejecucion.id}/`)) return;
-          if (!(await this.almacenamiento.estaFinalizada(prefijo))) return;
+          if (
+            !(await ejecutarOperacionGcs(
+              () => this.almacenamiento.estaFinalizada(prefijo),
+              "listar",
+            ))
+          )
+            return;
           const finalizadoEn = new Date();
           await this.repositorio.marcarEjecucionCompletada(
             ejecucion.id,
@@ -127,14 +146,99 @@ export class ServicioDescargas implements IServicioDescargas {
       }),
     );
 
-    return ejecuciones.map((e) => ({
-      id: e.id,
-      reporteNombre: e.reporteNombre,
-      automatizacionIdQlik: e.automatizacionIdQlik,
-      estado: e.estado,
-      mensajeError: e.mensajeError,
-      creadoEn: e.creadoEn.toISOString(),
-      finalizadoEn: e.finalizadoEn?.toISOString() ?? null,
-    }));
+    return Promise.all(
+      ejecuciones.map(async (e) => {
+        let archivos: Array<{
+          nombre: string;
+          formato: "CSV" | "CSV.GZ" | "PARQUET";
+          tamano: number;
+          fecha: string | null;
+        }> = [];
+        if (e.estado === "completada") {
+          const { prefijo } = parsearUriGcsPermitida(e.uriBaseGcs);
+          if (prefijo.endsWith(`${e.id}/`)) {
+            const objetos = (
+              await ejecutarOperacionGcs(
+                () => this.almacenamiento.listar(prefijo),
+                "listar",
+              )
+            ).filter(esArchivoDescargable);
+            archivos = objetos.map((obj) => ({
+              nombre: obj.nombre,
+              formato:
+                obj.formato ??
+                (obj.nombre.toLowerCase().endsWith(".parquet")
+                  ? "PARQUET"
+                  : obj.nombre.toLowerCase().endsWith(".csv.gz")
+                    ? "CSV.GZ"
+                    : "CSV"),
+              tamano: obj.tamanoBytes,
+              fecha: obj.fecha ?? null,
+            }));
+          }
+        }
+        return {
+          id: e.id,
+          creadoPorUsuarioId: e.creadoPorUsuarioId,
+          reporteNombre: e.reporteNombre,
+          automatizacionIdQlik: e.automatizacionIdQlik,
+          estado: e.estado,
+          mensajeError: e.mensajeError,
+          creadoEn: e.creadoEn.toISOString(),
+          finalizadoEn: e.finalizadoEn?.toISOString() ?? null,
+          archivos,
+        };
+      }),
+    );
   }
+}
+
+function esArchivoDescargable(objeto: { nombre: string }): boolean {
+  const nombre = objeto.nombre.toLowerCase();
+  return (
+    !nombre.startsWith("__finalizado__-") &&
+    (nombre.endsWith(".csv") ||
+      nombre.endsWith(".csv.gz") ||
+      nombre.endsWith(".parquet"))
+  );
+}
+
+type OperacionGcs = "listar" | "firmar";
+
+async function ejecutarOperacionGcs<T>(
+  operacion: () => Promise<T>,
+  tipo: OperacionGcs,
+): Promise<T> {
+  try {
+    return await operacion();
+  } catch (error) {
+    if (error instanceof ErrorAplicacion) throw error;
+    const codigo = obtenerCodigoHttp(error);
+    if (codigo === 401 || codigo === 403) {
+      throw new ErrorAplicacion(
+        "GCS_SIN_PERMISOS",
+        "La cuenta de servicio de Google Cloud no tiene permisos para acceder a los archivos del reporte",
+        502,
+      );
+    }
+    if (tipo === "firmar") {
+      throw new ErrorAplicacion(
+        "URL_FIRMADA_NO_DISPONIBLE",
+        "No se pudo crear la URL temporal de descarga",
+        502,
+      );
+    }
+    throw new ErrorAplicacion(
+      "GCS_NO_DISPONIBLE",
+      "No se pudo consultar Google Cloud Storage",
+      502,
+    );
+  }
+}
+
+function obtenerCodigoHttp(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const registro = error as Record<string, unknown>;
+  const codigo = registro.code ?? registro.statusCode ?? registro.status;
+  return typeof codigo === "number" ? codigo : undefined;
 }

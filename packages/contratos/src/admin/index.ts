@@ -114,6 +114,14 @@ export const esquemaConfigurarBigQuery = z.object({
       "El dataset solo admite letras, números y guion bajo",
     ),
   credencialesJson: z.string().trim().min(1).optional(),
+  gcsUri: z
+    .string()
+    .trim()
+    .regex(
+      /^gs:\/\/[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]\/(?!.*(?:^|\/)\.\.(?:\/|$))[^\s]+\/$/,
+      "Usa una ruta v?lida con formato gs://bucket/prefijo/",
+    )
+    .optional(),
   limiteMiB: z.number().positive().optional(),
   limiteUsd: z.number().positive().optional(),
   precioUsdPorTib: z.number().positive().default(6.25),
@@ -125,6 +133,7 @@ export const esquemaConfiguracionBigQuery = z.object({
   estado: z.enum(["activo", "error", "desconectado"]).optional(),
   projectId: z.string().optional(),
   dataset: z.string().optional(),
+  gcsUri: z.string().optional(),
   clientEmail: z.string().email().optional(),
   credencialesConfiguradas: z.boolean(),
   mensajeError: z.string().nullable().optional(),

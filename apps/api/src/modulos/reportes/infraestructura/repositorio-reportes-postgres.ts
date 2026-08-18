@@ -159,12 +159,21 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }
 
   async listarEjecucionesDescargas(
-    contexto: { tenantQlikId: string; organizacionId: string },
+    contexto: {
+      tenantQlikId: string;
+      organizacionId: string;
+      usuarioId?: string;
+      esAdministrador?: boolean;
+    },
     limite = 100,
   ): Promise<ResumenEjecucionDescarga[]> {
+    if (!contexto.esAdministrador && !contexto.usuarioId) {
+      throw new Error("usuarioId es obligatorio para consultar descargas personales");
+    }
     const filas = await this.db
       .select({
         id: ejecucionesReportes.id,
+        creadoPorUsuarioId: ejecucionesReportes.creadoPorUsuarioId,
         reporteNombre: configuracionesAutomatizacion.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
@@ -188,6 +197,9 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
             configuracionesAutomatizacion.organizacionId,
             contexto.organizacionId,
           ),
+          ...(contexto.esAdministrador
+            ? []
+            : [eq(ejecucionesReportes.creadoPorUsuarioId, contexto.usuarioId!)]),
         ),
       )
       .orderBy(desc(ejecucionesReportes.creadoEn))
@@ -199,10 +211,16 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     id: string;
     tenantQlikId: string;
     organizacionId: string;
+    usuarioId?: string;
+    esAdministrador?: boolean;
   }): Promise<ResumenEjecucionDescarga | null> {
+    if (!contexto.esAdministrador && !contexto.usuarioId) {
+      throw new Error("usuarioId es obligatorio para consultar una descarga personal");
+    }
     const fila = await this.db
       .select({
         id: ejecucionesReportes.id,
+        creadoPorUsuarioId: ejecucionesReportes.creadoPorUsuarioId,
         reporteNombre: configuracionesAutomatizacion.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
@@ -227,6 +245,9 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
             configuracionesAutomatizacion.organizacionId,
             contexto.organizacionId,
           ),
+          ...(contexto.esAdministrador
+            ? []
+            : [eq(ejecucionesReportes.creadoPorUsuarioId, contexto.usuarioId!)]),
         ),
       )
       .limit(1);
@@ -265,6 +286,7 @@ function mapearEjecucion(
   return {
     id: fila.id,
     configuracionId: fila.configuracionId,
+    creadoPorUsuarioId: fila.creadoPorUsuarioId,
     flujoIdQlik: fila.flujoIdQlik,
     automatizacionIdQlik: fila.automatizacionIdQlik,
     hashDataflowSha256: fila.hashDataflowSha256,

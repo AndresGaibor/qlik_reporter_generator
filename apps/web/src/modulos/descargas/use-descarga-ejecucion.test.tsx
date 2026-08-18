@@ -17,6 +17,7 @@ describe("presentacion-ejecucion", () => {
         mensajeError: null,
         creadoEn: "2026-08-15T10:00:00Z",
         finalizadoEn: null,
+        archivos: [],
       });
       expect(resultado.tipo).toBe("preparando");
     });
@@ -30,6 +31,7 @@ describe("presentacion-ejecucion", () => {
         mensajeError: null,
         creadoEn: "2026-08-15T10:00:00Z",
         finalizadoEn: null,
+        archivos: [],
       });
       expect(resultado.tipo).toBe("iniciada");
     });
@@ -43,6 +45,7 @@ describe("presentacion-ejecucion", () => {
         mensajeError: null,
         creadoEn: "2026-08-15T10:00:00Z",
         finalizadoEn: "2026-08-15T10:01:00Z",
+        archivos: [],
       });
       expect(resultado.tipo).toBe("completada");
     });
@@ -56,6 +59,7 @@ describe("presentacion-ejecucion", () => {
         mensajeError: "Error de conexión",
         creadoEn: "2026-08-15T10:00:00Z",
         finalizadoEn: "2026-08-15T10:01:00Z",
+        archivos: [],
       });
       expect(resultado.tipo).toBe("error");
       if (resultado.tipo === "error") {
@@ -72,6 +76,7 @@ describe("presentacion-ejecucion", () => {
         mensajeError: null,
         creadoEn: "2026-08-15T10:00:00Z",
         finalizadoEn: "2026-08-15T10:01:00Z",
+        archivos: [],
       });
       expect(resultado.tipo).toBe("detenida");
     });

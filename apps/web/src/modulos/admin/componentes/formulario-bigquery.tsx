@@ -1,18 +1,24 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ConfiguracionBigQuery } from "../api";
-import type { analizarCredencialesBigQuery } from "./bigquery-formulario";
+import {
+  type analizarCredencialesBigQuery,
+  construirUriGcs,
+  separarUriGcs,
+} from "./bigquery-formulario";
 import { DatoResumen } from "./dato-resumen";
 
 export function FormularioBigQuery({
   configuracion,
   dataset,
+  gcsUri,
   credencialesJson,
   analisis,
   habilitado,
   guardando,
   mostrarCancelar,
   onDataset,
+  onGcsUri,
   onCredenciales,
   onCancelar,
   onGuardar,
@@ -20,12 +26,14 @@ export function FormularioBigQuery({
 }: {
   configuracion?: ConfiguracionBigQuery;
   dataset: string;
+  gcsUri: string;
   credencialesJson: string;
   analisis?: ReturnType<typeof analizarCredencialesBigQuery>;
   habilitado: boolean;
   guardando: boolean;
   mostrarCancelar: boolean;
   onDataset: (v: string) => void;
+  onGcsUri: (v: string) => void;
   onCredenciales: (v: string) => void;
   onCancelar: () => void;
   onGuardar: () => void;
@@ -45,6 +53,34 @@ export function FormularioBigQuery({
           />
         </div>
       )}
+      <div className="rounded-xl border border-line-200 bg-surface-subtle p-4">
+        <p className="text-xs font-semibold text-ink-800">
+          Almacenamiento de reportes
+        </p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <CampoGcs
+            id="gcs-bucket"
+            etiqueta="Bucket"
+            valor={separarUriGcs(gcsUri).bucket}
+            placeholder="bkt_dwh"
+            onChange={(bucket) =>
+              onGcsUri(construirUriGcs(bucket, separarUriGcs(gcsUri).prefijo))
+            }
+          />
+          <CampoGcs
+            id="gcs-prefijo"
+            etiqueta="Carpeta / prefijo"
+            valor={separarUriGcs(gcsUri).prefijo}
+            placeholder="POCs/TalendDescargados/"
+            onChange={(prefijo) =>
+              onGcsUri(construirUriGcs(separarUriGcs(gcsUri).bucket, prefijo))
+            }
+          />
+        </div>
+        <p className="mt-3 text-[11px] text-ink-500">
+          Ruta resultante: <span className="font-mono">{gcsUri}</span>
+        </p>
+      </div>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
           <label
@@ -141,6 +177,35 @@ export function FormularioBigQuery({
           {guardando ? "Guardando…" : "Guardar y verificar"}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function CampoGcs({
+  id,
+  etiqueta,
+  valor,
+  placeholder,
+  onChange,
+}: {
+  id: string;
+  etiqueta: string;
+  valor: string;
+  placeholder: string;
+  onChange: (valor: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-semibold text-ink-700">
+        {etiqueta} <span className="text-danger-600">*</span>
+      </label>
+      <input
+        id={id}
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded-md border border-line-200 bg-surface px-3 py-2 font-mono text-sm text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+      />
     </div>
   );
 }

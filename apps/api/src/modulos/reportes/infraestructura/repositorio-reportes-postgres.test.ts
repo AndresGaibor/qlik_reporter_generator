@@ -160,10 +160,23 @@ describe("RepositorioReportesPostgres", () => {
     expect(sets[0]).toMatchObject({ nombre: "Ventas v2" });
   });
 
+  it("rechaza consultas personales sin usuarioId para evitar lecturas globales", async () => {
+    const repo = new RepositorioReportesPostgres({} as never);
+
+    await expect(
+      repo.listarEjecucionesDescargas({
+        tenantQlikId: "22222222-2222-4222-8222-222222222222",
+        organizacionId: "11111111-1111-4111-8111-111111111111",
+        esAdministrador: false,
+      }),
+    ).rejects.toThrow("usuarioId");
+  });
+
   it("listarEjecucionesDescargas hace join y filtra por tenant y organizacion", async () => {
     const filasMock = [
       {
         id: "e-1",
+        creadoPorUsuarioId: null,
         reporteNombre: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
@@ -193,6 +206,7 @@ describe("RepositorioReportesPostgres", () => {
       {
         tenantQlikId: "22222222-2222-4222-8222-222222222222",
         organizacionId: "11111111-1111-4111-8111-111111111111",
+        esAdministrador: true,
       },
       10,
     );
@@ -219,6 +233,7 @@ describe("RepositorioReportesPostgres", () => {
       id: "no-existe",
       tenantQlikId: "22222222-2222-4222-8222-222222222222",
       organizacionId: "11111111-1111-4111-8111-111111111111",
+      esAdministrador: true,
     });
 
     expect(resultado).toBeNull();

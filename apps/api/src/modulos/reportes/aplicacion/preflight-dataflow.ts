@@ -19,6 +19,7 @@ export interface EstimadorBigQueryReporte {
 export interface AlcanceBigQueryReporte {
   projectId: string;
   dataset: string;
+  gcsUri?: string;
 }
 
 export interface PreparacionDataflowActual {

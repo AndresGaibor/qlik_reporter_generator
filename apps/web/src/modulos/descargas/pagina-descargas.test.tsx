@@ -15,6 +15,25 @@ vi.mock("@/modulos/descargas/api", () => ({
       finalizadoEn: "2026-08-15T10:01:00Z",
     },
   ]),
+  listarDescargasAdministracion: vi.fn().mockResolvedValue([]),
+  listarExploradorGcs: vi.fn().mockResolvedValue({
+    bucket: "bkt_dwh",
+    prefijoBase: "POCs/TalendDescargados/",
+    ruta: "",
+    carpetas: ["reportes/"],
+    archivos: [
+      {
+        nombre: "mini-test-000000000000.csv.gz",
+        formato: "CSV.GZ",
+        tamano: 2048,
+        fecha: "2026-08-18T15:00:00.000Z",
+      },
+    ],
+  }),
+  firmarArchivoExploradorGcs: vi.fn().mockResolvedValue({
+    nombre: "mini-test-000000000000.csv.gz",
+    url: "https://storage.example.com/signed",
+  }),
   solicitarManifiesto: vi.fn().mockResolvedValue({
     descargaId: "e-1",
     archivos: [
@@ -31,6 +50,8 @@ vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
   useNotificaciones: () => ({ mostrarExito: vi.fn(), mostrarError: vi.fn() }),
 }));
 
+import { VistaContext } from "@/app/contexto-vista";
+import { listarExploradorGcs } from "@/modulos/descargas/api";
 import { PaginaDescargas } from "./pagina-descargas";
 
 let root: Root | undefined;
@@ -44,7 +65,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-async function montar() {
+async function montar(
+  vista: { modoUsuarioFinal: boolean; esAdmin: boolean } = {
+    modoUsuarioFinal: false,
+    esAdmin: false,
+  },
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -54,7 +80,9 @@ async function montar() {
   await act(async () => {
     root?.render(
       <QueryClientProvider client={queryClient}>
-        <PaginaDescargas />
+        <VistaContext.Provider value={vista}>
+          <PaginaDescargas />
+        </VistaContext.Provider>
       </QueryClientProvider>,
     );
   });
@@ -77,4 +105,19 @@ test("renderiza nombre del reporte", async () => {
 test("renderiza botón de descarga", async () => {
   const vista = await montar();
   expect(vista.textContent).toContain("Descargar archivos");
+});
+
+test("usuario final ve su carpeta privada y no consulta GCS global", async () => {
+  const vista = await montar();
+  expect(vista.textContent).toContain("Mi carpeta");
+  expect(vista.textContent).not.toContain("Google Cloud Storage");
+  expect(listarExploradorGcs).not.toHaveBeenCalled();
+});
+
+test("renderiza el explorador GCS para administradores", async () => {
+  const vista = await montar({ modoUsuarioFinal: false, esAdmin: true });
+  expect(vista.textContent).toContain("Google Cloud Storage");
+  expect(vista.textContent).toContain("bkt_dwh");
+  expect(vista.textContent).toContain("mini-test-000000000000.csv.gz");
+  expect(vista.textContent).toContain("reportes/");
 });

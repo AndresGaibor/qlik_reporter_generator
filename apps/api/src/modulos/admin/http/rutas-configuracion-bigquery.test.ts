@@ -17,6 +17,7 @@ function crearApp(configurada = true) {
     estado: "activo" as const,
     projectId: credenciales.project_id,
     dataset: "demo_lafavorita",
+    gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
     clientEmail: credenciales.client_email,
     credencialesConfiguradas: true,
     mensajeError: null,
@@ -45,6 +46,7 @@ function crearApp(configurada = true) {
               estado: "activo" as const,
               projectId: credenciales.project_id,
               dataset: "demo_lafavorita",
+              gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
               clientEmail: credenciales.client_email,
               credencialesConfiguradas: true,
               mensajeError: null,
@@ -66,6 +68,7 @@ describe("configuración BigQuery administrativa", () => {
     expect(respuesta.status).toBe(200);
     expect(cuerpo.datos.projectId).toBe("poc-bigquery-talend");
     expect(cuerpo.datos.credencialesConfiguradas).toBe(true);
+    expect(cuerpo.datos.gcsUri).toBe("gs://bkt_dwh/POCs/TalendDescargados/");
     expect(JSON.stringify(cuerpo)).not.toContain("PRIVATE KEY");
   });
 
@@ -78,6 +81,7 @@ describe("configuración BigQuery administrativa", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dataset: "demo_lafavorita",
+          gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
           credencialesJson: JSON.stringify(credenciales),
         }),
       },
@@ -104,7 +108,10 @@ describe("configuración BigQuery administrativa", () => {
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataset: "dataset_nuevo" }),
+        body: JSON.stringify({
+          dataset: "dataset_nuevo",
+          gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
+        }),
       },
     );
 
@@ -114,6 +121,7 @@ describe("configuración BigQuery administrativa", () => {
         projectId: "poc-bigquery-talend",
         clientEmail: "sa@example.iam.gserviceaccount.com",
         dataset: "dataset_nuevo",
+        gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
       }),
     );
     expect(guardarBigQuery.mock.calls[0]?.[0]).not.toHaveProperty(

@@ -7,6 +7,7 @@ import { servicioCifrado } from "../../../plataforma/seguridad/servicio-cifrado.
 export interface ConfiguracionGoogleCloud {
   projectId: string;
   dataset: string;
+  gcsUri: string;
   credencialesJson: string;
   secretoRefs: Record<string, unknown>;
 }
@@ -41,6 +42,10 @@ export class ResolverConfiguracionGoogleCloudPostgres {
       typeof config.projectId === "string" ? config.projectId.trim() : "";
     const dataset =
       typeof config.dataset === "string" ? config.dataset.trim() : "";
+    const gcsUri =
+      typeof config.gcsUri === "string" && config.gcsUri.trim()
+        ? config.gcsUri.trim()
+        : "gs://bkt_dwh/POCs/TalendDescargados/";
 
     if (!projectId || !dataset) {
       throw new ErrorAplicacion(
@@ -69,6 +74,6 @@ export class ResolverConfiguracionGoogleCloudPostgres {
       );
     }
 
-    return { projectId, dataset, credencialesJson, secretoRefs };
+    return { projectId, dataset, gcsUri, credencialesJson, secretoRefs };
   }
 }

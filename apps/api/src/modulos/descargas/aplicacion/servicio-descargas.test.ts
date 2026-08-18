@@ -13,6 +13,7 @@ function crearRepoMock() {
       async () =>
         [] as Array<{
           id: string;
+          creadoPorUsuarioId?: string | null;
           reporteNombre: string;
           automatizacionIdQlik: string;
           estado: string;
@@ -27,6 +28,7 @@ function crearRepoMock() {
       async () =>
         null as {
           id: string;
+          creadoPorUsuarioId?: string | null;
           reporteNombre: string;
           automatizacionIdQlik: string;
           estado: string;
@@ -192,6 +194,7 @@ describe("ServicioDescargas", () => {
     repo.listarEjecucionesDescargas.mockResolvedValue([
       {
         id: "e-2",
+        creadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
         reporteNombre: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
@@ -222,6 +225,9 @@ describe("ServicioDescargas", () => {
 
     expect(resultado).toHaveLength(2);
     expect(resultado[0].id).toBe("e-2");
+    expect(resultado[0].creadoPorUsuarioId).toBe(
+      "33333333-3333-4333-8333-333333333333",
+    );
     expect(repo.listarEjecucionesDescargas).toHaveBeenCalledWith(
       {
         tenantQlikId: CONTEXTO.tenantQlikId,
@@ -288,7 +294,7 @@ describe("ServicioDescargas", () => {
       servicio.crearManifiesto("e-invalida", CONTEXTO),
     ).rejects.toMatchObject({ codigo: "PREFIJO_GCS_INVALIDO" });
   });
-  it("crearManifiesto ignora objetos que no sean partes csv gzip", async () => {
+  it("crearManifiesto ignora objetos con extensiones no descargables", async () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-completa",
@@ -316,5 +322,90 @@ describe("ServicioDescargas", () => {
       "parte-001-000000000000.csv.gz",
     ]);
     expect(alm.firmar).toHaveBeenCalledTimes(1);
+  });
+  it("traduce falta de permisos de GCS a un error claro", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-permisos",
+      reporteNombre: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "completada",
+      mensajeError: null,
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-permisos/",
+      creadoEn: new Date(),
+      finalizadoEn: new Date(),
+    });
+    const alm = crearAlmacenamientoMock();
+    alm.listar.mockRejectedValue(
+      Object.assign(new Error("storage.objects.list denied"), { code: 403 }),
+    );
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    await expect(
+      servicio.crearManifiesto("e-permisos", CONTEXTO),
+    ).rejects.toMatchObject({
+      codigo: "GCS_SIN_PERMISOS",
+    });
+  });
+
+  it("traduce error al firmar URL a un mensaje claro", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-firma",
+      reporteNombre: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "completada",
+      mensajeError: null,
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-firma/",
+      creadoEn: new Date(),
+      finalizadoEn: new Date(),
+    });
+    const alm = crearAlmacenamientoMock([
+      { nombre: "ventas.csv", tamanoBytes: 10 },
+    ]);
+    alm.firmar.mockRejectedValue(new Error("signBlob denied"));
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    await expect(
+      servicio.crearManifiesto("e-firma", CONTEXTO),
+    ).rejects.toMatchObject({
+      codigo: "URL_FIRMADA_NO_DISPONIBLE",
+    });
+  });
+
+  it("informa permisos de GCS al consultar el marcador de una ejecución activa", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-activa-permisos",
+      reporteNombre: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "iniciada",
+      mensajeError: null,
+      uriBaseGcs:
+        "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-activa-permisos/",
+      creadoEn: new Date(),
+      finalizadoEn: null,
+    });
+    const alm = crearAlmacenamientoMock();
+    alm.estaFinalizada.mockRejectedValue(
+      Object.assign(new Error("storage.objects.list denied"), { code: 403 }),
+    );
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    await expect(
+      servicio.crearManifiesto("e-activa-permisos", CONTEXTO),
+    ).rejects.toMatchObject({ codigo: "GCS_SIN_PERMISOS" });
   });
 });

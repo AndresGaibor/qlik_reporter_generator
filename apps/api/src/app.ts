@@ -25,6 +25,7 @@ import {
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
+import { parsearUriGcsPermitida } from "./modulos/descargas/aplicacion/puerto-almacenamiento-descargas.js";
 import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
@@ -93,6 +94,8 @@ export interface DependenciasAplicacion {
     usuarioId: string;
     organizacionId: string;
     usuarioIdQlik: string;
+    roles?: Array<"admin" | "usuario">;
+    esSuperadmin?: boolean;
   }>;
 
   idempotencia?: PuertoIdempotencia;
@@ -211,6 +214,7 @@ export async function crearAplicacion(
       return {
         projectId: google.projectId,
         dataset: google.dataset,
+        gcsUri: google.gcsUri,
         estimador: {
           estimarConsulta: estimador.estimarConsulta.bind(estimador),
         },
@@ -399,10 +403,20 @@ export async function crearAplicacion(
           sesion.organizacionId,
           sesion.tenantId,
         );
+        const { bucket } = parsearUriGcsPermitida(google.gcsUri);
         return new ClienteGcs({
           projectId: google.projectId,
           credencialesJson: google.credencialesJson,
+          bucket,
         });
+      },
+      resolverConfiguracionGcs: async (c) => {
+        const sesion = await resolverSesion(c);
+        const google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
+        return parsearUriGcsPermitida(google.gcsUri);
       },
       minutosFirma: configuracion?.GOOGLE_SIGNED_URL_MINUTOS ?? 15,
     }),

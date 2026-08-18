@@ -8,10 +8,18 @@ export interface ArchivoGcs {
   nombre: string;
   rutaCompleta: string;
   tamanoBytes: number;
+  formato?: "CSV" | "CSV.GZ" | "PARQUET";
+  fecha?: string | null;
+}
+
+export interface ResultadoDirectorioGcs {
+  carpetas: string[];
+  archivos: ArchivoGcs[];
 }
 
 export interface PuertoAlmacenamientoDescargas {
   listar(prefijo: string): Promise<ArchivoGcs[]>;
+  listarDirectorio?(prefijo: string): Promise<ResultadoDirectorioGcs>;
   estaFinalizada(prefijo: string): Promise<boolean>;
   firmar(nombreObjeto: string, minutos: number): Promise<string>;
 }
@@ -20,26 +28,18 @@ export function parsearUriGcsPermitida(uri: string): {
   bucket: string;
   prefijo: string;
 } {
-  const regex = /^gs:\/\/([^/]+)\/(.+)\/?$/;
-  const match = uri.match(regex);
-
-  if (!match) {
-    throw new Error("URI GCS inválida: formato debe ser gs://bucket/ruta/");
+  const match = uri
+    .trim()
+    .match(/^gs:\/\/([a-z0-9][a-z0-9._-]{1,61}[a-z0-9])\/(.+)$/);
+  if (!match)
+    throw new Error("URI GCS inv?lida: formato debe ser gs://bucket/ruta/");
+  const bucket = match[1];
+  let prefijo = match[2];
+  if (!bucket || !prefijo || prefijo.split("/").includes("..")) {
+    throw new Error("URI GCS inv?lida");
   }
-
-  const [, bucket, ruta] = match;
-
-  if (bucket !== BUCKET_GCS_PERMITIDO) {
-    throw new Error(`Bucket no permitido: ${bucket}`);
-  }
-
-  if (!ruta.startsWith(PREFIJO_GCS_PERMITIDO)) {
-    throw new Error(
-      `Ruta no permitida: debe comenzar con ${PREFIJO_GCS_PERMITIDO}`,
-    );
-  }
-
-  return { bucket, prefijo: ruta };
+  if (!prefijo.endsWith("/")) prefijo += "/";
+  return { bucket, prefijo };
 }
 
 export { URI_BASE_GCS_REPORTES };

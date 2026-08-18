@@ -41,6 +41,37 @@ function crearApp(sesion: {
 }
 
 describe("GET /api/descargas", () => {
+  it("filtra la carpeta personal por usuario", async () => {
+    const listarEjecucionesDescargas = vi.fn(async () => []);
+    const sesion = {
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+    };
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => sesion,
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {
+        listarEjecucionesDescargas,
+        obtenerEjecucionDescarga: async () => null,
+      } as unknown as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () => ({
+        listar: async () => [],
+        estaFinalizada: async () => false,
+        firmar: async () => "https://signed.url",
+      }) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono();
+    app.route("/api/descargas", rutas);
+
+    await app.request("/api/descargas");
+
+    expect(listarEjecucionesDescargas).toHaveBeenCalledWith(
+      expect.objectContaining({ usuarioId: "user-1", esAdministrador: false }),
+      undefined,
+    );
+  });
+
   it("retorna 200 con lista de descargas", async () => {
     const sesion = {
       tenantId: "tenant-1",
@@ -99,6 +130,53 @@ describe("GET /api/descargas", () => {
     const json = await respuesta.json();
     expect(json.datos[0].id).toBe("e-1");
     expect(json.datos[0].estado).toBe("completada");
+    expect(json.datos[0].archivos).toEqual([]);
+  });
+});
+
+describe("GET /api/descargas/administracion", () => {
+  it("bloquea a usuarios finales", async () => {
+    const sesion = {
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+    };
+    const app = crearApp(sesion);
+    const respuesta = await app.request("/api/descargas/administracion");
+    expect(respuesta.status).toBe(403);
+  });
+
+  it("permite a admin consultar toda la organizacion", async () => {
+    const listarEjecucionesDescargas = vi.fn(async () => []);
+    const sesion = {
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "admin-1",
+      roles: ["admin" as const],
+    };
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => sesion,
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {
+        listarEjecucionesDescargas,
+        obtenerEjecucionDescarga: async () => null,
+      } as unknown as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () => ({
+        listar: async () => [],
+        estaFinalizada: async () => false,
+        firmar: async () => "https://signed.url",
+      }) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono();
+    app.route("/api/descargas", rutas);
+
+    const respuesta = await app.request("/api/descargas/administracion");
+
+    expect(respuesta.status).toBe(200);
+    expect(listarEjecucionesDescargas).toHaveBeenCalledWith(
+      expect.objectContaining({ esAdministrador: true }),
+      undefined,
+    );
   });
 });
 

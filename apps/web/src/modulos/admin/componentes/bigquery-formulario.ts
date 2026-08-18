@@ -43,17 +43,41 @@ export function analizarCredencialesBigQuery(
 }
 interface PuedeGuardarBigQueryEntrada {
   dataset: string;
+  gcsUri: string;
   credencialesJson: string;
   credencialesConfiguradas: boolean;
 }
 
 export function puedeGuardarBigQuery({
   dataset,
+  gcsUri,
   credencialesJson,
   credencialesConfiguradas,
 }: PuedeGuardarBigQueryEntrada): boolean {
   const datasetValido = /^[A-Za-z0-9_]+$/.test(dataset.trim());
-  if (!datasetValido) return false;
+  const gcsLimpio = gcsUri.trim();
+  const gcsValido = /^gs:\/\/[a-z0-9][a-z0-9._-]{1,61}[a-z0-9]\/[^\s]+\/$/.test(
+    gcsLimpio,
+  );
+  const tieneTraversal = gcsLimpio.split("/").includes("..");
+  if (!datasetValido || !gcsValido || tieneTraversal) return false;
   if (!credencialesJson.trim()) return credencialesConfiguradas;
   return analizarCredencialesBigQuery(credencialesJson).valido;
+}
+
+export function separarUriGcs(uri: string): {
+  bucket: string;
+  prefijo: string;
+} {
+  const match = uri.trim().match(/^gs:\/\/([^/]+)\/(.+)$/);
+  return {
+    bucket: match?.[1] ?? "",
+    prefijo: match?.[2] ?? "",
+  };
+}
+
+export function construirUriGcs(bucket: string, prefijo: string): string {
+  const bucketLimpio = bucket.trim();
+  const prefijoLimpio = prefijo.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  return `gs://${bucketLimpio}/${prefijoLimpio}/`;
 }

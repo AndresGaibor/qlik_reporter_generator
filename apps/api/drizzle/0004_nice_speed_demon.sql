@@ -1,0 +1,3 @@
+ALTER TABLE "ejecuciones_reportes" ADD COLUMN "creado_por_usuario_id" uuid;--> statement-breakpoint
+ALTER TABLE "ejecuciones_reportes" ADD CONSTRAINT "ejecuciones_reportes_creado_por_usuario_id_usuarios_id_fk" FOREIGN KEY ("creado_por_usuario_id") REFERENCES "public"."usuarios"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "idx_ejecuciones_reportes_propietario_fecha" ON "ejecuciones_reportes" USING btree ("creado_por_usuario_id","creado_en");

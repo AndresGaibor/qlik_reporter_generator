@@ -10,7 +10,7 @@ const BUCKET_PERMITIDO = "bkt_dwh";
 
 interface ArchivoSimulado {
   name: string;
-  metadata: { size: string | number };
+  metadata: { size: string | number; updated?: string; timeCreated?: string };
 }
 
 function crearFakeStorage(archivosSimulados: ArchivoSimulado[]) {
@@ -38,26 +38,37 @@ describe("parsearUriGcsPermitida", () => {
     });
   });
 
-  test("debe rechazar uri con bucket diferente", () => {
-    expect(() => parsearUriGcsPermitida("gs://otro-bucket/x/")).toThrow();
+  test("acepta otro bucket configurado con una ruta v?lida", () => {
+    expect(parsearUriGcsPermitida("gs://otro-bucket/x/")).toEqual({
+      bucket: "otro-bucket",
+      prefijo: "x/",
+    });
   });
 
-  test("debe rechazar uri con ruta fuera de POCs/TalendDescargados", () => {
-    expect(() => parsearUriGcsPermitida("gs://bkt_dwh/otra-ruta/")).toThrow();
+  test("rechaza traversal en la ruta GCS", () => {
+    expect(() => parsearUriGcsPermitida("gs://bkt_dwh/../secreto/")).toThrow();
   });
-  test("listar solo expone partes csv gzip generadas por EXPORT DATA", async () => {
+  test("listar expone archivos CSV, CSV.GZ y Parquet sin depender del nombre parte", async () => {
     const { storageFake } = crearFakeStorage([
       {
         name: "POCs/TalendDescargados/ventas/e-1/parte-001-000000000000.csv.gz",
-        metadata: { size: 1024 },
+        metadata: { size: 1024, updated: "2026-08-18T16:00:00Z" },
       },
       {
-        name: "POCs/TalendDescargados/ventas/e-1/metadata.json",
-        metadata: { size: 10 },
+        name: "POCs/TalendDescargados/ventas/e-1/ventas_final.parquet",
+        metadata: { size: 2048, timeCreated: "2026-08-18T15:00:00Z" },
       },
       {
         name: "POCs/TalendDescargados/ventas/e-1/archivo.csv",
         metadata: { size: 20 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/__finalizado__-000000000000.csv.gz",
+        metadata: { size: 3 },
+      },
+      {
+        name: "POCs/TalendDescargados/ventas/e-1/metadata.json",
+        metadata: { size: 10 },
       },
     ]);
     const cliente = new ClienteGcs({
@@ -71,7 +82,12 @@ describe("parsearUriGcsPermitida", () => {
 
     expect(resultado.map((archivo) => archivo.nombre)).toEqual([
       "parte-001-000000000000.csv.gz",
+      "ventas_final.parquet",
+      "archivo.csv",
     ]);
+    expect(resultado[0]).toMatchObject({ formato: "CSV.GZ" });
+    expect(resultado[0].fecha).toBe("2026-08-18T16:00:00.000Z");
+    expect(resultado[1]).toMatchObject({ formato: "PARQUET" });
   });
 
   test("firmar fuerza descarga con el nombre del archivo", async () => {

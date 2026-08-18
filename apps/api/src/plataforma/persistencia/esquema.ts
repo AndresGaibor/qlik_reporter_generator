@@ -267,6 +267,10 @@ export const ejecucionesReportes = pgTable(
       .references(() => configuracionesAutomatizacion.id, {
         onDelete: "cascade",
       }),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
     flujoIdQlik: text("flujo_id_qlik").notNull(),
     automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
     runIdQlik: text("run_id_qlik"),
@@ -290,6 +294,10 @@ export const ejecucionesReportes = pgTable(
       t.creadoEn,
     ),
     idxRunQlik: index("idx_ejecuciones_reportes_run_qlik").on(t.runIdQlik),
+    idxPropietarioFecha: index("idx_ejecuciones_reportes_propietario_fecha").on(
+      t.creadoPorUsuarioId,
+      t.creadoEn,
+    ),
     ckEstado: check(
       "ejecuciones_reportes_estado_check",
       sql`${t.estado} IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')`,

@@ -29,6 +29,7 @@ export interface DependenciasRutasConfiguracionTenant {
     organizacionId: string;
     tenantQlikId: string;
     dataset: string;
+    gcsUri?: string;
     credencialesJson?: string;
     projectId?: string;
     clientEmail?: string;
@@ -184,6 +185,7 @@ export function crearRutasConfiguracionTenant({
           organizacionId,
           tenantQlikId,
           dataset: entrada.dataset,
+          ...(entrada.gcsUri ? { gcsUri: entrada.gcsUri } : {}),
           ...(entrada.credencialesJson
             ? { credencialesJson: entrada.credencialesJson }
             : {}),
