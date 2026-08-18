@@ -97,3 +97,24 @@ Se migraron los consumidores actuales a UUID de reporte y alcance local. La ejec
 ### Commit
 
 Commit nuevo: `b41a8ce8c213b1df2f91522372b58c7422f4401d` (`fix: corregir migracion y contratos de reportes`). No se modificó `4b5bd1d`.
+
+## Fix round 2/5
+
+### Disposición del hallazgo
+
+- **IMPORTANT — ejecución del panel con ID incorrecto:** corregido. `POST /:id/ejecuciones` del panel técnico ya no llama a `EjecutarReporte` ni interpreta el ID Qlik Automate como `reporteId`; devuelve `405 NO_SOPORTADO` y remite a la ruta local del reporte.
+- No se introduce `automatizacionIdQlik` seleccionado por cliente ni se modifica el contrato separado de `EjecutarReporte`. La resolución del worker queda para Task 5/6.
+
+### Evidencia RED/GREEN
+
+- **RED:** la prueba nueva `no acepta un ID de Qlik Automate como ejecución de reporte local` falló contra la ruta existente porque intentó resolver BigQuery desde `POST /auto-1/ejecuciones`.
+- **GREEN:** la misma prueba pasó con respuesta `405`, código `NO_SOPORTADO`, y verificó que no se resolvieran Qlik, sesión, BigQuery ni repositorio local.
+- Panel y focales Task 2: `37 pass, 0 fail`.
+- `bun run --cwd apps/api typecheck`: PASS.
+- Check directo `readMigrationFiles({ migrationsFolder: "apps/api/drizzle" })`: `loaded 5 migrations`.
+- `bunx biome check` sobre los dos archivos cambiados: PASS; `git diff --check`: PASS.
+- No se ejecutó BigQuery ni se mutó una base persistente.
+
+### Commit
+
+Commit nuevo: `0ee3e3c3a65c3b2b41503fa67b192afc1f4868ae` (`fix: separar ejecucion de reportes del panel qlik`). Sin amend/push/merge/rebase.
