@@ -9,6 +9,109 @@ SQL SELECT id FROM \`p.d.t\`;
 `;
 
 describe("rutas reportes Dataflow", () => {
+  it("crea un reporte local sin copiar un Automate", async () => {
+    const crearReporte = vi.fn(async (entrada: Record<string, unknown>) => ({
+      id: "11111111-1111-4111-8111-111111111111",
+      ...entrada,
+    }));
+    const copiarAutomatizacion = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => [
+              { id: "df-1", name: "Ventas actual", spaceId: "space-1" },
+            ]),
+            copiarAutomatizacion,
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: { crearReporte } as never,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nombre: "Ventas", flujoIdQlik: "df-1" }),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(crearReporte).toHaveBeenCalledTimes(1);
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("clona un reporte localmente sin consultar ni copiar Qlik Automate", async () => {
+    const crearReporte = vi.fn(async (entrada: Record<string, unknown>) => ({
+      id: "22222222-2222-4222-8222-222222222222",
+      ...entrada,
+    }));
+    const obtenerPorId = vi.fn(async () => ({
+      id: "11111111-1111-4111-8111-111111111111",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas actual",
+      flujoEspacioIdQlik: "space-1",
+      estado: "activa" as const,
+    }));
+    const listarFlujos = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () => ({ listarFlujos }) as never,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-2",
+        }),
+        repositorioReportes: { obtenerPorId, crearReporte } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/11111111-1111-4111-8111-111111111111/clonar",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ nombre: "Ventas copia" }),
+      },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(obtenerPorId).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      "tenant-1",
+      "org-1",
+    );
+    expect(crearReporte).toHaveBeenCalledWith(
+      expect.objectContaining({ nombre: "Ventas copia" }),
+    );
+    expect(listarFlujos).not.toHaveBeenCalled();
+  });
+
   it("expone preflight usando Qlik y BigQuery resueltos en servidor", async () => {
     const obtenerScriptApp = vi.fn(async () => ({ script: SCRIPT }));
     const estimarConsulta = vi.fn(async () => ({
@@ -204,7 +307,7 @@ describe("rutas reportes Dataflow", () => {
     });
   });
 
-  it("sincroniza el nombre local con la copia de Qlik Automate", async () => {
+  it("edita el nombre solo localmente y no llama a Qlik Automate", async () => {
     const actualizarAutomatizacion = vi.fn(
       async (_id: string, definicion: Record<string, unknown>) => ({
         id: "auto-1",
@@ -295,5 +398,6 @@ describe("rutas reportes Dataflow", () => {
         nombre: "Ventas Comercial v2",
       }),
     );
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
   });
 });

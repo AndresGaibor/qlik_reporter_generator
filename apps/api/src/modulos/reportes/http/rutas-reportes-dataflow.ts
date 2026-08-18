@@ -1,7 +1,14 @@
-import { esquemaActualizarConfiguracionReporte } from "@qlik/contratos";
+import {
+  esquemaActualizarConfiguracionReporte,
+  esquemaCrearReporte,
+} from "@qlik/contratos";
 import { type Context, Hono } from "hono";
+import { z } from "zod";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { ClonarReporte } from "../aplicacion/clonar-reporte.js";
+import { CrearReporte } from "../aplicacion/crear-reporte.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
@@ -31,6 +38,46 @@ export function crearRutasReportesDataflow(
   dependencias: DependenciasRutasReportesDataflow,
 ) {
   const rutas = new Hono();
+
+  rutas.post("/", async (c) => {
+    const validacion = esquemaCrearReporte.safeParse(
+      await c.req.json().catch(() => undefined),
+    );
+    if (!validacion.success) return respuestaValidacion(c, validacion.error);
+
+    const sesion = await dependencias.resolverSesion(c);
+    const qlik = await dependencias.resolverQlik(c);
+    const bigQuery = await dependencias.resolverBigQuery(c);
+    try {
+      const reporte = await new CrearReporte(
+        qlik,
+        new PreflightDataflow(qlik, bigQuery.estimador, {
+          projectId: bigQuery.projectId,
+          dataset: bigQuery.dataset,
+        }),
+        dependencias.repositorioReportes,
+      ).ejecutar(validacion.data, sesion);
+      return responderExito(c, serializarConfiguracion(reporte));
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
+  });
+
+  rutas.post("/:reporteId/clonar", async (c) => {
+    const validacion = esquemaClonarReporte.safeParse(
+      await c.req.json().catch(() => undefined),
+    );
+    if (!validacion.success) return respuestaValidacion(c, validacion.error);
+    const sesion = await dependencias.resolverSesion(c);
+    try {
+      const reporte = await new ClonarReporte(
+        dependencias.repositorioReportes,
+      ).ejecutar(c.req.param("reporteId"), validacion.data.nombre, sesion);
+      return responderExito(c, serializarConfiguracion(reporte));
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
+  });
 
   rutas.get("/dataflows/:flujoId/preflight", async (c) => {
     const flujoIdQlik = c.req.param("flujoId").trim();
@@ -154,6 +201,39 @@ export function crearRutasReportesDataflow(
   return rutas;
 }
 
+const esquemaClonarReporte = z
+  .object({
+    nombre: z.string().trim().min(1).max(255),
+  })
+  .strict();
+
+function respuestaValidacion(c: Context, error: z.ZodError) {
+  return c.json(
+    {
+      exito: false,
+      error: { mensaje: "La solicitud es inválida", detalles: error.flatten() },
+    },
+    400,
+  );
+}
+
+function respuestaErrorAplicacion(c: Context, error: unknown) {
+  if (error instanceof ErrorAplicacion) {
+    return c.json(
+      {
+        exito: false,
+        error: {
+          codigo: error.codigo,
+          mensaje: error.message,
+          detalles: error.detalles,
+        },
+      },
+      error.estadoHttp as 400 | 401 | 404 | 409 | 422,
+    );
+  }
+  throw error;
+}
+
 async function obtenerConfiguracionAutorizada(
   repositorio: PuertoRepositorioReportes,
   sesion: SesionReportes,
@@ -172,6 +252,7 @@ function serializarConfiguracion(
   if (!configuracion) throw new Error("Configuración ausente");
   return {
     id: configuracion.id,
+    creadoPorUsuarioId: configuracion.creadoPorUsuarioId,
     nombre: configuracion.nombre,
     flujoIdQlik: configuracion.flujoIdQlik,
     flujoNombreSnapshot: configuracion.flujoNombreSnapshot,
