@@ -12,6 +12,7 @@ const reactPeerDir = resolve(reactDomDir, "../react");
 export default defineConfig({
   plugins: [react()],
   test: {
+    root: __dirname,
     environment: "jsdom",
     globals: true,
   },
