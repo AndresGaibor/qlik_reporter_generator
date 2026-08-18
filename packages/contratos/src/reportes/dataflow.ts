@@ -45,7 +45,7 @@ export const esquemaDetalleEjecucionReporte = z.object({
   flujoIdQlik: z.string(),
   automatizacionIdQlik: z.string(),
   runIdQlik: z.string().nullable(),
-  ejecutadoPorUsuarioId: z.string().uuid(),
+  ejecutadoPorUsuarioId: z.string().uuid().nullable(),
   automatizacionPersonalId: z.string().uuid().nullable(),
   hashDataflowSha256: z.string().regex(/^[a-f0-9]{64}$/),
   scriptDataflow: z.string(),

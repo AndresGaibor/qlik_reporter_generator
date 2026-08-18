@@ -106,10 +106,11 @@ describe("contratos de reportes Dataflow", () => {
     expect(detalle.automatizacionPersonalId).toBeNull();
     expect(detalle.automatizacionIdQlik).toBe("legacy-auto");
 
-    expect(() => esquemaDetalleEjecucionReporte.parse({
+    const ejecucionHistorica = esquemaDetalleEjecucionReporte.parse({
       ...detalle,
       ejecutadoPorUsuarioId: null,
-    })).toThrow();
+    });
+    expect(ejecucionHistorica.ejecutadoPorUsuarioId).toBeNull();
     expect(() => esquemaDetalleEjecucionReporte.parse({
       ...detalle,
       automatizacionPersonalId: "not-a-uuid",
