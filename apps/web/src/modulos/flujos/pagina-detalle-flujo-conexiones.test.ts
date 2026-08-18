@@ -1,14 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-const detallePath = resolve(
-  process.cwd(),
-  "src/modulos/flujos/pagina-detalle-flujo.tsx",
-);
+const aqui = dirname(fileURLToPath(import.meta.url));
+const detallePath = resolve(aqui, "pagina-detalle-flujo.tsx");
 const catalogoPath = resolve(
-  process.cwd(),
-  "src/modulos/origenes/pagina-catalogo-origen.tsx",
+  aqui,
+  "../origenes/pagina-catalogo-origen.tsx",
 );
 
 test("retira el catálogo técnico de conexiones del frontend", () => {
