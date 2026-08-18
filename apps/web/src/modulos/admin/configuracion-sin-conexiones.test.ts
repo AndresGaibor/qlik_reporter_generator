@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-const admin = resolve(process.cwd(), "src/modulos/admin");
+const aqui = dirname(fileURLToPath(import.meta.url));
+const admin = aqui;
 const componentes = resolve(admin, "componentes");
 
 test("la configuración elimina el administrador genérico y conserva BigQuery", () => {

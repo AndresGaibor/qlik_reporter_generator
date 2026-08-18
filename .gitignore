@@ -34,6 +34,8 @@ coverage/
 # Vite
 apps/web/dist/
 apps/web/node_modules/
+apps/web/vite.config.js
+apps/web/vite.config.d.ts
 
 # TypeScript incremental build cache
 *.tsbuildinfo

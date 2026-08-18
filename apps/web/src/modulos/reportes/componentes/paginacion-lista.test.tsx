@@ -1,4 +1,4 @@
-import { flushSync } from "react-dom";
+import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { PaginacionLista } from "./paginacion-lista";
@@ -7,7 +7,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;
@@ -18,7 +18,7 @@ test("describe la paginación usando el término reportes", () => {
   document.body.append(container);
   root = createRoot(container);
 
-  flushSync(() => {
+  act(() => {
     root?.render(
       <PaginacionLista
         paginaActual={1}

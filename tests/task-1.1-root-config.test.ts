@@ -79,7 +79,9 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
 
   test("Dockerfile usa oven/bun y copia apps", () => {
     const dockerfile = readFileSync(resolve(ROOT, "Dockerfile"), "utf-8");
-    expect(dockerfile).toContain("oven/bun");
+    expect(dockerfile).toContain(
+      "oven/bun:1.3.10@sha256:b86c67b531d87b4db11470d9b2bd0c519b1976eee6fcd71634e73abfa6230d2e",
+    );
     expect(dockerfile).toContain("apps/api");
     expect(dockerfile).toContain("apps/web");
     expect(dockerfile).toContain("packages");

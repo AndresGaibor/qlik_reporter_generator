@@ -503,6 +503,21 @@ export const conexionesDestino = pgTable(
     ),
     idxTipo: index("idx_conexiones_tipo").on(t.tipo),
     idxEstado: index("idx_conexiones_estado").on(t.estado),
+    idxTenant: index("idx_conexiones_tenant")
+      .on(t.tenantQlikId)
+      .where(sql`${t.tenantQlikId} IS NOT NULL`),
+    uqPredeterminadaPorTenant: uniqueIndex(
+      "uq_conexion_bigquery_predeterminada_tenant",
+    )
+      .on(t.tenantQlikId, t.tipo)
+      .where(
+        sql`${t.esPredeterminada} = true AND ${t.tenantQlikId} IS NOT NULL`,
+      ),
+    ckTipo: check("conexiones_destino_tipo_check", sql`${t.tipo} = 'bigquery'`),
+    ckEstado: check(
+      "conexiones_destino_estado_check",
+      sql`${t.estado} IN ('activo', 'error', 'desconectado')`,
+    ),
   }),
 );
 

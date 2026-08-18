@@ -1,4 +1,4 @@
-import { flushSync } from "react-dom";
+import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { TarjetaDetalleAutomatizacion } from "./tarjeta-detalle-automatizacion";
@@ -7,7 +7,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;
@@ -39,7 +39,7 @@ function montar() {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  flushSync(() => {
+  act(() => {
     root?.render(
       <TarjetaDetalleAutomatizacion
         automatizacion={automatizacion}
@@ -78,7 +78,7 @@ test("mantiene las acciones secundarias en un menú compacto", () => {
   const vista = montar();
 
   expect(vista.textContent).not.toContain("Clonar reporte");
-  flushSync(() => botonConTexto("Más acciones")?.click());
+  act(() => botonConTexto("Más acciones")?.click());
 
   expect(vista.textContent).toContain("Clonar reporte");
   expect(vista.textContent).toContain("Abrir en Qlik Cloud");

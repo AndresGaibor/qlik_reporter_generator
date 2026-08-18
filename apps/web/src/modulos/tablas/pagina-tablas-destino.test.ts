@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-const ruta = resolve(
-  process.cwd(),
-  "src/modulos/tablas/pagina-tablas-destino.tsx",
-);
+const aqui = dirname(fileURLToPath(import.meta.url));
+const ruta = resolve(aqui, "pagina-tablas-destino.tsx");
 
 test("la página es un orquestador de solo lectura sin simulaciones", () => {
   const fuente = readFileSync(ruta, "utf8");

@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
-const ruta = resolve(
-  process.cwd(),
-  "src/modulos/reportes/pagina-nueva-automatizacion.tsx",
-);
+const aqui = dirname(fileURLToPath(import.meta.url));
+const ruta = resolve(aqui, "pagina-nueva-automatizacion.tsx");
 
 test("el creador usa Dataflow y delega BigQuery al preflight del backend", () => {
   const fuente = readFileSync(ruta, "utf8");

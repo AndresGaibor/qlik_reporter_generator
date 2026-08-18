@@ -1,4 +1,4 @@
-FROM oven/bun:1 AS deps
+FROM oven/bun:1.3.10@sha256:b86c67b531d87b4db11470d9b2bd0c519b1976eee6fcd71634e73abfa6230d2e AS deps
 WORKDIR /app
 COPY package.json bun.lock tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/package.json
@@ -23,7 +23,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4523
 COPY --from=build-api /app/apps/api/dist ./dist
-COPY --from=build-api /app/apps/api/drizzle ./drizzle
 EXPOSE 4523
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://127.0.0.1:4523/api/salud || exit 1

@@ -1,18 +1,6 @@
 # Puesta en marcha
 
-## Desarrollo local
-
-```bash
-cp .env.example .env
-bun install
-bun --cwd apps/api run db:migrate
-bun run dev:api
-bun run dev
-```
-
-API: `http://localhost:4523`
-
-Frontend: `http://localhost:4525`
+Consulta la [guia de arranque local](guia-arranque-local.md). Antes del primer arranque, ejecuta `bun run db:migrate`.
 
 ## Variables críticas
 
