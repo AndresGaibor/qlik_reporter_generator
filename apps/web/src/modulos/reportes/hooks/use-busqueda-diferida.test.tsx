@@ -1,4 +1,4 @@
-import { flushSync } from "react-dom";
+import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 import { useBusquedaDiferida } from "./use-busqueda-diferida";
@@ -7,7 +7,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;
@@ -32,16 +32,16 @@ test("aplica la búsqueda recortada después del retraso", () => {
   document.body.append(container);
   root = createRoot(container);
 
-  flushSync(() => {
+  act(() => {
     root?.render(
       <ComponentePrueba valor="  clientes  " onCambiar={onCambiar} />,
     );
   });
 
-  vi.advanceTimersByTime(349);
+  act(() => vi.advanceTimersByTime(349));
   expect(onCambiar).not.toHaveBeenCalled();
 
-  vi.advanceTimersByTime(1);
+  act(() => vi.advanceTimersByTime(1));
   expect(onCambiar).toHaveBeenCalledOnce();
   expect(onCambiar).toHaveBeenCalledWith("clientes");
 });

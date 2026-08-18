@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
-import { flushSync } from "react-dom";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 
@@ -130,7 +129,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;

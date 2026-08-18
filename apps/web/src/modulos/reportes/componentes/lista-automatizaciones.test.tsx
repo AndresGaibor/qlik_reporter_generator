@@ -1,4 +1,4 @@
-import { flushSync } from "react-dom";
+import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { ListaAutomatizaciones } from "./lista-automatizaciones";
@@ -7,7 +7,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;
@@ -33,7 +33,7 @@ function montar() {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
-  flushSync(() => {
+  act(() => {
     root?.render(
       <ListaAutomatizaciones
         automatizaciones={[reporte]}
@@ -77,6 +77,6 @@ test("mantiene Qlik Cloud dentro de acciones secundarias", () => {
   expect(menu?.open).toBe(false);
   expect(menu?.textContent).toContain("Abrir en Qlik Cloud");
 
-  flushSync(() => botonConTexto("Más acciones")?.click());
+  act(() => botonConTexto("Más acciones")?.click());
   expect(menu?.open).toBe(true);
 });

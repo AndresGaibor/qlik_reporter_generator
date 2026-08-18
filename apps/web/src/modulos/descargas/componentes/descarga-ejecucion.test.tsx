@@ -1,4 +1,4 @@
-import { flushSync } from "react-dom";
+import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DescargaEjecucion } from "./descarga-ejecucion";
@@ -7,7 +7,7 @@ let root: Root | undefined;
 let container: HTMLDivElement | undefined;
 
 afterEach(() => {
-  if (root) flushSync(() => root?.unmount());
+  if (root) act(() => root?.unmount());
   container?.remove();
   root = undefined;
   container = undefined;
@@ -18,7 +18,7 @@ describe("DescargaEjecucion", () => {
     container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
-    flushSync(() => {
+    act(() => {
       root?.render(
         <DescargaEjecucion
           estado="descargando"
