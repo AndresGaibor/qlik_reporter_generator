@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { readdir } from "node:fs/promises";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
@@ -209,12 +210,34 @@ describe("Esquema Drizzle", () => {
         "automatizacion_id_qlik",
       ]),
     );
-    expect(
-      config.uniqueConstraints.some(
-        (item) =>
-          item.name === "automatizaciones_personales_usuario_tenant_unique",
-      ),
-    ).toBe(true);
+    const constraint = config.uniqueConstraints.find(
+      (item) =>
+        item.name === "automatizaciones_personales_usuario_tenant_unique",
+    );
+    expect(constraint).toBeDefined();
+    expect(constraint?.columns.map((column) => column.name)).toEqual([
+      "usuario_id",
+      "tenant_qlik_id",
+    ]);
+  });
+
+  it("mantiene la cadena de migraciones sin entradas huérfanas", async () => {
+    const migraciones = readMigrationFiles({
+      migrationsFolder: new URL("../drizzle/", import.meta.url).pathname,
+    });
+    expect(migraciones).toHaveLength(5);
+    const journal = JSON.parse(
+      await Bun.file(
+        new URL("../drizzle/meta/_journal.json", import.meta.url),
+      ).text(),
+    ) as { entries: Array<{ tag: string }> };
+    expect(journal.entries.map(({ tag }) => tag)).toEqual([
+      "0000_tan_zeigeist",
+      "0001_spooky_marvel_apes",
+      "0002_absent_thing",
+      "0003_even_spectrum",
+      "0004_separar_reportes_workers",
+    ]);
   });
 
   it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {

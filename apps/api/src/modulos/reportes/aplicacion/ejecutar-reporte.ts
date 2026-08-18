@@ -23,6 +23,7 @@ const VERSION_COMPILADOR = 2;
 export interface EntradaEjecutarReporte {
   tenantId: string;
   organizacionId: string;
+  reporteId: string;
   automatizacionIdQlik: string;
   usuarioId?: string;
 }
@@ -52,18 +53,14 @@ export class EjecutarReporte {
   private async ejecutarBajoBloqueo(
     entrada: EntradaEjecutarReporte,
   ): Promise<{ runId: string; ejecucionReporteId: string }> {
-    const configuracion = await this.repositorio.obtenerPorAutomatizacion(
+    const configuracion = await this.repositorio.obtenerPorId(
+      entrada.reporteId,
       entrada.tenantId,
-      entrada.automatizacionIdQlik,
+      entrada.organizacionId,
     );
     if (!configuracion) {
       throw new ErrorNoEncontrado(
         "La automatización no está asociada a un reporte Dataflow de esta plataforma",
-      );
-    }
-    if (configuracion.organizacionId !== entrada.organizacionId) {
-      throw new ErrorNoEncontrado(
-        "El reporte no pertenece a la organización activa",
       );
     }
     if (configuracion.estado !== "activa") {
@@ -116,7 +113,7 @@ export class EjecutarReporte {
     try {
       await this.repositorio.crearEjecucion({
         id: ejecucionReporteId,
-        configuracionId: configuracion.id,
+        reporteId: configuracion.id,
         flujoIdQlik: configuracion.flujoIdQlik,
         automatizacionIdQlik: entrada.automatizacionIdQlik,
         hashDataflowSha256: preparacion.hashDataflowSha256,

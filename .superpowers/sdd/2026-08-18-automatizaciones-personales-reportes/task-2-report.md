@@ -65,3 +65,35 @@ Antes de tocar cualquier base se inspeccionó `apps/api/src/plataforma/bootstrap
 ## Commit
 
 Pendiente de commit al crear este reporte.
+
+## Fix round 1/5
+
+### Disposición de hallazgos
+
+- **CRITICAL — cadena Drizzle:** corregido. Se eliminó la entrada huérfana `0005_lush_terrax` del journal y se alineó `0004_snapshot.json.prevId` con `0003_snapshot.json.id`.
+- **IMPORTANT 1 — shims/coupling:** corregido. El puerto ya no expone `crearConfiguracion`, `obtenerPorAutomatizacion`, `obtenerConfiguracionPorId` ni `actualizarConfiguracion`, ni campos Automate de reportes. Los consumidores activos pasan a identificar reportes por UUID y alcance; edición/listado local ya no renombra ni resuelve Automate. La sincronización Qlik desde descargas queda explícitamente pendiente del resolver/worker de tareas posteriores, sin shim que lance o descarte asociaciones.
+- **IMPORTANT 2 — alcance/contrato:** corregido. Los cinco métodos locales son obligatorios; `obtenerPorId(reporteId, tenantQlikId, organizacionId)` filtra las tres columnas. La prueba de repositorio cubre acceso correcto, acceso cross-tenant/org nulo y condiciones de `listar` con ambos alcances.
+- **IMPORTANT 3 — unicidad worker:** corregido. La prueba de esquema verifica exactamente `[usuario_id, tenant_qlik_id]`; la prueba de repositorio rechaza el segundo par idéntico y permite tenant o usuario distintos.
+
+### Evidencia RED/GREEN
+
+- **RED:** la nueva prueba de cadena falló con `No file .../0005_lush_terrax.sql found`; después de reparar journal/snapshot, el loader pasó.
+- **GREEN:** focal Task 2 y consumidores dirigidos: `48 pass, 0 fail`; rutas panel/descargas: `11 pass, 0 fail`.
+- `bun run --cwd apps/api typecheck`: PASS.
+- Check directo `readMigrationFiles({ migrationsFolder: "apps/api/drizzle" })`: `loaded 5 migrations`.
+- `git diff --check`: PASS.
+- No se tocó DB persistente ni se ejecutó BigQuery. `db:check` sigue condicionado a `DATABASE_URL` ausente.
+
+### Cadena de migraciones
+
+`0000_tan_zeigeist` → `0001_spooky_marvel_apes` → `0002_absent_thing` → `0003_even_spectrum` → `0004_separar_reportes_workers`.
+
+IDs: `0003_snapshot.json.id = 1f4c7c47-7db8-4957-8709-bd773741477f`; `0004_snapshot.json.prevId = 1f4c7c47-7db8-4957-8709-bd773741477f`; `0004_snapshot.json.id = b50a1412-2afb-4695-aadf-2bcaa8c8176b`.
+
+### Trabajo avanzado estrecho
+
+Se migraron los consumidores actuales a UUID de reporte y alcance local. La ejecución aún recibe el ID Qlik resuelto por una etapa posterior, mientras la persistencia conserva el snapshot técnico histórico; no se adoptan Automates antiguos como workers ni se crea mapping legacy.
+
+### Commit
+
+Se creará un commit nuevo, sin modificar `4b5bd1d`.

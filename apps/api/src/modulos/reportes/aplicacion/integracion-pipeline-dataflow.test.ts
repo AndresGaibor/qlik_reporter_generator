@@ -23,6 +23,7 @@ function configuracion() {
     flujoIdQlik: "flujo-1",
     flujoNombreSnapshot: "Ventas DF",
     automatizacionIdQlik: "auto-1",
+    reporteId: "reporte-1",
     automatizacionNombreSnapshot: "Ventas",
     estado: "activa" as const,
   };
@@ -90,7 +91,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     const auditorias: Array<Record<string, unknown>> = [];
     let id = 0;
     const repo = {
-      obtenerPorAutomatizacion: async () => configuracion(),
+      obtenerPorId: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         auditorias.push(entrada);
         return entrada;
@@ -115,11 +116,13 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
     });
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
     });
 
     expect(qlik.obtenerScriptApp).toHaveBeenCalledTimes(2);
@@ -155,7 +158,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     const { qlik, workspaces } = qlikConScripts([scriptReal]);
     const auditorias: Array<Record<string, unknown>> = [];
     const repo = {
-      obtenerPorAutomatizacion: async () => configuracion(),
+      obtenerPorId: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         auditorias.push(entrada);
         return entrada;
@@ -181,6 +184,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
     });
 
     const auditoria = auditorias[0];

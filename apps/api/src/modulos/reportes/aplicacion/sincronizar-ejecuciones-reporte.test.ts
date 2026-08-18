@@ -6,7 +6,7 @@ describe("SincronizarEjecucionesReporte", () => {
   it("mapea Qlik stopped a detenida", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
       ]),
@@ -23,7 +23,9 @@ describe("SincronizarEjecucionesReporte", () => {
     } as unknown as ServicioQlik;
 
     await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+      "reporte-1",
       "tenant-1",
+      "organizacion-1",
       "auto-1",
     );
 
@@ -39,7 +41,7 @@ describe("SincronizarEjecucionesReporte", () => {
     async (status) => {
       const marcar = vi.fn(async () => undefined);
       const repo = {
-        obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
+        obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
         listarEjecuciones: vi.fn(async () => [
           { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
         ]),
@@ -50,7 +52,9 @@ describe("SincronizarEjecucionesReporte", () => {
       } as unknown as ServicioQlik;
 
       await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+        "reporte-1",
         "tenant-1",
+        "organizacion-1",
         "auto-1",
       );
 
@@ -62,7 +66,7 @@ describe("SincronizarEjecucionesReporte", () => {
     const marcarError = vi.fn(async () => undefined);
     const marcarEstado = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
       ]),
@@ -96,7 +100,9 @@ describe("SincronizarEjecucionesReporte", () => {
     } as unknown as ServicioQlik;
 
     await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+      "reporte-1",
       "tenant-1",
+      "organizacion-1",
       "auto-1",
     );
 
@@ -112,7 +118,7 @@ describe("SincronizarEjecucionesReporte", () => {
   it("guarda un error útil si Qlik falla sin detalle estructurado", async () => {
     const marcarError = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
       ]),
@@ -129,7 +135,9 @@ describe("SincronizarEjecucionesReporte", () => {
     } as unknown as ServicioQlik;
 
     await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+      "reporte-1",
       "tenant-1",
+      "organizacion-1",
       "auto-1",
     );
 
@@ -144,7 +152,7 @@ describe("SincronizarEjecucionesReporte", () => {
   it("no modifica auditorías si Qlik sigue running", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorAutomatizacion: async () => ({ id: "config-1" }),
+      obtenerPorId: async () => ({ id: "config-1" }),
       listarEjecuciones: async () => [
         { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
       ],
@@ -155,7 +163,9 @@ describe("SincronizarEjecucionesReporte", () => {
     } as unknown as ServicioQlik;
 
     await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+      "reporte-1",
       "tenant-1",
+      "organizacion-1",
       "auto-1",
     );
 

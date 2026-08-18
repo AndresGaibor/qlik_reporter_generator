@@ -51,7 +51,7 @@ describe("rutas reportes Dataflow", () => {
 
   it("devuelve la configuración local sin programación", async () => {
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -61,6 +61,7 @@ describe("rutas reportes Dataflow", () => {
         flujoNombreSnapshot: "Ventas DF",
         flujoEspacioIdQlik: "espacio-1",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: "Ventas",
         programar: false,
         estado: "activa",
@@ -106,7 +107,7 @@ describe("rutas reportes Dataflow", () => {
   });
 
   it("rechaza campos de edición que pertenecen al SQL o workspace", async () => {
-    const actualizarConfiguracion = vi.fn();
+    const actualizarReporte = vi.fn();
     const app = new Hono().route(
       "/api/reportes",
       crearRutasReportesDataflow({
@@ -121,7 +122,7 @@ describe("rutas reportes Dataflow", () => {
           organizacionId: "org-1",
           usuarioId: "user-1",
         }),
-        repositorioReportes: { actualizarConfiguracion },
+        repositorioReportes: { actualizarReporte },
       } as never),
     );
 
@@ -131,7 +132,7 @@ describe("rutas reportes Dataflow", () => {
       body: JSON.stringify({ nombre: "Ventas", gcp_script: "SELECT 1" }),
     });
     expect(respuesta.status).toBe(400);
-    expect(actualizarConfiguracion).not.toHaveBeenCalled();
+    expect(actualizarReporte).not.toHaveBeenCalled();
   });
 
   it("mantiene iniciada hasta que GCS confirme y devuelve las auditorías locales", async () => {
@@ -141,6 +142,7 @@ describe("rutas reportes Dataflow", () => {
       configuracionId: "11111111-1111-4111-8111-111111111111",
       flujoIdQlik: "flujo-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
       runIdQlik: "run-1",
       hashDataflowSha256: "a".repeat(64),
       scriptDataflow: "LOAD ...",
@@ -156,7 +158,7 @@ describe("rutas reportes Dataflow", () => {
       creadoEn: new Date("2026-08-14T22:59:59Z"),
     };
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: ejecucion.configuracionId,
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -210,7 +212,7 @@ describe("rutas reportes Dataflow", () => {
         ...definicion,
       }),
     );
-    const actualizarConfiguracion = vi.fn(
+    const actualizarReporte = vi.fn(
       async (_id: string, cambios: Record<string, unknown>) => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
@@ -220,6 +222,7 @@ describe("rutas reportes Dataflow", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas DF",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: String(
           cambios.automatizacionNombreSnapshot ?? "Ventas",
         ),
@@ -228,7 +231,7 @@ describe("rutas reportes Dataflow", () => {
       }),
     );
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -237,12 +240,13 @@ describe("rutas reportes Dataflow", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas DF",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: "Ventas",
         programar: false,
         estado: "activa" as const,
       })),
       obtenerProgramacion: vi.fn(async () => null),
-      actualizarConfiguracion,
+      actualizarReporte,
     };
     const qlik = {
       obtenerAutomatizacion: vi.fn(async () => ({
@@ -285,15 +289,10 @@ describe("rutas reportes Dataflow", () => {
     });
 
     expect(respuesta.status).toBe(200);
-    expect(actualizarAutomatizacion).toHaveBeenCalledWith(
-      "auto-1",
-      expect.objectContaining({ name: "Ventas Comercial v2", schedules: [] }),
-    );
-    expect(actualizarConfiguracion).toHaveBeenCalledWith(
+    expect(actualizarReporte).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",
       expect.objectContaining({
         nombre: "Ventas Comercial v2",
-        automatizacionNombreSnapshot: "Ventas Comercial v2",
       }),
     );
   });

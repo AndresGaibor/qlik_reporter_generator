@@ -14,10 +14,16 @@ export class SincronizarEjecucionesReporte {
     private readonly repositorio: PuertoRepositorioReportes,
   ) {}
 
-  async ejecutar(tenantQlikId: string, automatizacionIdQlik: string) {
-    const configuracion = await this.repositorio.obtenerPorAutomatizacion(
+  async ejecutar(
+    reporteId: string,
+    tenantQlikId: string,
+    organizacionId: string,
+    automatizacionIdQlik: string,
+  ) {
+    const configuracion = await this.repositorio.obtenerPorId(
+      reporteId,
       tenantQlikId,
-      automatizacionIdQlik,
+      organizacionId,
     );
     if (!configuracion) return;
 

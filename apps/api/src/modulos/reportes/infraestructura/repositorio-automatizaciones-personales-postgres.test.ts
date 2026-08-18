@@ -53,4 +53,31 @@ describe("RepositorioAutomatizacionesPersonalesPostgres", () => {
     expect(valores).toMatchObject({ automatizacionIdQlik: "auto-2" });
     expect(resultado.automatizacionIdQlik).toBe("auto-2");
   });
+
+  it("rechaza el segundo worker del mismo usuario y tenant, pero permite otros pares", async () => {
+    const pares = new Set<string>();
+    const db = {
+      insert: () => ({
+        values: (valores: typeof entrada) => ({
+          returning: async () => {
+            const par = `${valores.usuarioId}:${valores.tenantQlikId}`;
+            if (pares.has(par)) throw new Error("unique violation");
+            pares.add(par);
+            return [{ id: `worker-${pares.size}`, ...valores }];
+          },
+        }),
+      }),
+    };
+    const repo = new RepositorioAutomatizacionesPersonalesPostgres(db as never);
+    await repo.crear(entrada);
+    await expect(
+      repo.crear({ ...entrada, automatizacionIdQlik: "auto-2" }),
+    ).rejects.toThrow("unique violation");
+    await expect(
+      repo.crear({ ...entrada, tenantQlikId: "tenant-2" }),
+    ).resolves.toMatchObject({ tenantQlikId: "tenant-2" });
+    await expect(
+      repo.crear({ ...entrada, usuarioId: "usuario-2" }),
+    ).resolves.toMatchObject({ usuarioId: "usuario-2" });
+  });
 });

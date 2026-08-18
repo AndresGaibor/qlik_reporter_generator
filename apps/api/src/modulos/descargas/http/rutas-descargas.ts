@@ -37,36 +37,10 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       dependencias.minutosFirma ?? 15,
     );
 
-    let ejecuciones = await servicio.listarEjecuciones({
+    const ejecuciones = await servicio.listarEjecuciones({
       tenantQlikId: sesion.tenantId,
       organizacionId: sesion.organizacionId,
     });
-
-    const pendientes = ejecuciones.filter(
-      (e) => e.estado === "preparando" || e.estado === "iniciada",
-    );
-
-    if (pendientes.length > 0) {
-      const automatizacionesDistintas = [
-        ...new Set(pendientes.map((p) => p.automatizacionIdQlik)),
-      ];
-
-      const qlik = await dependencias.resolverQlik(c);
-
-      await Promise.all(
-        automatizacionesDistintas.map((automatizacionIdQlik) =>
-          new SincronizarEjecucionesReporte(
-            qlik,
-            dependencias.repositorioReportes,
-          ).ejecutar(sesion.tenantId, automatizacionIdQlik),
-        ),
-      );
-
-      ejecuciones = await servicio.listarEjecuciones({
-        tenantQlikId: sesion.tenantId,
-        organizacionId: sesion.organizacionId,
-      });
-    }
 
     return responderExito(c, ejecuciones);
   });

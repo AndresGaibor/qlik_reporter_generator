@@ -117,7 +117,7 @@ export class CrearAutomatizacionDesdePlantilla {
     };
 
     try {
-      await this.repositorioReportes.crearConfiguracion({
+      await this.repositorioReportes.crearReporte({
         organizacionId: contexto.organizacionId,
         tenantQlikId: contexto.tenantId,
         creadoPorUsuarioId: contexto.usuarioId,
@@ -125,8 +125,6 @@ export class CrearAutomatizacionDesdePlantilla {
         flujoIdQlik,
         flujoNombreSnapshot: flujo.name,
         ...(flujo.spaceId ? { flujoEspacioIdQlik: flujo.spaceId } : {}),
-        automatizacionIdQlik: resultado.id,
-        automatizacionNombreSnapshot: resultado.nombre,
         estado: "activa",
       });
 

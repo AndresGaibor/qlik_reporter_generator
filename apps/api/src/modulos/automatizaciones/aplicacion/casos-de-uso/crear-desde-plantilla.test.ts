@@ -109,16 +109,16 @@ function crearAuditoria() {
 }
 
 function crearRepositorioReportes() {
-  const crearConfiguracion = vi.fn(async (entrada: unknown) => ({
+  const crearReporte = vi.fn(async (entrada: unknown) => ({
     id: "config-1",
     ...(entrada as Record<string, unknown>),
   }));
   return {
     puerto: {
-      crearConfiguracion,
-      obtenerPorAutomatizacion: async () => null,
+      crearReporte,
+      obtenerPorId: async () => null,
     },
-    crearConfiguracion,
+    crearReporte,
   };
 }
 
@@ -285,7 +285,7 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
       ),
     ).rejects.toThrow("Dataflow");
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
-    expect(repositorio.crearConfiguracion).not.toHaveBeenCalled();
+    expect(repositorio.crearReporte).not.toHaveBeenCalled();
   });
 
   it("valida current antes de copiar y persiste la asociación Dataflow-Automate", async () => {
@@ -320,13 +320,12 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
     );
 
     expect(orden.slice(0, 2)).toEqual(["preflight", "copiar"]);
-    expect(repositorio.crearConfiguracion).toHaveBeenCalledWith(
+    expect(repositorio.crearReporte).toHaveBeenCalledWith(
       expect.objectContaining({
         organizacionId: "organizacion-1",
         tenantQlikId: "tenant-1",
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas Dataflow",
-        automatizacionIdQlik: "copia-1",
         estado: "activa",
       }),
     );

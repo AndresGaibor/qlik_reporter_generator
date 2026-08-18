@@ -55,16 +55,15 @@ describe("POST /desde-plantilla", () => {
       idempotencia: {} as unknown as PuertoIdempotencia,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
       repositorioReportes: {
-        crearConfiguracion: async (entrada) => ({ id: "config-1", ...entrada }),
-        obtenerPorAutomatizacion: async () => null,
+        crearReporte: async (entrada) => ({ id: "config-1", ...entrada }),
+        obtenerPorId: async () => null,
         crearEjecucion: async (entrada) => entrada as never,
         marcarEjecucionIniciada: async () => undefined,
         marcarEjecucionError: async () => undefined,
         marcarEjecucionCompletada: async () => undefined,
-        obtenerConfiguracionPorId: async () => null,
         listarEjecuciones: async () => [],
         marcarEstadoPorRunQlik: async () => undefined,
-        actualizarConfiguracion: async (_id, cambios) => ({
+        actualizarReporte: async (_id, cambios) => ({
           id: "config-1",
           organizacionId: "organizacion-1",
           tenantQlikId: "tenant-1",
@@ -72,11 +71,10 @@ describe("POST /desde-plantilla", () => {
           nombre: String(cambios.nombre ?? "Reporte"),
           flujoIdQlik: String(cambios.flujoIdQlik ?? "flujo-1"),
           flujoNombreSnapshot: String(cambios.flujoNombreSnapshot ?? "Flujo"),
-          automatizacionIdQlik: "auto-1",
-          automatizacionNombreSnapshot: "Reporte",
-          programar: false,
           estado: "activa",
         }),
+        listar: async () => [],
+        clonarReporte: async () => ({}) as never,
         listarEjecucionesDescargas: async () => [],
         obtenerEjecucionDescarga: async () => null,
       },
@@ -143,8 +141,8 @@ describe("POST /:id/ejecuciones", () => {
       ejecutarAutomatizacion,
     } as unknown as ServicioQlik;
     const repositorioReportes = {
-      crearConfiguracion: async (entrada: never) => entrada,
-      obtenerPorAutomatizacion: async () => ({
+      crearReporte: async (entrada: never) => entrada,
+      obtenerPorId: async () => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "organizacion-1",
         tenantQlikId: "tenant-1",
@@ -153,6 +151,7 @@ describe("POST /:id/ejecuciones", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Flujo",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: "Reporte",
         programar: false,
         estado: "activa" as const,

@@ -252,6 +252,7 @@ export function crearRutasPanelAutomatizaciones(
     ).ejecutar({
       tenantId: sesion.tenantId,
       organizacionId: sesion.organizacionId,
+      reporteId: id,
       automatizacionIdQlik: id,
       usuarioId: sesion.usuarioId,
     });

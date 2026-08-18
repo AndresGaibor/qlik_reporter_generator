@@ -71,4 +71,77 @@ describe("RepositorioReportesPostgres", () => {
     expect(resultado.ejecutadoPorUsuarioId).toBeNull();
     expect(resultado.automatizacionPersonalId).toBeNull();
   });
+
+  it("aplica tenant y organización al obtener y listar", async () => {
+    const condiciones: unknown[] = [];
+    const fila = {
+      id: "reporte-1",
+      organizacionId: "organizacion-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "usuario-1",
+      nombre: "Ventas",
+      flujoIdQlik: "flujo-1",
+      flujoNombreSnapshot: "Ventas",
+      estado: "activa",
+    };
+    const contieneAlcanceCorrecto = (where: unknown) => {
+      const valores: string[] = [];
+      const visitar = (valor: unknown) => {
+        if (!valor || typeof valor !== "object") return;
+        const objeto = valor as { value?: string[]; queryChunks?: unknown[] };
+        if (objeto.value) valores.push(...objeto.value);
+        objeto.queryChunks?.forEach(visitar);
+      };
+      visitar(where);
+      return (
+        valores.join("").includes("reporte-1") &&
+        valores.join("").includes("tenant-1") &&
+        valores.join("").includes("organizacion-1")
+      );
+    };
+    const db = {
+      query: {
+        reportes: {
+          findFirst: async ({ where }: { where: unknown }) => {
+            condiciones.push(where);
+            return contieneAlcanceCorrecto(where) ? fila : null;
+          },
+          findMany: async ({ where }: { where: unknown }) => {
+            condiciones.push(where);
+            return contieneAlcanceCorrecto(where) ? [fila] : [];
+          },
+        },
+      },
+    };
+    const repo = new RepositorioReportesPostgres(db as never);
+    expect(
+      await repo.obtenerPorId("reporte-1", "tenant-1", "organizacion-1"),
+    ).toMatchObject({
+      id: "reporte-1",
+    });
+    expect(
+      await repo.obtenerPorId("reporte-1", "tenant-2", "organizacion-2"),
+    ).toBeNull();
+    await repo.listar({
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+    });
+
+    const valores = condiciones.flatMap((condicion) => {
+      const encontrados: string[] = [];
+      const visitar = (valor: unknown) => {
+        if (!valor || typeof valor !== "object") return;
+        const objeto = valor as { value?: string[]; queryChunks?: unknown[] };
+        if (objeto.value) encontrados.push(...objeto.value);
+        objeto.queryChunks?.forEach(visitar);
+      };
+      visitar(condicion);
+      return encontrados;
+    });
+    expect(valores.join("")).toContain("reporte-1");
+    expect(valores.join("")).toContain("tenant-1");
+    expect(valores.join("")).toContain("organizacion-1");
+    expect(valores.join("")).toContain("tenant-2");
+    expect(valores.join("")).toContain("organizacion-2");
+  });
 });

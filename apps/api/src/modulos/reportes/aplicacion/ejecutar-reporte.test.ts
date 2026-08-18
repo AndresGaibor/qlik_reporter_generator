@@ -47,6 +47,7 @@ function configuracion() {
     flujoIdQlik: "flujo-1",
     flujoNombreSnapshot: "Ventas DF",
     automatizacionIdQlik: "auto-1",
+    reporteId: "reporte-1",
     automatizacionNombreSnapshot: "Ventas",
     estado: "activa" as const,
   };
@@ -85,7 +86,7 @@ describe("EjecutarReporte", () => {
 
     const ejecuciones: Array<Record<string, unknown>> = [];
     const repositorio = {
-      obtenerPorAutomatizacion: vi.fn(async () => configuracion()),
+      obtenerPorId: vi.fn(async () => configuracion()),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         orden.push("auditar");
         ejecuciones.push(entrada);
@@ -118,6 +119,7 @@ describe("EjecutarReporte", () => {
       tenantId: "tenant-1",
       organizacionId: "org-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
       usuarioId: "user-1",
     });
 
@@ -165,6 +167,7 @@ describe("EjecutarReporte", () => {
         tenantId: "tenant-1",
         organizacionId: "org-1",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
       }),
     ).rejects.toThrow("solicitud de ejecución");
   });
@@ -191,7 +194,7 @@ describe("EjecutarReporte", () => {
       ejecutarAutomatizacion,
     } as unknown as ServicioQlik;
     const repositorio = {
-      obtenerPorAutomatizacion: async () => configuracion(),
+      obtenerPorId: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: unknown) => entrada),
       marcarEjecucionIniciada: vi.fn(async () => undefined),
       marcarEjecucionError,
@@ -214,6 +217,7 @@ describe("EjecutarReporte", () => {
         tenantId: "tenant-1",
         organizacionId: "org-1",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
       }),
     ).rejects.toThrow("Qlik no aceptó");
 

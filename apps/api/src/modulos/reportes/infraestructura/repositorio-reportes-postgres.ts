@@ -27,15 +27,15 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
 
   async obtenerPorId(
     reporteId: string,
-    tenantQlikId?: string,
-    organizacionId?: string,
+    tenantQlikId: string,
+    organizacionId: string,
   ): Promise<ReportePersistido | null> {
-    const condiciones = [eq(reportes.id, reporteId)];
-    if (tenantQlikId) condiciones.push(eq(reportes.tenantQlikId, tenantQlikId));
-    if (organizacionId)
-      condiciones.push(eq(reportes.organizacionId, organizacionId));
     const fila = await this.db.query.reportes.findFirst({
-      where: and(...condiciones),
+      where: and(
+        eq(reportes.id, reporteId),
+        eq(reportes.tenantQlikId, tenantQlikId),
+        eq(reportes.organizacionId, organizacionId),
+      ),
     });
     return fila ? mapearReporte(fila) : null;
   }
@@ -68,21 +68,22 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }
 
   async clonarReporte(id: string, nombre: string): Promise<ReportePersistido> {
-    const origen = await this.obtenerPorId(id);
+    const [origen] = await this.db
+      .select()
+      .from(reportes)
+      .where(eq(reportes.id, id))
+      .limit(1);
     if (!origen) throw new Error("No se encontró el reporte a clonar");
-    const { id: _id, ...entrada } = origen;
+    const { id: _id, ...entrada } = mapearReporte(origen);
     return this.crearReporte({ ...entrada, nombre });
   }
 
   async crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
   ): Promise<EjecucionReportePersistida> {
-    const { configuracionId, ...resto } = entrada;
-    const reporteId = entrada.reporteId ?? configuracionId;
-    if (!reporteId) throw new Error("La ejecución requiere un reporte");
     const [fila] = await this.db
       .insert(ejecucionesReportes)
-      .values({ ...resto, reporteId })
+      .values(entrada)
       .returning();
     if (!fila) throw new Error("No se pudo crear la auditoría de ejecución");
     return mapearEjecucion(fila);
@@ -211,36 +212,6 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .limit(1);
     return fila ?? null;
   }
-
-  async crearConfiguracion(
-    entrada: CrearReportePersistido & Record<string, unknown>,
-  ): Promise<ReportePersistido> {
-    const {
-      automatizacionIdQlik: _id,
-      automatizacionNombreSnapshot: _nombre,
-      ...reporte
-    } = entrada;
-    return this.crearReporte(reporte);
-  }
-
-  async obtenerPorAutomatizacion(
-    _tenantQlikId: string,
-    _automatizacionIdQlik: string,
-  ): Promise<ReportePersistido | null> {
-    throw new Error("Los reportes ya no se resuelven por Qlik Automate");
-  }
-
-  async obtenerConfiguracionPorId(
-    id: string,
-  ): Promise<ReportePersistido | null> {
-    return this.obtenerPorId(id);
-  }
-  async actualizarConfiguracion(
-    id: string,
-    cambios: ActualizarReportePersistido,
-  ): Promise<ReportePersistido> {
-    return this.actualizarReporte(id, cambios);
-  }
 }
 
 function mapearReporte(fila: typeof reportes.$inferSelect): ReportePersistido {
@@ -265,7 +236,6 @@ function mapearEjecucion(
   return {
     ...fila,
     reporteId: fila.reporteId,
-    configuracionId: fila.reporteId,
     ejecutadoPorUsuarioId: fila.ejecutadoPorUsuarioId,
     automatizacionPersonalId: fila.automatizacionPersonalId,
     estado: fila.estado as EjecucionReportePersistida["estado"],
