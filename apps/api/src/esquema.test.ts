@@ -80,14 +80,21 @@ describe("Esquema Drizzle", () => {
     expect(idxNames(config)).toContain("uq_configuracion_oauth_por_tenant");
   });
 
-  it("mantiene columnas cifradas separadas sin borrar secretos heredados durante la migración", async () => {
+  it("el esquema base conserva las tablas y restricciones finales", async () => {
     const contenido = await Bun.file(
-      new URL("../drizzle/0009_secretos_destino_impala.sql", import.meta.url),
+      new URL("../sql/esquema-base.sql", import.meta.url),
     ).text();
 
-    expect(contenido).toContain("destino_api_key_cifrada");
-    expect(contenido).toContain("impala_password_cifrada");
-    expect(contenido).not.toContain("DROP COLUMN");
+    expect(contenido).toContain('CREATE TABLE IF NOT EXISTS "app_config"');
+    expect(contenido).toContain(
+      'CREATE TABLE IF NOT EXISTS "conexiones_destino"',
+    );
+    expect(contenido).toContain("\"tipo\" = 'bigquery'");
+    expect(contenido).toContain(
+      'CREATE TABLE IF NOT EXISTS "ejecuciones_reportes"',
+    );
+    expect(contenido).toContain("\"tipo_ejecucion\" = 'manual'");
+    expect(contenido).toContain('CREATE TABLE IF NOT EXISTS "eventos_outbox"');
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {
@@ -134,21 +141,6 @@ describe("Esquema Drizzle", () => {
         "estado",
       ]),
     );
-  });
-
-  it("la migración 0014 solo introduce auditoría de ejecuciones", async () => {
-    const contenido = await Bun.file(
-      new URL(
-        "../drizzle/0014_ejecuciones_reportes_dataflow.sql",
-        import.meta.url,
-      ),
-    ).text();
-    expect(contenido).toMatch(
-      /CREATE TABLE (IF NOT EXISTS )?"ejecuciones_reportes"/,
-    );
-    expect(contenido).not.toContain('CREATE TABLE "conexiones_destino"');
-    expect(contenido).not.toContain('CREATE TABLE "conexiones_origen"');
-    expect(contenido).not.toContain('DROP COLUMN "impala_');
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {

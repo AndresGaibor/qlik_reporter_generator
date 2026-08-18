@@ -25,7 +25,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${PORT_API:-4523}
-      DATABASE_URL: ${DATABASE_URL:-postgres://qlik_app:cambiar_en_produccion@postgres:5432/qlik_automatizaciones}
+      DATABASE_URL: postgres://${POSTGRES_USER:-qlik_app}:${POSTGRES_PASSWORD:-cambiar_en_produccion}@postgres:5432/qlik_automatizaciones
     ports:
       - "${HOST_IP:-127.0.0.1}:${PORT_API:-4523}:${PORT_API:-4523}"
     depends_on:

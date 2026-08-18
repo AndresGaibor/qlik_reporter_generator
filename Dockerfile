@@ -23,7 +23,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4523
 COPY --from=build-api /app/apps/api/dist ./dist
-COPY --from=build-api /app/apps/api/drizzle ./drizzle
+COPY --from=build-api /app/apps/api/sql ./sql
 EXPOSE 4523
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://127.0.0.1:4523/api/salud || exit 1

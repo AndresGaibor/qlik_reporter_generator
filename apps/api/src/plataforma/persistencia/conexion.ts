@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -48,65 +48,18 @@ export async function cerrarConexion(): Promise<void> {
   await dbHolder.cerrar();
 }
 
-export async function ejecutarMigraciones(): Promise<void> {
-  await db.execute(sql`SET client_min_messages = 'WARNING'`);
+const rutaEsquemaBase = resolve(process.cwd(), "sql/esquema-base.sql");
 
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS _migrations_lock (
-        id INTEGER PRIMARY KEY,
-        locked BOOLEAN DEFAULT FALSE
-      )
-    `);
-  } catch {
-    // tabla _migrations_lock puede no existir aún
-  }
-
-  const migrationsDir = join(process.cwd(), "drizzle");
-
-  let archivos: string[] = [];
-  try {
-    archivos = readdirSync(migrationsDir)
-      .filter((f) => f.endsWith(".sql"))
-      .sort();
-  } catch {
-    console.warn("No se encontró directorio de migraciones:", migrationsDir);
-    return;
-  }
-
-  for (const archivo of archivos) {
-    try {
-      const contenido = readFileSync(join(migrationsDir, archivo), "utf8");
-      await db.execute(sql.raw(contenido));
-      console.log("✓ Migración:", archivo);
-    } catch (error) {
-      console.warn("✗ Error en migración", `${archivo}:`, error);
-    }
-  }
+export function obtenerEsquemaBase(): string {
+  return readFileSync(rutaEsquemaBase, "utf8");
 }
 
 export async function asegurarEsquemaTablas(): Promise<void> {
-  await ejecutarMigraciones();
-
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS app_config (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        clave text NOT NULL UNIQUE,
-        valor jsonb NOT NULL DEFAULT '{}',
-        actualizado_en timestamp with time zone NOT NULL DEFAULT NOW()
-      )
-    `);
-  } catch (error) {
-    console.warn("Aviso al asegurar esquema de app_config:", error);
-  }
-
-  try {
-    await db.execute(sql`
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_id_qlik TEXT;
-      ALTER TABLE tenants_qlik ADD COLUMN IF NOT EXISTS automatizacion_base_nombre TEXT;
-    `);
-  } catch (error) {
-    console.warn("Aviso al asegurar esquema de tenants_qlik:", error);
+  await db.execute(sql`SET client_min_messages = 'WARNING'`);
+  const resultado = await db.execute<{ existe: boolean }>(sql`
+    SELECT to_regclass('public.organizaciones') IS NOT NULL AS existe
+  `);
+  if (!resultado[0]?.existe) {
+    await db.execute(sql.raw(obtenerEsquemaBase()));
   }
 }
