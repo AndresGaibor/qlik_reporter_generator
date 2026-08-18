@@ -165,10 +165,29 @@ describe("ClienteHttpQlik", () => {
     expect(JSON.parse(String(opciones.body))).toEqual({ script: "LOAD [id];" });
   });
 
-  it("copia el Dataflow con el formato exacto de Apps API", async () => {
-    const fetchFn: FetchMock = vi.fn(async () =>
-      respuestaJson({ attributes: { id: "copia-1", name: "Copia ventas" } }),
-    );
+  it("copia y registra el Dataflow con la secuencia del frontend de Qlik", async () => {
+    const fetchFn: FetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        respuestaJson(
+          {
+            details: {
+              attributes: {
+                id: "copia-1",
+                name: "Copia ventas",
+                description: "qlik generator",
+                usage: "DATAFLOW_PREP",
+                spaceId: "space-1",
+                createdDate: "2026-08-18T22:14:35.870Z",
+                owner: "usuario-1",
+                custom: {},
+              },
+            },
+          },
+          201,
+        ),
+      )
+      .mockResolvedValueOnce(respuestaJson({ id: "item-1" }, 201));
     const cliente = new ClienteHttpQlik(
       "tenant.eu.qlikcloud.com",
       "token",
@@ -182,19 +201,26 @@ describe("ClienteHttpQlik", () => {
 
     const llamada = fetchFn.mock.calls[0] as unknown[];
     expect(new URL(String(llamada[0])).pathname).toBe(
-      "/api/v1/apps/app-real-1/copy",
+      "/api/v1/dataflow-apps/app-real-1/actions/copy",
     );
     const opciones = llamada[1] as RequestInit;
     expect(opciones.headers).toMatchObject({
       "Content-Type": "application/json",
     });
     expect(JSON.parse(String(opciones.body))).toEqual({
-      attributes: {
-        name: "Copia ventas",
-        usage: "DATAFLOW_PREP",
-        spaceId: "space-1",
-        description: "qlik generator",
-      },
+      name: "Copia ventas",
+      usage: "DATAFLOW_PREP",
+      spaceId: "space-1",
+    });
+    const registro = fetchFn.mock.calls[1] as unknown[];
+    expect(new URL(String(registro[0])).pathname).toBe("/api/v1/items");
+    expect(JSON.parse(String((registro[1] as RequestInit).body))).toMatchObject({
+      name: "Copia ventas",
+      resourceId: "copia-1",
+      resourceType: "app",
+      description: "qlik generator",
+      spaceId: "space-1",
+      resourceCustomAttributes: {},
     });
   });
 
