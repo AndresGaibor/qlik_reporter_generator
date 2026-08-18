@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { readdir } from "node:fs/promises";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
@@ -142,6 +143,26 @@ describe("Esquema Drizzle", () => {
     );
   });
 
+  it("la segunda migración retira campos redundantes del reporte", async () => {
+    const directorio = new URL("../drizzle/", import.meta.url);
+    const archivo = (await readdir(directorio)).find(
+      (nombre) => nombre.startsWith("0002_") && nombre.endsWith(".sql"),
+    );
+    expect(archivo).toBeDefined();
+    const contenido = await Bun.file(
+      new URL(`../drizzle/${archivo}`, import.meta.url),
+    ).text();
+    for (const columna of [
+      "destino_proveedor",
+      "destino_id_externo",
+      "destino_nombre_snapshot",
+      "clave_idempotencia",
+    ]) {
+      expect(contenido).toContain(`DROP COLUMN \"${columna}\"`);
+    }
+    expect(contenido).toContain('DROP COLUMN "tipo_ejecucion"');
+  });
+
   it("identidadesQlik tiene las columnas esperadas", () => {
     const cols = colNames(getTableConfig(identidadesQlik));
     expect(cols).toContain("usuario_id_qlik");
@@ -162,12 +183,20 @@ describe("Esquema Drizzle", () => {
     expect(idxs).toContain("idx_sesiones_usuario_expira");
   });
 
-  it("configuracionesAutomatizacion tiene las columnas esperadas sin programar", () => {
+  it("configuracionesAutomatizacion solo persiste Dataflow, Automate y estado", () => {
     const cols = colNames(getTableConfig(configuracionesAutomatizacion));
     expect(cols).toContain("flujo_id_qlik");
     expect(cols).toContain("automatizacion_id_qlik");
-    expect(cols).not.toContain("programar");
     expect(cols).toContain("estado");
+    for (const legacy of [
+      "programar",
+      "destino_proveedor",
+      "destino_id_externo",
+      "destino_nombre_snapshot",
+      "clave_idempotencia",
+    ]) {
+      expect(cols).not.toContain(legacy);
+    }
   });
 
   it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {
@@ -182,7 +211,6 @@ describe("Esquema Drizzle", () => {
         "sql_bigquery_compilado",
         "script_exportacion",
         "uri_base_gcs",
-        "tipo_ejecucion",
         "estado",
       ]),
     );
@@ -234,22 +262,8 @@ describe("Esquema Drizzle", () => {
     expect(cols).not.toContain("destino_base_datos");
   });
 
-  it("ejecucionesReportes.tipoEjecucion solo permite 'manual'", () => {
-    const config = getTableConfig(ejecucionesReportes);
-    const checks = config.checks as unknown as Array<{
-      name: string;
-      value: { queryChunks: Array<{ value?: string[]; name?: string }> };
-    }>;
-    const tipoCheck = checks?.find(
-      (c) => c.name === "ejecuciones_reportes_tipo_check",
-    );
-    expect(tipoCheck).toBeDefined();
-    const chunks = tipoCheck?.value?.queryChunks ?? [];
-    const chunkValues = chunks
-      .filter((ch) => ch.value)
-      .flatMap((ch) => ch.value ?? []);
-    const constraintDef = chunkValues.join("");
-    expect(constraintDef).toContain("'manual'");
-    expect(constraintDef).not.toContain("'programada'");
+  it("ejecucionesReportes no persiste tipo de ejecución desde que solo existe manual", () => {
+    const cols = colNames(getTableConfig(ejecucionesReportes));
+    expect(cols).not.toContain("tipo_ejecucion");
   });
 });

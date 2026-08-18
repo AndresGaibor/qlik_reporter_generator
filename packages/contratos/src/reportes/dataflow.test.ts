@@ -7,29 +7,10 @@ import {
 } from "./dataflow.js";
 
 describe("contratos de reportes Dataflow", () => {
-  it("exige que tipoEjecucion sea solo manual", () => {
-    expect(
-      esquemaDetalleEjecucionReporte.safeParse({
-        id: "11111111-1111-4111-8111-111111111111",
-        configuracionId: "22222222-2222-4222-8222-222222222222",
-        flujoIdQlik: "flujo-1",
-        automatizacionIdQlik: "auto-1",
-        runIdQlik: null,
-        hashDataflowSha256: "a".repeat(64),
-        scriptDataflow: "SELECT 1",
-        sqlBigQueryCompilado: "SELECT 1",
-        scriptExportacion: "EXPORT DATA",
-        uriBaseGcs: "gs://bkt/test/",
-        tipoEjecucion: "programada",
-        estado: "preparando",
-        versionCompilador: 1,
-        etapaError: null,
-        mensajeError: null,
-        iniciadoEn: null,
-        finalizadoEn: null,
-        creadoEn: new Date().toISOString(),
-      }).success,
-    ).toBe(false);
+  it("no expone tipoEjecucion desde que solo existen ejecuciones manuales", () => {
+    expect(esquemaDetalleEjecucionReporte.shape).not.toHaveProperty(
+      "tipoEjecucion",
+    );
   });
 
   it("ConfiguracionReporteDataflow no tiene programacion", () => {

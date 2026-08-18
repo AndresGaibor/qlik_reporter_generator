@@ -14,13 +14,9 @@ export interface CrearConfiguracionReportePersistida {
   flujoIdQlik: string;
   flujoNombreSnapshot: string;
   flujoEspacioIdQlik?: string;
-  destinoProveedor: string;
-  destinoIdExterno: string;
-  destinoNombreSnapshot: string;
   automatizacionIdQlik: string;
   automatizacionNombreSnapshot: string;
   estado: EstadoConfiguracionReporte;
-  claveIdempotencia?: string;
 }
 
 export interface ConfiguracionReportePersistida
@@ -45,7 +41,6 @@ export interface CrearEjecucionReportePersistida {
   sqlBigQueryCompilado: string;
   scriptExportacion: string;
   uriBaseGcs: string;
-  tipoEjecucion: "manual";
   estado: "preparando";
   versionCompilador: number;
 }

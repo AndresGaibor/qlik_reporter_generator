@@ -21,6 +21,6 @@ bun run build
 
 ## PostgreSQL
 
-El esquema vigente parte de `0000_tan_zeigeist.sql`. La migración forward `0001_spooky_marvel_apes.sql` retira tablas y columnas legacy, normaliza roles a `admin | usuario` y limpia sesiones/idempotencias expiradas.
+El esquema vigente parte de `0000_tan_zeigeist.sql`. `0001_spooky_marvel_apes.sql` retira tablas y columnas históricas, normaliza roles a `admin | usuario` y limpia sesiones/idempotencias expiradas. `0002_absent_thing.sql` elimina campos redundantes de configuración y ejecución de reportes.
 
 La persistencia activa incluye organizaciones, usuarios, tenants Qlik, OAuth/sesiones, configuración BigQuery, reportes, ejecuciones, auditoría e idempotencia.

@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-export const esquemaTipoEjecucionReporte = z.enum(["manual"]);
-export type TipoEjecucionReporte = z.infer<typeof esquemaTipoEjecucionReporte>;
-
 export const esquemaEstadoEjecucionReporte = z.enum([
   "preparando",
   "iniciada",
@@ -46,7 +43,6 @@ export const esquemaDetalleEjecucionReporte = z.object({
   sqlBigQueryCompilado: z.string(),
   scriptExportacion: z.string(),
   uriBaseGcs: z.string().startsWith("gs://"),
-  tipoEjecucion: esquemaTipoEjecucionReporte,
   estado: esquemaEstadoEjecucionReporte,
   versionCompilador: z.number().int().positive(),
   etapaError: z.string().nullable(),

@@ -169,6 +169,10 @@ describe("arquitectura-integraciones-activas", () => {
       "destino_api_key_cifrada",
       "destino_base_datos",
       "conexiones_origen",
+      "destinoProveedor",
+      "destinoIdExterno",
+      "destinoNombreSnapshot",
+      "tipoEjecucion",
     ]) {
       expect(codigoActivo).not.toContain(identificador);
     }

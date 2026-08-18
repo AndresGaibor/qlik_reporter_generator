@@ -8,7 +8,6 @@ import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js"
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
-import { URI_BASE_GCS_REPORTES } from "../../../reportes/dominio/destino-gcs.js";
 import { copiarAutomatizacion } from "../servicios/servicio-copia-automatizacion.js";
 import {
   completarIdempotencia,
@@ -126,13 +125,9 @@ export class CrearAutomatizacionDesdePlantilla {
         flujoIdQlik,
         flujoNombreSnapshot: flujo.name,
         ...(flujo.spaceId ? { flujoEspacioIdQlik: flujo.spaceId } : {}),
-        destinoProveedor: "gcs",
-        destinoIdExterno: URI_BASE_GCS_REPORTES,
-        destinoNombreSnapshot: "TalendDescargados",
         automatizacionIdQlik: resultado.id,
         automatizacionNombreSnapshot: resultado.nombre,
         estado: "activa",
-        ...(clave ? { claveIdempotencia: clave } : {}),
       });
 
       await this.auditoria.registrar({

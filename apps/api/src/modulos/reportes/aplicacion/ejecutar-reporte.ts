@@ -124,7 +124,6 @@ export class EjecutarReporte {
         sqlBigQueryCompilado: preparacion.sqlBigQuery,
         scriptExportacion,
         uriBaseGcs,
-        tipoEjecucion: "manual",
         estado: "preparando",
         versionCompilador: VERSION_COMPILADOR,
       });

@@ -327,8 +327,6 @@ describe("CrearAutomatizacionDesdePlantilla", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas Dataflow",
         automatizacionIdQlik: "copia-1",
-        destinoProveedor: "gcs",
-        destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
         estado: "activa",
       }),
     );

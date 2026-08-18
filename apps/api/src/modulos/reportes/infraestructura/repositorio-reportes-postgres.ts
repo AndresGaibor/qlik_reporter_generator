@@ -253,15 +253,9 @@ function mapearConfiguracion(
     ...(fila.flujoEspacioIdQlik
       ? { flujoEspacioIdQlik: fila.flujoEspacioIdQlik }
       : {}),
-    destinoProveedor: fila.destinoProveedor,
-    destinoIdExterno: fila.destinoIdExterno,
-    destinoNombreSnapshot: fila.destinoNombreSnapshot,
     automatizacionIdQlik: fila.automatizacionIdQlik,
     automatizacionNombreSnapshot: fila.automatizacionNombreSnapshot,
     estado: fila.estado as ConfiguracionReportePersistida["estado"],
-    ...(fila.claveIdempotencia
-      ? { claveIdempotencia: fila.claveIdempotencia }
-      : {}),
   };
 }
 
@@ -278,7 +272,6 @@ function mapearEjecucion(
     sqlBigQueryCompilado: fila.sqlBigQueryCompilado,
     scriptExportacion: fila.scriptExportacion,
     uriBaseGcs: fila.uriBaseGcs,
-    tipoEjecucion: "manual",
     estado: fila.estado as EjecucionReportePersistida["estado"],
     versionCompilador: fila.versionCompilador,
     runIdQlik: fila.runIdQlik,
