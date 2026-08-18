@@ -134,6 +134,21 @@ export class RepositorioAdministracionPostgres
     );
   }
 
+  async configurarDataflowBase(
+    organizacionId: string,
+    tenantQlikId: string,
+    dataflowBaseIdQlik: string,
+    dataflowBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null> {
+    return ConsultaTenantQlik.configurarDataflowBase(
+      this.db,
+      organizacionId,
+      tenantQlikId,
+      dataflowBaseIdQlik,
+      dataflowBaseNombre,
+    );
+  }
+
   async eliminarTenantQlik(organizacionId: string, tenantQlikId: string) {
     return ConsultaTenantQlik.eliminarTenantQlik(
       this.db,

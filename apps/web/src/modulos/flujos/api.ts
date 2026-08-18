@@ -1,6 +1,8 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type { EspacioDisponible } from "@qlik/contratos/automatizaciones";
 import type {
+  DataflowBaseDisponible,
+  ResultadoClonarDataflowBase,
   ResumenFlujo,
   ResumenReporteDataflow,
 } from "@qlik/contratos/flujos";
@@ -17,6 +19,17 @@ export function obtenerFlujosConFiltros(espacioId?: string, busqueda?: string) {
       ...(busqueda ? { q: busqueda } : {}),
     },
   });
+}
+
+export function obtenerDataflowBase() {
+  return clienteApi.get<DataflowBaseDisponible>("/flujos/plantilla-base");
+}
+
+export function clonarDataflowBase(nombre: string) {
+  return clienteApi.post<ResultadoClonarDataflowBase>(
+    "/flujos/desde-plantilla",
+    { nombre },
+  );
 }
 
 export function obtenerEspacios() {

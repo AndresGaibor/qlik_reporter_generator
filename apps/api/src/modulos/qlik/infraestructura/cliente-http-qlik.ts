@@ -277,7 +277,9 @@ export class ClienteHttpQlik implements ServicioQlik {
         )
         .map((item) => ({
           id: String(item.resourceId ?? item.id),
+          appId: obtenerAppIdDataflow(item),
           name: String(item.name ?? ""),
+          description: obtenerDescripcionItem(item),
           spaceId: item.spaceId ? String(item.spaceId) : undefined,
           ownerId: item.ownerId ? String(item.ownerId) : undefined,
           createdAt: item.resourceCreatedAt
@@ -289,6 +291,36 @@ export class ClienteHttpQlik implements ServicioQlik {
         }));
     }
     return [];
+  }
+
+  async copiarDataflow(
+    id: string,
+    nombre: string,
+    atributos: { espacioId?: string; descripcion?: string },
+  ) {
+    const respuesta = await this.solicitarJson<{
+      attributes?: { id?: string; name?: string };
+    }>({
+      metodo: "POST",
+      ruta: `/api/v1/apps/${encodeURIComponent(id)}/copy`,
+      cuerpo: {
+        attributes: {
+          name: nombre,
+          usage: "DATAFLOW_PREP",
+          ...(atributos.espacioId ? { spaceId: atributos.espacioId } : {}),
+          ...(atributos.descripcion
+            ? { description: atributos.descripcion }
+            : {}),
+        },
+      },
+    });
+    if (!respuesta.attributes?.id) {
+      throw new Error("Qlik no devolvió el ID de la copia creada");
+    }
+    return {
+      id: respuesta.attributes.id,
+      nombre: respuesta.attributes.name || nombre,
+    };
   }
 
   obtenerScriptApp(
@@ -322,6 +354,21 @@ export class ClienteHttpQlik implements ServicioQlik {
       advertencias: (respuesta.Warnings ?? []).map(mapear),
     };
   }
+}
+
+function obtenerAppIdDataflow(item: Record<string, unknown>): string {
+  const atributos = item.resourceAttributes as
+    | Record<string, unknown>
+    | undefined;
+  const appId = atributos?.appId ?? atributos?.id;
+  if (typeof appId === "string" && appId.trim()) return appId.trim();
+
+  const sourceSystemId = atributos?.sourceSystemId;
+  if (typeof sourceSystemId === "string" && sourceSystemId.trim()) {
+    return sourceSystemId.replace(/^QIX-DF_/i, "").trim();
+  }
+
+  return String(item.resourceId ?? item.id);
 }
 
 function obtenerDescripcionItem(item: Record<string, unknown>): string {

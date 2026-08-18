@@ -153,6 +153,18 @@ describe("API", () => {
           automatizacionBaseNombre: "Base Auto",
           creadoEn: new Date(),
         }),
+        configurarDataflowBase: async () => ({
+          id: "t1",
+          organizacionId: "org1",
+          tenantIdQlik: "q1",
+          host: "test.qlikcloud.com",
+          nombre: "test",
+          estado: "activo",
+          esPrincipal: true,
+          dataflowBaseIdQlik: "flow1",
+          dataflowBaseNombre: "Base Ventas",
+          creadoEn: new Date(),
+        }),
         eliminarTenantQlik: async () => "ELIMINADO",
         obtenerConfiguracionOAuth: async () => null,
         guardarConfiguracionOAuth: async () => null,
@@ -201,6 +213,22 @@ describe("API", () => {
       },
     );
     expect(res2.status).toBe(200);
+
+    const resDataflow = await app.request(
+      "/api/admin/organizaciones/org1/tenants-qlik/t1/dataflow-base",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://localhost:4525",
+        },
+        body: JSON.stringify({
+          dataflowBaseIdQlik: "flow1",
+          dataflowBaseNombre: "Base Ventas",
+        }),
+      },
+    );
+    expect(resDataflow.status).toBe(200);
   });
   it("monta GET /api/flujos con datos de Qlik", async () => {
     const app = await crearAplicacion({

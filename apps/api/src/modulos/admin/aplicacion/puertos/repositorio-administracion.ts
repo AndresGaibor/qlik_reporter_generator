@@ -19,6 +19,8 @@ export interface TenantQlikAdministrable {
   esPrincipal: boolean;
   automatizacionBaseIdQlik?: string | null;
   automatizacionBaseNombre?: string | null;
+  dataflowBaseIdQlik?: string | null;
+  dataflowBaseNombre?: string | null;
   creadoEn: Date;
 }
 
@@ -120,6 +122,12 @@ export interface RepositorioAdministracion {
     tenantQlikId: string,
     automatizacionBaseIdQlik: string,
     automatizacionBaseNombre?: string,
+  ): Promise<TenantQlikAdministrable | null>;
+  configurarDataflowBase(
+    organizacionId: string,
+    tenantQlikId: string,
+    dataflowBaseIdQlik: string,
+    dataflowBaseNombre?: string,
   ): Promise<TenantQlikAdministrable | null>;
   eliminarTenantQlik(
     organizacionId: string,

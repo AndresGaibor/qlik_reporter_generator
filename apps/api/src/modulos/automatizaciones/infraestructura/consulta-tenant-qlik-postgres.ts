@@ -8,12 +8,16 @@ export function mapearTenantParaAutomatizaciones(
     host: string;
     automatizacionBaseIdQlik?: string | null;
     automatizacionBaseNombre?: string | null;
+    dataflowBaseIdQlik?: string | null;
+    dataflowBaseNombre?: string | null;
   } & Record<string, unknown>,
 ) {
   return {
     host: fila.host,
     automatizacionBaseIdQlik: fila.automatizacionBaseIdQlik,
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
+    dataflowBaseIdQlik: fila.dataflowBaseIdQlik,
+    dataflowBaseNombre: fila.dataflowBaseNombre,
   };
 }
 

@@ -21,7 +21,9 @@ export interface EspacioQlik {
 
 export interface FlujoQlik {
   id: string;
+  appId?: string;
   name: string;
+  description?: string;
   spaceId?: string;
   owner?: { id: string; name: string };
   ownerId?: string;

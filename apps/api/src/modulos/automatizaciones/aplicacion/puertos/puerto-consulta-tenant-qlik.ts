@@ -3,5 +3,7 @@ export interface PuertoConsultaTenantQlik {
     host: string;
     automatizacionBaseIdQlik?: string | null;
     automatizacionBaseNombre?: string | null;
+    dataflowBaseIdQlik?: string | null;
+    dataflowBaseNombre?: string | null;
   } | null>;
 }

@@ -62,6 +62,14 @@ export interface PuertoQlik {
   listarFlujos(
     espacioId?: string,
   ): Promise<import("../../dominio/modelos-qlik.js").FlujoQlik[]>;
+  copiarDataflow(
+    id: string,
+    nombre: string,
+    atributos: { espacioId?: string; descripcion?: string },
+  ): Promise<{
+    id: string;
+    nombre: string;
+  }>;
   obtenerScriptApp(
     appId: string,
     scriptId?: string,

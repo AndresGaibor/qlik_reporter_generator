@@ -89,6 +89,9 @@ describe("ClienteHttpQlik", () => {
             name: "Ventas",
             description: "Creado por QLIK GENERATOR para ventas",
             resourceSubType: "qix-df",
+            resourceAttributes: {
+              sourceSystemId: "QIX-DF_app-real-1",
+            },
           },
           {
             id: "incluido-2",
@@ -128,6 +131,7 @@ describe("ClienteHttpQlik", () => {
     const flujos = await cliente.listarFlujos();
 
     expect(flujos.map((flujo) => flujo.id)).toEqual(["flujo-1", "incluido-2"]);
+    expect(flujos[0]?.appId).toBe("app-real-1");
   });
 
   it("valida el script mediante el endpoint nativo de Qlik", async () => {
@@ -159,6 +163,39 @@ describe("ClienteHttpQlik", () => {
     const opciones = llamada[1] as RequestInit;
     expect(opciones.method).toBe("POST");
     expect(JSON.parse(String(opciones.body))).toEqual({ script: "LOAD [id];" });
+  });
+
+  it("copia el Dataflow con el formato exacto de Apps API", async () => {
+    const fetchFn: FetchMock = vi.fn(async () =>
+      respuestaJson({ attributes: { id: "copia-1", name: "Copia ventas" } }),
+    );
+    const cliente = new ClienteHttpQlik(
+      "tenant.eu.qlikcloud.com",
+      "token",
+      fetchFn as unknown as typeof fetch,
+    );
+
+    await cliente.copiarDataflow("app-real-1", "Copia ventas", {
+      espacioId: "space-1",
+      descripcion: "qlik generator",
+    });
+
+    const llamada = fetchFn.mock.calls[0] as unknown[];
+    expect(new URL(String(llamada[0])).pathname).toBe(
+      "/api/v1/apps/app-real-1/copy",
+    );
+    const opciones = llamada[1] as RequestInit;
+    expect(opciones.headers).toMatchObject({
+      "Content-Type": "application/json",
+    });
+    expect(JSON.parse(String(opciones.body))).toEqual({
+      attributes: {
+        name: "Copia ventas",
+        usage: "DATAFLOW_PREP",
+        spaceId: "space-1",
+        description: "qlik generator",
+      },
+    });
   });
 
   it("propaga estado, cuerpo y trace id de Qlik", async () => {

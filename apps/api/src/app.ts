@@ -399,6 +399,11 @@ export async function crearAplicacion(
     crearRutasFlujos(
       async (c) => new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverQlik,
+      {
+        resolverSesion,
+        obtenerTenant: (tenantId) =>
+          new ConsultaTenantQlikPostgres().obtenerTenant(tenantId),
+      },
     ),
   );
   const servicioBigQueryAdmin = new ServicioBigQueryAdminPostgres(
