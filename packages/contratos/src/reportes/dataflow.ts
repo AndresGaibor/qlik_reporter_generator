@@ -32,12 +32,21 @@ export type PreflightDataflowReporte = z.infer<
   typeof esquemaPreflightDataflowReporte
 >;
 
+export const esquemaCrearReporte = z.object({
+  nombre: z.string().trim().min(1).max(255),
+  flujoIdQlik: z.string().trim().min(1),
+  espacioIdQlik: z.string().trim().min(1).optional(),
+}).strict();
+export type CrearReporte = z.infer<typeof esquemaCrearReporte>;
+
 export const esquemaDetalleEjecucionReporte = z.object({
   id: z.string().uuid(),
-  configuracionId: z.string().uuid(),
+  reporteId: z.string().uuid(),
   flujoIdQlik: z.string(),
   automatizacionIdQlik: z.string(),
   runIdQlik: z.string().nullable(),
+  ejecutadoPorUsuarioId: z.string().uuid(),
+  automatizacionPersonalId: z.string().uuid().nullable(),
   hashDataflowSha256: z.string().regex(/^[a-f0-9]{64}$/),
   scriptDataflow: z.string(),
   sqlBigQueryCompilado: z.string(),
@@ -73,10 +82,9 @@ export const esquemaConfiguracionReporteDataflow = z
     flujoIdQlik: z.string(),
     flujoNombreSnapshot: z.string(),
     flujoEspacioIdQlik: z.string().nullable(),
-    automatizacionIdQlik: z.string(),
-    automatizacionNombreSnapshot: z.string(),
     destinoGcs: z.string().startsWith("gs://"),
     activa: z.boolean(),
+    creadoPorUsuarioId: z.string().uuid(),
   })
   .strict();
 export type ConfiguracionReporteDataflow = z.infer<
