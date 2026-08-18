@@ -5,10 +5,7 @@ import { expect, test } from "vitest";
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const detallePath = resolve(aqui, "pagina-detalle-flujo.tsx");
-const catalogoPath = resolve(
-  aqui,
-  "../origenes/pagina-catalogo-origen.tsx",
-);
+const catalogoPath = resolve(aqui, "../origenes/pagina-catalogo-origen.tsx");
 
 test("retira el catálogo técnico de conexiones del frontend", () => {
   const fuente = readFileSync(detallePath, "utf8");
