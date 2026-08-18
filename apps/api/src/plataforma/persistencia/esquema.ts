@@ -65,10 +65,7 @@ export const membresiasOrganizacion = pgTable(
   },
   (t) => ({
     pk: unique("membresias_pk").on(t.organizacionId, t.usuarioId),
-    ckRol: check(
-      "membresias_rol_check",
-      sql`${t.rol} IN ('admin', 'usuario')`,
-    ),
+    ckRol: check("membresias_rol_check", sql`${t.rol} IN ('admin', 'usuario')`),
   }),
 );
 

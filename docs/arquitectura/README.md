@@ -12,7 +12,7 @@ HTTP → aplicación → dominio
 Se combinan:
 
 - Clean Architecture para dirigir dependencias hacia adentro.
-- Arquitectura hexagonal para aislar Qlik, PostgreSQL y servicios remotos detrás de puertos.
+- Arquitectura hexagonal para aislar Qlik Cloud, Google Cloud y PostgreSQL detrás de puertos.
 - DDD táctico para nombrar módulos, casos de uso, eventos y valores según el negocio.
 
 ## Estructura
@@ -35,22 +35,28 @@ apps/api/src/
 ├── nucleo/
 │   ├── auditoria/
 │   ├── errores/
-│   ├── eventos/
 │   ├── idempotencia/
-│   ├── tiempo/
+│   ├── sesion/
 │   └── valores/
 └── modulos/
+    ├── admin/
     ├── autenticacion-qlik/
     ├── automatizaciones/
-    ├── destinos/
+    ├── descargas/
     ├── flujos/
-    └── qlik/
+    ├── google-cloud/
+    ├── qlik/
+    ├── reportes/
+    └── setup/
 
 packages/contratos/src/
+├── admin/
 ├── autenticacion/
 ├── automatizaciones/
 ├── comun/
+├── descargas/
 ├── flujos/
+├── reportes/
 └── qlik/
 ```
 
@@ -74,16 +80,16 @@ Cada módulo expone únicamente su `publico.ts`. Los consumidores no deben impor
 4. Los contratos compartidos viven en `packages/contratos`.
 5. Todo módulo nuevo debe tener `publico.ts`.
 6. Un módulo no importa carpetas internas de otro módulo; consume su API pública.
-7. Los nombres del negocio, DTO, eventos y estados se escriben en español. Se conservan nombres ingleses solo al representar literalmente el contrato externo de Qlik.
+7. Los nombres del negocio, DTO y estados se escriben en español. Se conservan nombres ingleses solo al representar literalmente contratos externos.
 8. Las escrituras repetibles aceptan clave de idempotencia.
-9. Los hechos relevantes generan auditoría y evento outbox.
+9. Los hechos relevantes generan auditoría persistente.
 10. Los tokens de Qlik no salen del backend ni se escriben en logs.
 
 ## API de negocio frente a API externa
 
 Hay dos superficies intencionales:
 
-- `/api/automatizaciones`, `/api/flujos` y `/api/destinos`: API estable del producto, con DTO en español.
+- `/api/reportes`, `/api/flujos` y `/api/descargas`: API estable del producto, con DTO en español.
 - `/api/qlik/*`: proxy controlado y validado de endpoints oficiales. Conserva las respuestas exitosas de Qlik; los errores se traducen al contrato común para operaciones administrativas o avanzadas.
 
 El frontend debe usar la API de negocio. El proxy no debe convertirse en un atajo para saltarse casos de uso del dominio.
@@ -99,7 +105,7 @@ copiar automatización
   → reemplazar únicamente rutas JSON Pointer existentes
   → actualizar definición completa
   → cambiar propietario opcional (al final)
-  → auditoría + outbox + completar idempotencia
+  → auditoría + completar idempotencia
 ```
 
 Si un paso posterior a la copia falla, el caso de uso intenta eliminar la copia para no dejar recursos incompletos.
@@ -111,10 +117,13 @@ apps/web/src/
 ├── app/                    # router, layout y providers
 ├── compartido/             # API client, UI y feedback transversal
 └── modulos/
+    ├── admin/
     ├── autenticacion/
-    ├── automatizaciones/
+    ├── descargas/
     ├── flujos/
-    └── inicio/
+    ├── inicio/
+    ├── reportes/
+    └── setup/
 ```
 
 Cada feature contiene su API, páginas, rutas y `publico.ts`. La feature no conoce Drizzle ni la forma cruda de Qlik.
