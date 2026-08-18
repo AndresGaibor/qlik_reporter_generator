@@ -1,6 +1,9 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type { EspacioDisponible } from "@qlik/contratos/automatizaciones";
-import type { ResumenFlujo } from "@qlik/contratos/flujos";
+import type {
+  ResumenFlujo,
+  ResumenReporteDataflow,
+} from "@qlik/contratos/flujos";
 
 export type { ResumenFlujo };
 export function obtenerFlujos() {
@@ -29,5 +32,11 @@ export interface RespuestaScriptFlujo {
 export function obtenerScriptFlujo(id: string) {
   return clienteApi.get<RespuestaScriptFlujo>(
     `/flujos/${encodeURIComponent(id)}/script`,
+  );
+}
+
+export function obtenerResumenReporteDataflow(id: string) {
+  return clienteApi.get<ResumenReporteDataflow>(
+    `/flujos/${encodeURIComponent(id)}/resumen`,
   );
 }

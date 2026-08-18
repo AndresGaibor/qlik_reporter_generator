@@ -79,6 +79,88 @@ describe("ClienteHttpQlik", () => {
     expect(JSON.parse(String(opciones.body))).toEqual({ context: "api" });
   });
 
+  it("solo lista Dataflows cuya descripcion contiene qlik generator", async () => {
+    const fetchFn: FetchMock = vi.fn(async () =>
+      respuestaJson({
+        data: [
+          {
+            id: "incluido-1",
+            resourceId: "flujo-1",
+            name: "Ventas",
+            description: "Creado por QLIK GENERATOR para ventas",
+            resourceSubType: "qix-df",
+          },
+          {
+            id: "incluido-2",
+            name: "Inventario",
+            resourceAttributes: {
+              usage: "DATAFLOW_PREP",
+              description: "Reporte de qlik generator",
+            },
+          },
+          {
+            id: "excluido-sin-marcador",
+            name: "Dataflow manual",
+            description: "Creado manualmente",
+            resourceSubType: "qix-df",
+          },
+          {
+            id: "excluido-marcador-en-nombre",
+            name: "Qlik Generator sin descripcion",
+            description: "",
+            resourceSubType: "qix-df",
+          },
+          {
+            id: "excluido-no-dataflow",
+            name: "Aplicacion",
+            description: "qlik generator",
+            resourceSubType: "qix-app",
+          },
+        ],
+      }),
+    );
+    const cliente = new ClienteHttpQlik(
+      "tenant.eu.qlikcloud.com",
+      "token",
+      fetchFn as unknown as typeof fetch,
+    );
+
+    const flujos = await cliente.listarFlujos();
+
+    expect(flujos.map((flujo) => flujo.id)).toEqual(["flujo-1", "incluido-2"]);
+  });
+
+  it("valida el script mediante el endpoint nativo de Qlik", async () => {
+    const fetchFn: FetchMock = vi.fn(async () =>
+      respuestaJson({
+        Errors: [{ Msg: "Unexpected token", Tab: 2, Line: 7, Column: 3 }],
+        Warnings: [{ Msg: "Deprecated function", Line: 4 }],
+      }),
+    );
+    const cliente = new ClienteHttpQlik(
+      "tenant.eu.qlikcloud.com",
+      "token",
+      fetchFn as unknown as typeof fetch,
+    );
+
+    const resultado = await cliente.validarScriptApp("LOAD [id];");
+
+    expect(resultado.errores[0]).toMatchObject({
+      mensaje: "Unexpected token",
+      pestana: 2,
+      linea: 7,
+      columna: 3,
+    });
+    expect(resultado.advertencias[0]?.mensaje).toBe("Deprecated function");
+    const llamada = fetchFn.mock.calls[0] as unknown[];
+    expect(new URL(String(llamada[0])).pathname).toBe(
+      "/api/v1/apps/validatescript",
+    );
+    const opciones = llamada[1] as RequestInit;
+    expect(opciones.method).toBe("POST");
+    expect(JSON.parse(String(opciones.body))).toEqual({ script: "LOAD [id];" });
+  });
+
   it("propaga estado, cuerpo y trace id de Qlik", async () => {
     const fetchFn: FetchMock = vi.fn(
       async () =>

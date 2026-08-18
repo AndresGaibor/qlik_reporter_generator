@@ -66,6 +66,22 @@ export interface PuertoQlik {
     appId: string,
     scriptId?: string,
   ): Promise<{ script: string; versionMessage?: string }>;
+  validarScriptApp(script: string): Promise<{
+    errores: Array<{
+      mensaje: string;
+      pestana?: number;
+      linea?: number;
+      columna?: number;
+      informacion?: string;
+    }>;
+    advertencias: Array<{
+      mensaje: string;
+      pestana?: number;
+      linea?: number;
+      columna?: number;
+      informacion?: string;
+    }>;
+  }>;
 }
 
 export type ServicioQlik = PuertoQlik;

@@ -9,7 +9,7 @@ import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import {
   type ResumenFlujo,
   obtenerFlujosConFiltros,
-  obtenerScriptFlujo,
+  obtenerResumenReporteDataflow,
 } from "@/modulos/flujos/api";
 import {
   type ResumenAutomatizacion,
@@ -25,8 +25,8 @@ import { PestanaScriptFlujo } from "./componentes/detalle/pestana-script-flujo";
 export function PaginaDetalleFlujo() {
   const { id } = useParams({ strict: false }) as { id: string };
   const [pestana, setPestana] = useState<
-    "script" | "metadata" | "automatizaciones"
-  >("script");
+    "diseno" | "metadata" | "automatizaciones"
+  >("diseno");
 
   const { tenant: tenantActivo } = useTenantActivo();
 
@@ -43,13 +43,14 @@ export function PaginaDetalleFlujo() {
   });
 
   const {
-    data: datosScript,
-    isLoading: cargandoScript,
-    isError: errorScript,
-    error: errorScriptMsg,
+    data: resumenReporte,
+    isLoading: cargandoResumen,
+    isFetching: actualizandoResumen,
+    error: errorResumen,
+    refetch: actualizarResumen,
   } = useQuery({
-    queryKey: ["flujo-script", id],
-    queryFn: () => obtenerScriptFlujo(id),
+    queryKey: ["resumen-reporte-dataflow", id],
+    queryFn: () => obtenerResumenReporteDataflow(id),
     retry: false,
     staleTime: 60 * 1000,
   });
@@ -159,14 +160,14 @@ export function PaginaDetalleFlujo() {
       <div className="flex rounded-xl bg-line-200/60 p-1 text-sm max-w-fit shadow-xs">
         <button
           type="button"
-          onClick={() => setPestana("script")}
+          onClick={() => setPestana("diseno")}
           className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-            pestana === "script"
+            pestana === "diseno"
               ? "bg-surface text-ink-900 shadow-sm"
               : "text-ink-500 hover:text-ink-900"
           }`}
         >
-          Script de carga
+          Diseño y validación
         </button>
         <button
           type="button"
@@ -196,12 +197,13 @@ export function PaginaDetalleFlujo() {
       </div>
 
       <div className="space-y-6">
-        {pestana === "script" && (
+        {pestana === "diseno" && (
           <PestanaScriptFlujo
-            datosScript={datosScript}
-            cargandoScript={cargandoScript}
-            errorScript={errorScript}
-            errorScriptMsg={errorScriptMsg}
+            resumen={resumenReporte}
+            cargando={cargandoResumen}
+            actualizando={actualizandoResumen}
+            error={errorResumen}
+            onActualizar={() => void actualizarResumen()}
           />
         )}
 

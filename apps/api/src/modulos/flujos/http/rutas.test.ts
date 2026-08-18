@@ -1,0 +1,68 @@
+import { describe, expect, it, vi } from "bun:test";
+import { Hono } from "hono";
+import { crearRutasFlujos } from "./rutas.js";
+
+describe("rutas de flujos", () => {
+  it("expone un resumen seguro validado por Qlik", async () => {
+    const validarScriptApp = vi.fn(async () => ({
+      errores: [],
+      advertencias: [],
+    }));
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [
+              { id: "flujo-1", name: "Ventas diarias" },
+            ],
+            obtenerScriptApp: async () => ({
+              script:
+                "LIB CONNECT TO [Google BigQuery:Prod]; [salida]: LOAD [Fecha], [Total]; SQL SELECT Fecha, Total FROM `p.d.ventas` WHERE Fecha >= '2026-08-01';",
+            }),
+            validarScriptApp,
+          }) as never,
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/flujo-1/resumen");
+    const cuerpo = (await respuesta.json()) as {
+      datos: Record<string, unknown>;
+    };
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo.datos).toMatchObject({
+      nombre: "Ventas diarias",
+      estado: "analizado",
+    });
+    expect(cuerpo.datos).not.toHaveProperty("script");
+    expect(cuerpo.datos).not.toHaveProperty("sqlBigQuery");
+    expect(validarScriptApp).toHaveBeenCalledTimes(1);
+  });
+
+  it("devuelve el estado script no disponible sin exponer el error técnico", async () => {
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [],
+            obtenerScriptApp: async () => {
+              throw new Error("Script no disponible");
+            },
+          }) as never,
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/flujo-2/resumen");
+    const cuerpo = (await respuesta.json()) as {
+      datos: { estado: string; advertencias: string[] };
+    };
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo.datos.estado).toBe("script_no_disponible");
+    expect(cuerpo.datos.advertencias).toContain("Script no disponible");
+  });
+});

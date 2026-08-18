@@ -270,6 +270,11 @@ export class ClienteHttpQlik implements ServicioQlik {
             (item.resourceAttributes as Record<string, unknown>)?.usage ===
               "DATAFLOW_PREP",
         )
+        .filter((item) =>
+          obtenerDescripcionItem(item)
+            .toLocaleLowerCase("es")
+            .includes("qlik generator"),
+        )
         .map((item) => ({
           id: String(item.resourceId ?? item.id),
           name: String(item.name ?? ""),
@@ -295,6 +300,38 @@ export class ClienteHttpQlik implements ServicioQlik {
       ruta: `/api/v1/apps/${encodeURIComponent(appId)}/scripts/${encodeURIComponent(scriptId)}`,
     });
   }
+
+  async validarScriptApp(script: string) {
+    const respuesta = await this.solicitarJson<{
+      Errors?: Array<Record<string, unknown>>;
+      Warnings?: Array<Record<string, unknown>>;
+    }>({
+      metodo: "POST",
+      ruta: "/api/v1/apps/validatescript",
+      cuerpo: { script },
+    });
+    const mapear = (item: Record<string, unknown>) => ({
+      mensaje: String(item.Msg ?? "Error de validación de Qlik"),
+      ...(typeof item.Tab === "number" ? { pestana: item.Tab } : {}),
+      ...(typeof item.Line === "number" ? { linea: item.Line } : {}),
+      ...(typeof item.Column === "number" ? { columna: item.Column } : {}),
+      ...(typeof item.Info === "string" ? { informacion: item.Info } : {}),
+    });
+    return {
+      errores: (respuesta.Errors ?? []).map(mapear),
+      advertencias: (respuesta.Warnings ?? []).map(mapear),
+    };
+  }
+}
+
+function obtenerDescripcionItem(item: Record<string, unknown>): string {
+  const descripcion = item.description;
+  if (typeof descripcion === "string") return descripcion;
+
+  const descripcionRecurso = (
+    item.resourceAttributes as Record<string, unknown> | undefined
+  )?.description;
+  return typeof descripcionRecurso === "string" ? descripcionRecurso : "";
 }
 
 async function leerCuerpoError(
