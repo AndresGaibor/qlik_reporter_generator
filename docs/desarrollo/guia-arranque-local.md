@@ -40,3 +40,14 @@ Este comando elimina todos los datos locales de PostgreSQL:
 docker compose down -v
 docker compose up -d postgres
 ```
+
+## Reinicio Completo
+
+Para sustituir una instalación anterior y crear la base desde cero, ejecuta lo siguiente. Elimina todos los datos de PostgreSQL, pero conserva `.env`:
+
+```bash
+docker compose down -v --remove-orphans
+docker compose build --no-cache
+docker compose up -d
+docker compose ps
+```
