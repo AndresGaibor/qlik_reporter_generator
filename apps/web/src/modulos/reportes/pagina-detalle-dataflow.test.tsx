@@ -46,7 +46,6 @@ const api = vi.hoisted(() => ({
       sqlBigQueryCompilado: "SELECT `id` FROM `p.d.t`",
       scriptExportacion: "DECLARE max_rows INT64 DEFAULT 1000000; EXPORT DATA",
       uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-1/",
-      tipoEjecucion: "manual",
       estado: "completada",
       versionCompilador: 1,
       etapaError: null,

@@ -2,12 +2,12 @@
 
 ## Decisión principal
 
-El sistema es un **monolito modular** que persiste en PostgreSQL y se integra con Qlik Cloud, Qlik Automate, Talend, BigQuery y GCS.
+El sistema es un **monolito modular** que persiste en PostgreSQL. Sus únicas integraciones externas directas son **Qlik Cloud** y **Google Cloud**. Talend participa aguas abajo del Qlik Automate, sin API directa desde la plataforma.
 
 ```
 Usuario → qlik_reportes_creator → Qlik Dataflow (lectura)
                               → Qlik Automate → Talend → BigQuery → GCS
-                              → BigQuery (preflight/resultados)
+                              → BigQuery (dry-run de preflight)
                               → GCS (descargas firmadas)
 PostgreSQL = persistencia interna
 ```
@@ -26,14 +26,17 @@ apps/api/src/
 ├── app.ts                 # Composition root
 ├── entradas/              # Bun, Node y adaptación opcional
 ├── plataforma/            # HTTP, configuración, persistencia, seguridad y observabilidad
-├── nucleo/                # Errores, eventos, auditoría, idempotencia, tiempo y valores
+├── nucleo/                # Errores, auditoría, idempotencia, sesión y valores
 └── modulos/
     ├── autenticacion-qlik/
     ├── qlik/
     ├── flujos/
-    ├── destinos/
+    ├── google-cloud/
     ├── automatizaciones/
-    └── admin/
+    ├── reportes/
+    ├── descargas/
+    ├── admin/
+    └── setup/
 ```
 
 Cada módulo expone únicamente `publico.ts` y organiza su código en `dominio`, `aplicacion`, `infraestructura` y `http` según lo que necesite. Ningún módulo debe importar detalles internos de infraestructura de otro módulo.
@@ -44,8 +47,8 @@ El frontend mantiene módulos verticales equivalentes bajo `apps/web/src/modulos
 
 ```text
 HTTP → middleware → validación de contrato → sesión/organización/tenant
-→ caso de uso → dominio → puerto → adaptador PostgreSQL/Qlik/API de destinos
-→ auditoría/outbox → respuesta normalizada
+→ caso de uso → dominio → puerto → adaptador PostgreSQL/Qlik/Google Cloud
+→ auditoría → respuesta normalizada
 ```
 
 Las respuestas usan el contrato común `{ exito, datos }` o `{ exito, error }`. Los errores internos no se exponen al cliente.
@@ -57,12 +60,12 @@ Las respuestas usan el contrato común `{ exito, datos }` o `{ exito, error }`. 
 - Las sesiones guardan únicamente el hash del token.
 - OAuth usa Authorization Code, PKCE y `state` de un solo uso.
 - Todas las configuraciones de automatización incluyen `organizacionId` y `tenantQlikId`.
-- Las operaciones mutables críticas usan idempotencia, auditoría y outbox.
+- Las operaciones mutables críticas usan idempotencia y auditoría.
 - Solo puede existir un tenant principal por organización; una organización también puede no tener principal durante una migración o desconexión.
 
 ## Integraciones
 
-Qlik Cloud, BigQuery y GCS son puertos reemplazables. El frontend nunca consume directamente esas integraciones: todas las llamadas atraviesan el backend.
+Qlik Cloud y Google Cloud (BigQuery/GCS) son las únicas fronteras externas directas y se aíslan detrás de adaptadores. El frontend nunca consume directamente esas integraciones: todas las llamadas atraviesan el backend.
 
 PostgreSQL es exclusivamente persistencia interna.
 

@@ -46,9 +46,6 @@ function configuracion() {
     nombre: "Ventas Diarias",
     flujoIdQlik: "flujo-1",
     flujoNombreSnapshot: "Ventas DF",
-    destinoProveedor: "gcs",
-    destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-    destinoNombreSnapshot: "TalendDescargados",
     automatizacionIdQlik: "auto-1",
     automatizacionNombreSnapshot: "Ventas",
     estado: "activa" as const,
@@ -142,7 +139,6 @@ describe("EjecutarReporte", () => {
       sqlBigQueryCompilado: expect.stringContaining("`p.d.ventas`"),
       scriptExportacion: expect.stringContaining("-- bq_export_data"),
       uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/`,
-      tipoEjecucion: "manual",
       estado: "preparando",
       versionCompilador: 2,
     });

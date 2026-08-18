@@ -302,7 +302,6 @@ export class RepositorioAutenticacionPostgres
         });
         if (org) {
           const rolMap: Record<string, "admin" | "usuario"> = {
-            administrador: "admin",
             admin: "admin",
             usuario: "usuario",
           };

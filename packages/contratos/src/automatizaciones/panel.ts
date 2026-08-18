@@ -41,13 +41,7 @@ export const esquemaCrearDesdePlantilla = z
     espacioIdQlik: esquemaIdQlik.optional(),
     propietarioIdQlik: esquemaIdQlik.optional(),
     flujoId: z.string().trim().min(1),
-    tablaId: z.string().optional(),
     autor: z.string().optional(),
-    fechaDesde: z.string().optional(),
-    fechaHasta: z.string().optional(),
-    columnas: z.array(z.string()).optional(),
-    formatoSalida: z.string().optional(),
-    destinoId: z.string().uuid().optional(),
     reemplazosWorkspace: z
       .array(esquemaReemplazoWorkspace)
       .max(100)

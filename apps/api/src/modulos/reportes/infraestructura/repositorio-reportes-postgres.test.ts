@@ -9,9 +9,6 @@ const entrada = {
   flujoIdQlik: "flujo-1",
   flujoNombreSnapshot: "Ventas Dataflow",
   flujoEspacioIdQlik: "espacio-1",
-  destinoProveedor: "gcs",
-  destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
-  destinoNombreSnapshot: "TalendDescargados",
   automatizacionIdQlik: "auto-1",
   automatizacionNombreSnapshot: "Ventas",
   estado: "activa" as const,
@@ -46,8 +43,6 @@ describe("RepositorioReportesPostgres", () => {
     expect(valores).toMatchObject({
       flujoIdQlik: "flujo-1",
       automatizacionIdQlik: "auto-1",
-      destinoProveedor: "gcs",
-      destinoIdExterno: "gs://bkt_dwh/POCs/TalendDescargados/",
     });
     expect(resultado.id).toBe("44444444-4444-4444-8444-444444444444");
   });
@@ -111,7 +106,6 @@ describe("RepositorioReportesPostgres", () => {
       sqlBigQueryCompilado: "SELECT 1",
       scriptExportacion: "EXPORT DATA",
       uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/r/e/",
-      tipoEjecucion: "manual",
       estado: "preparando",
       versionCompilador: 1,
     });

@@ -9,6 +9,7 @@ import {
 } from "../aplicacion/preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
+import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
   estimador: EstimadorBigQueryReporte;
@@ -239,7 +240,7 @@ function serializarConfiguracion(
     flujoEspacioIdQlik: configuracion.flujoEspacioIdQlik ?? null,
     automatizacionIdQlik: configuracion.automatizacionIdQlik,
     automatizacionNombreSnapshot: configuracion.automatizacionNombreSnapshot,
-    destinoGcs: configuracion.destinoIdExterno,
+    destinoGcs: URI_BASE_GCS_REPORTES,
     activa: configuracion.estado === "activa",
   };
 }
@@ -260,7 +261,6 @@ function serializarEjecucion(
     sqlBigQueryCompilado: ejecucion.sqlBigQueryCompilado,
     scriptExportacion: ejecucion.scriptExportacion,
     uriBaseGcs: ejecucion.uriBaseGcs,
-    tipoEjecucion: ejecucion.tipoEjecucion,
     estado: ejecucion.estado,
     versionCompilador: ejecucion.versionCompilador,
     etapaError: ejecucion.etapaError ?? null,
