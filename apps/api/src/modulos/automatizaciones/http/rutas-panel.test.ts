@@ -109,99 +109,44 @@ describe("POST /desde-plantilla", () => {
 });
 
 describe("POST /:id/ejecuciones", () => {
-  it("recompila el Dataflow antes de disparar Qlik Automate", async () => {
-    const orden: string[] = [];
-    const obtenerScriptApp = vi.fn(async () => {
-      orden.push("current");
-      return {
-        script:
-          "LIB CONNECT TO [Google BigQuery:Prod]; [x]: LOAD [id]; SQL SELECT id FROM `p.d.t`;",
-      };
-    });
-    const actualizarAutomatizacion = vi.fn(async (_id, definicion) => {
-      orden.push("actualizar");
-      return { id: "auto-1", name: "Reporte", ...definicion };
-    });
-    const ejecutarAutomatizacion = vi.fn(async () => {
-      orden.push("run");
-      return { runId: "run-1" };
-    });
-    const qlik = {
-      listarEjecuciones: vi.fn(async () => []),
-      obtenerScriptApp,
-      obtenerAutomatizacion: vi.fn(async () => ({
-        id: "auto-1",
-        name: "Reporte",
-        schedules: [],
-        workspace: await workspaceTalend(),
-        description: "",
-        maxConcurrentRuns: 1,
-      })),
-      actualizarAutomatizacion,
-      ejecutarAutomatizacion,
-    } as unknown as ServicioQlik;
-    const repositorioReportes = {
-      crearReporte: async (entrada: never) => entrada,
-      obtenerPorId: async () => ({
-        id: "11111111-1111-4111-8111-111111111111",
-        organizacionId: "organizacion-1",
-        tenantQlikId: "tenant-1",
-        creadoPorUsuarioId: "usuario-1",
-        nombre: "Reporte",
-        flujoIdQlik: "flujo-1",
-        flujoNombreSnapshot: "Flujo",
-        automatizacionIdQlik: "auto-1",
-        reporteId: "reporte-1",
-        automatizacionNombreSnapshot: "Reporte",
-        programar: false,
-        estado: "activa" as const,
-      }),
-      crearEjecucion: async (entrada: never) => entrada,
-      marcarEjecucionIniciada: async () => undefined,
-      marcarEjecucionError: async () => undefined,
-      marcarEjecucionCompletada: async () => undefined,
-    };
+  it("no acepta un ID de Qlik Automate como ejecución de reporte local", async () => {
+    const resolverQlik = vi.fn(async () => ({}) as ServicioQlik);
+    const resolverSesion = vi.fn(async () => ({
+      tenantId: "tenant-1",
+      usuarioId: "usuario-1",
+      organizacionId: "organizacion-1",
+      usuarioIdQlik: "andres-qlik-id",
+    }));
+    const obtenerPorId = vi.fn(async () => null);
     const rutas = crearRutasPanelAutomatizaciones({
-      resolverQlik: async () => qlik,
-      resolverSesion: async () => ({
-        tenantId: "tenant-1",
-        usuarioId: "usuario-1",
-        organizacionId: "organizacion-1",
-        usuarioIdQlik: "andres-qlik-id",
-      }),
-      consultaTenant: { obtenerTenant: async () => null },
-      bloqueos: {
-        ejecutarExclusivo: async (
-          _clave: string,
-          tarea: () => Promise<unknown>,
-        ) => tarea(),
-      } as never,
+      resolverQlik,
+      resolverSesion,
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
       idempotencia: {} as unknown as PuertoIdempotencia,
-      auditoria: { registrar: async () => undefined } as PuertoAuditoria,
-      repositorioReportes: repositorioReportes as never,
-      resolverBigQueryReporte: async () => ({
-        projectId: "p",
-        dataset: "d",
-        estimador: {
-          estimarConsulta: async () => ({
-            bytesProcesados: 1,
-            costoEstimadoUsd: 0,
-          }),
-        },
-      }),
+      auditoria: {} as never,
+      repositorioReportes: { obtenerPorId } as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
     });
 
     const respuesta = await rutas.request("/auto-1/ejecuciones", {
       method: "POST",
     });
     const cuerpo = (await respuesta.json()) as {
-      datos?: { runId?: string; ejecucionReporteId?: string };
+      exito?: boolean;
+      error?: { codigo?: string };
     };
 
-    expect(respuesta.status).toBe(201);
-    expect(cuerpo.datos?.runId).toBe("run-1");
-    expect(cuerpo.datos?.ejecucionReporteId).toBeDefined();
-    expect(orden).toEqual(["current", "actualizar", "run"]);
+    expect(respuesta.status).toBe(405);
+    expect(cuerpo).toMatchObject({
+      exito: false,
+      error: { codigo: "NO_SOPORTADO" },
+    });
+    expect(resolverQlik).not.toHaveBeenCalled();
+    expect(resolverSesion).not.toHaveBeenCalled();
+    expect(obtenerPorId).not.toHaveBeenCalled();
   });
 });
 
