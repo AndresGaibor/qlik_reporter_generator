@@ -33,14 +33,6 @@ vi.mock("@/modulos/flujos/api", () => ({
 }));
 
 vi.mock("./api", () => ({
-  obtenerConexionesDestino: vi.fn(async () => []),
-  obtenerRecursosDestino: vi.fn(async () => []),
-  obtenerDetalleRecursoDestino: vi.fn(async () => ({ columnas: [] })),
-  obtenerVistaPreviaDestino: vi.fn(async () => []),
-  estimarConsultaDestino: vi.fn(async () => ({
-    bytesProcesados: 0,
-    costoEstimadoUsd: 0,
-  })),
   preflightDataflowReporte: preflight,
   crearAutomatizacionDesdePlantilla: crear,
 }));

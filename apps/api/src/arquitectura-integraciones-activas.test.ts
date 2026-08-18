@@ -106,6 +106,17 @@ describe("arquitectura-integraciones-activas", () => {
     expect(codigoActivo).not.toMatch(/REMOTE_API_(URL|KEY)/);
   });
 
+  it("no debe conservar el catálogo genérico de destinos BigQuery", async () => {
+    const codigoActivo = await contenidoCodigo(dirs);
+    for (const termino of [
+      "crearRutasDestinosGenericas",
+      "RepositorioConexionesDestinoPostgres",
+      "PuertoRepositorioConexionesDestino",
+    ]) {
+      expect(codigoActivo).not.toContain(termino);
+    }
+  });
+
   it("no debe conservar infraestructura Outbox sin consumidor", async () => {
     const codigoActivo = await contenidoCodigo(dirs);
     for (const termino of [

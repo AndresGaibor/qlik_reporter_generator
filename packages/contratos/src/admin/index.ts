@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { esquemaTipoDestino } from "../destinos/index.js";
 
 export const esquemaTenantResumen = z.object({
   id: z.string(),

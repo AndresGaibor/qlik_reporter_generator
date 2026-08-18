@@ -27,13 +27,9 @@ import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestruc
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
 import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js";
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
-import {
-  RepositorioConexionesDestinoPostgres,
-  crearClienteDestino,
-  crearRutasDestinosGenericas,
-} from "./modulos/destinos/publico.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
@@ -205,25 +201,17 @@ export async function crearAplicacion(
         }
         throw error;
       }
-      const cliente = crearClienteDestino({
-        tipo: "bigquery",
-        config: { projectId: google.projectId, dataset: google.dataset },
-        secretoRefs: google.credencialesJson
-          ? { credencialesJson: google.credencialesJson }
-          : google.secretoRefs,
+      const estimador = new EstimadorBigQuery({
+        projectId: google.projectId,
+        dataset: google.dataset,
+        credencialesJson: google.credencialesJson || undefined,
       });
-      const estimarConsulta = cliente.estimarConsulta?.bind(cliente);
-      if (!estimarConsulta) {
-        throw new ErrorAplicacion(
-          "BIGQUERY_SIN_ESTIMACION",
-          "La conexión BigQuery no permite estimar consultas",
-          422,
-        );
-      }
       return {
         projectId: google.projectId,
         dataset: google.dataset,
-        estimador: { estimarConsulta },
+        estimador: {
+          estimarConsulta: estimador.estimarConsulta.bind(estimador),
+        },
       };
     });
 
@@ -355,38 +343,6 @@ export async function crearAplicacion(
       resolverSesion,
       repositorioReportes,
     }),
-  );
-  const repositorioConexionesDestino = new RepositorioConexionesDestinoPostgres(
-    db,
-  );
-
-  aplicacion.route(
-    "/api/destinos/conexiones",
-    crearRutasDestinosGenericas(
-      async (c: Context) => {
-        const sesion = await resolverSesion(c);
-        return repositorioConexionesDestino.listarPorOrganizacion(
-          sesion.organizacionId,
-        );
-      },
-      async (c: Context, conexion) => {
-        const sesion = await resolverSesion(c);
-        return repositorioConexionesDestino.crear({
-          ...conexion,
-          organizacionId: sesion.organizacionId,
-        });
-      },
-      async (_c: Context, id: string, cambios) => {
-        await repositorioConexionesDestino.actualizar(id, cambios);
-      },
-      async (_c: Context, id: string) => {
-        await repositorioConexionesDestino.eliminar(id);
-      },
-      async (_c: Context, id: string) => {
-        return repositorioConexionesDestino.obtenerPorId(id);
-      },
-      async (c: Context) => (await resolverSesion(c)).organizacionId,
-    ),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
   aplicacion.route(

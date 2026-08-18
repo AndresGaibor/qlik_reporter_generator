@@ -6,7 +6,6 @@ import { crearRutasFlujos } from "@/modulos/flujos/publico";
 import { crearRutasInicio } from "@/modulos/inicio/publico";
 import { crearRutasReportes } from "@/modulos/reportes/publico";
 import { crearRutasSetup } from "@/modulos/setup/publico";
-import { crearRutasTablas } from "@/modulos/tablas/rutas";
 import { createRootRoute, createRouter } from "@tanstack/react-router";
 import { LayoutPrincipal } from "./layout-principal";
 
@@ -22,7 +21,6 @@ const arbolRutas = rutaRaiz.addChildren([
   ...crearRutasAutenticacion(rutaRaiz),
   ...crearRutasFlujos(rutaRaiz),
   ...crearRutasReportes(rutaRaiz),
-  ...crearRutasTablas(rutaRaiz),
   ...crearRutasAdmin(rutaRaiz),
   ...crearRutasSetup(rutaRaiz),
   ...crearRutasDescargas(rutaRaiz),

@@ -16,3 +16,8 @@ test("incluye /flujos en navegación como punto de entrada Dataflows", () => {
   const item = NAVEGACION.find((item) => item.to === "/flujos");
   expect(item?.etiqueta).toBe("Dataflows");
 });
+
+test("no conserva la navegación legacy de Resultados BigQuery", () => {
+  expect(NAVEGACION.some((item) => String(item.to) === "/tablas")).toBe(false);
+  expect(NAVEGACION.some((item) => item.etiqueta === "Resultados")).toBe(false);
+});
