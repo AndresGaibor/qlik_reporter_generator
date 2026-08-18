@@ -129,6 +129,34 @@ describe("arquitectura-integraciones-activas", () => {
     }
   });
 
+  it("no debe conservar archivos productivos huérfanos conocidos", async () => {
+    for (const ruta of [
+      "apps/web/src/compartido/componentes/ui/tabs.tsx",
+      "apps/web/src/modulos/reportes/componentes/alerta-configuracion-tenant.tsx",
+      "apps/web/src/modulos/reportes/componentes/lista-ejecuciones.tsx",
+      "apps/web/src/modulos/reportes/componentes/visor-workspace.tsx",
+      "apps/web/src/modulos/reportes/componentes/workspace/bloque-workspace-cards.tsx",
+      "apps/web/src/modulos/reportes/componentes/workspace/parser-workspace-util.ts",
+      "apps/api/src/modulos/automatizaciones/aplicacion/casos-de-uso/ejecutar-automatizacion.ts",
+      "apps/api/src/modulos/flujos/infraestructura/publico.ts",
+      "apps/api/src/nucleo/errores/error-dominio.ts",
+      "apps/api/src/nucleo/idempotencia/clave-idempotencia.ts",
+      "apps/api/src/nucleo/tiempo/reloj.ts",
+      "apps/api/src/nucleo/valores/identificador.ts",
+      "apps/api/src/plataforma/errores/error-aplicacion.ts",
+      "apps/api/src/plataforma/http/leer-json.ts",
+      "apps/api/src/plataforma/seguridad/secreto-cifrado.ts",
+    ]) {
+      expect(await existe(ruta)).toBe(false);
+    }
+  });
+
+  it("no debe mapear roles históricos en código activo", async () => {
+    const codigoActivo = await contenidoCodigo(["apps/api/src"]);
+    expect(codigoActivo).not.toContain('administrador: "admin"');
+    expect(codigoActivo).not.toContain('rol === "administrador"');
+  });
+
   it("no debe usar identificadores de legacy en código activo", async () => {
     const codigoActivo = await contenidoCodigo(dirs);
     for (const identificador of [
