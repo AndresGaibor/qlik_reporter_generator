@@ -52,7 +52,6 @@ import {
   ErrorAplicacion,
   ErrorNoAutorizado,
 } from "./nucleo/errores/error-aplicacion.js";
-import type { PuertoOutbox } from "./nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "./nucleo/idempotencia/puerto-idempotencia.js";
 import { generarUuid } from "./nucleo/valores/generar-uuid.js";
 import { ejecutarBootstrap } from "./plataforma/bootstrap/bootstrap.js";
@@ -84,7 +83,6 @@ import {
   tenantsQlik,
 } from "./plataforma/persistencia/esquema.js";
 import { IdempotenciaPostgres } from "./plataforma/persistencia/idempotencia-postgres.js";
-import { OutboxPostgres } from "./plataforma/persistencia/outbox-postgres.js";
 import { servicioCifrado } from "./plataforma/seguridad/servicio-cifrado.js";
 
 export interface DependenciasAplicacion {
@@ -102,7 +100,6 @@ export interface DependenciasAplicacion {
   }>;
 
   idempotencia?: PuertoIdempotencia;
-  outbox?: PuertoOutbox;
   auditoria?: PuertoAuditoria;
   repositorioAdministracion?: RepositorioAdministracion;
   resolverContextoAdmin?: ResolverContextoAdmin;
@@ -231,7 +228,6 @@ export async function crearAplicacion(
     });
 
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
-  const outbox = dependencias.outbox ?? new OutboxPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
   const repositorioAdministracion =
     dependencias.repositorioAdministracion ??
@@ -346,7 +342,6 @@ export async function crearAplicacion(
       consultaTenant: new ConsultaTenantQlikPostgres(),
       bloqueos: new BloqueoEjecucionPostgres(db),
       idempotencia,
-      outbox,
       auditoria,
       repositorioReportes,
       resolverBigQueryReporte,

@@ -2,7 +2,6 @@ import { esquemaCrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import { esquemaIdQlik } from "@qlik/contratos/qlik";
 import { type Context, Hono } from "hono";
 import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
-import type { PuertoOutbox } from "../../../nucleo/eventos/puerto-outbox.js";
 import { leerJson } from "../../../nucleo/http/leer-json.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
@@ -30,7 +29,6 @@ export interface DependenciasRutasPanel {
   consultaTenant: PuertoConsultaTenantQlik;
   bloqueos: PuertoBloqueoEjecucion;
   idempotencia: PuertoIdempotencia;
-  outbox: PuertoOutbox;
   auditoria: PuertoAuditoria;
   repositorioReportes: PuertoRepositorioReportes;
   resolverBigQueryReporte(c: Context): Promise<ResolucionBigQueryReporte>;
@@ -155,7 +153,6 @@ export function crearRutasPanelAutomatizaciones(
     const resultado = await new CrearAutomatizacionDesdePlantilla(
       qlik,
       dependencias.idempotencia,
-      dependencias.outbox,
       dependencias.auditoria,
       dependencias.repositorioReportes,
       new PreflightDataflow(qlik, bigQuery.estimador, {

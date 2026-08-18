@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
-import type { PuertoOutbox } from "../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { crearRutasPanelAutomatizaciones } from "./rutas-panel.js";
@@ -54,12 +53,6 @@ describe("POST /desde-plantilla", () => {
       },
       bloqueos: {} as never,
       idempotencia: {} as unknown as PuertoIdempotencia,
-      outbox: {
-        guardar: async () => undefined,
-        listarPendientes: async () => [],
-        marcarPublicado: async () => undefined,
-        registrarFallo: async () => undefined,
-      } satisfies PuertoOutbox,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
       repositorioReportes: {
         crearConfiguracion: async (entrada) => ({ id: "config-1", ...entrada }),
@@ -191,12 +184,6 @@ describe("POST /:id/ejecuciones", () => {
         ) => tarea(),
       } as never,
       idempotencia: {} as unknown as PuertoIdempotencia,
-      outbox: {
-        guardar: async () => undefined,
-        listarPendientes: async () => [],
-        marcarPublicado: async () => undefined,
-        registrarFallo: async () => undefined,
-      } satisfies PuertoOutbox,
       auditoria: { registrar: async () => undefined } as PuertoAuditoria,
       repositorioReportes: repositorioReportes as never,
       resolverBigQueryReporte: async () => ({

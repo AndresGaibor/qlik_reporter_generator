@@ -67,7 +67,7 @@ export const membresiasOrganizacion = pgTable(
     pk: unique("membresias_pk").on(t.organizacionId, t.usuarioId),
     ckRol: check(
       "membresias_rol_check",
-      sql`${t.rol} IN ('administrador', 'editor', 'usuario', 'auditor', 'admin')`,
+      sql`${t.rol} IN ('admin', 'usuario')`,
     ),
   }),
 );
@@ -218,23 +218,6 @@ export const sesionesUsuario = pgTable(
   }),
 );
 
-export const intentosOauthQlik = pgTable(
-  "intentos_oauth_qlik",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    hostTenant: text("host_tenant").notNull(),
-    hashEstado: text("hash_estado").notNull().unique(),
-    verificadorPkceCifrado: text("verificador_pkce_cifrado").notNull(),
-    rutaRetorno: text("ruta_retorno").notNull().default("/"),
-    expiraEn: timestamp("expira_en").notNull(),
-    consumidoEn: timestamp("consumido_en"),
-    creadoEn: timestamp("creado_en").notNull().defaultNow(),
-  },
-  (t) => ({
-    idxExpira: index("idx_intentos_oauth_expira").on(t.expiraEn),
-  }),
-);
-
 export const configuracionesAutomatizacion = pgTable(
   "configuraciones_automatizacion",
   {
@@ -364,79 +347,6 @@ export const auditoriaEventos = pgTable(
   }),
 );
 
-export const espaciosQlikCache = pgTable(
-  "espacios_qlik_cache",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    tenantQlikId: uuid("tenant_qlik_id")
-      .notNull()
-      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
-    espacioIdQlik: text("espacio_id_qlik").notNull(),
-    nombre: text("nombre").notNull(),
-    tipo: text("tipo"),
-    propietarioIdQlik: text("propietario_id_qlik"),
-    metadatos: jsonb("metadatos").notNull().default({}),
-    modificadoEnQlik: timestamp("modificado_en_qlik"),
-    sincronizadoEn: timestamp("sincronizado_en").notNull().defaultNow(),
-    eliminadoEn: timestamp("eliminado_en"),
-  },
-  (t) => ({
-    uqEspacio: unique("espacios_unique").on(t.tenantQlikId, t.espacioIdQlik),
-  }),
-);
-
-export const flujosQlikCache = pgTable(
-  "flujos_qlik_cache",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    tenantQlikId: uuid("tenant_qlik_id")
-      .notNull()
-      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
-    flujoIdQlik: text("flujo_id_qlik").notNull(),
-    espacioIdQlik: text("espacio_id_qlik"),
-    nombre: text("nombre").notNull(),
-    propietarioIdQlik: text("propietario_id_qlik"),
-    urlQlik: text("url_qlik"),
-    tipoRecurso: text("tipo_recurso"),
-    metadatos: jsonb("metadatos").notNull().default({}),
-    modificadoEnQlik: timestamp("modificado_en_qlik"),
-    sincronizadoEn: timestamp("sincronizado_en").notNull().defaultNow(),
-    eliminadoEn: timestamp("eliminado_en"),
-  },
-  (t) => ({
-    uqFlujo: unique("flujos_unique").on(t.tenantQlikId, t.flujoIdQlik),
-  }),
-);
-
-export const automatizacionesQlikCache = pgTable(
-  "automatizaciones_qlik_cache",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    tenantQlikId: uuid("tenant_qlik_id")
-      .notNull()
-      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
-    automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
-    espacioIdQlik: text("espacio_id_qlik"),
-    propietarioIdQlik: text("propietario_id_qlik"),
-    nombre: text("nombre").notNull(),
-    estado: text("estado"),
-    modoEjecucion: text("modo_ejecucion"),
-    ultimoEstadoEjecucion: text("ultimo_estado_ejecucion"),
-    ultimaEjecucionEn: timestamp("ultima_ejecucion_en"),
-    creadaEnQlik: timestamp("creada_en_qlik"),
-    modificadaEnQlik: timestamp("modificada_en_qlik"),
-    metadatos: jsonb("metadatos").notNull().default({}),
-    sincronizadoEn: timestamp("sincronizado_en").notNull().defaultNow(),
-    eliminadoEn: timestamp("eliminado_en"),
-  },
-  (t) => ({
-    uqAutomatizacion: unique("automatizaciones_unique").on(
-      t.tenantQlikId,
-      t.automatizacionIdQlik,
-    ),
-  }),
-);
-
 export const appConfig = pgTable("app_config", {
   id: uuid("id").primaryKey().defaultRandom(),
   clave: text("clave").notNull().unique(),
@@ -517,34 +427,6 @@ export const conexionesDestino = pgTable(
     ckEstado: check(
       "conexiones_destino_estado_check",
       sql`${t.estado} IN ('activo', 'error', 'desconectado')`,
-    ),
-  }),
-);
-
-export const eventosOutbox = pgTable(
-  "eventos_outbox",
-  {
-    id: uuid("id").primaryKey(),
-    agregadoTipo: text("agregado_tipo").notNull(),
-    agregadoId: text("agregado_id").notNull(),
-    tipo: text("tipo").notNull(),
-    version: integer("version").notNull().default(1),
-    datos: jsonb("datos").notNull(),
-    metadatos: jsonb("metadatos").notNull().default({}),
-    ocurridoEn: timestamp("ocurrido_en").notNull(),
-    publicadoEn: timestamp("publicado_en"),
-    intentos: integer("intentos").notNull().default(0),
-    ultimoError: text("ultimo_error"),
-    creadoEn: timestamp("creado_en").notNull().defaultNow(),
-  },
-  (t) => ({
-    idxPendientes: index("idx_eventos_outbox_pendientes").on(
-      t.publicadoEn,
-      t.ocurridoEn,
-    ),
-    idxAgregado: index("idx_eventos_outbox_agregado").on(
-      t.agregadoTipo,
-      t.agregadoId,
     ),
   }),
 );

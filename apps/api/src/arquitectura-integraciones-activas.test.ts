@@ -106,6 +106,18 @@ describe("arquitectura-integraciones-activas", () => {
     expect(codigoActivo).not.toMatch(/REMOTE_API_(URL|KEY)/);
   });
 
+  it("no debe conservar infraestructura Outbox sin consumidor", async () => {
+    const codigoActivo = await contenidoCodigo(dirs);
+    for (const termino of [
+      "PuertoOutbox",
+      "OutboxPostgres",
+      "eventosOutbox",
+      "PublicadorEventos",
+    ]) {
+      expect(codigoActivo).not.toContain(termino);
+    }
+  });
+
   it("no debe usar identificadores de legacy en código activo", async () => {
     const codigoActivo = await contenidoCodigo(dirs);
     for (const identificador of [

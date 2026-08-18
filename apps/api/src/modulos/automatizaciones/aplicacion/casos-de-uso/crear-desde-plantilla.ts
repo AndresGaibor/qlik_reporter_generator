@@ -5,9 +5,7 @@ import type {
 } from "@qlik/contratos/automatizaciones";
 import type { PuertoAuditoria } from "../../../../nucleo/auditoria/puerto-auditoria.js";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
-import type { PuertoOutbox } from "../../../../nucleo/eventos/puerto-outbox.js";
 import type { PuertoIdempotencia } from "../../../../nucleo/idempotencia/puerto-idempotencia.js";
-import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { URI_BASE_GCS_REPORTES } from "../../../reportes/dominio/destino-gcs.js";
@@ -36,7 +34,6 @@ export class CrearAutomatizacionDesdePlantilla {
   constructor(
     private readonly qlik: PuertoQlik,
     private readonly idempotencia: PuertoIdempotencia,
-    private readonly outbox: PuertoOutbox,
     private readonly auditoria: PuertoAuditoria,
     private readonly repositorioReportes: PuertoRepositorioReportes,
     private readonly preflight: ValidadorDataflowReporte,
@@ -138,37 +135,18 @@ export class CrearAutomatizacionDesdePlantilla {
         ...(clave ? { claveIdempotencia: clave } : {}),
       });
 
-      await Promise.all([
-        this.outbox.guardar([
-          {
-            id: generarUuid(),
-            tipo: "automatizaciones.automatizacion-creada-desde-plantilla.v1",
-            agregadoTipo: "automatizacion-qlik",
-            agregadoId: resultado.id,
-            version: 1,
-            ocurridoEn: new Date(),
-            datos: resultado,
-            metadatos: {
-              tenantId: contexto.tenantId,
-              organizacionId: contexto.organizacionId,
-              usuarioId: contexto.usuarioId,
-              flujoIdQlik,
-            },
-          },
-        ]),
-        this.auditoria.registrar({
-          organizacionId: contexto.organizacionId,
-          usuarioId: contexto.usuarioId,
-          accion: "automatizacion.crear-desde-plantilla",
-          entidadTipo: "automatizacion-qlik",
-          entidadId: resultado.id,
-          resultado: "exito",
-          datosNuevos: { ...resultado, flujoIdQlik },
-          idSolicitud: contexto.idSolicitud,
-          ip: contexto.ip,
-          agenteUsuario: contexto.agenteUsuario,
-        }),
-      ]);
+      await this.auditoria.registrar({
+        organizacionId: contexto.organizacionId,
+        usuarioId: contexto.usuarioId,
+        accion: "automatizacion.crear-desde-plantilla",
+        entidadTipo: "automatizacion-qlik",
+        entidadId: resultado.id,
+        resultado: "exito",
+        datosNuevos: { ...resultado, flujoIdQlik },
+        idSolicitud: contexto.idSolicitud,
+        ip: contexto.ip,
+        agenteUsuario: contexto.agenteUsuario,
+      });
 
       if (clave) {
         await completarIdempotencia(

@@ -3,16 +3,11 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
   auditoriaEventos,
-  automatizacionesQlikCache,
   configuracionesAutomatizacion,
   configuracionesOauthQlik,
   credencialesQlik,
   ejecucionesReportes,
-  espaciosQlikCache,
-  eventosOutbox,
-  flujosQlikCache,
   identidadesQlik,
-  intentosOauthQlik,
   membresiasOrganizacion,
   organizaciones,
   sesionesUsuario,
@@ -48,11 +43,25 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("es_superadmin");
   });
 
-  it("membresiasOrganizacion tiene las columnas de FK", () => {
-    const cols = colNames(getTableConfig(membresiasOrganizacion));
+  it("membresiasOrganizacion solo permite admin o usuario", () => {
+    const config = getTableConfig(membresiasOrganizacion);
+    const cols = colNames(config);
     expect(cols).toContain("organizacion_id");
     expect(cols).toContain("usuario_id");
     expect(cols).toContain("rol");
+    const checks = config.checks as unknown as Array<{
+      name: string;
+      value: { queryChunks: Array<{ value?: string[] }> };
+    }>;
+    const rolCheck = checks.find((check) => check.name === "membresias_rol_check");
+    const definicion = (rolCheck?.value.queryChunks ?? [])
+      .flatMap((chunk) => chunk.value ?? [])
+      .join("");
+    expect(definicion).toContain("'admin'");
+    expect(definicion).toContain("'usuario'");
+    expect(definicion).not.toContain("'administrador'");
+    expect(definicion).not.toContain("'editor'");
+    expect(definicion).not.toContain("'auditor'");
   });
 
   it("tenantsQlik tiene las columnas esperadas", () => {
@@ -94,7 +103,42 @@ describe("Esquema Drizzle", () => {
       'CREATE TABLE "ejecuciones_reportes"',
     );
     expect(contenido).toContain("\"tipo_ejecucion\" = 'manual'");
-    expect(contenido).toContain('CREATE TABLE "eventos_outbox"');
+  });
+
+  it("la migración forward elimina residuos físicos y normaliza roles", async () => {
+    const contenido = await Bun.file(
+      new URL(
+        "../drizzle/0001_spooky_marvel_apes.sql",
+        import.meta.url,
+      ),
+    ).text();
+
+    for (const tabla of [
+      "automatizaciones_qlik_cache",
+      "espacios_qlik_cache",
+      "flujos_qlik_cache",
+      "intentos_oauth_qlik",
+      "eventos_outbox",
+      "_migrations_lock",
+      "configuracion_espacios_visibles",
+      "configuraciones_plataforma",
+      "espacios_visibles_usuario_final",
+      "secretos_conexion_destino",
+    ]) {
+      expect(contenido).toContain(`DROP TABLE IF EXISTS "${tabla}"`);
+    }
+    for (const columna of [
+      "automatizacion_plantilla_modo_1_id_qlik",
+      "automatizacion_plantilla_modo_1_nombre",
+      "automatizacion_plantilla_modo_2_id_qlik",
+      "automatizacion_plantilla_modo_2_nombre",
+    ]) {
+      expect(contenido).toContain(`DROP COLUMN IF EXISTS "${columna}"`);
+    }
+    expect(contenido).toContain('DROP COLUMN IF EXISTS "probada_en"');
+    expect(contenido).toContain("\"rol\" = 'admin'");
+    expect(contenido).toContain("\"rol\" = 'usuario'");
+    expect(contenido).toContain("\"rol\" IN ('admin', 'usuario')");
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {
@@ -151,27 +195,8 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("datos_nuevos");
   });
 
-  it("espaciosQlikCache tiene las columnas esperadas", () => {
-    const cols = colNames(getTableConfig(espaciosQlikCache));
-    expect(cols).toContain("espacio_id_qlik");
-    expect(cols).toContain("nombre");
-    expect(cols).toContain("tipo");
-  });
 
-  it("flujosQlikCache tiene las columnas esperadas", () => {
-    const cols = colNames(getTableConfig(flujosQlikCache));
-    expect(cols).toContain("flujo_id_qlik");
-    expect(cols).toContain("nombre");
-    expect(cols).toContain("url_qlik");
-  });
 
-  it("automatizacionesQlikCache tiene columnas de estado", () => {
-    const cols = colNames(getTableConfig(automatizacionesQlikCache));
-    expect(cols).toContain("automatizacion_id_qlik");
-    expect(cols).toContain("nombre");
-    expect(cols).toContain("estado");
-    expect(cols).toContain("ultimo_estado_ejecucion");
-  });
 
   it("solicitudesIdempotentes conserva clave, hash y respuesta", () => {
     const cols = colNames(getTableConfig(solicitudesIdempotentes));
@@ -180,17 +205,7 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("respuesta");
   });
 
-  it("eventosOutbox conserva agregado, payload y publicación", () => {
-    const cols = colNames(getTableConfig(eventosOutbox));
-    expect(cols).toContain("agregado_tipo");
-    expect(cols).toContain("datos");
-    expect(cols).toContain("publicado_en");
-  });
 
-  it("intentosOauthQlik tiene indice en expiraEn", () => {
-    const idxs = idxNames(getTableConfig(intentosOauthQlik));
-    expect(idxs).toContain("idx_intentos_oauth_expira");
-  });
 
   it("no exporta programacionesAutomatizacion (legacy)", () => {
     expect(esquema).not.toHaveProperty("programacionesAutomatizacion");
@@ -202,6 +217,18 @@ describe("Esquema Drizzle", () => {
 
   it("no exporta destinosCache (legacy)", () => {
     expect(esquema).not.toHaveProperty("destinosCache");
+  });
+
+  it("no exporta caches Qlik, intentos OAuth ni Outbox sin consumidores", () => {
+    for (const nombre of [
+      "espaciosQlikCache",
+      "flujosQlikCache",
+      "automatizacionesQlikCache",
+      "intentosOauthQlik",
+      "eventosOutbox",
+    ]) {
+      expect(esquema).not.toHaveProperty(nombre);
+    }
   });
 
   it("tenantsQlik no tiene columnas destinoApi ni destinoBaseDatos", () => {
