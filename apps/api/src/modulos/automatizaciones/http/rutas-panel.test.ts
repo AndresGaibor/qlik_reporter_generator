@@ -205,3 +205,110 @@ describe("POST /:id/ejecuciones", () => {
     expect(orden).toEqual(["current", "actualizar", "run"]);
   });
 });
+
+describe("GET /:id/workspace", () => {
+  it("deniega el script de Qlik Automate a usuarios no administradores", async () => {
+    const obtenerAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      schedules: [],
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ obtenerAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "usuario-1",
+        organizacionId: "organizacion-1",
+        usuarioIdQlik: "usuario-qlik-id",
+      }),
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace");
+
+    expect(respuesta.status).toBe(403);
+    expect(obtenerAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("permite consultar el workspace a un administrador", async () => {
+    const obtenerAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      schedules: [],
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ obtenerAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () =>
+        ({
+          tenantId: "tenant-1",
+          usuarioId: "admin-1",
+          organizacionId: "organizacion-1",
+          usuarioIdQlik: "admin-qlik-id",
+          esSuperadmin: false,
+          roles: ["admin"],
+        }) as never,
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace");
+
+    expect(respuesta.status).toBe(200);
+    expect(obtenerAutomatizacion).toHaveBeenCalledWith("auto-1");
+  });
+
+  it("mantiene el workspace en solo lectura incluso para administradores", async () => {
+    const actualizarAutomatizacion = vi.fn(async () => ({
+      id: "auto-1",
+      name: "Reporte",
+      workspace: { blocks: [] },
+    }));
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik: async () =>
+        ({ actualizarAutomatizacion }) as unknown as ServicioQlik,
+      resolverSesion: async () =>
+        ({
+          tenantId: "tenant-1",
+          usuarioId: "admin-1",
+          organizacionId: "organizacion-1",
+          usuarioIdQlik: "admin-qlik-id",
+          esSuperadmin: false,
+          roles: ["admin"],
+        }) as never,
+      consultaTenant: {} as never,
+      bloqueos: {} as never,
+      idempotencia: {} as unknown as PuertoIdempotencia,
+      auditoria: {} as PuertoAuditoria,
+      repositorioReportes: {} as never,
+      resolverBigQueryReporte: async () => {
+        throw new Error("no debería resolverse BigQuery");
+      },
+    });
+
+    const respuesta = await rutas.request("/auto-1/workspace", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace: { blocks: [] } }),
+    });
+
+    expect(respuesta.status).toBe(405);
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
+  });
+});

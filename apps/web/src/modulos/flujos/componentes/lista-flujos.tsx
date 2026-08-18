@@ -23,6 +23,7 @@ interface Props {
   onPageChange: (page: number) => void;
   total: number;
   hayFiltros: boolean;
+  mostrarScript: boolean;
 }
 
 export function ListaFlujos({
@@ -35,6 +36,7 @@ export function ListaFlujos({
   onPageChange,
   total,
   hayFiltros,
+  mostrarScript,
 }: Props) {
   const inicio = (paginaActual - 1) * 10;
 
@@ -111,7 +113,7 @@ export function ListaFlujos({
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <VisorScriptFlujoModal flujo={flujo} />
+                    {mostrarScript && <VisorScriptFlujoModal flujo={flujo} />}
 
                     {targetHost && (
                       <Button

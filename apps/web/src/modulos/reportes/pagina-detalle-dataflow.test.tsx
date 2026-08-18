@@ -1,7 +1,26 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
+
+const vista = vi.hoisted(() => ({ modoUsuarioFinal: false }));
+
+const autenticacion = vi.hoisted(() => ({
+  obtenerSesion: vi.fn(async () => ({
+    tenantHost: "tenant.qlikcloud.com",
+    tenantActivoId: "tenant-1",
+    tenantsDisponibles: [
+      { id: "tenant-1", organizacionId: "organizacion-1" },
+    ] as Array<{ id: string; organizacionId: string }>,
+    esSuperadmin: false,
+    membresias: [] as Array<{
+      organizacionId: string;
+      organizacionNombre: string;
+      rol: "admin" | "usuario";
+    }>,
+  })),
+}));
 
 const api = vi.hoisted(() => ({
   obtenerDetalleAutomatizacion: vi.fn(async () => ({
@@ -86,20 +105,16 @@ const api = vi.hoisted(() => ({
     workspace: {},
     schedules: [],
   })),
-  actualizarWorkspaceAutomatizacion: vi.fn(async () => ({})),
 }));
 
 vi.mock("@/modulos/reportes/api", () => api);
-vi.mock("@/modulos/autenticacion/api", () => ({
-  obtenerSesion: vi.fn(async () => ({
-    tenantHost: "tenant.qlikcloud.com",
-    membresias: [],
-  })),
-}));
+vi.mock("@/modulos/autenticacion/api", () => autenticacion);
 vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
   useNotificaciones: () => ({ mostrarExito: vi.fn(), mostrarError: vi.fn() }),
 }));
-vi.mock("@/app/contexto-vista", () => ({ useVistaUsuarioFinal: () => false }));
+vi.mock("@/app/contexto-vista", () => ({
+  useVistaUsuarioFinal: () => vista.modoUsuarioFinal,
+}));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: unknown }) => (
     <a href="/reportes">{children as never}</a>
@@ -111,10 +126,23 @@ vi.mock(
   () => ({
     TarjetaDetalleAutomatizacion: ({
       onEjecutar,
-    }: { onEjecutar: () => void }) => (
-      <button type="button" onClick={onEjecutar}>
-        Ejecutar reporte
-      </button>
+      mostrarWorkspace,
+      ejecucionDesdePlataformaHabilitada = true,
+    }: {
+      onEjecutar: () => void;
+      mostrarWorkspace: boolean;
+      ejecucionDesdePlataformaHabilitada?: boolean;
+    }) => (
+      <>
+        <button
+          type="button"
+          onClick={onEjecutar}
+          disabled={!ejecucionDesdePlataformaHabilitada}
+        >
+          Ejecutar reporte
+        </button>
+        {mostrarWorkspace ? <span>Ver Script / Workspace</span> : null}
+      </>
     ),
   }),
 );
@@ -132,6 +160,7 @@ afterEach(() => {
   container?.remove();
   root = undefined;
   container = undefined;
+  vista.modoUsuarioFinal = false;
   vi.clearAllMocks();
 });
 
@@ -158,6 +187,19 @@ async function montar() {
 }
 
 test("muestra configuración Dataflow y auditoría por ejecución", async () => {
+  autenticacion.obtenerSesion.mockResolvedValueOnce({
+    tenantHost: "tenant.qlikcloud.com",
+    tenantActivoId: "tenant-1",
+    tenantsDisponibles: [{ id: "tenant-1", organizacionId: "organizacion-1" }],
+    esSuperadmin: false,
+    membresias: [
+      {
+        organizacionId: "organizacion-1",
+        organizacionNombre: "Bancolombia prueba",
+        rol: "admin",
+      },
+    ],
+  });
   const vista = await montar();
   expect(vista.textContent).toContain("Dataflow actual");
   expect(vista.textContent).toContain("Dataflow compatible");
@@ -182,4 +224,114 @@ test("permite editar solo propiedades del reporte", async () => {
   expect(container?.textContent).toContain("Cambiar Dataflow");
   expect(container?.textContent).not.toContain("gcp_script");
   expect(container?.textContent).not.toContain("Seleccionar columnas");
+});
+
+test("muestra el script de Qlik Automate únicamente al administrador", async () => {
+  autenticacion.obtenerSesion.mockResolvedValueOnce({
+    tenantHost: "tenant.qlikcloud.com",
+    tenantActivoId: "tenant-1",
+    tenantsDisponibles: [{ id: "tenant-1", organizacionId: "organizacion-1" }],
+    esSuperadmin: false,
+    membresias: [
+      {
+        organizacionId: "organizacion-1",
+        organizacionNombre: "Bancolombia prueba",
+        rol: "admin",
+      },
+    ],
+  });
+
+  const vista = await montar();
+
+  expect(vista.textContent).toContain("Ver Script / Workspace");
+});
+
+test("oculta el script de Qlik Automate a usuarios no administradores", async () => {
+  const vista = await montar();
+
+  expect(vista.textContent).not.toContain("Ver Script / Workspace");
+});
+
+test("no muestra el workspace si el usuario es admin solo de otra organización", async () => {
+  autenticacion.obtenerSesion.mockResolvedValueOnce({
+    tenantHost: "tenant.qlikcloud.com",
+    tenantActivoId: "tenant-2",
+    tenantsDisponibles: [{ id: "tenant-2", organizacionId: "organizacion-2" }],
+    esSuperadmin: false,
+    membresias: [
+      {
+        organizacionId: "organizacion-1",
+        organizacionNombre: "Otra organización",
+        rol: "admin",
+      },
+    ],
+  });
+
+  const vista = await montar();
+
+  expect(vista.textContent).not.toContain("Ver Script / Workspace");
+});
+
+test("oculta la auditoría técnica cuando un admin prueba Vista usuario final", async () => {
+  autenticacion.obtenerSesion.mockResolvedValueOnce({
+    tenantHost: "tenant.qlikcloud.com",
+    tenantActivoId: "tenant-1",
+    tenantsDisponibles: [{ id: "tenant-1", organizacionId: "organizacion-1" }],
+    esSuperadmin: false,
+    membresias: [
+      {
+        organizacionId: "organizacion-1",
+        organizacionNombre: "Bancolombia prueba",
+        rol: "admin",
+      },
+    ],
+  });
+  vista.modoUsuarioFinal = true;
+
+  const pagina = await montar();
+
+  expect(pagina.textContent).not.toContain("Ver Script / Workspace");
+  expect(pagina.textContent).not.toContain("Ver auditoría técnica");
+  expect(pagina.textContent).not.toContain("Script Dataflow utilizado");
+});
+
+test("muestra en modo consulta una automatización traída de Qlik sin configuración local", async () => {
+  api.obtenerConfiguracionReporte.mockRejectedValueOnce(
+    new ErrorClienteApi(
+      "El reporte no tiene configuración local",
+      404,
+      "NO_ENCONTRADO",
+    ),
+  );
+
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () => {
+    root?.render(
+      <QueryClientProvider client={queryClient}>
+        <PaginaDetalleAutomatizacion id="auto-1" />
+      </QueryClientProvider>,
+    );
+  });
+
+  await vi.waitFor(() => {
+    expect(container?.textContent).not.toContain("Cargando reporte…");
+  });
+
+  expect(container.textContent).toContain("Ventas");
+  expect(container.textContent).toContain(
+    "Automatización de Qlik sin configuración local",
+  );
+  expect(container.textContent).not.toContain("Dataflow actual");
+  expect(container.textContent).not.toContain("Auditoría de ejecuciones");
+  const ejecutar = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent?.includes("Ejecutar reporte"),
+  );
+  expect(ejecutar?.disabled).toBe(true);
+  expect(api.obtenerEjecucionesLocalesReporte).not.toHaveBeenCalled();
+  expect(api.preflightDataflowReporte).not.toHaveBeenCalled();
 });

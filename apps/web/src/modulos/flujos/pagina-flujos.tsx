@@ -1,3 +1,4 @@
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
@@ -11,6 +12,7 @@ import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type ResumenFlujo,
   obtenerEspacios,
@@ -27,6 +29,7 @@ import { ListaFlujos } from "./componentes/lista-flujos";
 
 export function PaginaFlujos() {
   const { mostrarError } = useNotificaciones();
+  const modoUsuarioFinal = useVistaUsuarioFinal();
   const {
     tenant: tenantActivo,
     tenants,
@@ -40,6 +43,12 @@ export function PaginaFlujos() {
   const [modalTenantsAbierto, setModalTenantsAbierto] = useState(false);
   const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
     useBusqueda();
+
+  const { data: sesion } = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const {
     data: flujos,
@@ -105,6 +114,12 @@ export function PaginaFlujos() {
     return <EstadoError mensaje={error.message} onReintentar={handleRefetch} />;
   }
 
+  const esAdmin =
+    (sesion?.esSuperadmin ?? false) ||
+    (sesion?.membresias ?? []).some(
+      (m) =>
+        m.rol === "admin" && m.organizacionId === tenantActivo?.organizacionId,
+    );
   const targetHost = tenantActivo?.host;
   const targetUrlCrear = targetHost
     ? construirUrlCrearFlujoQlik(targetHost, espacioId)
@@ -155,6 +170,7 @@ export function PaginaFlujos() {
         onPageChange={irPagina}
         total={flujos?.length ?? 0}
         hayFiltros={Boolean(espacioFiltrado || busquedaActiva)}
+        mostrarScript={esAdmin && !modoUsuarioFinal}
       />
 
       <ModalSeleccionarTenantQlik

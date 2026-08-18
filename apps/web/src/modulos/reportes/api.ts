@@ -131,17 +131,6 @@ export function obtenerWorkspaceAutomatizacion(id: string) {
   );
 }
 
-export function actualizarWorkspaceAutomatizacion(
-  id: string,
-  workspace: Record<string, unknown>,
-  nombre?: string,
-) {
-  return clienteApi.put<WorkspaceAutomatizacion>(
-    `${RUTA}/${encodeURIComponent(id)}/workspace`,
-    { workspace, ...(nombre?.trim() ? { nombre: nombre.trim() } : {}) },
-  );
-}
-
 export function clonarAutomatizacion(
   id: string,
   opciones?: { nombre?: string; espacioIdQlik?: string },

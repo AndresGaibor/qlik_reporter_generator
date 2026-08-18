@@ -1,3 +1,5 @@
+import { useVistaUsuarioFinal } from "@/app/contexto-vista";
+import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Icon } from "@/compartido/componentes/ui/icon";
@@ -32,6 +34,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const queryClient = useQueryClient();
   const navegar = useNavigate();
   const [modalClonarAbierto, setModalClonarAbierto] = useState(false);
+  const modoUsuarioFinal = useVistaUsuarioFinal();
 
   const { data: sesion } = useQuery({
     queryKey: ["sesion"],
@@ -80,6 +83,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   const { data: ejecucionesLocales = [] } = useQuery({
     queryKey: ["ejecuciones-locales-reporte", id],
     queryFn: () => obtenerEjecucionesLocalesReporte(id),
+    enabled: Boolean(configuracion),
     retry: false,
     refetchInterval: (consulta) => {
       const ejecuciones = consulta.state.data as
@@ -144,7 +148,12 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
     );
   }
 
-  if (errorDetalle || errorConfiguracion) {
+  const configuracionNoRegistrada =
+    errorConfiguracion &&
+    errorConfiguracionMsg instanceof ErrorClienteApi &&
+    errorConfiguracionMsg.estado === 404;
+
+  if (errorDetalle || (errorConfiguracion && !configuracionNoRegistrada)) {
     return (
       <EstadoError
         mensaje={
@@ -163,7 +172,7 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
   }
 
   const auto = detalle?.automatizacion;
-  if (!auto || !configuracion) return null;
+  if (!auto) return null;
 
   const ejecucionesQlik = detalle?.ejecuciones ?? [];
   const ejecutandoActiva = ejecucionesQlik.find((ejecucion: EjecucionResumen) =>
@@ -178,6 +187,17 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
       ? ejecucion
       : ultima;
   }, undefined);
+  const organizacionActivaId = sesion?.tenantsDisponibles?.find(
+    (tenant) => tenant.id === sesion.tenantActivoId,
+  )?.organizacionId;
+  const esAdmin = Boolean(
+    sesion?.esSuperadmin ||
+      sesion?.membresias?.some(
+        (m) =>
+          m.rol === "admin" &&
+          (!organizacionActivaId || m.organizacionId === organizacionActivaId),
+      ),
+  );
   const hostQlik = sesion?.tenantHost?.trim();
   const urlQlik = hostQlik
     ? new URL(`/automations/${id}`, `https://${hostQlik}`).toString()
@@ -199,13 +219,27 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
           Detalle del reporte
         </div>
         <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-ink-900 sm:text-[28px]">
-          {configuracion.nombre}
+          {configuracion?.nombre ?? auto.nombre}
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-ink-500">
-          El diseño se toma del Dataflow actual. Antes de cada ejecución la
-          plataforma vuelve a leerlo, compila el SQL y actualiza Qlik Automate.
+          {configuracion
+            ? "El diseño se toma del Dataflow actual. Antes de cada ejecución la plataforma vuelve a leerlo, compila el SQL y actualiza Qlik Automate."
+            : "Esta automatización se obtuvo directamente de Qlik Cloud y todavía no tiene una configuración local asociada."}
         </p>
       </header>
+
+      {!configuracion && configuracionNoRegistrada && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900 shadow-card">
+          <p className="font-semibold">
+            Automatización de Qlik sin configuración local
+          </p>
+          <p className="mt-1 text-sm leading-6">
+            Puedes consultar su estado y sus ejecuciones de Qlik desde esta
+            página. Para ejecutarla desde la plataforma primero debe vincularse
+            a un Dataflow y guardar su configuración local.
+          </p>
+        </div>
+      )}
 
       <TarjetaDetalleAutomatizacion
         automatizacion={auto}
@@ -217,21 +251,29 @@ export function PaginaDetalleAutomatizacion({ id }: Props) {
         mutationEjecutar={mutationEjecutar}
         mutationDetener={mutationDetener}
         onClonar={() => setModalClonarAbierto(true)}
-        mostrarWorkspace={false}
+        mostrarWorkspace={esAdmin && !modoUsuarioFinal}
+        ejecucionDesdePlataformaHabilitada={Boolean(configuracion)}
       />
 
-      <ConfiguracionDataflowReporte
-        automatizacionId={id}
-        configuracion={configuracion}
-        preflight={preflight}
-        validandoDataflow={validandoDataflow}
-      />
+      {configuracion && (
+        <>
+          <ConfiguracionDataflowReporte
+            automatizacionId={id}
+            configuracion={configuracion}
+            preflight={preflight}
+            validandoDataflow={validandoDataflow}
+          />
 
-      <HistorialAuditoriaReporte ejecuciones={ejecucionesLocales} />
+          <HistorialAuditoriaReporte
+            ejecuciones={ejecucionesLocales}
+            mostrarDetallesTecnicos={esAdmin && !modoUsuarioFinal}
+          />
+        </>
+      )}
 
       <ModalClonarAutomatizacion
         open={modalClonarAbierto}
-        nombreOriginal={configuracion.nombre}
+        nombreOriginal={configuracion?.nombre ?? auto.nombre}
         cargando={mutationClonar.isPending}
         onConfirmar={(nombre) => mutationClonar.mutate(nombre)}
         onCancelar={() => setModalClonarAbierto(false)}

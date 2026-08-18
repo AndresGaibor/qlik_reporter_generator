@@ -150,6 +150,8 @@ export async function crearAplicacion(
         usuarioId: contexto.usuarioId,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,
+        esSuperadmin: contexto.esSuperadmin ?? false,
+        roles: contexto.roles ?? [],
       };
     });
   const resolverQlik =

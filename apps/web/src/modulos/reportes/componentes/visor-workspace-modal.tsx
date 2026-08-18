@@ -1,5 +1,6 @@
 import { Button } from "@/compartido/componentes/ui/button";
 import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
+import { VisorJsonInteractivo } from "@/compartido/componentes/ui/visor-json-interactivo";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -11,7 +12,6 @@ import {
   type InputParam,
   TarjetaBloqueWorkspace,
 } from "./workspace/tarjeta-bloque-workspace";
-import { VisorEditorJsonTab } from "./workspace/visor-editor-json-tab";
 
 interface Props {
   automatizacionId: string;
@@ -151,6 +151,9 @@ export function VisorWorkspaceModal({
               </div>
 
               <div className="flex items-center gap-3">
+                <span className="hidden rounded-full border border-brand-100 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 sm:inline-flex">
+                  Solo lectura
+                </span>
                 <div className="flex rounded-lg bg-line-200/60 p-1 text-xs">
                   <button
                     type="button"
@@ -172,7 +175,7 @@ export function VisorWorkspaceModal({
                         : "text-ink-500 hover:text-ink-900"
                     }`}
                   >
-                    Edición avanzada (JSON)
+                    JSON del workspace
                   </button>
                 </div>
 
@@ -267,16 +270,24 @@ export function VisorWorkspaceModal({
                   )}
 
                   {pestana === "json" && (
-                    <div className="space-y-4">
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 font-medium">
-                        Esta sección es para usuarios con experiencia técnica.
-                        Modificar el JSON directamente puede afectar el
-                        funcionamiento de la automatización.
+                    <div className="mx-auto max-w-4xl space-y-4">
+                      <div className="flex items-center justify-between gap-3 rounded-lg border border-line-200 bg-white px-4 py-3 text-xs text-ink-600 shadow-sm">
+                        <span>
+                          Workspace de Qlik Automate en modo claro. Solo
+                          lectura.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={copiarJson}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-line-300 bg-white px-2.5 py-1 font-semibold text-ink-700 transition-colors hover:bg-app"
+                        >
+                          <Icon name="copy" size="sm" />
+                          {copiado ? "¡Copiado!" : "Copiar JSON"}
+                        </button>
                       </div>
-                      <VisorEditorJsonTab
-                        automatizacionId={automatizacionId}
-                        workspaceInicial={workspaceObj}
-                      />
+                      <div className="min-h-[400px] rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <VisorJsonInteractivo data={workspaceObj} />
+                      </div>
                     </div>
                   )}
                 </>

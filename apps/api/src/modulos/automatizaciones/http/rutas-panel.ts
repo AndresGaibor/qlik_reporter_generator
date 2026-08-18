@@ -21,6 +21,8 @@ interface ContextoSesion {
   usuarioId: string;
   organizacionId: string;
   usuarioIdQlik: string;
+  esSuperadmin?: boolean;
+  roles?: Array<"admin" | "usuario">;
 }
 
 export interface DependenciasRutasPanel {
@@ -169,6 +171,22 @@ export function crearRutasPanelAutomatizaciones(
   });
 
   rutas.get("/:id/workspace", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const esAdmin =
+      sesion.esSuperadmin === true || sesion.roles?.includes("admin") === true;
+    if (!esAdmin) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            mensaje: "Solo los administradores pueden consultar el workspace",
+            codigo: "NO_AUTORIZADO",
+          },
+        },
+        403,
+      );
+    }
+
     const id = esquemaIdQlik.parse(c.req.param("id"));
     const qlik = await dependencias.resolverQlik(c);
     const automatizacion = await qlik.obtenerAutomatizacion(id);
@@ -180,36 +198,19 @@ export function crearRutasPanelAutomatizaciones(
     });
   });
 
-  rutas.put("/:id/workspace", async (c) => {
-    const id = esquemaIdQlik.parse(c.req.param("id"));
-    const cuerpo = (await c.req.json()) as {
-      nombre?: string;
-      workspace: Record<string, unknown>;
-    };
-    if (
-      !cuerpo ||
-      typeof cuerpo.workspace !== "object" ||
-      cuerpo.workspace === null
-    ) {
-      return c.json(
-        {
-          exito: false,
-          error: { mensaje: "El workspace debe ser un objeto JSON válido" },
+  rutas.put("/:id/workspace", (c) =>
+    c.json(
+      {
+        exito: false,
+        error: {
+          mensaje:
+            "El workspace de Qlik Automate está disponible solo para lectura",
+          codigo: "SOLO_LECTURA",
         },
-        400,
-      );
-    }
-    const qlik = await dependencias.resolverQlik(c);
-    const actualizada = await qlik.actualizarAutomatizacion(id, {
-      ...(cuerpo.nombre?.trim() ? { name: cuerpo.nombre.trim() } : {}),
-      workspace: cuerpo.workspace,
-    });
-    return responderExito(c, {
-      id: actualizada.id,
-      nombre: actualizada.name,
-      workspace: actualizada.workspace ?? {},
-    });
-  });
+      },
+      405,
+    ),
+  );
 
   rutas.post("/:id/clonar", async (c) => {
     const id = esquemaIdQlik.parse(c.req.param("id"));

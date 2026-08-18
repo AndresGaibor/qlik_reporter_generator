@@ -2,8 +2,10 @@ import type { DetalleEjecucionReporte } from "@qlik/contratos";
 
 export function HistorialAuditoriaReporte({
   ejecuciones,
+  mostrarDetallesTecnicos,
 }: {
   ejecuciones: DetalleEjecucionReporte[];
+  mostrarDetallesTecnicos: boolean;
 }) {
   return (
     <section className="rounded-xl border border-line-200 bg-surface shadow-card">
@@ -40,12 +42,14 @@ export function HistorialAuditoriaReporte({
                     {formatearFecha(ejecucion.iniciadoEn ?? ejecucion.creadoEn)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-ink-400">SHA-256</p>
-                  <p className="font-mono text-xs font-semibold text-ink-700">
-                    {ejecucion.hashDataflowSha256.slice(0, 16)}…
-                  </p>
-                </div>
+                {mostrarDetallesTecnicos && (
+                  <div className="text-right">
+                    <p className="text-xs text-ink-400">SHA-256</p>
+                    <p className="font-mono text-xs font-semibold text-ink-700">
+                      {ejecucion.hashDataflowSha256.slice(0, 16)}…
+                    </p>
+                  </div>
+                )}
               </div>
 
               <p className="mt-3 break-all font-mono text-[11px] text-ink-500">
@@ -59,37 +63,39 @@ export function HistorialAuditoriaReporte({
                 </p>
               ) : null}
 
-              <details className="mt-3 rounded-lg border border-line-200 bg-app">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-700">
-                  Ver auditoría técnica
-                </summary>
-                <div className="space-y-4 border-t border-line-200 p-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                      SHA-256 completo
-                    </p>
-                    <p className="mt-1 break-all font-mono text-xs text-ink-700">
-                      {ejecucion.hashDataflowSha256}
-                    </p>
+              {mostrarDetallesTecnicos && (
+                <details className="mt-3 rounded-lg border border-line-200 bg-app">
+                  <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-700">
+                    Ver auditoría técnica
+                  </summary>
+                  <div className="space-y-4 border-t border-line-200 p-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                        SHA-256 completo
+                      </p>
+                      <p className="mt-1 break-all font-mono text-xs text-ink-700">
+                        {ejecucion.hashDataflowSha256}
+                      </p>
+                    </div>
+                    <BloqueCodigo
+                      titulo="Script Dataflow utilizado"
+                      contenido={ejecucion.scriptDataflow}
+                    />
+                    <BloqueCodigo
+                      titulo="SQL BigQuery compilado"
+                      contenido={ejecucion.sqlBigQueryCompilado}
+                    />
+                    <BloqueCodigo
+                      titulo="Script enviado a Talend"
+                      contenido={ejecucion.scriptExportacion}
+                    />
+                    <div className="grid gap-2 text-xs text-ink-500 sm:grid-cols-2">
+                      <span>Qlik run: {ejecucion.runIdQlik ?? "—"}</span>
+                      <span>Compilador: v{ejecucion.versionCompilador}</span>
+                    </div>
                   </div>
-                  <BloqueCodigo
-                    titulo="Script Dataflow utilizado"
-                    contenido={ejecucion.scriptDataflow}
-                  />
-                  <BloqueCodigo
-                    titulo="SQL BigQuery compilado"
-                    contenido={ejecucion.sqlBigQueryCompilado}
-                  />
-                  <BloqueCodigo
-                    titulo="Script enviado a Talend"
-                    contenido={ejecucion.scriptExportacion}
-                  />
-                  <div className="grid gap-2 text-xs text-ink-500 sm:grid-cols-2">
-                    <span>Qlik run: {ejecucion.runIdQlik ?? "—"}</span>
-                    <span>Compilador: v{ejecucion.versionCompilador}</span>
-                  </div>
-                </div>
-              </details>
+                </details>
+              )}
             </article>
           ))}
         </div>
@@ -125,7 +131,7 @@ function BloqueCodigo({
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
         {titulo}
       </p>
-      <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-slate-950 p-3 text-[11px] leading-5 text-slate-100">
+      <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-line-200 bg-surface p-3 text-[11px] leading-5 text-ink-700 shadow-sm">
         {contenido}
       </pre>
     </div>
