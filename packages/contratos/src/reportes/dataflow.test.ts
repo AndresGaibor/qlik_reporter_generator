@@ -116,6 +116,105 @@ describe("contratos de reportes Dataflow", () => {
     })).toThrow();
   });
 
+  it("rechaza un reporteId que no sea UUID", () => {
+    expect(() => esquemaDetalleEjecucionReporte.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      reporteId: "reporte-invalido",
+      flujoIdQlik: "df-1",
+      automatizacionIdQlik: "legacy-auto",
+      runIdQlik: null,
+      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+      automatizacionPersonalId: null,
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "export",
+      uriBaseGcs: "gs://bucket/ejecucion/",
+      estado: "preparando",
+      versionCompilador: 1,
+      etapaError: null,
+      mensajeError: null,
+      iniciadoEn: null,
+      finalizadoEn: null,
+      creadoEn: "2026-08-18T12:00:00.000Z",
+    })).toThrow();
+  });
+
+  it("rechaza un ejecutadoPorUsuarioId que no sea UUID", () => {
+    expect(() => esquemaDetalleEjecucionReporte.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      reporteId: "22222222-2222-4222-8222-222222222222",
+      flujoIdQlik: "df-1",
+      automatizacionIdQlik: "legacy-auto",
+      runIdQlik: null,
+      ejecutadoPorUsuarioId: "usuario-invalido",
+      automatizacionPersonalId: null,
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "export",
+      uriBaseGcs: "gs://bucket/ejecucion/",
+      estado: "preparando",
+      versionCompilador: 1,
+      etapaError: null,
+      mensajeError: null,
+      iniciadoEn: null,
+      finalizadoEn: null,
+      creadoEn: "2026-08-18T12:00:00.000Z",
+    })).toThrow();
+  });
+
+  it("acepta una automatización personal UUID no nula", () => {
+    const resultado = esquemaDetalleEjecucionReporte.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      reporteId: "22222222-2222-4222-8222-222222222222",
+      flujoIdQlik: "df-1",
+      automatizacionIdQlik: "legacy-auto",
+      runIdQlik: null,
+      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+      automatizacionPersonalId: "44444444-4444-4444-8444-444444444444",
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "export",
+      uriBaseGcs: "gs://bucket/ejecucion/",
+      estado: "preparando",
+      versionCompilador: 1,
+      etapaError: null,
+      mensajeError: null,
+      iniciadoEn: null,
+      finalizadoEn: null,
+      creadoEn: "2026-08-18T12:00:00.000Z",
+    });
+
+    expect(resultado.automatizacionPersonalId).toBe(
+      "44444444-4444-4444-8444-444444444444",
+    );
+  });
+
+  it("exige automatizacionIdQlik como snapshot histórico", () => {
+    expect(() => esquemaDetalleEjecucionReporte.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      reporteId: "22222222-2222-4222-8222-222222222222",
+      flujoIdQlik: "df-1",
+      runIdQlik: null,
+      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+      automatizacionPersonalId: null,
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "export",
+      uriBaseGcs: "gs://bucket/ejecucion/",
+      estado: "preparando",
+      versionCompilador: 1,
+      etapaError: null,
+      mensajeError: null,
+      iniciadoEn: null,
+      finalizadoEn: null,
+      creadoEn: "2026-08-18T12:00:00.000Z",
+    })).toThrow();
+  });
+
   it("expone los contratos públicos de resumen y detalle de reporte", () => {
     const resumen: ResumenReporte = {
       id: crypto.randomUUID(),
