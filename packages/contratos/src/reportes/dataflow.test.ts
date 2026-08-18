@@ -1,10 +1,13 @@
 import { describe, expect, it } from "bun:test";
+import type { DetalleReporte, ResumenReporte } from "./dataflow.js";
 import {
   esquemaActualizarConfiguracionReporte,
   esquemaConfiguracionReporteDataflow,
   esquemaCrearReporte,
   esquemaDetalleEjecucionReporte,
   esquemaPreflightDataflowReporte,
+  esquemaResumenReporte,
+  esquemaDetalleReporte,
 } from "./dataflow.js";
 
 describe("contratos de reportes Dataflow", () => {
@@ -36,18 +39,32 @@ describe("contratos de reportes Dataflow", () => {
     ).toBe(false);
   });
 
-  it("rechaza propiedad de Automate en reportes", () => {
-    expect(() =>
-      esquemaConfiguracionReporteDataflow.parse({
-        id: crypto.randomUUID(), nombre: "Ventas", flujoIdQlik: "df-1",
-        flujoNombreSnapshot: "Ventas DF", flujoEspacioIdQlik: null,
-        automatizacionIdQlik: "legacy-auto",
-        automatizacionNombreSnapshot: "Legacy Automate",
-        destinoGcs: "gs://bucket/",
-        activa: true,
-        creadoPorUsuarioId: crypto.randomUUID(),
-      }),
-    ).toThrow();
+  it("rechaza cada propiedad propia de Automate por separado", () => {
+    const reporteValido = {
+      id: crypto.randomUUID(),
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas DF",
+      flujoEspacioIdQlik: null,
+      destinoGcs: "gs://bucket/",
+      activa: true,
+      creadoPorUsuarioId: crypto.randomUUID(),
+    };
+
+    for (const propiedad of [
+      "automatizacionIdQlik",
+      "automatizacionNombreSnapshot",
+      "programacion",
+    ]) {
+      expect(() => esquemaConfiguracionReporteDataflow.parse({
+        ...reporteValido,
+        [propiedad]: propiedad === "automatizacionIdQlik"
+          ? "legacy-auto"
+          : propiedad === "automatizacionNombreSnapshot"
+            ? "Legacy Automate"
+            : {},
+      })).toThrow();
+    }
   });
 
   it("crea reportes sin referencias a Automate", () => {
@@ -60,18 +77,61 @@ describe("contratos de reportes Dataflow", () => {
   });
 
   it("audita usuario y automatización personal en cada ejecución", () => {
-    expect(esquemaDetalleEjecucionReporte.shape).toHaveProperty(
-      "reporteId",
+    const detalle = esquemaDetalleEjecucionReporte.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      reporteId: "22222222-2222-4222-8222-222222222222",
+      flujoIdQlik: "df-1",
+      automatizacionIdQlik: "legacy-auto",
+      runIdQlik: null,
+      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+      automatizacionPersonalId: null,
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "export",
+      uriBaseGcs: "gs://bucket/ejecucion/",
+      estado: "preparando",
+      versionCompilador: 1,
+      etapaError: null,
+      mensajeError: null,
+      iniciadoEn: null,
+      finalizadoEn: null,
+      creadoEn: "2026-08-18T12:00:00.000Z",
+    });
+
+    expect(detalle.reporteId).toBe("22222222-2222-4222-8222-222222222222");
+    expect(detalle.ejecutadoPorUsuarioId).toBe(
+      "33333333-3333-4333-8333-333333333333",
     );
-    expect(esquemaDetalleEjecucionReporte.shape).toHaveProperty(
-      "ejecutadoPorUsuarioId",
+    expect(detalle.automatizacionPersonalId).toBeNull();
+    expect(detalle.automatizacionIdQlik).toBe("legacy-auto");
+
+    expect(() => esquemaDetalleEjecucionReporte.parse({
+      ...detalle,
+      ejecutadoPorUsuarioId: null,
+    })).toThrow();
+    expect(() => esquemaDetalleEjecucionReporte.parse({
+      ...detalle,
+      automatizacionPersonalId: "not-a-uuid",
+    })).toThrow();
+  });
+
+  it("expone los contratos públicos de resumen y detalle de reporte", () => {
+    const resumen: ResumenReporte = {
+      id: crypto.randomUUID(),
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas DF",
+      flujoEspacioIdQlik: null,
+      destinoGcs: "gs://bucket/",
+      activa: true,
+      creadoPorUsuarioId: crypto.randomUUID(),
+    };
+    const detalle: DetalleReporte = esquemaDetalleReporte.parse(
+      esquemaResumenReporte.parse(resumen),
     );
-    expect(esquemaDetalleEjecucionReporte.shape).toHaveProperty(
-      "automatizacionPersonalId",
-    );
-    expect(esquemaDetalleEjecucionReporte.shape).not.toHaveProperty(
-      "configuracionId",
-    );
+
+    expect(detalle).toEqual(resumen);
   });
 
   it("exige una huella SHA-256 válida en preflight", () => {

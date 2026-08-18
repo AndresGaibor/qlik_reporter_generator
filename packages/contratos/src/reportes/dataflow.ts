@@ -90,3 +90,9 @@ export const esquemaConfiguracionReporteDataflow = z
 export type ConfiguracionReporteDataflow = z.infer<
   typeof esquemaConfiguracionReporteDataflow
 >;
+
+export const esquemaResumenReporte = esquemaConfiguracionReporteDataflow;
+export type ResumenReporte = z.infer<typeof esquemaResumenReporte>;
+
+export const esquemaDetalleReporte = esquemaConfiguracionReporteDataflow;
+export type DetalleReporte = z.infer<typeof esquemaDetalleReporte>;
