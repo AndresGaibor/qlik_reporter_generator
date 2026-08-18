@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./esquema.js";
@@ -46,20 +43,4 @@ export type ConexionDb = typeof db;
 
 export async function cerrarConexion(): Promise<void> {
   await dbHolder.cerrar();
-}
-
-const rutaEsquemaBase = resolve(process.cwd(), "sql/esquema-base.sql");
-
-export function obtenerEsquemaBase(): string {
-  return readFileSync(rutaEsquemaBase, "utf8");
-}
-
-export async function asegurarEsquemaTablas(): Promise<void> {
-  await db.execute(sql`SET client_min_messages = 'WARNING'`);
-  const resultado = await db.execute<{ existe: boolean }>(sql`
-    SELECT to_regclass('public.organizaciones') IS NOT NULL AS existe
-  `);
-  if (!resultado[0]?.existe) {
-    await db.execute(sql.raw(obtenerEsquemaBase()));
-  }
 }

@@ -80,21 +80,21 @@ describe("Esquema Drizzle", () => {
     expect(idxNames(config)).toContain("uq_configuracion_oauth_por_tenant");
   });
 
-  it("el esquema base conserva las tablas y restricciones finales", async () => {
+  it("la migración inicial conserva las tablas y restricciones finales", async () => {
     const contenido = await Bun.file(
-      new URL("../sql/esquema-base.sql", import.meta.url),
+      new URL("../drizzle/0000_tan_zeigeist.sql", import.meta.url),
     ).text();
 
-    expect(contenido).toContain('CREATE TABLE IF NOT EXISTS "app_config"');
+    expect(contenido).toContain('CREATE TABLE "app_config"');
     expect(contenido).toContain(
-      'CREATE TABLE IF NOT EXISTS "conexiones_destino"',
+      'CREATE TABLE "conexiones_destino"',
     );
     expect(contenido).toContain("\"tipo\" = 'bigquery'");
     expect(contenido).toContain(
-      'CREATE TABLE IF NOT EXISTS "ejecuciones_reportes"',
+      'CREATE TABLE "ejecuciones_reportes"',
     );
     expect(contenido).toContain("\"tipo_ejecucion\" = 'manual'");
-    expect(contenido).toContain('CREATE TABLE IF NOT EXISTS "eventos_outbox"');
+    expect(contenido).toContain('CREATE TABLE "eventos_outbox"');
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {

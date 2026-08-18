@@ -10,7 +10,7 @@ docker compose ps
 
 El frontend queda en el puerto configurado por `PORT_WEB` (4524 por defecto) y la API en `PORT_API` (4523 por defecto). PostgreSQL solo se expone en el host configurado por `HOST_IP`.
 
-La API crea el esquema desde `apps/api/sql/esquema-base.sql` cuando la base está vacía. No ejecutes migraciones Drizzle ni `db:migrate`.
+Antes del primer arranque, aplica la migración inicial con `bun run db:migrate`. Los cambios futuros se gestionan con nuevas migraciones Drizzle.
 
 ## Actualización
 

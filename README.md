@@ -32,7 +32,11 @@ docker compose up --build
 - Frontend: `http://localhost:4524`
 - API: `http://localhost:4523`
 
-La API crea automáticamente el esquema desde `apps/api/sql/esquema-base.sql` al detectar una base vacía. No existen comandos de migración.
+Aplica el esquema inicial antes del primer arranque:
+
+```bash
+bun run db:migrate
+```
 
 ## Diagnóstico
 
@@ -64,6 +68,25 @@ docker compose build --no-cache
 docker compose up -d
 docker compose ps
 ```
+
+## Actualizar una instalación existente
+
+Después de obtener cambios del repositorio, sincroniza las dependencias antes de arrancar. En Windows con PowerShell:
+
+```powershell
+git pull origin main
+bun install --frozen-lockfile
+docker compose up -d postgres
+bun run dev
+```
+
+Si una versión anterior conservaba una URL con `@postgres`, reemplaza el archivo local con el ejemplo antes de iniciar Bun:
+
+```powershell
+Copy-Item .env.example .env -Force
+```
+
+`DATABASE_URL` debe usar `localhost` cuando Bun se ejecuta en el host. Si el puerto `4525` está ocupado, detén el proceso anterior antes de ejecutar `bun run dev`.
 
 ## Calidad
 

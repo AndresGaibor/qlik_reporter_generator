@@ -8,6 +8,9 @@
     "build:worker": "bun build src/entradas/worker.ts --target=node --outdir=dist/worker",
     "start": "node dist/node.js",
     "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun --env-file=../../.env run drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:check": "bun --env-file=../../.env run src/plataforma/bootstrap/check.ts",
     "db:seed": "bun --env-file=../../.env run src/plataforma/bootstrap/seed.ts"
   },

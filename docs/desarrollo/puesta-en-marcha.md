@@ -1,6 +1,6 @@
 # Puesta en marcha
 
-Consulta la [guia de arranque local](guia-arranque-local.md). El esquema se crea automaticamente al iniciar la API; no hay migraciones que ejecutar.
+Consulta la [guia de arranque local](guia-arranque-local.md). Antes del primer arranque, ejecuta `bun run db:migrate`.
 
 ## Variables críticas
 

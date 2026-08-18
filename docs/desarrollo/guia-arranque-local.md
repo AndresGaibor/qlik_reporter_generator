@@ -11,7 +11,11 @@ bun run dev
 
 Abre `http://localhost:4525`. La API escucha en `http://localhost:4523` y su salud se comprueba en `http://localhost:4523/api/salud`.
 
-La API crea el esquema desde `apps/api/sql/esquema-base.sql` cuando PostgreSQL esta vacio. No ejecutes `db:migrate`.
+Antes del primer arranque, aplica la migración inicial:
+
+```bash
+bun run db:migrate
+```
 
 ## Docker Completo
 
@@ -51,3 +55,22 @@ docker compose build --no-cache
 docker compose up -d
 docker compose ps
 ```
+
+## Actualizar una Instalación Existente en Windows
+
+Desde PowerShell, sincroniza el código y las dependencias antes de iniciar la aplicación:
+
+```powershell
+git pull origin main
+bun install --frozen-lockfile
+docker compose up -d postgres
+bun run dev
+```
+
+Si la versión anterior tenía una URL de PostgreSQL con host `postgres`, recrea `.env` desde el ejemplo para ejecutar Bun en Windows:
+
+```powershell
+Copy-Item .env.example .env -Force
+```
+
+Si Vite informa que el puerto `4525` está ocupado, termina el proceso anterior o libera el puerto antes de reintentar.

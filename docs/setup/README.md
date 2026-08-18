@@ -15,7 +15,7 @@ Abre `http://localhost:4524` y completa el wizard de configuración. La API est�
 2. Registra el tenant, Client ID y Client Secret de Qlik Cloud.
 3. Define el superadministrador.
 
-La aplicación crea su esquema automáticamente al iniciar una base vacía. No existen migraciones ni comandos `drizzle-kit` que ejecutar.
+Antes del primer arranque, ejecuta `bun run db:migrate`. Los cambios futuros se gestionan con nuevas migraciones Drizzle.
 
 ## Variables de entorno
 
