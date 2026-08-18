@@ -61,6 +61,8 @@ export const esquemaTenantQlik = z.object({
   esPrincipal: z.boolean(),
   automatizacionBaseIdQlik: z.string().nullable().optional(),
   automatizacionBaseNombre: z.string().nullable().optional(),
+  dataflowBaseIdQlik: z.string().nullable().optional(),
+  dataflowBaseNombre: z.string().nullable().optional(),
   creadoEn: z.string(),
 });
 
@@ -75,10 +77,18 @@ export const esquemaConfigurarAutomatizacionBase = z.object({
   automatizacionBaseNombre: z.string().optional(),
 });
 
+export const esquemaConfigurarDataflowBase = z.object({
+  dataflowBaseIdQlik: z.string().min(1),
+  dataflowBaseNombre: z.string().optional(),
+});
+
 export type TenantQlik = z.infer<typeof esquemaTenantQlik>;
 export type CrearTenantQlik = z.infer<typeof esquemaCrearTenantQlik>;
 export type ConfigurarAutomatizacionBase = z.infer<
   typeof esquemaConfigurarAutomatizacionBase
+>;
+export type ConfigurarDataflowBase = z.infer<
+  typeof esquemaConfigurarDataflowBase
 >;
 
 export const esquemaCredencialesBigQuery = z.object({

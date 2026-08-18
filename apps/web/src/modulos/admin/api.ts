@@ -175,6 +175,18 @@ export function configurarAutomatizacionBaseTenant(
   );
 }
 
+export function configurarDataflowBaseTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  dataflowBaseIdQlik: string,
+  dataflowBaseNombre?: string,
+) {
+  return clienteApi.put<TenantQlik>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/dataflow-base`,
+    { dataflowBaseIdQlik, dataflowBaseNombre },
+  );
+}
+
 export function listarAutomatizacionesParaAdmin() {
   return clienteApi.get<
     import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]

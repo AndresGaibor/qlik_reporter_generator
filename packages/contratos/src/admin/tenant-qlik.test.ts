@@ -11,6 +11,8 @@ const tenantValido = {
   esPrincipal: true,
   automatizacionBaseIdQlik: "auto-1",
   automatizacionBaseNombre: "Auto Test",
+  dataflowBaseIdQlik: "flow-1",
+  dataflowBaseNombre: "Dataflow Test",
   destinoApiUrl: null,
   tieneDestinoApiKey: false,
   destinoApiKeyMascara: null,
@@ -41,6 +43,15 @@ describe("admin/index - esquemaTenantQlik", () => {
     if (resultado.success) {
       expect(resultado.data).toHaveProperty("automatizacionBaseIdQlik");
       expect(resultado.data).toHaveProperty("automatizacionBaseNombre");
+    }
+  });
+
+  it("debe mantener la configuracion del Dataflow base", () => {
+    const resultado = esquemaTenantQlik.safeParse(tenantValido);
+    expect(resultado.success).toBe(true);
+    if (resultado.success) {
+      expect(resultado.data.dataflowBaseIdQlik).toBe("flow-1");
+      expect(resultado.data.dataflowBaseNombre).toBe("Dataflow Test");
     }
   });
 });

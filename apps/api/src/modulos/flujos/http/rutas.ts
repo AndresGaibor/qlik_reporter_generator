@@ -1,3 +1,4 @@
+import { esquemaClonarDataflowBase } from "@qlik/contratos/flujos";
 import { type Context, Hono } from "hono";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
 import { ListarFlujos } from "../aplicacion/casos-de-uso/listar-flujos.js";
@@ -12,8 +13,102 @@ export function crearRutasFlujos(
   resolverQlik?: (
     c: Context,
   ) => Promise<import("../../qlik/publico.js").ServicioQlik>,
+  dependenciasClonado?: {
+    resolverSesion(c: Context): Promise<{ tenantId: string }>;
+    obtenerTenant(tenantId: string): Promise<{
+      dataflowBaseIdQlik?: string | null;
+      dataflowBaseNombre?: string | null;
+    } | null>;
+  },
 ) {
   const rutas = new Hono();
+  rutas.get("/plantilla-base", async (c) => {
+    if (!dependenciasClonado) {
+      return c.json(
+        {
+          exito: false,
+          error: { mensaje: "Configuración de Dataflow base no disponible" },
+        },
+        503,
+      );
+    }
+    const sesion = await dependenciasClonado.resolverSesion(c);
+    const tenant = await dependenciasClonado.obtenerTenant(sesion.tenantId);
+    if (!tenant?.dataflowBaseIdQlik) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            codigo: "SIN_DATAFLOW_BASE",
+            mensaje: "No hay un Dataflow base configurado para este entorno",
+          },
+        },
+        422,
+      );
+    }
+    return responderExito(c, {
+      id: tenant.dataflowBaseIdQlik,
+      nombre: tenant.dataflowBaseNombre || "Dataflow base",
+    });
+  });
+
+  rutas.post("/desde-plantilla", async (c) => {
+    if (!resolverQlik || !dependenciasClonado) {
+      return c.json(
+        { exito: false, error: { mensaje: "Copia de Dataflow no disponible" } },
+        503,
+      );
+    }
+    const entrada = esquemaClonarDataflowBase.parse(await c.req.json());
+    const sesion = await dependenciasClonado.resolverSesion(c);
+    const tenant = await dependenciasClonado.obtenerTenant(sesion.tenantId);
+    if (!tenant?.dataflowBaseIdQlik) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            codigo: "SIN_DATAFLOW_BASE",
+            mensaje: "No hay un Dataflow base configurado para este entorno",
+          },
+        },
+        422,
+      );
+    }
+    const qlik = await resolverQlik(c);
+    const flujosDisponibles = await qlik.listarFlujos();
+    const plantillaDisponible = flujosDisponibles.find(
+      (flujo) =>
+        flujo.id === tenant.dataflowBaseIdQlik ||
+        (tenant.dataflowBaseNombre &&
+          flujo.name.trim().toLocaleLowerCase("es") ===
+            tenant.dataflowBaseNombre.trim().toLocaleLowerCase("es")),
+    );
+    if (!plantillaDisponible) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            codigo: "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
+            mensaje:
+              "La plantilla configurada no pertenece al entorno Qlik activo o ya no está disponible. Activa este entorno en Qlik y vuelve a seleccionar la plantilla en Configuración.",
+          },
+        },
+        404,
+      );
+    }
+    return responderExito(
+      c,
+      await qlik.copiarDataflow(
+        plantillaDisponible.appId ?? plantillaDisponible.id,
+        entrada.nombre,
+        {
+          espacioId: plantillaDisponible.spaceId,
+          descripcion: plantillaDisponible.description,
+        },
+      ),
+      201,
+    );
+  });
   rutas.get("/", async (c) => {
     const consulta = await resolverConsulta(c);
     const espacioId = c.req.query("espacioId")?.trim() || undefined;

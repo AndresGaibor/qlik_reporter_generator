@@ -18,6 +18,8 @@ export function mapearTenantQlik(
     esPrincipal: fila.esPrincipal,
     automatizacionBaseIdQlik: fila.automatizacionBaseIdQlik,
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
+    dataflowBaseIdQlik: fila.dataflowBaseIdQlik,
+    dataflowBaseNombre: fila.dataflowBaseNombre,
     creadoEn: fila.creadoEn,
   };
 }

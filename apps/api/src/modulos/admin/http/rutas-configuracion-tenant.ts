@@ -2,6 +2,7 @@ import {
   type ConfiguracionBigQuery,
   esquemaConfigurarAutomatizacionBase,
   esquemaConfigurarBigQuery,
+  esquemaConfigurarDataflowBase,
   esquemaCredencialesBigQuery,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
@@ -77,6 +78,38 @@ export function crearRutasConfiguracionTenant({
   rutas.put(
     "/organizaciones/:id/tenants-qlik/:tenantQlikId/automatizacion-base",
     handlerAutomatizacionBase,
+  );
+
+  const handlerDataflowBase = async (c: Context) => {
+    try {
+      const organizacionId = obtenerParametroRequerido(c, "id");
+      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
+      exigirAccesoOrganizacion(await resolverContexto(c), organizacionId);
+      const entrada = esquemaConfigurarDataflowBase.parse(await c.req.json());
+      const resultado = await repositorio.configurarDataflowBase(
+        organizacionId,
+        tenantQlikId,
+        entrada.dataflowBaseIdQlik,
+        entrada.dataflowBaseNombre,
+      );
+      if (!resultado) {
+        return responderError(c, "Tenant Qlik no encontrado", 404, {
+          codigo: "NO_ENCONTRADO",
+        });
+      }
+      return responderExito(c, resultado);
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  };
+
+  rutas.put(
+    "/organizaciones/:id/tenants-qlik/:tenantQlikId/dataflow-base",
+    handlerDataflowBase,
+  );
+  rutas.put(
+    "/tenants/:id/qlik/:tenantQlikId/dataflow-base",
+    handlerDataflowBase,
   );
   rutas.put(
     "/tenants/:id/qlik/:tenantQlikId/automatizacion-base",

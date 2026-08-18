@@ -109,6 +109,31 @@ export const ConsultaTenantQlik = {
     return fila ? mapearTenantQlik(fila) : null;
   },
 
+  async configurarDataflowBase(
+    db: DbType,
+    organizacionId: string,
+    tenantQlikId: string,
+    dataflowBaseIdQlik: string,
+    dataflowBaseNombre?: string,
+  ) {
+    const [fila] = await db
+      .update(tenantsQlik)
+      .set({
+        dataflowBaseIdQlik,
+        dataflowBaseNombre: dataflowBaseNombre ?? null,
+        actualizadoEn: new Date(),
+      })
+      .where(
+        and(
+          eq(tenantsQlik.id, tenantQlikId),
+          eq(tenantsQlik.organizacionId, organizacionId),
+        ),
+      )
+      .returning();
+
+    return fila ? mapearTenantQlik(fila) : null;
+  },
+
   async eliminarTenantQlik(
     db: DbType,
     organizacionId: string,

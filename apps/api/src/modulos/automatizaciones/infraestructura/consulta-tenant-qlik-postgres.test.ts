@@ -7,12 +7,16 @@ describe("mapearTenantParaAutomatizaciones", () => {
       host: "empresa.us.qlikcloud.com",
       automatizacionBaseIdQlik: "base-1",
       automatizacionBaseNombre: "Base",
+      dataflowBaseIdQlik: "dataflow-base-1",
+      dataflowBaseNombre: "Dataflow Base",
     });
 
     expect(tenant).toEqual({
       host: "empresa.us.qlikcloud.com",
       automatizacionBaseIdQlik: "base-1",
       automatizacionBaseNombre: "Base",
+      dataflowBaseIdQlik: "dataflow-base-1",
+      dataflowBaseNombre: "Dataflow Base",
     });
   });
 });

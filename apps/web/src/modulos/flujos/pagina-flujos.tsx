@@ -15,6 +15,7 @@ import { construirUrlCrearFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type ResumenFlujo,
+  obtenerDataflowBase,
   obtenerEspacios,
   obtenerFlujosConFiltros,
 } from "@/modulos/flujos/api";
@@ -26,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BarraFiltrosFlujos } from "./componentes/barra-filtros-flujos";
 import { ListaFlujos } from "./componentes/lista-flujos";
+import { ModalCrearDataflowDesdePlantilla } from "./componentes/modal-crear-dataflow-desde-plantilla";
 
 export function PaginaFlujos() {
   const { mostrarError } = useNotificaciones();
@@ -41,6 +43,7 @@ export function PaginaFlujos() {
   );
   const espacioFiltrado = espacioId.trim() || undefined;
   const [modalTenantsAbierto, setModalTenantsAbierto] = useState(false);
+  const [modalCopiaAbierto, setModalCopiaAbierto] = useState(false);
   const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
     useBusqueda();
 
@@ -71,6 +74,12 @@ export function PaginaFlujos() {
   const espacios = useQuery({
     queryKey: ["flujos", "espacios", tenantActivo?.id],
     queryFn: obtenerEspacios,
+    retry: false,
+  });
+
+  const dataflowBase = useQuery({
+    queryKey: ["dataflow-base", tenantActivo?.id],
+    queryFn: obtenerDataflowBase,
     retry: false,
   });
 
@@ -149,6 +158,35 @@ export function PaginaFlujos() {
         }
       />
 
+      <section className="mb-5 rounded-xl border border-brand-100 bg-brand-50/60 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-brand-900">
+            Crear Dataflow desde la plantilla base
+          </p>
+          <p className="mt-1 text-xs text-brand-800">
+            Primero se copiará{" "}
+            {dataflowBase.data?.nombre
+              ? `“${dataflowBase.data.nombre}”`
+              : "la plantilla"}
+            . Después podrás abrir la copia confirmada para editarla en Qlik.
+          </p>
+        </div>
+        {targetHost && dataflowBase.data ? (
+          <Button
+            className="mt-3 w-full sm:mt-0 sm:w-auto"
+            onClick={() => setModalCopiaAbierto(true)}
+          >
+            Crear copia
+          </Button>
+        ) : (
+          <p className="mt-3 text-xs font-medium text-brand-800 sm:mt-0">
+            {dataflowBase.isLoading
+              ? "Consultando plantilla…"
+              : "No hay una plantilla base disponible"}
+          </p>
+        )}
+      </section>
+
       <BarraFiltrosFlujos
         busquedaTemp={busquedaTemp}
         setBusquedaTemp={setBusquedaTemp}
@@ -180,6 +218,15 @@ export function PaginaFlujos() {
         tenantActivoId={tenantActivo?.id}
         espacioId={espacioId}
       />
+      {targetHost && dataflowBase.data ? (
+        <ModalCrearDataflowDesdePlantilla
+          abierto={modalCopiaAbierto}
+          nombrePlantilla={dataflowBase.data.nombre}
+          host={targetHost}
+          onCerrar={() => setModalCopiaAbierto(false)}
+          onCreado={() => void refetch()}
+        />
+      ) : null}
     </PageLayout>
   );
 }

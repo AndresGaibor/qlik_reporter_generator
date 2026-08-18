@@ -134,6 +134,13 @@ function traducirErrorQlik(
   if (codigo && MENSAJES_POR_CODIGO_ERROR[codigo]) {
     return MENSAJES_POR_CODIGO_ERROR[codigo];
   }
+  if (
+    (estado === 400 || estado === 404 || estado === 422) &&
+    mensajeOriginal &&
+    mensajeOriginal !== MENSAJES_QLIK_POR_CODIGO[estado]
+  ) {
+    return mensajeOriginal;
+  }
   if (MENSAJES_QLIK_POR_CODIGO[estado]) {
     return MENSAJES_QLIK_POR_CODIGO[estado];
   }

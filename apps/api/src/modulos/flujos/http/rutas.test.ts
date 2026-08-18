@@ -3,6 +3,77 @@ import { Hono } from "hono";
 import { crearRutasFlujos } from "./rutas.js";
 
 describe("rutas de flujos", () => {
+  it("expone el Dataflow base para abrirlo en Qlik", async () => {
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [],
+          }) as never,
+        {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "base-1",
+            dataflowBaseNombre: "Base Ventas",
+          }),
+        },
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/plantilla-base");
+    const cuerpo = (await respuesta.json()) as { datos: unknown };
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo.datos).toEqual({
+      id: "base-1",
+      nombre: "Base Ventas",
+    });
+  });
+
+  it("localiza por resourceId y copia usando el App ID del Dataflow", async () => {
+    const copiarDataflow = vi.fn(async () => ({
+      id: "copia-1",
+      nombre: "Copia ventas",
+    }));
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [
+              {
+                id: "item-1",
+                appId: "app-real-1",
+                name: "Base Ventas",
+                spaceId: "space-1",
+                description: "qlik generator",
+              },
+            ],
+            copiarDataflow,
+          }) as never,
+        {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({ dataflowBaseIdQlik: "item-1" }),
+        },
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/desde-plantilla", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "Copia ventas" }),
+    });
+
+    expect(respuesta.status).toBe(201);
+    expect(copiarDataflow).toHaveBeenCalledWith("app-real-1", "Copia ventas", {
+      espacioId: "space-1",
+      descripcion: "qlik generator",
+    });
+  });
+
   it("expone un resumen seguro validado por Qlik", async () => {
     const validarScriptApp = vi.fn(async () => ({
       errores: [],

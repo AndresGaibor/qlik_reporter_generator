@@ -77,6 +77,8 @@ vi.mock("@/modulos/flujos/api", () => ({
     { id: "flujo-1", nombre: "Ventas" },
   ]),
   obtenerEspacios: vi.fn(async () => []),
+  obtenerDataflowBase: vi.fn(async () => null),
+  clonarDataflowBase: vi.fn(),
 }));
 vi.mock("@/modulos/reportes/api", () => ({
   obtenerAutomatizaciones: vi.fn(async () => []),

@@ -19,6 +19,7 @@ import { NavegacionConfiguracion } from "./componentes/navegacion-configuracion"
 import { ResumenConfiguracion } from "./componentes/resumen-configuracion";
 import { SeccionAutomatizacionBaseTenant } from "./componentes/seccion-automatizacion-base-tenant";
 import { SeccionBigQuery } from "./componentes/seccion-bigquery";
+import { SeccionDataflowBaseTenant } from "./componentes/seccion-dataflow-base-tenant";
 import { SeccionInfoTenant } from "./componentes/seccion-info-tenant";
 import { SeccionOauthQlik } from "./componentes/seccion-oauth-qlik";
 import { SeccionQlikCloud } from "./componentes/seccion-qlik-cloud";
@@ -220,6 +221,11 @@ export function PaginaDetalleTenant({
               tenantsQlik={tenantsQlik}
             />
           </SeccionAnclada>
+
+          <SeccionDataflowBaseTenant
+            organizacionId={tenantId}
+            tenantsQlik={tenantsQlik}
+          />
 
           <SeccionAnclada id="bigquery">
             <SeccionBigQuery
