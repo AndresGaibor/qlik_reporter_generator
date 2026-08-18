@@ -17,3 +17,6 @@ UPDATE "membresias_organizacion" SET "rol" = 'admin' WHERE "rol" = 'administrado
 UPDATE "membresias_organizacion" SET "rol" = 'usuario' WHERE "rol" IN ('editor', 'auditor');--> statement-breakpoint
 ALTER TABLE "membresias_organizacion" DROP CONSTRAINT IF EXISTS "membresias_rol_check";--> statement-breakpoint
 ALTER TABLE "membresias_organizacion" ADD CONSTRAINT "membresias_rol_check" CHECK ("membresias_organizacion"."rol" IN ('admin', 'usuario'));
+--> statement-breakpoint
+DELETE FROM "sesiones_usuario" WHERE "revocada_en" IS NOT NULL OR "expira_en" <= NOW();--> statement-breakpoint
+DELETE FROM "solicitudes_idempotentes" WHERE "expira_en" <= NOW();

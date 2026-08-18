@@ -53,7 +53,9 @@ describe("Esquema Drizzle", () => {
       name: string;
       value: { queryChunks: Array<{ value?: string[] }> };
     }>;
-    const rolCheck = checks.find((check) => check.name === "membresias_rol_check");
+    const rolCheck = checks.find(
+      (check) => check.name === "membresias_rol_check",
+    );
     const definicion = (rolCheck?.value.queryChunks ?? [])
       .flatMap((chunk) => chunk.value ?? [])
       .join("");
@@ -95,22 +97,15 @@ describe("Esquema Drizzle", () => {
     ).text();
 
     expect(contenido).toContain('CREATE TABLE "app_config"');
-    expect(contenido).toContain(
-      'CREATE TABLE "conexiones_destino"',
-    );
+    expect(contenido).toContain('CREATE TABLE "conexiones_destino"');
     expect(contenido).toContain("\"tipo\" = 'bigquery'");
-    expect(contenido).toContain(
-      'CREATE TABLE "ejecuciones_reportes"',
-    );
+    expect(contenido).toContain('CREATE TABLE "ejecuciones_reportes"');
     expect(contenido).toContain("\"tipo_ejecucion\" = 'manual'");
   });
 
   it("la migración forward elimina residuos físicos y normaliza roles", async () => {
     const contenido = await Bun.file(
-      new URL(
-        "../drizzle/0001_spooky_marvel_apes.sql",
-        import.meta.url,
-      ),
+      new URL("../drizzle/0001_spooky_marvel_apes.sql", import.meta.url),
     ).text();
 
     for (const tabla of [
@@ -139,6 +134,12 @@ describe("Esquema Drizzle", () => {
     expect(contenido).toContain("\"rol\" = 'admin'");
     expect(contenido).toContain("\"rol\" = 'usuario'");
     expect(contenido).toContain("\"rol\" IN ('admin', 'usuario')");
+    expect(contenido).toContain(
+      'DELETE FROM "sesiones_usuario" WHERE "revocada_en" IS NOT NULL OR "expira_en" <= NOW()',
+    );
+    expect(contenido).toContain(
+      'DELETE FROM "solicitudes_idempotentes" WHERE "expira_en" <= NOW()',
+    );
   });
 
   it("identidadesQlik tiene las columnas esperadas", () => {
@@ -195,17 +196,12 @@ describe("Esquema Drizzle", () => {
     expect(cols).toContain("datos_nuevos");
   });
 
-
-
-
   it("solicitudesIdempotentes conserva clave, hash y respuesta", () => {
     const cols = colNames(getTableConfig(solicitudesIdempotentes));
     expect(cols).toContain("clave");
     expect(cols).toContain("hash_solicitud");
     expect(cols).toContain("respuesta");
   });
-
-
 
   it("no exporta programacionesAutomatizacion (legacy)", () => {
     expect(esquema).not.toHaveProperty("programacionesAutomatizacion");
