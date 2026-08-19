@@ -80,6 +80,21 @@ export class EjecutarReporte {
         { operacionesNoSoportadas: preparacion.operacionesNoSoportadas },
       );
     }
+    if (!this.alcanceBigQuery.credencialesJson?.trim()) {
+      throw new ErrorAplicacion(
+        "BIGQUERY_CREDENCIALES_NO_CONFIGURADAS",
+        "La conexión BigQuery del tenant no tiene credenciales JSON configuradas",
+        422,
+      );
+    }
+    if (!this.alcanceBigQuery.estimador) {
+      throw new ErrorAplicacion(
+        "BIGQUERY_ESTIMADOR_NO_CONFIGURADO",
+        "No se pudo validar BigQuery antes de iniciar Talend",
+        500,
+      );
+    }
+    await this.alcanceBigQuery.estimador.estimarConsulta(preparacion.sqlBigQuery);
 
     const workers = this.workers;
     if (!workers) {
@@ -166,6 +181,7 @@ export class EjecutarReporte {
           const workspace = inyectarContextoTalend(
             (automatizacion.workspace ?? {}) as Record<string, unknown>,
             consultasTalend,
+            this.alcanceBigQuery.credencialesJson as string,
           );
           etapa = "actualizar-workspace";
           await this.qlik.actualizarAutomatizacion(

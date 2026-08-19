@@ -13,7 +13,7 @@ const workspace = JSON.parse(
   ).text(),
 );
 
-function caso() {
+function caso(opciones: { estimarError?: Error } = {}) {
   const qlik = {
     listarFlujos: vi.fn(async () => [
       { id: "df-1", name: "Ventas Diarias", spaceId: "sp-1" },
@@ -24,7 +24,9 @@ function caso() {
       name: "Worker",
       workspace: structuredClone(workspace),
     })),
-    actualizarAutomatizacion: vi.fn(async () => ({})),
+    actualizarAutomatizacion: vi.fn(
+      async (_id: string, definicion: Record<string, unknown>) => definicion,
+    ),
     ejecutarAutomatizacion: vi.fn(async () => ({ runId: "run-1" })),
   };
   const repositorio = {
@@ -33,6 +35,12 @@ function caso() {
     marcarEjecucionError: vi.fn(async () => undefined),
   };
   const workers = { ejecutar: vi.fn(async () => worker) };
+  const estimador = {
+    estimarConsulta: vi.fn(async () => {
+      if (opciones.estimarError) throw opciones.estimarError;
+      return { bytesProcesados: 123, costoEstimadoUsd: 0.01 };
+    }),
+  };
   const ejecutar = new EjecutarReporte(
     qlik as never,
     repositorio as never,
@@ -40,7 +48,12 @@ function caso() {
       ejecutarExclusivo: async (_: string, tarea: () => Promise<unknown>) =>
         tarea(),
     } as never,
-    { projectId: "p", dataset: "d" },
+    {
+      projectId: "p",
+      dataset: "d",
+      credencialesJson: '{"type":"service_account","project_id":"p"}',
+      estimador,
+    },
     () => "11111111-1111-4111-8111-111111111111",
     () => ({
       organizacionId: "org-1",
@@ -52,7 +65,7 @@ function caso() {
     }),
     workers as never,
   );
-  return { ejecutar, qlik, repositorio, workers };
+  return { ejecutar, qlik, repositorio, workers, estimador };
 }
 
 describe("EjecutarReporte", () => {
@@ -76,6 +89,50 @@ describe("EjecutarReporte", () => {
         automatizacionIdQlik: "worker-1",
       }),
     );
+  });
+
+  it("valida BigQuery con la credencial configurada antes de iniciar Talend", async () => {
+    const { ejecutar, estimador, qlik } = caso();
+    await ejecutar.ejecutar({
+      flujoIdQlik: "df-1",
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "qlik-1",
+    });
+    expect(estimador.estimarConsulta).toHaveBeenCalledTimes(1);
+    const llamadaActualizar = qlik.actualizarAutomatizacion.mock.calls[0];
+    const workspaceActualizado = llamadaActualizar?.[1].workspace as Record<
+      string,
+      unknown
+    >;
+    const blocks = workspaceActualizado.blocks as Array<
+      Record<string, unknown>
+    >;
+    const credenciales = blocks.find((block) => block.name === "Credenciales");
+    const operations = credenciales?.operations as Array<
+      Record<string, unknown>
+    >;
+    expect(operations.find((item) => item.id === "set_value")?.value).toBe(
+      '{"type":"service_account","project_id":"p"}',
+    );
+  });
+
+  it("no crea worker ni inicia Talend si BigQuery rechaza la consulta", async () => {
+    const { ejecutar, workers, qlik } = caso({
+      estimarError: new Error("Access Denied: source table"),
+    });
+    await expect(
+      ejecutar.ejecutar({
+        flujoIdQlik: "df-1",
+        tenantId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "qlik-1",
+      }),
+    ).rejects.toThrow("Access Denied");
+    expect(workers.ejecutar).not.toHaveBeenCalled();
+    expect(qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
   });
 
   it("falla si el Dataflow no pertenece al tenant visible", async () => {

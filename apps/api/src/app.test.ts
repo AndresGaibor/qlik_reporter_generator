@@ -136,7 +136,7 @@ describe("API", () => {
                     {
                       mode: "keyValue",
                       value: [
-                        { key: "credenciales", value: "credenciales" },
+                        { key: "credenciales", value: "{ $.Credenciales }" },
                         { key: "bq_select_data", value: "{ $.BqSelectData }" },
                         { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
                         { key: "bq_export_data", value: "{ $.BqExportData }" },
@@ -417,9 +417,16 @@ describe("API", () => {
             },
           ],
         },
-        ...["BqSelectData", "BqNumberCsv", "BqExportData", "BqDrop"].map(
-          (name) => ({ name, operations: [{ id: "set_value", value: "" }] }),
-        ),
+        ...[
+          "Credenciales",
+          "BqSelectData",
+          "BqNumberCsv",
+          "BqExportData",
+          "BqDrop",
+        ].map((name) => ({
+          name,
+          operations: [{ id: "set_value", value: "" }],
+        })),
       ],
     };
     const tenant = vi.fn(async () => ({
@@ -481,7 +488,13 @@ describe("API", () => {
       resolverBigQueryReporte: async () => ({
         projectId: "p",
         dataset: "d",
-        estimador: { estimarConsulta: vi.fn() },
+        credencialesJson: '{"type":"service_account","project_id":"p"}',
+        estimador: {
+          estimarConsulta: vi.fn(async () => ({
+            bytesProcesados: 1,
+            costoEstimadoUsd: 0,
+          })),
+        },
       }),
       consultaTenantQlik: { obtenerTenant: tenant },
       repositorioAutomatizacionesPersonales: workerRepo as never,

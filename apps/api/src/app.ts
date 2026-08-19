@@ -230,6 +230,7 @@ export async function crearAplicacion(
         projectId: google.projectId,
         dataset: google.dataset,
         gcsUri: google.gcsUri,
+        credencialesJson: google.credencialesJson,
         estimador: {
           estimarConsulta: estimador.estimarConsulta.bind(estimador),
         },

@@ -108,7 +108,17 @@ describe("pipeline Dataflow → Automate → Talend", () => {
           tarea: () => Promise<unknown>,
         ) => tarea(),
       } as never,
-      { projectId: "p", dataset: "d" },
+      {
+        projectId: "p",
+        dataset: "d",
+        credencialesJson: '{"type":"service_account","project_id":"p"}',
+        estimador: {
+          estimarConsulta: vi.fn(async () => ({
+            bytesProcesados: 1,
+            costoEstimadoUsd: 0,
+          })),
+        },
+      },
       () => `22222222-2222-4222-8222-${String(++id).padStart(12, "0")}`,
       () => ({
         organizacionId: "org-1",
@@ -166,7 +176,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       valorVariable(workspaces[1] ?? {}, "BqSelectData"),
     );
     expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
-      "CREDENCIAL_SANITIZADA",
+      '{"type":"service_account","project_id":"p"}',
     );
   });
 
@@ -196,7 +206,18 @@ describe("pipeline Dataflow → Automate → Talend", () => {
           tarea: () => Promise<unknown>,
         ) => tarea(),
       } as never,
-      { projectId: "poc-bigquery-talend", dataset: "demo_lafavorita" },
+      {
+        projectId: "poc-bigquery-talend",
+        dataset: "demo_lafavorita",
+        credencialesJson:
+          '{"type":"service_account","project_id":"poc-bigquery-talend"}',
+        estimador: {
+          estimarConsulta: vi.fn(async () => ({
+            bytesProcesados: 1,
+            costoEstimadoUsd: 0,
+          })),
+        },
+      },
       () => ejecucionId,
       () => ({
         organizacionId: "org-1",

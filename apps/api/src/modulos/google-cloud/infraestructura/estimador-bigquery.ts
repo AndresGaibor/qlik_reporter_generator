@@ -1,3 +1,4 @@
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { BigQuery } from "@google-cloud/bigquery";
 
 export interface OpcionesEstimadorBigQuery {
@@ -45,8 +46,17 @@ export class EstimadorBigQuery {
           }
         )?.statistics;
       return this.resultado(Number(stats?.query?.totalBytesProcessed ?? 0));
-    } catch {
-      return this.estimarDesdeMetadatos(query);
+    } catch (error) {
+      const detalle =
+        error instanceof Error ? error.message : "Error desconocido de BigQuery";
+      throw new ErrorAplicacion(
+        "BIGQUERY_VALIDACION_FALLIDA",
+        `BigQuery rechazó la consulta con las credenciales configuradas: ${detalle}`.slice(
+          0,
+          1000,
+        ),
+        422,
+      );
     }
   }
 
