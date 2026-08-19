@@ -6,7 +6,7 @@ const entrada = {
   tenantQlikId: "22222222-2222-4222-8222-222222222222",
   usuarioId: "33333333-3333-4333-8333-333333333333",
   automatizacionIdQlik: "auto-1",
-  nombreSnapshot: "Reportes Andres",
+  automatizacionNombreSnapshot: "Reportes Andres",
   estado: "activo" as const,
 };
 

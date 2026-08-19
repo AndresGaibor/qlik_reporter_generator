@@ -82,7 +82,7 @@ function workerPersistido() {
     tenantQlikId: "tenant-1",
     usuarioId: "usuario-1",
     automatizacionIdQlik: "old-broken-auto",
-    nombreSnapshot: "Worker roto",
+    automatizacionNombreSnapshot: "Worker roto",
     estado: "error" as const,
     mensajeError: "Contrato incompatible",
   };
@@ -156,7 +156,7 @@ describe("administración de automatizaciones personales", () => {
           tenantQlikId: "tenant-1",
           usuarioId: "usuario-1",
           automatizacionIdQlik: "auto-1",
-          nombreSnapshot: "Worker de Ana",
+          automatizacionNombreSnapshot: "Worker de Ana",
           estado: "error" as const,
           mensajeError: "Contrato incompatible",
         },

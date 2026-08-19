@@ -263,7 +263,9 @@ export const automatizacionesPersonalesQlik = pgTable(
       .notNull()
       .references(() => usuarios.id, { onDelete: "cascade" }),
     automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
-    nombreSnapshot: text("automatizacion_nombre_snapshot").notNull(),
+    automatizacionNombreSnapshot: text(
+      "automatizacion_nombre_snapshot",
+    ).notNull(),
     estado: text("estado").notNull().default("activo"),
     mensajeError: text("mensaje_error"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),

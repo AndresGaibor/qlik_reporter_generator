@@ -168,7 +168,7 @@ export function crearRutasAutomatizacionesPersonales(
               tenantQlikId,
               {
                 automatizacionIdQlik: copia.id,
-                nombreSnapshot: copia.nombre,
+                automatizacionNombreSnapshot: copia.nombre,
                 estado: "activo",
                 mensajeError: null,
               },
@@ -203,7 +203,7 @@ function mapearWorker(
     usuarioNombreQlik: identidad?.nombreQlik ?? null,
     usuarioCorreoQlik: identidad?.correoQlik ?? null,
     automatizacionIdQlik: worker.automatizacionIdQlik,
-    automatizacionNombre: worker.nombreSnapshot,
+    automatizacionNombre: worker.automatizacionNombreSnapshot,
     estado: worker.estado,
     mensajeError: worker.mensajeError ?? null,
   };

@@ -20,7 +20,7 @@ const worker = {
   tenantQlikId: "tenant-1",
   usuarioId: "user-1",
   automatizacionIdQlik: "worker-old",
-  nombreSnapshot: "Worker",
+  automatizacionNombreSnapshot: "Worker",
   estado: "activo" as const,
 };
 const TALEND_WORKSPACE = JSON.parse(
