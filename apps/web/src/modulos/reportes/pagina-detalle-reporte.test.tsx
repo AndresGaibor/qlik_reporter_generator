@@ -36,7 +36,9 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock("@/modulos/reportes/api", () => api);
 vi.mock("@/compartido/hooks/use-tenant-activo", () => ({
-  useTenantActivo: () => ({ tenant: { host: "tenant.qlikcloud.com" } }),
+  useTenantActivo: () => ({
+    tenant: { id: "tenant-1", host: "tenant.qlikcloud.com" },
+  }),
 }));
 vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
   useNotificaciones: () => ({ mostrarError: vi.fn(), mostrarExito: vi.fn() }),
@@ -92,6 +94,16 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(api.obtenerResumenReporte).toHaveBeenCalledWith("df-1");
   expect(api.preflightDataflowReporte).toHaveBeenCalledWith("df-1");
   expect(api.obtenerEjecucionesReporte).toHaveBeenCalledWith("df-1");
+  expect(client.getQueryData(["reporte", "tenant-1", "df-1"])).toBeDefined();
+  expect(
+    client.getQueryData(["resumen-reporte", "tenant-1", "df-1"]),
+  ).toBeDefined();
+  expect(
+    client.getQueryData(["preflight-reporte", "tenant-1", "df-1"]),
+  ).toBeDefined();
+  expect(
+    client.getQueryData(["ejecuciones-reporte", "tenant-1", "df-1"]),
+  ).toBeDefined();
   expect(container?.textContent).not.toContain("Clonar");
   expect(container?.textContent).not.toContain("Inactivo");
 });

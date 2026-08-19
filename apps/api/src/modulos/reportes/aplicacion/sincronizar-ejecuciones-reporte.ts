@@ -73,11 +73,7 @@ export class SincronizarEjecucionesReporte {
         continue;
       }
 
-      await this.repositorio.marcarEstadoPorRunQlik(
-        local.runIdQlik,
-        estado,
-        fecha,
-      );
+      await this.repositorio.marcarEstadoEjecucion(local.id, estado, fecha);
     }
   }
 

@@ -86,15 +86,15 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     return filas.map(mapearEjecucion);
   }
 
-  async marcarEstadoPorRunQlik(
-    runIdQlik: string,
+  async marcarEstadoEjecucion(
+    id: string,
     estado: "completada" | "error" | "detenida",
     finalizadoEn: Date,
   ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
       .set({ estado, finalizadoEn, actualizadoEn: new Date() })
-      .where(eq(ejecucionesReportes.runIdQlik, runIdQlik));
+      .where(eq(ejecucionesReportes.id, id));
   }
 
   async listarEjecucionesDescargas(

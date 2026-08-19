@@ -58,7 +58,11 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
 describe("fachada /api/reportes para Dataflows", () => {
   it("expone la plantilla base con la autorización del tenant", async () => {
     const app = appCon(
-      { listarFlujos: vi.fn(async () => []) },
+      {
+        listarFlujos: vi.fn(async () => [
+          { id: "base-1", name: "Base Ventas" },
+        ]),
+      },
       {
         dependenciasClonado: {
           resolverSesion: async () => ({ tenantId: "tenant-1" }),
@@ -66,6 +70,10 @@ describe("fachada /api/reportes para Dataflows", () => {
             dataflowBaseIdQlik: "base-1",
             dataflowBaseNombre: "Base Ventas",
           }),
+          resolverQlik: async () =>
+            ({
+              listarFlujos: async () => [{ id: "base-1", name: "Base Ventas" }],
+            }) as never,
         },
       },
     );
@@ -77,6 +85,36 @@ describe("fachada /api/reportes para Dataflows", () => {
       id: "base-1",
       nombre: "Base Ventas",
     });
+  });
+
+  it("rechaza en la ruta canónica una plantilla ausente en el tenant Qlik", async () => {
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [
+          { id: "otro-1", name: "Base Ventas" },
+        ]),
+      },
+      {
+        dependenciasClonado: {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "base-1",
+            dataflowBaseNombre: "Base Ventas",
+          }),
+          resolverQlik: async () =>
+            ({
+              listarFlujos: async () => [{ id: "otro-1", name: "Base Ventas" }],
+            }) as never,
+        },
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/plantilla-base");
+
+    expect(respuesta.status).toBe(404);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
+    );
   });
 
   it("crea un reporte desde la plantilla usando el App ID disponible en Qlik", async () => {

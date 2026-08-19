@@ -75,4 +75,28 @@ describe("RepositorioReportesPostgres", () => {
     expect(serializado).toContain("tenant_qlik_id");
     expect(serializado).toContain("organizacion_id");
   });
+
+  it("marca el estado terminal por ID de ejecución y no por run Qlik", async () => {
+    let condicion: unknown;
+    const db = {
+      update: () => ({
+        set: () => ({
+          where: async (where: unknown) => {
+            condicion = where;
+          },
+        }),
+      }),
+    };
+
+    await new RepositorioReportesPostgres(db as never).marcarEstadoEjecucion(
+      "ejecucion-seleccionada",
+      "detenida",
+      new Date("2026-08-19T00:00:00Z"),
+    );
+
+    expect(
+      (condicion as { queryChunks: Array<{ name?: string }> }).queryChunks[1]
+        ?.name,
+    ).toBe("id");
+  });
 });

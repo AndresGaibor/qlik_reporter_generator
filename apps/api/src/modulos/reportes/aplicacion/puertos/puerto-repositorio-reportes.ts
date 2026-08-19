@@ -73,8 +73,8 @@ export interface PuertoRepositorioReportes {
     organizacionId: string,
     limite?: number,
   ): Promise<EjecucionReportePersistida[]>;
-  marcarEstadoPorRunQlik(
-    runIdQlik: string,
+  marcarEstadoEjecucion(
+    id: string,
     estado: "completada" | "error" | "detenida",
     finalizadoEn: Date,
   ): Promise<void>;

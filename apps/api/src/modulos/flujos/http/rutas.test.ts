@@ -10,7 +10,7 @@ describe("rutas de flujos", () => {
         async () => ({ listar: async () => [] }),
         async () =>
           ({
-            listarFlujos: async () => [],
+            listarFlujos: async () => [{ id: "base-1", name: "Base Ventas" }],
           }) as never,
         {
           resolverSesion: async () => ({ tenantId: "tenant-1" }),
@@ -72,6 +72,69 @@ describe("rutas de flujos", () => {
       espacioId: "space-1",
       descripcion: "qlik generator",
     });
+  });
+
+  it("no usa el nombre como fallback si falta el ID configurado", async () => {
+    const copiarDataflow = vi.fn(async () => ({ id: "copia-1" }));
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [
+              { id: "otro-1", name: "Base Ventas", appId: "app-otro" },
+            ],
+            copiarDataflow,
+          }) as never,
+        {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "base-configurada-inexistente",
+            dataflowBaseNombre: "Base Ventas",
+          }),
+        },
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/desde-plantilla", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "Copia ventas" }),
+    });
+
+    expect(respuesta.status).toBe(404);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
+    );
+    expect(copiarDataflow).not.toHaveBeenCalled();
+  });
+
+  it("no anuncia una plantilla configurada que falta en Qlik", async () => {
+    const app = new Hono().route(
+      "/api/flujos",
+      crearRutasFlujos(
+        async () => ({ listar: async () => [] }),
+        async () =>
+          ({
+            listarFlujos: async () => [{ id: "otro-1", name: "Base Ventas" }],
+          }) as never,
+        {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "base-configurada-inexistente",
+            dataflowBaseNombre: "Base Ventas",
+          }),
+        },
+      ),
+    );
+
+    const respuesta = await app.request("/api/flujos/plantilla-base");
+
+    expect(respuesta.status).toBe(404);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
+    );
   });
 
   it("expone un resumen seguro validado por Qlik", async () => {

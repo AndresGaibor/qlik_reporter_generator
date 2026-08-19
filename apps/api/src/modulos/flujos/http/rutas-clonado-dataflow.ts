@@ -45,9 +45,18 @@ export function crearRutasClonadoDataflow(
         422,
       );
     }
+    const plantillaDisponible = await resolverPlantillaDisponible(
+      c,
+      dependencias,
+      tenant.dataflowBaseIdQlik,
+    );
+    if (!plantillaDisponible) return respuestaPlantillaNoDisponible(c);
     return responderExito(c, {
       id: tenant.dataflowBaseIdQlik,
-      nombre: tenant.dataflowBaseNombre || "Dataflow base",
+      nombre:
+        tenant.dataflowBaseNombre ||
+        plantillaDisponible.name ||
+        "Dataflow base",
     });
   });
 
@@ -66,28 +75,13 @@ export function crearRutasClonadoDataflow(
         422,
       );
     }
-    const qlik = await dependencias.resolverQlik(c);
-    const flujosDisponibles = await qlik.listarFlujos();
-    const plantillaDisponible = flujosDisponibles.find(
-      (flujo) =>
-        flujo.id === tenant.dataflowBaseIdQlik ||
-        (tenant.dataflowBaseNombre &&
-          flujo.name.trim().toLocaleLowerCase("es") ===
-            tenant.dataflowBaseNombre.trim().toLocaleLowerCase("es")),
+    const plantillaDisponible = await resolverPlantillaDisponible(
+      c,
+      dependencias,
+      tenant.dataflowBaseIdQlik,
     );
-    if (!plantillaDisponible) {
-      return c.json(
-        {
-          exito: false,
-          error: {
-            codigo: "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
-            mensaje:
-              "La plantilla configurada no pertenece al entorno Qlik activo o ya no está disponible. Activa este entorno en Qlik y vuelve a seleccionar la plantilla en Configuración.",
-          },
-        },
-        404,
-      );
-    }
+    if (!plantillaDisponible) return respuestaPlantillaNoDisponible(c);
+    const qlik = await dependencias.resolverQlik(c);
     return responderExito(
       c,
       await qlik.copiarDataflow(
@@ -103,6 +97,30 @@ export function crearRutasClonadoDataflow(
   });
 
   return rutas;
+}
+
+async function resolverPlantillaDisponible(
+  c: Context,
+  dependencias: DependenciasClonadoDataflow,
+  id: string,
+) {
+  const qlik = await dependencias.resolverQlik(c);
+  const flujosDisponibles = await qlik.listarFlujos();
+  return flujosDisponibles.find((flujo) => flujo.id === id);
+}
+
+function respuestaPlantillaNoDisponible(c: Context) {
+  return c.json(
+    {
+      exito: false,
+      error: {
+        codigo: "DATAFLOW_BASE_NO_DISPONIBLE_EN_TENANT",
+        mensaje:
+          "La plantilla configurada no pertenece al entorno Qlik activo o ya no está disponible. Activa este entorno en Qlik y vuelve a seleccionar la plantilla en Configuración.",
+      },
+    },
+    404,
+  );
 }
 
 async function obtenerTenantDataflow(

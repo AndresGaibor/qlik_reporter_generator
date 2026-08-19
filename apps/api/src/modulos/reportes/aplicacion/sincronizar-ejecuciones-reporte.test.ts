@@ -16,22 +16,22 @@ describe("SincronizarEjecucionesReporte", () => {
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-old",
-          runIdQlik: "run-old",
+          runIdQlik: "run-shared",
           automatizacionIdQlik: "auto-old",
           estado: "iniciada",
         },
         {
           id: "e-new",
-          runIdQlik: "run-new",
+          runIdQlik: "run-shared",
           automatizacionIdQlik: "auto-new",
           estado: "iniciada",
         },
       ]),
-      marcarEstadoPorRunQlik: vi.fn(async () => undefined),
+      marcarEstadoEjecucion: vi.fn(async () => undefined),
     };
     const listarEjecuciones = vi.fn(async (id: string) => [
       {
-        id: id === "auto-old" ? "run-old" : "run-new",
+        id: "run-shared",
         status: "stopped",
       },
     ]);
@@ -55,27 +55,27 @@ describe("SincronizarEjecucionesReporte", () => {
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-old",
-          runIdQlik: "run-old",
+          runIdQlik: "run-shared",
           automatizacionIdQlik: "auto-old",
           estado: "iniciada",
         },
         {
           id: "e-new",
-          runIdQlik: "run-new",
+          runIdQlik: "run-shared",
           automatizacionIdQlik: "auto-new",
           estado: "iniciada",
         },
       ]),
-      marcarEstadoPorRunQlik: marcarEstado,
+      marcarEstadoEjecucion: marcarEstado,
       marcarEjecucionError: marcarError,
     };
     const listar = vi.fn(async (automatizacionIdQlik: string) =>
       automatizacionIdQlik === "auto-old"
-        ? [{ id: "run-old", status: "failed", error: { message: "viejo" } }]
-        : [{ id: "run-new", status: "stopped" }],
+        ? [{ id: "run-shared", status: "failed", error: { message: "viejo" } }]
+        : [{ id: "run-shared", status: "stopped" }],
     );
     const solicitarJson = vi.fn(async ({ ruta }: { ruta: string }) => ({
-      id: "run-old",
+      id: "run-shared",
       status: "failed",
       error: { message: `detalle-${ruta}` },
     }));
@@ -89,7 +89,7 @@ describe("SincronizarEjecucionesReporte", () => {
       expect.any(Date),
     );
     expect(marcarEstado).toHaveBeenCalledWith(
-      "run-new",
+      "e-new",
       "detenida",
       expect.any(Date),
     );
@@ -101,7 +101,7 @@ describe("SincronizarEjecucionesReporte", () => {
     );
     expect(solicitarJson).toHaveBeenCalledWith({
       metodo: "GET",
-      ruta: "/api/workflows/automations/auto-old/runs/run-old",
+      ruta: "/api/workflows/automations/auto-old/runs/run-shared",
     });
   });
 
@@ -116,7 +116,7 @@ describe("SincronizarEjecucionesReporte", () => {
           estado: "iniciada",
         },
       ]),
-      marcarEstadoPorRunQlik: marcar,
+      marcarEstadoEjecucion: marcar,
     };
     await llamada(repo, {
       listarEjecuciones: vi.fn(async () => [
@@ -137,13 +137,13 @@ describe("SincronizarEjecucionesReporte", () => {
           estado: "iniciada",
         },
       ]),
-      marcarEstadoPorRunQlik: marcar,
+      marcarEstadoEjecucion: marcar,
     };
     await llamada(repo, {
       listarEjecuciones: vi.fn(async () => [
         { id: "run-1", status: "stopped" },
       ]),
     } as unknown as ServicioQlik);
-    expect(marcar).toHaveBeenCalledWith("run-1", "detenida", expect.any(Date));
+    expect(marcar).toHaveBeenCalledWith("e-1", "detenida", expect.any(Date));
   });
 });

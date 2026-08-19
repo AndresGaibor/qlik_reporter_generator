@@ -29,22 +29,22 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     "diseno",
   );
   const reporte = useQuery({
-    queryKey: ["reporte", id],
+    queryKey: ["reporte", tenantActivo?.id, id],
     queryFn: () => obtenerReporte(id),
     retry: false,
   });
   const resumen = useQuery({
-    queryKey: ["resumen-reporte", id],
+    queryKey: ["resumen-reporte", tenantActivo?.id, id],
     queryFn: () => obtenerResumenReporte(id),
     retry: false,
   });
   const preflight = useQuery({
-    queryKey: ["preflight-reporte", id],
+    queryKey: ["preflight-reporte", tenantActivo?.id, id],
     queryFn: () => preflightDataflowReporte(id),
     retry: false,
   });
   const ejecuciones = useQuery({
-    queryKey: ["ejecuciones-reporte", id],
+    queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
     queryFn: () => obtenerEjecucionesReporte(id),
     retry: false,
   });
@@ -52,7 +52,9 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     mutationFn: () => ejecutarReporte(id),
     onSuccess: () => {
       mostrarExito("Ejecución iniciada");
-      void client.invalidateQueries({ queryKey: ["ejecuciones-reporte", id] });
+      void client.invalidateQueries({
+        queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
+      });
     },
     onError: (error: Error) => mostrarError(error.message),
   });
