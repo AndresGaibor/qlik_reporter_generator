@@ -59,3 +59,33 @@ export function firmarArchivoExploradorGcs(ruta: string) {
     { ruta },
   );
 }
+
+
+export interface CarpetaUsuarioGcs extends ExploradorGcs {
+  carpetaUsuario: string;
+}
+
+export interface CarpetaRegistradaGcs {
+  usuarioId: string;
+  correo: string | null;
+  carpeta: string;
+}
+
+export function listarCarpetaUsuarioGcs(ruta = ""): Promise<CarpetaUsuarioGcs> {
+  return clienteApi.get<CarpetaUsuarioGcs>("/descargas/carpeta", {
+    parametros: ruta ? { ruta } : undefined,
+  });
+}
+
+export function firmarArchivoCarpetaUsuarioGcs(ruta: string) {
+  return clienteApi.post<{ nombre: string; url: string }>(
+    "/descargas/carpeta/firma",
+    { ruta },
+  );
+}
+
+export function listarCarpetasUsuariosGcs(): Promise<CarpetaRegistradaGcs[]> {
+  return clienteApi.get<CarpetaRegistradaGcs[]>(
+    "/descargas/administracion/carpetas",
+  );
+}

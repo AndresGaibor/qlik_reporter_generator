@@ -14,6 +14,7 @@ interface SesionDescarga {
   tenantId: string;
   organizacionId: string;
   usuarioId: string;
+  correo?: string | null;
   roles?: Array<"admin" | "administrador" | "usuario">;
   esSuperadmin?: boolean;
 }
@@ -26,11 +27,58 @@ export interface DependenciasRutasDescargas {
   resolverConfiguracionGcs?: (
     c: Context,
   ) => Promise<{ bucket: string; prefijo: string }>;
+  resolverUsuariosOrganizacion?: (
+    organizacionId: string,
+  ) => Promise<Array<{ id: string; correo: string | null }>>;
   minutosFirma?: number;
 }
 
 export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
   const rutas = new Hono();
+
+  rutas.get("/carpeta", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
+    if (!carpetaUsuario) {
+      return responderError(c, "La cuenta no tiene un correo válido", 422, {
+        codigo: "CORREO_USUARIO_NO_DISPONIBLE",
+      });
+    }
+    if (!dependencias.resolverConfiguracionGcs) {
+      return responderError(c, "GCS no está configurado", 422, {
+        codigo: "GCS_NO_CONFIGURADO",
+      });
+    }
+    const configuracion = await dependencias.resolverConfiguracionGcs(c);
+    const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+    if (!almacenamiento.listarDirectorio) {
+      return responderError(c, "El almacenamiento no permite explorar carpetas", 501, {
+        codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
+      });
+    }
+    const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
+    try {
+      const prefijoUsuario = `${configuracion.prefijo}${carpetaUsuario}/`;
+      const resultado = await almacenamiento.listarDirectorio(
+        `${prefijoUsuario}${subruta}`,
+      );
+      return responderExito(c, {
+        bucket: configuracion.bucket,
+        prefijoBase: prefijoUsuario,
+        ruta: subruta,
+        carpetaUsuario,
+        carpetas: resultado.carpetas,
+        archivos: resultado.archivos.map((a) => ({
+          nombre: a.nombre,
+          formato: a.formato,
+          tamano: a.tamanoBytes,
+          fecha: a.fecha ?? null,
+        })),
+      });
+    } catch (error) {
+      return responderErrorGcs(c, error);
+    }
+  });
 
   rutas.get("/explorador", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
@@ -78,6 +126,38 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       return responderErrorGcs(c, error);
     }
   });
+  rutas.post("/carpeta/firma", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
+    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs) {
+      return responderError(c, "No se pudo resolver la carpeta del usuario", 422, {
+        codigo: "CARPETA_USUARIO_NO_DISPONIBLE",
+      });
+    }
+    const configuracion = await dependencias.resolverConfiguracionGcs(c);
+    const cuerpo = await c.req.json<{ ruta?: string }>();
+    const rutaRelativa = normalizarRutaArchivo(cuerpo.ruta ?? "");
+    const rutaCompleta = `${configuracion.prefijo}${carpetaUsuario}/${rutaRelativa}`;
+    if (!esRutaDescargable(rutaCompleta)) {
+      return responderError(c, "El archivo solicitado no es descargable", 422, {
+        codigo: "RUTA_GCS_NO_PERMITIDA",
+      });
+    }
+    try {
+      const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+      const url = await almacenamiento.firmar(
+        rutaCompleta,
+        dependencias.minutosFirma ?? 15,
+      );
+      return responderExito(c, {
+        nombre: rutaCompleta.split("/").at(-1) ?? "archivo",
+        url,
+      });
+    } catch (error) {
+      return responderErrorGcs(c, error);
+    }
+  });
+
   rutas.post("/explorador/firma", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
     if (!esAdministrador(sesion)) {
@@ -176,6 +256,46 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     return responderExito(c, ejecuciones);
   });
 
+  rutas.get("/administracion/carpetas", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    if (!esAdministrador(sesion)) {
+      return responderError(c, "Acceso restringido a administradores", 403, {
+        codigo: "SOLO_ADMIN",
+      });
+    }
+    if (!dependencias.resolverConfiguracionGcs || !dependencias.resolverUsuariosOrganizacion) {
+      return responderError(c, "No se pudo resolver las carpetas de usuarios", 422, {
+        codigo: "CARPETAS_USUARIO_NO_CONFIGURADAS",
+      });
+    }
+    const configuracion = await dependencias.resolverConfiguracionGcs(c);
+    const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+    if (!almacenamiento.listarDirectorio) {
+      return responderError(c, "El almacenamiento no permite explorar carpetas", 501, {
+        codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
+      });
+    }
+    try {
+      const [directorio, usuarios] = await Promise.all([
+        almacenamiento.listarDirectorio(configuracion.prefijo),
+        dependencias.resolverUsuariosOrganizacion(sesion.organizacionId),
+      ]);
+      const existentes = new Set(
+        directorio.carpetas.map((carpeta) => carpeta.replace(/\/$/, "")),
+      );
+      const carpetas = usuarios
+        .flatMap((usuario) => {
+          const carpeta = carpetaDesdeCorreo(usuario.correo);
+          if (!carpeta || !existentes.has(carpeta)) return [];
+          return [{ usuarioId: usuario.id, correo: usuario.correo, carpeta }];
+        })
+        .sort((a, b) => a.carpeta.localeCompare(b.carpeta));
+      return responderExito(c, carpetas);
+    } catch (error) {
+      return responderErrorGcs(c, error);
+    }
+  });
+
   rutas.get("/administracion", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
     if (!esAdministrador(sesion)) {
@@ -235,6 +355,28 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
   });
 
   return rutas;
+}
+
+function carpetaDesdeCorreo(correo: string | null | undefined): string | null {
+  const local = correo
+    ?.split("@")[0]
+    ?.normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return local || null;
+}
+
+function normalizarRutaArchivo(valor: string): string {
+  const limpio = valor.trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!limpio || limpio.split("/").includes("..")) {
+    throw new ErrorAplicacion(
+      "RUTA_GCS_NO_PERMITIDA",
+      "La ruta solicitada no es válida",
+      422,
+    );
+  }
+  return limpio;
 }
 
 function esAdministrador(sesion: SesionDescarga): boolean {

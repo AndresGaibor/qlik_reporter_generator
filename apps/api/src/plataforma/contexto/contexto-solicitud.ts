@@ -41,6 +41,7 @@ export function obtenerContextoSolicitud(c: Context): ContextoSolicitud {
 export interface ContextoSolicitudAutenticado extends ContextoSolicitud {
   sesionId: string;
   usuarioId: string;
+  correo: string | null;
   organizacionId: string;
   tenantQlikId: string;
   tenantHost: string;
@@ -67,6 +68,7 @@ export function construirContextoSolicitud(entrada: {
     ...(entrada.agenteUsuario ? { agenteUsuario: entrada.agenteUsuario } : {}),
     sesionId: entrada.sesion.sesionId,
     usuarioId: entrada.sesion.usuarioId,
+    correo: entrada.sesionPublica.usuario?.correo ?? null,
     organizacionId: entrada.sesion.organizacionId,
     tenantQlikId: entrada.sesion.tenantId,
     tenantHost: entrada.sesion.tenantHost,

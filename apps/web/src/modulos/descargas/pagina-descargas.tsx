@@ -6,9 +6,15 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useManejoError } from "@/compartido/hooks/use-manejo-error";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
+  type ExploradorGcs,
+  type CarpetaRegistradaGcs,
   type ResumenDescargaEjecucion,
+  firmarArchivoCarpetaUsuarioGcs,
   firmarArchivoExploradorGcs,
+  listarCarpetaUsuarioGcs,
+  listarCarpetasUsuariosGcs,
   listarDescargas,
   listarDescargasAdministracion,
   listarExploradorGcs,
@@ -29,6 +35,25 @@ export function PaginaDescargas() {
   const { esAdmin, modoUsuarioFinal } = useContextoVista();
   const puedeAdministrar = esAdmin && !modoUsuarioFinal;
   const [rutaGcs, setRutaGcs] = useState("");
+  const [rutaCarpeta, setRutaCarpeta] = useState("");
+
+  const { data: sesion } = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+  });
+  const correoUsuario = sesion?.usuario?.correo?.trim() ?? null;
+  const carpetaUsuario = useQuery({
+    queryKey: ["carpeta-usuario-gcs", rutaCarpeta],
+    queryFn: () => listarCarpetaUsuarioGcs(rutaCarpeta),
+    retry: false,
+  });
+
+  const carpetasUsuarios = useQuery({
+    queryKey: ["carpetas-usuarios-gcs"],
+    queryFn: listarCarpetasUsuariosGcs,
+    retry: false,
+    enabled: puedeAdministrar,
+  });
 
   const explorador = useQuery({
     queryKey: ["explorador-gcs", rutaGcs],
@@ -87,25 +112,75 @@ export function PaginaDescargas() {
         description="Consulta tus reportes generados desde una carpeta privada y descarga sus archivos cuando estén listos."
       />
 
-      <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-surface-subtle p-2 text-brand-700">
-            <Icon name="folder" />
+      <section className="relative overflow-hidden rounded-xl border border-line-200 bg-surface p-5 shadow-card">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-50" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
+              <Icon name="folder" size="lg" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-display text-lg font-semibold text-ink-900">
+                  {carpetaUsuario.data?.carpetaUsuario ?? "Tu carpeta"}
+                </h2>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-[11px] font-semibold text-success-700">
+                  <Icon name="shield" size="sm" />
+                  Espacio privado
+                </span>
+              </div>
+              <p className="mt-1 max-w-2xl text-sm text-ink-500">
+                Aquí se guardan únicamente tus ejecuciones y archivos generados. Nadie fuera de tu cuenta puede acceder a esta carpeta.
+              </p>
+              {correoUsuario && (
+                <p className="mt-2 truncate text-xs text-ink-400">{correoUsuario}</p>
+              )}
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-ink-900">Mi carpeta</h2>
-            <p className="mt-1 text-sm text-ink-500">
-              Solo tu cuenta puede acceder a estas ejecuciones y sus archivos.
-            </p>
+          <div className="grid grid-cols-2 gap-2 sm:min-w-[220px]">
+            <MetricaCarpeta icono="file-text" etiqueta="Ejecuciones" valor={descargas.length} />
+            <MetricaCarpeta
+              icono="download"
+              etiqueta="Archivos"
+              valor={carpetaUsuario.data?.archivos.length ?? 0}
+            />
           </div>
         </div>
       </section>
 
-      <h2 className="mt-6 text-base font-semibold text-ink-900">
-        Mis reportes
-      </h2>
+      <SeccionExploradorGcs
+        titulo={`Contenido de ${carpetaUsuario.data?.carpetaUsuario ?? "tu carpeta"}`}
+        mostrarBucket={false}
+        datos={carpetaUsuario.data ?? null}
+        cargando={carpetaUsuario.isLoading}
+        error={carpetaUsuario.error instanceof Error ? carpetaUsuario.error.message : null}
+        onAbrirCarpeta={(carpeta) => setRutaCarpeta(`${rutaCarpeta}${carpeta}`)}
+        onSubir={() => {
+          const partes = rutaCarpeta.split("/").filter(Boolean);
+          partes.pop();
+          setRutaCarpeta(partes.length ? `${partes.join("/")}/` : "");
+        }}
+        onDescargar={async (nombre) => {
+          const firmado = await firmarArchivoCarpetaUsuarioGcs(`${rutaCarpeta}${nombre}`);
+          descargarDesdeEnlace(firmado);
+        }}
+      />
+
+      <div className="mt-7 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-600">Actividad de la aplicaci?n</p>
+          <h2 className="mt-1 font-display text-lg font-semibold text-ink-900">Historial de ejecuciones</h2>
+        </div>
+        <span className="text-sm text-ink-500">{descargas.length} {descargas.length === 1 ? "reporte" : "reportes"}</span>
+      </div>
       {descargas.length === 0 ? (
-        <p className="text-sm text-ink-500">No hay descargas disponibles.</p>
+        <div className="mt-3 rounded-xl border border-dashed border-line-300 bg-surface p-8 text-center">
+          <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-surface-subtle text-ink-400">
+            <Icon name="folder" />
+          </span>
+          <p className="mt-3 font-medium text-ink-800">A?n no tienes reportes descargables</p>
+          <p className="mt-1 text-sm text-ink-500">Cuando ejecutes un reporte, sus archivos aparecer?n autom?ticamente aqu?.</p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {descargas.map((descarga) => (
@@ -116,6 +191,10 @@ export function PaginaDescargas() {
 
       {puedeAdministrar && (
         <>
+          <SeccionCarpetasUsuariosGcs
+            carpetas={carpetasUsuarios.data ?? []}
+            onAbrir={(carpeta) => setRutaGcs(`${carpeta}/`)}
+          />
           <SeccionAdministracion descargas={administracion.data ?? []} />
           <SeccionExploradorGcs
             datos={explorador.data ?? null}
@@ -149,6 +228,81 @@ export function PaginaDescargas() {
   );
 }
 
+
+function descargarDesdeEnlace(firmado: { nombre: string; url: string }) {
+  const enlace = document.createElement("a");
+  enlace.href = firmado.url;
+  enlace.download = firmado.nombre;
+  enlace.rel = "noopener";
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+}
+
+function nombreDesdeCorreo(correo: string | null | undefined): string {
+  const local = correo?.split("@")[0]?.trim();
+  if (!local) return "Mi espacio";
+  return local
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function MetricaCarpeta({
+  icono,
+  etiqueta,
+  valor,
+}: {
+  icono: "file-text" | "download";
+  etiqueta: string;
+  valor: number;
+}) {
+  return (
+    <div className="rounded-lg border border-line-200 bg-surface px-3 py-2.5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-xs text-ink-500">
+        <Icon name={icono} size="sm" />
+        {etiqueta}
+      </div>
+      <p className="mt-1 text-lg font-semibold text-ink-900">{valor}</p>
+    </div>
+  );
+}
+
+function SeccionCarpetasUsuariosGcs({
+  carpetas,
+  onAbrir,
+}: {
+  carpetas: CarpetaRegistradaGcs[];
+  onAbrir: (carpeta: string) => void;
+}) {
+  if (carpetas.length === 0) return null;
+  return (
+    <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
+      <h2 className="font-display text-lg font-semibold text-ink-900">Carpetas de usuarios</h2>
+      <p className="mt-1 text-sm text-ink-500">
+        Carpetas reales de Google Cloud Storage asociadas a usuarios registrados.
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {carpetas.map((item) => (
+          <button
+            key={item.usuarioId}
+            type="button"
+            onClick={() => onAbrir(item.carpeta)}
+            className="flex items-center gap-3 rounded-lg border border-line-200 px-4 py-3 text-left hover:bg-surface-subtle"
+          >
+            <Icon name="folder" />
+            <span className="min-w-0">
+              <span className="block font-semibold text-ink-900">{item.carpeta}</span>
+              <span className="block truncate text-xs text-ink-500">{item.correo}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function SeccionAdministracion({
   descargas,
 }: {
@@ -165,30 +319,37 @@ function SeccionAdministracion({
     {},
   );
   return (
-    <section className="mt-8 rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
+    <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
       <div className="flex items-start gap-3">
         <div className="rounded-lg bg-surface-subtle p-2 text-brand-700">
           <Icon name="users" />
         </div>
         <div>
-          <h2 className="font-semibold text-ink-900">Carpetas de usuarios</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-display text-lg font-semibold text-ink-900">Administración de descargas</h2>
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">Solo administradores</span>
+          </div>
           <p className="mt-1 text-sm text-ink-500">
-            Vista administrativa de las ejecuciones de esta organización.
+            Consulta las carpetas privadas de los usuarios de esta organización sin mezclar su contenido con tu espacio personal.
           </p>
         </div>
       </div>
       <div className="mt-4 space-y-4">
         {Object.entries(grupos).map(([propietario, items]) => (
-          <div
-            key={propietario}
-            className="rounded-lg border border-line-200 p-4"
-          >
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink-800">
-              <Icon name="folder" size="sm" />
-              {propietario === "historico"
-                ? "Histórico sin propietario"
-                : `Usuario ${propietario.slice(0, 8)}`}
-              <span className="font-normal text-ink-500">({items.length})</span>
+          <div key={propietario} className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-800">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-brand-700 shadow-sm">
+                <Icon name="folder" size="sm" />
+              </span>
+              <span>
+                {propietario === "historico"
+                  ? "Histórico sin propietario"
+                  : nombreDesdeCorreo(items[0]?.propietarioCorreo ?? null)}
+              </span>
+              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-500">
+                {items.length} {items.length === 1 ? "reporte" : "reportes"}
+              </span>
+
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((descarga) => (
@@ -233,6 +394,8 @@ function TarjetaConDescarga({
 }
 
 function SeccionExploradorGcs({
+  titulo = "Google Cloud Storage",
+  mostrarBucket = true,
   datos,
   cargando,
   error,
@@ -240,7 +403,9 @@ function SeccionExploradorGcs({
   onSubir,
   onDescargar,
 }: {
-  datos: Awaited<ReturnType<typeof listarExploradorGcs>>;
+  titulo?: string;
+  mostrarBucket?: boolean;
+  datos: ExploradorGcs | null;
   cargando: boolean;
   error: string | null;
   onAbrirCarpeta: (carpeta: string) => void;
@@ -252,8 +417,8 @@ function SeccionExploradorGcs({
     <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-ink-900">Google Cloud Storage</h2>
-          {datos && (
+          <h2 className="font-semibold text-ink-900">{titulo}</h2>
+          {mostrarBucket && datos && (
             <p className="mt-1 text-xs text-ink-500">
               Bucket activo: <span className="font-mono">{datos.bucket}</span>
             </p>

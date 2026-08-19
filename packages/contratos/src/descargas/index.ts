@@ -36,6 +36,7 @@ export const esquemaResumenDescargaEjecucion = z.object({
   id: z.string().uuid(),
   flujoIdQlik: z.string(),
   creadoPorUsuarioId: z.string().uuid().nullable().optional(),
+  propietarioCorreo: z.string().nullable().optional(),
   reporteNombre: z.string(),
   automatizacionIdQlik: z.string(),
   estado: z.string(),

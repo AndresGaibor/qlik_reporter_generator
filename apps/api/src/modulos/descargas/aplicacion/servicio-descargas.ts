@@ -181,6 +181,7 @@ export class ServicioDescargas implements IServicioDescargas {
           id: e.id,
           flujoIdQlik: e.flujoIdQlik,
           creadoPorUsuarioId: e.creadoPorUsuarioId,
+          propietarioCorreo: e.propietarioCorreo ?? null,
           reporteNombre: e.flujoNombreSnapshot,
           automatizacionIdQlik: e.automatizacionIdQlik,
           estado: e.estado,

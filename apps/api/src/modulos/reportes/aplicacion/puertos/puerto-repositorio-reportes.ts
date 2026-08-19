@@ -42,6 +42,7 @@ export interface ResumenEjecucionDescarga {
   flujoIdQlik: string;
   flujoNombreSnapshot: string;
   creadoPorUsuarioId: string | null;
+  propietarioCorreo?: string | null;
   automatizacionIdQlik: string;
   estado: string;
   mensajeError: string | null;
