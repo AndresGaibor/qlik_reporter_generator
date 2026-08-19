@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import { ejecucionesReportes } from "../../../plataforma/persistencia/esquema.js";
+import { ejecucionesReportes, usuarios } from "../../../plataforma/persistencia/esquema.js";
 import type {
   CrearEjecucionReportePersistida,
   EjecucionReportePersistida,
@@ -118,6 +118,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         flujoIdQlik: ejecucionesReportes.flujoIdQlik,
         flujoNombreSnapshot: ejecucionesReportes.flujoNombreSnapshot,
         creadoPorUsuarioId: ejecucionesReportes.ejecutadoPorUsuarioId,
+        propietarioCorreo: usuarios.correo,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -126,6 +127,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
+      .leftJoin(usuarios, eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarios.id))
       .where(
         and(
           eq(ejecucionesReportes.tenantQlikId, contexto.tenantQlikId),
@@ -159,6 +161,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         flujoIdQlik: ejecucionesReportes.flujoIdQlik,
         flujoNombreSnapshot: ejecucionesReportes.flujoNombreSnapshot,
         creadoPorUsuarioId: ejecucionesReportes.ejecutadoPorUsuarioId,
+        propietarioCorreo: usuarios.correo,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -167,6 +170,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
+      .leftJoin(usuarios, eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarios.id))
       .where(
         and(
           eq(ejecucionesReportes.id, contexto.id),

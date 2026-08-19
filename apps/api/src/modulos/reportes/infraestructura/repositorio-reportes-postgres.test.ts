@@ -51,13 +51,15 @@ describe("RepositorioReportesPostgres", () => {
       },
       select: () => ({
         from: () => ({
-          where: (where: unknown) => {
-            condiciones.push(where);
-            return {
-              orderBy: () => ({ limit: async () => [] }),
-              limit: async () => [],
-            };
-          },
+          leftJoin: () => ({
+            where: (where: unknown) => {
+              condiciones.push(where);
+              return {
+                orderBy: () => ({ limit: async () => [] }),
+                limit: async () => [],
+              };
+            },
+          }),
         }),
       }),
     };

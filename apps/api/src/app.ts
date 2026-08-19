@@ -166,6 +166,7 @@ export async function crearAplicacion(
       return {
         tenantId: contexto.tenantQlikId,
         usuarioId: contexto.usuarioId,
+        correo: contexto.correo,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,
         esSuperadmin: contexto.esSuperadmin ?? false,
@@ -486,6 +487,11 @@ export async function crearAplicacion(
           bucket,
         });
       },
+      resolverUsuariosOrganizacion: async (organizacionId) =>
+        (await repositorioAdministracion.listarUsuarios(organizacionId)).map((usuario) => ({
+          id: usuario.id,
+          correo: usuario.correo,
+        })),
       resolverConfiguracionGcs: async (c) => {
         const sesion = await resolverSesion(c);
         const google = await resolverGoogle.resolver(
