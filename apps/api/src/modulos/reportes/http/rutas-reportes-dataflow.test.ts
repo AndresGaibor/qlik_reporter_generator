@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
+import { esquemaDetalleEjecucionReporte } from "@qlik/contratos";
 import { Hono } from "hono";
 import { crearRutasReportesDataflow } from "./rutas-reportes-dataflow.js";
 
@@ -22,10 +23,11 @@ describe("rutas reportes Dataflow", () => {
       estado: "activa" as const,
     };
     const listar = vi.fn(async () => [reporte]);
+    const resolverQlik = vi.fn(async () => ({}) as never);
     const app = new Hono().route(
       "/api/reportes",
       crearRutasReportesDataflow({
-        resolverQlik: async () => ({}) as never,
+        resolverQlik,
         resolverBigQuery: async () => ({
           estimador: { estimarConsulta: vi.fn() },
           projectId: "p",
@@ -51,6 +53,7 @@ describe("rutas reportes Dataflow", () => {
     expect((await respuesta.json()).datos[0]).not.toHaveProperty(
       "automatizacionIdQlik",
     );
+    expect(resolverQlik).not.toHaveBeenCalled();
   });
 
   it("ejecuta un reporte local con identidad exacta de la sesión", async () => {
@@ -95,7 +98,56 @@ describe("rutas reportes Dataflow", () => {
   });
 
   it("consulta historial local por el UUID del reporte", async () => {
-    const listarEjecuciones = vi.fn(async () => []);
+    const listarEjecuciones = vi.fn(async () => [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        reporteId: "11111111-1111-4111-8111-111111111111",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "auto-legacy",
+        runIdQlik: null,
+        ejecutadoPorUsuarioId: null,
+        automatizacionPersonalId: null,
+        hashDataflowSha256: "a".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "select 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://reportes/legacy",
+        estado: "completada" as const,
+        versionCompilador: 2,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: null,
+        finalizadoEn: null,
+        creadoEn: new Date("2026-01-01T00:00:00.000Z"),
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        reporteId: "11111111-1111-4111-8111-111111111111",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "auto-modern",
+        runIdQlik: "run-1",
+        ejecutadoPorUsuarioId: "44444444-4444-4444-8444-444444444444",
+        automatizacionPersonalId: "55555555-5555-4555-8555-555555555555",
+        hashDataflowSha256: "b".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "select 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://reportes/modern",
+        estado: "iniciada" as const,
+        versionCompilador: 2,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: new Date("2026-01-02T00:00:00.000Z"),
+        finalizadoEn: null,
+        creadoEn: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    const resolverQlik = vi.fn(
+      async () =>
+        ({
+          listarAutomatizaciones: vi.fn(async () => [{ id: "arbitrario" }]),
+        }) as never,
+    );
     const obtenerPorId = vi.fn(async () => ({
       id: "reporte-1",
       organizacionId: "org-1",
@@ -109,7 +161,7 @@ describe("rutas reportes Dataflow", () => {
     const app = new Hono().route(
       "/api/reportes",
       crearRutasReportesDataflow({
-        resolverQlik: async () => ({}) as never,
+        resolverQlik,
         resolverBigQuery: async () => ({
           estimador: { estimarConsulta: vi.fn() },
           projectId: "p",
@@ -130,6 +182,19 @@ describe("rutas reportes Dataflow", () => {
     expect(respuesta.status).toBe(200);
     expect(obtenerPorId).toHaveBeenCalledWith("reporte-1", "tenant-1", "org-1");
     expect(listarEjecuciones).toHaveBeenCalledWith("reporte-1", 100);
+    const cuerpo = await respuesta.json();
+    for (const ejecucion of cuerpo.datos) {
+      esquemaDetalleEjecucionReporte.parse(ejecucion);
+    }
+    expect(cuerpo.datos[0]).toMatchObject({
+      ejecutadoPorUsuarioId: null,
+      automatizacionPersonalId: null,
+    });
+    expect(cuerpo.datos[1]).toMatchObject({
+      ejecutadoPorUsuarioId: "44444444-4444-4444-8444-444444444444",
+      automatizacionPersonalId: "55555555-5555-4555-8555-555555555555",
+    });
+    expect(resolverQlik).not.toHaveBeenCalled();
   });
 
   it("crea un reporte local sin copiar un Automate", async () => {

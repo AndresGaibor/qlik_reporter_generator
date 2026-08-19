@@ -338,6 +338,8 @@ function serializarEjecucion(
     flujoIdQlik: ejecucion.flujoIdQlik,
     automatizacionIdQlik: ejecucion.automatizacionIdQlik,
     runIdQlik: ejecucion.runIdQlik ?? null,
+    ejecutadoPorUsuarioId: ejecucion.ejecutadoPorUsuarioId ?? null,
+    automatizacionPersonalId: ejecucion.automatizacionPersonalId ?? null,
     hashDataflowSha256: ejecucion.hashDataflowSha256,
     scriptDataflow: ejecucion.scriptDataflow,
     sqlBigQueryCompilado: ejecucion.sqlBigQueryCompilado,

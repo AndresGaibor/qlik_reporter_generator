@@ -22,6 +22,8 @@ import {
   ServicioAutenticacionQlik,
   crearRutasAutenticacionQlik,
 } from "./modulos/autenticacion-qlik/publico.js";
+import type { PuertoBloqueoEjecucion } from "./modulos/automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
+import type { PuertoConsultaTenantQlik } from "./modulos/automatizaciones/aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
@@ -38,6 +40,7 @@ import {
 } from "./modulos/qlik/publico.js";
 import { EjecutarReporte } from "./modulos/reportes/aplicacion/ejecutar-reporte.js";
 import { ObtenerOCrearAutomatizacionPersonal } from "./modulos/reportes/aplicacion/obtener-o-crear-automatizacion-personal.js";
+import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { PuertoRepositorioReportes } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import {
   type ResolucionBigQueryReporte,
@@ -93,6 +96,9 @@ export interface DependenciasAplicacion {
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
   resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
   repositorioReportes?: PuertoRepositorioReportes;
+  consultaTenantQlik?: PuertoConsultaTenantQlik;
+  repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
+  bloqueoEjecucion?: PuertoBloqueoEjecucion;
   resolverSesion?: (c: Context) => Promise<{
     tenantId: string;
     usuarioId: string;
@@ -330,11 +336,13 @@ export async function crearAplicacion(
 
   const repositorioReportes =
     dependencias.repositorioReportes ?? new RepositorioReportesPostgres(db);
-  const consultaTenantAutomatizaciones = new ConsultaTenantQlikPostgres();
-  const bloqueosEjecucion = new BloqueoEjecucionPostgres(db);
-  const repositorioWorkers = new RepositorioAutomatizacionesPersonalesPostgres(
-    db,
-  );
+  const consultaTenantAutomatizaciones =
+    dependencias.consultaTenantQlik ?? new ConsultaTenantQlikPostgres();
+  const bloqueosEjecucion =
+    dependencias.bloqueoEjecucion ?? new BloqueoEjecucionPostgres(db);
+  const repositorioWorkers =
+    dependencias.repositorioAutomatizacionesPersonales ??
+    new RepositorioAutomatizacionesPersonalesPostgres(db);
   aplicacion.route(
     "/api/qlik/automatizaciones",
     crearRutasPanelAutomatizaciones({

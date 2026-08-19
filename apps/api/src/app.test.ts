@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "bun:test";
 import { crearAplicacion } from "./app.js";
+import type { PuertoBloqueoEjecucion } from "./modulos/automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
+import type { PuertoConsultaTenantQlik } from "./modulos/automatizaciones/aplicacion/puertos/puerto-consulta-tenant-qlik.js";
+import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { Registrador } from "./plataforma/observabilidad/registrador.js";
 
 function crearRegistradorPrueba(): Registrador {
@@ -341,5 +344,221 @@ describe("API", () => {
       expect.objectContaining({ nombre: "Ventas copia" }),
     );
     expect(copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("inyecta las dependencias de ejecución y falla cerrado sin plantilla base", async () => {
+    const obtenerTenant = vi.fn(async () => ({ host: "tenant.example" }));
+    const ejecutarExclusivo = vi.fn(
+      async (_clave: string, tarea: () => Promise<unknown>) => tarea(),
+    ) as unknown as PuertoBloqueoEjecucion["ejecutarExclusivo"];
+    const obtener = vi.fn();
+    const copiarAutomatizacion = vi.fn();
+    const resolverQlik = vi.fn(async () => ({ copiarAutomatizacion }) as never);
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "11111111-1111-4111-8111-111111111111",
+        organizacionId: "org-1",
+        usuarioIdQlik: "usuario-qlik-1",
+      }),
+      resolverQlik,
+      consultaTenantQlik: { obtenerTenant } satisfies PuertoConsultaTenantQlik,
+      repositorioAutomatizacionesPersonales: {
+        obtener,
+      } as unknown as PuertoRepositorioAutomatizacionesPersonales,
+      bloqueoEjecucion: { ejecutarExclusivo } satisfies PuertoBloqueoEjecucion,
+      repositorioReportes: {} as never,
+    });
+
+    const respuesta = await app.request("/api/reportes/reporte-1/ejecuciones", {
+      method: "POST",
+      headers: { Origin: "http://localhost:4525" },
+    });
+
+    expect(respuesta.status).toBe(422);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "SIN_AUTOMATIZACION_BASE",
+    );
+    expect(obtenerTenant).toHaveBeenCalledWith("tenant-1");
+    expect(resolverQlik).not.toHaveBeenCalled();
+    expect(obtener).not.toHaveBeenCalled();
+    expect(ejecutarExclusivo).not.toHaveBeenCalled();
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("compone la ejecución con plantilla, worker y lock inyectados sin IDs del cliente", async () => {
+    const workspace = {
+      blocks: [
+        {
+          name: "executeTask",
+          inputs: [
+            {
+              mode: "keyValue",
+              value: [
+                { key: "credenciales", value: "credenciales" },
+                { key: "bq_select_data", value: "{ $.BqSelectData }" },
+                { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
+                { key: "bq_export_data", value: "{ $.BqExportData }" },
+                { key: "bq_drop", value: "{ $.BqDrop }" },
+              ],
+            },
+          ],
+        },
+        ...["BqSelectData", "BqNumberCsv", "BqExportData", "BqDrop"].map(
+          (name) => ({ name, operations: [{ id: "set_value", value: "" }] }),
+        ),
+      ],
+    };
+    const tenant = vi.fn(async () => ({
+      host: "tenant.example",
+      automatizacionBaseIdQlik: "base-from-tenant",
+      automatizacionBaseNombre: "Base Talend",
+    }));
+    const lock = vi.fn(async (_clave: string, tarea: () => Promise<unknown>) =>
+      tarea(),
+    ) as unknown as PuertoBloqueoEjecucion["ejecutarExclusivo"];
+    const workerRepo = {
+      obtener: vi.fn(async () => null),
+      crear: vi.fn(async (entrada: Record<string, unknown>) => ({
+        id: "66666666-6666-4666-8666-666666666666",
+        ...entrada,
+      })),
+    };
+    const copiar = vi.fn(async (id: string) => {
+      expect(id).toBe("base-from-tenant");
+      return { id: "77777777-7777-4777-8777-777777777777" };
+    });
+    const obtenerAutomatizacion = vi.fn(async (id: string) => ({
+      id,
+      name: id === "base-from-tenant" ? "Base Talend" : "Worker personal",
+      workspace,
+      schedules: [],
+    }));
+    const qlik = {
+      copiarAutomatizacion: copiar,
+      obtenerAutomatizacion,
+      cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+      actualizarAutomatizacion: vi.fn(async () => ({ id: "worker" })),
+      ejecutarAutomatizacion: vi.fn(async () => ({ runId: "run-1" })),
+      obtenerScriptApp: vi.fn(async () => ({
+        script:
+          "LIB CONNECT TO [Google BigQuery:Produccion]; [x]: LOAD [id]; SQL SELECT id FROM `p.d.t`;",
+      })),
+    };
+    const ejecucionRepo = {
+      obtenerPorId: vi.fn(async () => ({
+        id: "88888888-8888-4888-8888-888888888888",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        creadoPorUsuarioId: "11111111-1111-4111-8111-111111111111",
+        nombre: "Ventas",
+        flujoIdQlik: "flow-1",
+        flujoNombreSnapshot: "Ventas",
+        flujoEspacioIdQlik: null,
+        estado: "activa" as const,
+      })),
+      crearEjecucion: vi.fn(
+        async (entrada: Record<string, unknown>) => entrada,
+      ),
+      marcarEjecucionIniciada: vi.fn(async () => undefined),
+      marcarEjecucionError: vi.fn(async () => undefined),
+    };
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "11111111-1111-4111-8111-111111111111",
+        organizacionId: "org-1",
+        usuarioIdQlik: "usuario-qlik-1",
+      }),
+      resolverQlik: async () => qlik as never,
+      resolverBigQueryReporte: async () => ({
+        projectId: "p",
+        dataset: "d",
+        estimador: { estimarConsulta: vi.fn() },
+      }),
+      consultaTenantQlik: { obtenerTenant: tenant },
+      repositorioAutomatizacionesPersonales: workerRepo as never,
+      bloqueoEjecucion: { ejecutarExclusivo: lock },
+      repositorioReportes: ejecucionRepo as never,
+    });
+
+    const respuesta = await app.request("/api/reportes/reporte-1/ejecuciones", {
+      method: "POST",
+      headers: {
+        Origin: "http://localhost:4525",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        automatizacionIdQlik: "client-controlled",
+        plantillaIdQlik: "client-controlled",
+      }),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(tenant).toHaveBeenCalledWith("tenant-1");
+    expect(copiar).toHaveBeenCalledWith(
+      "base-from-tenant",
+      "Base Talend - Worker personal",
+    );
+    expect(workerRepo.obtener).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      "tenant-1",
+    );
+    expect(lock).toHaveBeenCalled();
+    expect(ejecucionRepo.crearEjecucion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ejecutadoPorUsuarioId: "11111111-1111-4111-8111-111111111111",
+        automatizacionPersonalId: "66666666-6666-4666-8666-666666666666",
+      }),
+    );
+  });
+
+  it("separa el panel Qlik del listado y rutas canónicas de reportes", async () => {
+    const listarAutomatizaciones = vi.fn(async () => [
+      { id: "qlik-auto-1", name: "QLIK GENERATOR Panel técnico" },
+    ]);
+    const resolverQlik = vi.fn(
+      async () =>
+        ({ listarAutomatizaciones, listarEspacios: async () => [] }) as never,
+    );
+    const listar = vi.fn(async () => []);
+    const obtenerPorId = vi.fn(async () => null);
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik,
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "11111111-1111-4111-8111-111111111111",
+        organizacionId: "org-1",
+        usuarioIdQlik: "usuario-qlik-1",
+      }),
+      consultaTenantQlik: {
+        obtenerTenant: async () => ({ host: "tenant.example" }),
+      },
+      repositorioReportes: { listar, obtenerPorId } as never,
+    });
+
+    const panel = await app.request(
+      "/api/qlik/automatizaciones?incluirBase=true",
+    );
+    const reportes = await app.request("/api/reportes");
+    const configuracionTenant = await app.request(
+      "/api/reportes/configuracion-tenant",
+    );
+
+    expect(panel.status).toBe(200);
+    expect((await panel.json()).datos).toMatchObject([
+      { id: "qlik-auto-1", nombre: "QLIK GENERATOR Panel técnico" },
+    ]);
+    expect(reportes.status).toBe(200);
+    expect((await reportes.json()).datos).toEqual([]);
+    expect(configuracionTenant.status).toBe(404);
+    expect(listar).toHaveBeenCalledWith({
+      tenantQlikId: "tenant-1",
+      organizacionId: "org-1",
+    });
+    expect(resolverQlik).toHaveBeenCalledTimes(1);
   });
 });
