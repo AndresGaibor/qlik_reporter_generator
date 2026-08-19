@@ -36,11 +36,14 @@ import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
+import { EjecutarReporte } from "./modulos/reportes/aplicacion/ejecutar-reporte.js";
+import { ObtenerOCrearAutomatizacionPersonal } from "./modulos/reportes/aplicacion/obtener-o-crear-automatizacion-personal.js";
 import type { PuertoRepositorioReportes } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import {
   type ResolucionBigQueryReporte,
   crearRutasReportesDataflow,
 } from "./modulos/reportes/http/rutas-reportes-dataflow.js";
+import { RepositorioAutomatizacionesPersonalesPostgres } from "./modulos/reportes/infraestructura/repositorio-automatizaciones-personales-postgres.js";
 import { RepositorioReportesPostgres } from "./modulos/reportes/infraestructura/repositorio-reportes-postgres.js";
 import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
 import { crearRutasSetup } from "./modulos/setup/publico.js";
@@ -327,17 +330,17 @@ export async function crearAplicacion(
 
   const repositorioReportes =
     dependencias.repositorioReportes ?? new RepositorioReportesPostgres(db);
+  const consultaTenantAutomatizaciones = new ConsultaTenantQlikPostgres();
+  const bloqueosEjecucion = new BloqueoEjecucionPostgres(db);
+  const repositorioWorkers = new RepositorioAutomatizacionesPersonalesPostgres(
+    db,
+  );
   aplicacion.route(
-    "/api/reportes",
+    "/api/qlik/automatizaciones",
     crearRutasPanelAutomatizaciones({
       resolverQlik,
       resolverSesion,
-      consultaTenant: new ConsultaTenantQlikPostgres(),
-      bloqueos: new BloqueoEjecucionPostgres(db),
-      idempotencia,
-      auditoria,
-      repositorioReportes,
-      resolverBigQueryReporte,
+      consultaTenant: consultaTenantAutomatizaciones,
     }),
   );
   aplicacion.route(
@@ -347,6 +350,46 @@ export async function crearAplicacion(
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
       repositorioReportes,
+      resolverEjecutarReporte: async (c) => {
+        const sesion = await resolverSesion(c);
+        const tenant = await consultaTenantAutomatizaciones.obtenerTenant(
+          sesion.tenantId,
+        );
+        if (!tenant?.automatizacionBaseIdQlik) {
+          throw new ErrorAplicacion(
+            "SIN_AUTOMATIZACION_BASE",
+            "El tenant no tiene configurada una automatización base para crear el worker personal",
+            422,
+          );
+        }
+        const [qlik, bigQuery] = await Promise.all([
+          resolverQlik(c),
+          resolverBigQueryReporte(c),
+        ]);
+        const worker = new ObtenerOCrearAutomatizacionPersonal(
+          qlik,
+          repositorioWorkers,
+          bloqueosEjecucion,
+        );
+        const caso = new EjecutarReporte(
+          qlik,
+          repositorioReportes,
+          bloqueosEjecucion,
+          bigQuery,
+          generarUuid,
+          (entrada) => ({
+            organizacionId: entrada.organizacionId,
+            tenantQlikId: entrada.tenantId,
+            usuarioId: entrada.usuarioId,
+            usuarioIdQlik: entrada.usuarioIdQlik,
+            plantillaIdQlik: tenant.automatizacionBaseIdQlik as string,
+            plantillaNombre:
+              tenant.automatizacionBaseNombre ?? "Automatización base",
+          }),
+          worker,
+        );
+        return caso.ejecutar.bind(caso);
+      },
     }),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));

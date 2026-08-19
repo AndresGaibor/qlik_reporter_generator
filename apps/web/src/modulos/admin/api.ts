@@ -190,7 +190,7 @@ export function configurarDataflowBaseTenant(
 export function listarAutomatizacionesParaAdmin() {
   return clienteApi.get<
     import("@qlik/contratos/automatizaciones").ResumenAutomatizacion[]
-  >("/reportes", {
+  >("/qlik/automatizaciones", {
     parametros: { incluirBase: "true" },
   });
 }

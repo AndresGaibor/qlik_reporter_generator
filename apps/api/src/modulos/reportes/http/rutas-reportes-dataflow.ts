@@ -9,6 +9,7 @@ import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { ClonarReporte } from "../aplicacion/clonar-reporte.js";
 import { CrearReporte } from "../aplicacion/crear-reporte.js";
+import type { EntradaEjecutarReporte } from "../aplicacion/ejecutar-reporte.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
@@ -25,6 +26,7 @@ interface SesionReportes {
   tenantId: string;
   organizacionId: string;
   usuarioId: string;
+  usuarioIdQlik: string;
 }
 
 export interface DependenciasRutasReportesDataflow {
@@ -32,12 +34,28 @@ export interface DependenciasRutasReportesDataflow {
   resolverBigQuery(c: Context): Promise<ResolucionBigQueryReporte>;
   resolverSesion(c: Context): Promise<SesionReportes>;
   repositorioReportes: PuertoRepositorioReportes;
+  resolverEjecutarReporte?: (
+    c: Context,
+  ) => Promise<
+    (
+      entrada: EntradaEjecutarReporte,
+    ) => Promise<{ runId: string; ejecucionReporteId: string }>
+  >;
 }
 
 export function crearRutasReportesDataflow(
   dependencias: DependenciasRutasReportesDataflow,
 ) {
   const rutas = new Hono();
+
+  rutas.get("/", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const reportes = await dependencias.repositorioReportes.listar({
+      tenantQlikId: sesion.tenantId,
+      organizacionId: sesion.organizacionId,
+    });
+    return responderExito(c, reportes.map(serializarConfiguracion));
+  });
 
   rutas.post("/", async (c) => {
     const validacion = esquemaCrearReporte.safeParse(
@@ -72,7 +90,11 @@ export function crearRutasReportesDataflow(
     try {
       const reporte = await new ClonarReporte(
         dependencias.repositorioReportes,
-      ).ejecutar(c.req.param("reporteId"), validacion.data.nombre, sesion);
+      ).ejecutar(
+        c.req.param("reporteId") ?? "",
+        validacion.data.nombre,
+        sesion,
+      );
       return responderExito(c, serializarConfiguracion(reporte));
     } catch (error) {
       return respuestaErrorAplicacion(c, error);
@@ -98,18 +120,21 @@ export function crearRutasReportesDataflow(
     return responderExito(c, await caso.ejecutar(flujoIdQlik));
   });
 
-  rutas.get("/:reporteId/configuracion", async (c) => {
+  const obtenerDetalle = async (c: Context) => {
     const sesion = await dependencias.resolverSesion(c);
     const configuracion = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
-      c.req.param("reporteId"),
+      c.req.param("reporteId") ?? "",
     );
     if (!configuracion) return respuestaNoEncontrada(c);
     return responderExito(c, serializarConfiguracion(configuracion));
-  });
+  };
 
-  rutas.put("/:reporteId/configuracion", async (c) => {
+  rutas.get("/:reporteId", obtenerDetalle);
+  rutas.get("/:reporteId/configuracion", obtenerDetalle);
+
+  const actualizarDetalle = async (c: Context) => {
     const json = await c.req.json().catch(() => undefined);
     const validacion = esquemaActualizarConfiguracionReporte.safeParse(json);
     if (!validacion.success) {
@@ -126,7 +151,7 @@ export function crearRutasReportesDataflow(
     }
 
     const sesion = await dependencias.resolverSesion(c);
-    const reporteId = c.req.param("reporteId");
+    const reporteId = c.req.param("reporteId") ?? "";
     const actual = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
@@ -188,11 +213,14 @@ export function crearRutasReportesDataflow(
           : {}),
       });
     return responderExito(c, serializarConfiguracion(actualizada));
-  });
+  };
 
-  rutas.get("/:reporteId/ejecuciones-locales", async (c) => {
+  rutas.put("/:reporteId", actualizarDetalle);
+  rutas.put("/:reporteId/configuracion", actualizarDetalle);
+
+  const listarHistorial = async (c: Context) => {
     const sesion = await dependencias.resolverSesion(c);
-    const reporteId = c.req.param("reporteId");
+    const reporteId = c.req.param("reporteId") ?? "";
     const configuracion = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
@@ -206,6 +234,33 @@ export function crearRutasReportesDataflow(
         100,
       );
     return responderExito(c, ejecuciones.map(serializarEjecucion));
+  };
+
+  rutas.get("/:reporteId/ejecuciones", listarHistorial);
+  rutas.get("/:reporteId/ejecuciones-locales", listarHistorial);
+
+  rutas.post("/:reporteId/ejecuciones", async (c) => {
+    if (!dependencias.resolverEjecutarReporte) {
+      throw new ErrorAplicacion(
+        "EXECUTOR_NOT_CONFIGURED",
+        "La ejecución de reportes no está configurada",
+        500,
+      );
+    }
+    const sesion = await dependencias.resolverSesion(c);
+    try {
+      const ejecutarReporte = await dependencias.resolverEjecutarReporte(c);
+      const resultado = await ejecutarReporte({
+        reporteId: c.req.param("reporteId") ?? "",
+        tenantId: sesion.tenantId,
+        organizacionId: sesion.organizacionId,
+        usuarioId: sesion.usuarioId,
+        usuarioIdQlik: sesion.usuarioIdQlik,
+      });
+      return responderExito(c, resultado);
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
   });
 
   return rutas;

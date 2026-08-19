@@ -1,18 +1,8 @@
-import { esquemaCrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import { esquemaIdQlik } from "@qlik/contratos/qlik";
 import { type Context, Hono } from "hono";
-import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
-import { leerJson } from "../../../nucleo/http/leer-json.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
-import type { PuertoIdempotencia } from "../../../nucleo/idempotencia/puerto-idempotencia.js";
-import { obtenerContextoSolicitud } from "../../../plataforma/contexto/contexto-solicitud.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
-import { PreflightDataflow } from "../../reportes/aplicacion/preflight-dataflow.js";
-import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
-import type { ResolucionBigQueryReporte } from "../../reportes/http/rutas-reportes-dataflow.js";
 import { ConsultarPanelAutomatizaciones } from "../aplicacion/casos-de-uso/consultar-panel.js";
-import { CrearAutomatizacionDesdePlantilla } from "../aplicacion/casos-de-uso/crear-desde-plantilla.js";
-import type { PuertoBloqueoEjecucion } from "../aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { PuertoConsultaTenantQlik } from "../aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 
 interface ContextoSesion {
@@ -28,11 +18,6 @@ export interface DependenciasRutasPanel {
   resolverQlik(c: Context): Promise<ServicioQlik>;
   resolverSesion(c: Context): Promise<ContextoSesion>;
   consultaTenant: PuertoConsultaTenantQlik;
-  bloqueos: PuertoBloqueoEjecucion;
-  idempotencia: PuertoIdempotencia;
-  auditoria: PuertoAuditoria;
-  repositorioReportes: PuertoRepositorioReportes;
-  resolverBigQueryReporte(c: Context): Promise<ResolucionBigQueryReporte>;
 }
 
 export function crearRutasPanelAutomatizaciones(
@@ -97,78 +82,6 @@ export function crearRutasPanelAutomatizaciones(
     });
   });
 
-  // Debe declararse antes de /:id para evitar que "desde-plantilla" sea un id.
-  rutas.post("/desde-plantilla", async (c) => {
-    const cuerpo = await leerJson(c);
-    const claveEncabezado = c.req.header("idempotency-key")?.trim();
-
-    const [qlik, sesion, bigQuery] = await Promise.all([
-      dependencias.resolverQlik(c),
-      dependencias.resolverSesion(c),
-      dependencias.resolverBigQueryReporte(c),
-    ]);
-
-    // ── Resolver plantilla base desde el tenant ──────────────────────────────
-    const tenant = await dependencias.consultaTenant.obtenerTenant(
-      sesion.tenantId,
-    );
-
-    if (!tenant?.automatizacionBaseIdQlik) {
-      return c.json(
-        {
-          exito: false,
-          error: {
-            mensaje:
-              "El tenant no tiene configurada una automatización base. Configúrala en Administración → Tenants.",
-            codigo: "SIN_AUTOMATIZACION_BASE",
-          },
-        },
-        422,
-      );
-    }
-
-    const cuerpoObj =
-      typeof cuerpo === "object" && cuerpo !== null
-        ? (cuerpo as Record<string, unknown>)
-        : {};
-
-    const autorIngresado =
-      typeof cuerpoObj.autor === "string" ? cuerpoObj.autor.trim() : undefined;
-    const nombreFinal =
-      typeof cuerpoObj.nombre === "string" && cuerpoObj.nombre.trim()
-        ? cuerpoObj.nombre.trim()
-        : `Reporte ${String(cuerpoObj.flujoId ?? "Dataflow")}${autorIngresado ? ` ${autorIngresado}` : ""}`;
-
-    const contextoSolicitud = obtenerContextoSolicitud(c);
-    const entrada = esquemaCrearDesdePlantilla.parse({
-      ...cuerpoObj,
-      nombre: nombreFinal,
-      ...(autorIngresado ? { autor: autorIngresado } : {}),
-      // Qlik conserva el propietario de la plantilla al copiarla. Debe prevalecer
-      // la identidad autenticada, no un identificador enviado por el cliente.
-      propietarioIdQlik: sesion.usuarioIdQlik,
-      plantillaIdQlik: tenant.automatizacionBaseIdQlik,
-      ...(claveEncabezado ? { claveIdempotencia: claveEncabezado } : {}),
-    });
-
-    const resultado = await new CrearAutomatizacionDesdePlantilla(
-      qlik,
-      dependencias.idempotencia,
-      dependencias.auditoria,
-      dependencias.repositorioReportes,
-      new PreflightDataflow(qlik, bigQuery.estimador, {
-        projectId: bigQuery.projectId,
-        dataset: bigQuery.dataset,
-      }),
-    ).ejecutar(entrada, {
-      ...sesion,
-      idSolicitud: contextoSolicitud.idSolicitud,
-      ip: contextoSolicitud.ip,
-      agenteUsuario: contextoSolicitud.agenteUsuario,
-    });
-    return responderExito(c, resultado, 201);
-  });
-
   rutas.get("/:id/workspace", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
     const esAdmin =
@@ -217,20 +130,6 @@ export function crearRutasPanelAutomatizaciones(
     return responderExito(
       c,
       await new ConsultarPanelAutomatizaciones(qlik).obtener(id),
-    );
-  });
-
-  rutas.post("/:id/ejecuciones", async (c) => {
-    return c.json(
-      {
-        exito: false,
-        error: {
-          mensaje:
-            "La ejecución de reportes se realiza mediante la ruta local del reporte",
-          codigo: "NO_SOPORTADO",
-        },
-      },
-      405,
     );
   });
 
