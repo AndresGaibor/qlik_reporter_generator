@@ -157,13 +157,7 @@ export function ListaFlujos({
                         size="sm"
                         className="text-xs gap-1.5 bg-brand-600 hover:bg-brand-700 text-white"
                       >
-                        <Link
-                          to="/reportes/nueva"
-                          search={{
-                            flujoId: flujo.id,
-                            ...(espacioId ? { espacioId } : {}),
-                          }}
-                        >
+                        <Link to="/reportes">
                           <Icon name="zap" size="sm" />
                           Crear automatización en Qlik Automate
                         </Link>

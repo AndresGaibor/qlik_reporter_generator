@@ -60,7 +60,7 @@ export function PestanaAutomatizacionFlujo({
             size="sm"
             className="bg-brand-600 hover:bg-brand-700 text-white gap-1.5 text-xs"
           >
-            <Link to="/reportes/nueva" search={{ flujoId: flujo.id }}>
+            <Link to="/reportes">
               <Icon name="zap" size="sm" />
               Crear automatización en Qlik Automate
             </Link>

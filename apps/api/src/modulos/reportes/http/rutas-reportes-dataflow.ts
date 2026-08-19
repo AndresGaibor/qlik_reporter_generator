@@ -7,6 +7,10 @@ import {
   resumenScriptNoDisponible,
   resumirDataflowParaUsuario,
 } from "../../flujos/aplicacion/resumir-dataflow.js";
+import {
+  type DependenciasClonadoDataflow,
+  crearRutasClonadoDataflow,
+} from "../../flujos/http/rutas-clonado-dataflow.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { EntradaEjecutarReporte } from "../aplicacion/ejecutar-reporte.js";
 import {
@@ -39,12 +43,14 @@ export interface DependenciasRutasReportesDataflow {
       entrada: EntradaEjecutarReporte,
     ) => Promise<{ runId: string; ejecucionReporteId: string }>
   >;
+  dependenciasClonado: DependenciasClonadoDataflow;
 }
 
 export function crearRutasReportesDataflow(
   dependencias: DependenciasRutasReportesDataflow,
 ) {
   const rutas = new Hono();
+  rutas.route("/", crearRutasClonadoDataflow(dependencias.dependenciasClonado));
   const obtenerFlujo = async (c: Context) => {
     const flujoId = c.req.param("flujoId")?.trim() ?? "";
     const flujos = await (

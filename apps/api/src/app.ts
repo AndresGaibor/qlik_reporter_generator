@@ -370,6 +370,12 @@ export async function crearAplicacion(
         new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
+      dependenciasClonado: {
+        resolverSesion,
+        obtenerTenant: (tenantId) =>
+          consultaTenantAutomatizaciones.obtenerTenant(tenantId),
+        resolverQlik,
+      },
       repositorioReportes,
       resolverEjecutarReporte: async (c) => {
         const sesion = await resolverSesion(c);

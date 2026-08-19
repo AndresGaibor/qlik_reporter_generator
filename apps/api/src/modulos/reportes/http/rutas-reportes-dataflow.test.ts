@@ -42,6 +42,11 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
         dataset: "d",
       }),
       resolverSesion: async () => sesion,
+      dependenciasClonado: {
+        resolverSesion: async () => ({ tenantId: sesion.tenantId }),
+        obtenerTenant: async () => null,
+        resolverQlik: async () => qlik as never,
+      },
       repositorioReportes: {
         listarEjecuciones: vi.fn(async () => []),
       } as never,
@@ -51,6 +56,81 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
 }
 
 describe("fachada /api/reportes para Dataflows", () => {
+  it("expone la plantilla base con la autorización del tenant", async () => {
+    const app = appCon(
+      { listarFlujos: vi.fn(async () => []) },
+      {
+        dependenciasClonado: {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "base-1",
+            dataflowBaseNombre: "Base Ventas",
+          }),
+        },
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/plantilla-base");
+
+    expect(respuesta.status).toBe(200);
+    expect((await respuesta.json()).datos).toEqual({
+      id: "base-1",
+      nombre: "Base Ventas",
+    });
+  });
+
+  it("crea un reporte desde la plantilla usando el App ID disponible en Qlik", async () => {
+    const copiarDataflow = vi.fn(async () => ({
+      id: "copia-1",
+      nombre: "Copia ventas",
+    }));
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [
+          {
+            id: "item-1",
+            appId: "app-real-1",
+            name: "Base Ventas",
+            spaceId: "space-1",
+            description: "qlik generator",
+          },
+        ]),
+        copiarDataflow,
+      },
+      {
+        dependenciasClonado: {
+          resolverSesion: async () => ({ tenantId: "tenant-1" }),
+          obtenerTenant: async () => ({ dataflowBaseIdQlik: "item-1" }),
+          resolverQlik: async () =>
+            ({
+              listarFlujos: async () => [
+                {
+                  id: "item-1",
+                  appId: "app-real-1",
+                  name: "Base Ventas",
+                  spaceId: "space-1",
+                  description: "qlik generator",
+                },
+              ],
+              copiarDataflow,
+            }) as never,
+        },
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/desde-plantilla", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "Copia ventas" }),
+    });
+
+    expect(respuesta.status).toBe(201);
+    expect(copiarDataflow).toHaveBeenCalledWith("app-real-1", "Copia ventas", {
+      espacioId: "space-1",
+      descripcion: "qlik generator",
+    });
+  });
+
   it("lista Dataflows Qlik y aplica búsqueda y espacio, sin leer reportes locales", async () => {
     const listarFlujos = vi.fn(async () => [
       { id: "df-1", name: "Ventas", spaceId: "sp-1" },
