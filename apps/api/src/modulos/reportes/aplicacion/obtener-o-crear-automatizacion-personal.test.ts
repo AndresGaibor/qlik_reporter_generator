@@ -228,12 +228,16 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     const lock: PuertoBloqueoEjecucion = {
       ejecutarExclusivo: vi.fn(async () => undefined),
     };
-    const { caso, qlik } = construir({ lock });
+    const { caso, repo, qlik } = construir({ lock });
 
     await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
       codigo: "WORKER_LOCK_BUSY",
     });
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+    expect(repo.crear).not.toHaveBeenCalled();
+    expect(repo.actualizar).not.toHaveBeenCalled();
+    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
   });
 
   it("si el lock está ocupado y la fila da 404 no recrea fuera del lock", async () => {
@@ -254,7 +258,9 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
       codigo: "WORKER_LOCK_BUSY",
     });
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+    expect(repo.crear).not.toHaveBeenCalled();
     expect(repo.actualizar).not.toHaveBeenCalled();
+    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
     expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
   });
 
