@@ -32,11 +32,13 @@ export type PreflightDataflowReporte = z.infer<
   typeof esquemaPreflightDataflowReporte
 >;
 
-export const esquemaCrearReporte = z.object({
-  nombre: z.string().trim().min(1).max(255),
-  flujoIdQlik: z.string().trim().min(1),
-  espacioIdQlik: z.string().trim().min(1).optional(),
-}).strict();
+export const esquemaCrearReporte = z
+  .object({
+    nombre: z.string().trim().min(1).max(255),
+    flujoIdQlik: z.string().trim().min(1),
+    espacioIdQlik: z.string().trim().min(1).optional(),
+  })
+  .strict();
 export type CrearReporte = z.infer<typeof esquemaCrearReporte>;
 
 export const esquemaDetalleEjecucionReporte = z.object({

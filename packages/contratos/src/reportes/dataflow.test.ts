@@ -5,9 +5,9 @@ import {
   esquemaConfiguracionReporteDataflow,
   esquemaCrearReporte,
   esquemaDetalleEjecucionReporte,
+  esquemaDetalleReporte,
   esquemaPreflightDataflowReporte,
   esquemaResumenReporte,
-  esquemaDetalleReporte,
 } from "./dataflow.js";
 
 describe("contratos de reportes Dataflow", () => {
@@ -56,23 +56,31 @@ describe("contratos de reportes Dataflow", () => {
       "automatizacionNombreSnapshot",
       "programacion",
     ]) {
-      expect(() => esquemaConfiguracionReporteDataflow.parse({
-        ...reporteValido,
-        [propiedad]: propiedad === "automatizacionIdQlik"
-          ? "legacy-auto"
-          : propiedad === "automatizacionNombreSnapshot"
-            ? "Legacy Automate"
-            : {},
-      })).toThrow();
+      expect(() =>
+        esquemaConfiguracionReporteDataflow.parse({
+          ...reporteValido,
+          [propiedad]:
+            propiedad === "automatizacionIdQlik"
+              ? "legacy-auto"
+              : propiedad === "automatizacionNombreSnapshot"
+                ? "Legacy Automate"
+                : {},
+        }),
+      ).toThrow();
     }
   });
 
   it("crea reportes sin referencias a Automate", () => {
-    expect(esquemaCrearReporte.parse({
-      nombre: " Ventas ", flujoIdQlik: " df-1 ",
-      espacioIdQlik: " space-1 ",
-    })).toEqual({
-      nombre: "Ventas", flujoIdQlik: "df-1", espacioIdQlik: "space-1",
+    expect(
+      esquemaCrearReporte.parse({
+        nombre: " Ventas ",
+        flujoIdQlik: " df-1 ",
+        espacioIdQlik: " space-1 ",
+      }),
+    ).toEqual({
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      espacioIdQlik: "space-1",
     });
   });
 
@@ -111,58 +119,64 @@ describe("contratos de reportes Dataflow", () => {
       ejecutadoPorUsuarioId: null,
     });
     expect(ejecucionHistorica.ejecutadoPorUsuarioId).toBeNull();
-    expect(() => esquemaDetalleEjecucionReporte.parse({
-      ...detalle,
-      automatizacionPersonalId: "not-a-uuid",
-    })).toThrow();
+    expect(() =>
+      esquemaDetalleEjecucionReporte.parse({
+        ...detalle,
+        automatizacionPersonalId: "not-a-uuid",
+      }),
+    ).toThrow();
   });
 
   it("rechaza un reporteId que no sea UUID", () => {
-    expect(() => esquemaDetalleEjecucionReporte.parse({
-      id: "11111111-1111-4111-8111-111111111111",
-      reporteId: "reporte-invalido",
-      flujoIdQlik: "df-1",
-      automatizacionIdQlik: "legacy-auto",
-      runIdQlik: null,
-      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
-      automatizacionPersonalId: null,
-      hashDataflowSha256: "a".repeat(64),
-      scriptDataflow: "script",
-      sqlBigQueryCompilado: "SELECT 1",
-      scriptExportacion: "export",
-      uriBaseGcs: "gs://bucket/ejecucion/",
-      estado: "preparando",
-      versionCompilador: 1,
-      etapaError: null,
-      mensajeError: null,
-      iniciadoEn: null,
-      finalizadoEn: null,
-      creadoEn: "2026-08-18T12:00:00.000Z",
-    })).toThrow();
+    expect(() =>
+      esquemaDetalleEjecucionReporte.parse({
+        id: "11111111-1111-4111-8111-111111111111",
+        reporteId: "reporte-invalido",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "legacy-auto",
+        runIdQlik: null,
+        ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+        automatizacionPersonalId: null,
+        hashDataflowSha256: "a".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "SELECT 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://bucket/ejecucion/",
+        estado: "preparando",
+        versionCompilador: 1,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: null,
+        finalizadoEn: null,
+        creadoEn: "2026-08-18T12:00:00.000Z",
+      }),
+    ).toThrow();
   });
 
   it("rechaza un ejecutadoPorUsuarioId que no sea UUID", () => {
-    expect(() => esquemaDetalleEjecucionReporte.parse({
-      id: "11111111-1111-4111-8111-111111111111",
-      reporteId: "22222222-2222-4222-8222-222222222222",
-      flujoIdQlik: "df-1",
-      automatizacionIdQlik: "legacy-auto",
-      runIdQlik: null,
-      ejecutadoPorUsuarioId: "usuario-invalido",
-      automatizacionPersonalId: null,
-      hashDataflowSha256: "a".repeat(64),
-      scriptDataflow: "script",
-      sqlBigQueryCompilado: "SELECT 1",
-      scriptExportacion: "export",
-      uriBaseGcs: "gs://bucket/ejecucion/",
-      estado: "preparando",
-      versionCompilador: 1,
-      etapaError: null,
-      mensajeError: null,
-      iniciadoEn: null,
-      finalizadoEn: null,
-      creadoEn: "2026-08-18T12:00:00.000Z",
-    })).toThrow();
+    expect(() =>
+      esquemaDetalleEjecucionReporte.parse({
+        id: "11111111-1111-4111-8111-111111111111",
+        reporteId: "22222222-2222-4222-8222-222222222222",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "legacy-auto",
+        runIdQlik: null,
+        ejecutadoPorUsuarioId: "usuario-invalido",
+        automatizacionPersonalId: null,
+        hashDataflowSha256: "a".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "SELECT 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://bucket/ejecucion/",
+        estado: "preparando",
+        versionCompilador: 1,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: null,
+        finalizadoEn: null,
+        creadoEn: "2026-08-18T12:00:00.000Z",
+      }),
+    ).toThrow();
   });
 
   it("acepta una automatización personal UUID no nula", () => {
@@ -194,26 +208,28 @@ describe("contratos de reportes Dataflow", () => {
   });
 
   it("exige automatizacionIdQlik como snapshot histórico", () => {
-    expect(() => esquemaDetalleEjecucionReporte.parse({
-      id: "11111111-1111-4111-8111-111111111111",
-      reporteId: "22222222-2222-4222-8222-222222222222",
-      flujoIdQlik: "df-1",
-      runIdQlik: null,
-      ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
-      automatizacionPersonalId: null,
-      hashDataflowSha256: "a".repeat(64),
-      scriptDataflow: "script",
-      sqlBigQueryCompilado: "SELECT 1",
-      scriptExportacion: "export",
-      uriBaseGcs: "gs://bucket/ejecucion/",
-      estado: "preparando",
-      versionCompilador: 1,
-      etapaError: null,
-      mensajeError: null,
-      iniciadoEn: null,
-      finalizadoEn: null,
-      creadoEn: "2026-08-18T12:00:00.000Z",
-    })).toThrow();
+    expect(() =>
+      esquemaDetalleEjecucionReporte.parse({
+        id: "11111111-1111-4111-8111-111111111111",
+        reporteId: "22222222-2222-4222-8222-222222222222",
+        flujoIdQlik: "df-1",
+        runIdQlik: null,
+        ejecutadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
+        automatizacionPersonalId: null,
+        hashDataflowSha256: "a".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "SELECT 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://bucket/ejecucion/",
+        estado: "preparando",
+        versionCompilador: 1,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: null,
+        finalizadoEn: null,
+        creadoEn: "2026-08-18T12:00:00.000Z",
+      }),
+    ).toThrow();
   });
 
   it("expone los contratos públicos de resumen y detalle de reporte", () => {

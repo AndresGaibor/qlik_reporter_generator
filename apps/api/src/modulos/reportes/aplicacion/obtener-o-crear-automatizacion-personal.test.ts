@@ -32,7 +32,7 @@ function persistida(id = "row-1", automatizacionIdQlik = "worker-1") {
     tenantQlikId: ctx.tenantQlikId,
     usuarioId: ctx.usuarioId,
     automatizacionIdQlik,
-    automatizacionNombreSnapshot: "Worker personal",
+    nombreSnapshot: "Worker personal",
     estado: "activo" as const,
   };
 }

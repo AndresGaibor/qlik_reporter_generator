@@ -24,7 +24,7 @@ function configuracion() {
     flujoNombreSnapshot: "Ventas DF",
     automatizacionIdQlik: "auto-1",
     reporteId: "reporte-1",
-    automatizacionNombreSnapshot: "Ventas",
+    nombreSnapshot: "Ventas",
     estado: "activa" as const,
   };
 }
@@ -124,7 +124,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
           tenantQlikId: "tenant-1",
           usuarioId: "user-1",
           automatizacionIdQlik: "auto-1",
-          automatizacionNombreSnapshot: "Worker",
+          nombreSnapshot: "Worker",
           estado: "activo" as const,
         })),
       } as never,
@@ -213,7 +213,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
           tenantQlikId: "tenant-1",
           usuarioId: "user-1",
           automatizacionIdQlik: "auto-1",
-          automatizacionNombreSnapshot: "Worker",
+          nombreSnapshot: "Worker",
           estado: "activo" as const,
         })),
       } as never,

@@ -33,7 +33,7 @@ export function clonarDataflowBase(nombre: string) {
 }
 
 export function obtenerEspacios() {
-  return clienteApi.get<EspacioDisponible[]>("/reportes/espacios");
+  return clienteApi.get<EspacioDisponible[]>("/qlik/automatizaciones/espacios");
 }
 
 export interface RespuestaScriptFlujo {

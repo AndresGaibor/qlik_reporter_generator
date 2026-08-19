@@ -122,6 +122,39 @@ describe("API", () => {
   it("permite invocar las rutas PUT de automatización base en admin", async () => {
     const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
+      resolverQlik: async () =>
+        ({
+          obtenerAutomatizacion: async () => ({
+            workspace: {
+              blocks: [
+                {
+                  name: "executeTask",
+                  inputs: [
+                    {
+                      mode: "keyValue",
+                      value: [
+                        { key: "credenciales", value: "credenciales" },
+                        { key: "bq_select_data", value: "{ $.BqSelectData }" },
+                        { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
+                        { key: "bq_export_data", value: "{ $.BqExportData }" },
+                        { key: "bq_drop", value: "{ $.BqDrop }" },
+                      ],
+                    },
+                  ],
+                },
+                ...[
+                  "BqSelectData",
+                  "BqNumberCsv",
+                  "BqExportData",
+                  "BqDrop",
+                ].map((name) => ({
+                  name,
+                  operations: [{ id: "set_value", value: "" }],
+                })),
+              ],
+            },
+          }),
+        }) as never,
       resolverContextoAdmin: async () => ({
         esSuperadmin: true,
         membresias: [],

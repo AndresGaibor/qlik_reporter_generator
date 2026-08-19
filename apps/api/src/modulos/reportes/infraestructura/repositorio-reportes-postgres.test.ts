@@ -54,7 +54,7 @@ describe("RepositorioReportesPostgres", () => {
     ).crearReporte(entrada);
     expect(resultado.id).toBe("reporte-1");
     expect(valores).not.toHaveProperty("automatizacionIdQlik");
-    expect(valores).not.toHaveProperty("automatizacionNombreSnapshot");
+    expect(valores).not.toHaveProperty("nombreSnapshot");
   });
 
   it("crea la ejecución con reporte y worker históricos nullable", async () => {
@@ -169,5 +169,77 @@ describe("RepositorioReportesPostgres", () => {
     expect(valores.join("")).toContain("organizacion-1");
     expect(valores.join("")).toContain("tenant-2");
     expect(valores.join("")).toContain("organizacion-2");
+  });
+
+  it("conserva el worker y GCS históricos sin consultar el worker vigente", async () => {
+    const fila = {
+      id: "ejecucion-historica",
+      reporteNombre: "Ventas históricas",
+      automatizacionIdQlik: "auto-viejo",
+      estado: "completada",
+      mensajeError: null,
+      uriBaseGcs:
+        "gs://bkt_dwh/POCs/TalendDescargados/ventas/ejecucion-historica/",
+      creadoEn: new Date("2026-01-01T00:00:00.000Z"),
+      finalizadoEn: new Date("2026-01-01T00:01:00.000Z"),
+    };
+    const db = {
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: () => ({ limit: async () => [fila] }),
+          }),
+        }),
+      }),
+      query: {
+        get automatizacionesPersonalesQlik() {
+          throw new Error("el historial no debe consultar el worker vigente");
+        },
+      },
+    };
+
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).obtenerEjecucionDescarga({
+      id: "ejecucion-historica",
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+    });
+
+    expect(resultado).toMatchObject({
+      automatizacionIdQlik: "auto-viejo",
+      uriBaseGcs: fila.uriBaseGcs,
+    });
+  });
+
+  it("lista descargas por reporte dentro del tenant y organización", async () => {
+    let condicion: unknown;
+    const db = {
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: (valor: unknown) => {
+              condicion = valor;
+              return {
+                orderBy: () => ({ limit: async () => [] }),
+              };
+            },
+          }),
+        }),
+      }),
+    };
+
+    await new RepositorioReportesPostgres(
+      db as never,
+    ).listarEjecucionesDescargas({
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+    });
+
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("tenant_qlik_id");
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("organizacion_id");
+    expect(Bun.inspect(condicion, { depth: 20 })).not.toContain(
+      "automatizaciones_personales_qlik",
+    );
   });
 });

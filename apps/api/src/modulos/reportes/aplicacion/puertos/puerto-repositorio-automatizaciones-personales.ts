@@ -5,7 +5,7 @@ export interface CrearAutomatizacionPersonalPersistida {
   tenantQlikId: string;
   usuarioId: string;
   automatizacionIdQlik: string;
-  automatizacionNombreSnapshot: string;
+  nombreSnapshot: string;
   estado: EstadoAutomatizacionPersonal;
   mensajeError?: string | null;
 }
@@ -19,7 +19,7 @@ export interface AutomatizacionPersonalPersistida
 
 export interface ActualizarAutomatizacionPersonalPersistida {
   automatizacionIdQlik?: string;
-  automatizacionNombreSnapshot?: string;
+  nombreSnapshot?: string;
   estado?: EstadoAutomatizacionPersonal;
   mensajeError?: string | null;
 }

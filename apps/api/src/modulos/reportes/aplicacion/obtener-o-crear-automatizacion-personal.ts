@@ -77,7 +77,7 @@ export class ObtenerOCrearAutomatizacionPersonal {
       const nuevo = await this.copiarYValidar(contexto);
       return this.repositorio.actualizar(persistida.id, {
         automatizacionIdQlik: nuevo.id,
-        automatizacionNombreSnapshot: nuevo.nombre,
+        nombreSnapshot: nuevo.nombre,
         estado: "activo",
         mensajeError: null,
       });
@@ -106,7 +106,7 @@ export class ObtenerOCrearAutomatizacionPersonal {
       tenantQlikId: contexto.tenantQlikId,
       usuarioId: contexto.usuarioId,
       automatizacionIdQlik: nuevo.id,
-      automatizacionNombreSnapshot: nuevo.nombre,
+      nombreSnapshot: nuevo.nombre,
       estado: "activo",
     });
   }
