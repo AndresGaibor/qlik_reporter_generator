@@ -535,7 +535,11 @@ describe("API", () => {
         usuarioIdQlik: "usuario-qlik-1",
       }),
       consultaTenantQlik: {
-        obtenerTenant: async () => ({ host: "tenant.example" }),
+        obtenerTenant: async () => ({
+          host: "tenant.example",
+          automatizacionBaseIdQlik: "base-tenant-1",
+          automatizacionBaseNombre: "Base tenant 1",
+        }),
       },
       repositorioReportes: { listar, obtenerPorId } as never,
     });
@@ -554,7 +558,19 @@ describe("API", () => {
     ]);
     expect(reportes.status).toBe(200);
     expect((await reportes.json()).datos).toEqual([]);
-    expect(configuracionTenant.status).toBe(404);
+    expect(configuracionTenant.status).toBe(410);
+    expect((await configuracionTenant.json()).error.codigo).toBe(
+      "ENDPOINT_DEPRECADO",
+    );
+    expect(obtenerPorId).not.toHaveBeenCalled();
+    const configuracionTecnica = await app.request(
+      "/api/qlik/automatizaciones/configuracion-tenant",
+    );
+    expect(configuracionTecnica.status).toBe(200);
+    expect((await configuracionTecnica.json()).datos).toEqual({
+      automatizacionBaseIdQlik: "base-tenant-1",
+      automatizacionBaseNombre: "Base tenant 1",
+    });
     expect(listar).toHaveBeenCalledWith({
       tenantQlikId: "tenant-1",
       organizacionId: "org-1",

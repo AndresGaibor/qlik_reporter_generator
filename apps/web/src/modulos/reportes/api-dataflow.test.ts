@@ -3,6 +3,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import {
   actualizarConfiguracionReporte,
   obtenerConfiguracionReporte,
+  obtenerConfiguracionTenant,
   obtenerEjecucionesLocalesReporte,
   preflightDataflowReporte,
 } from "./api";
@@ -34,4 +35,14 @@ test("usa endpoints locales de configuración y auditoría", async () => {
   expect(put).toHaveBeenCalledWith("/reportes/auto%201/configuracion", {
     nombre: "Ventas v2",
   });
+});
+
+test("obtiene la configuración tenant desde el endpoint técnico", async () => {
+  const get = vi.spyOn(clienteApi, "get").mockResolvedValue({});
+
+  await obtenerConfiguracionTenant();
+
+  expect(get).toHaveBeenCalledWith(
+    "/qlik/automatizaciones/configuracion-tenant",
+  );
 });

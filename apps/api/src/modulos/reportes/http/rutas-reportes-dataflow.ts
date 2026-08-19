@@ -120,6 +120,20 @@ export function crearRutasReportesDataflow(
     return responderExito(c, await caso.ejecutar(flujoIdQlik));
   });
 
+  rutas.all("/configuracion-tenant", (c) =>
+    c.json(
+      {
+        exito: false,
+        error: {
+          codigo: "ENDPOINT_DEPRECADO",
+          mensaje:
+            "La configuración del tenant se consulta en /api/qlik/automatizaciones/configuracion-tenant",
+        },
+      },
+      410,
+    ),
+  );
+
   const obtenerDetalle = async (c: Context) => {
     const sesion = await dependencias.resolverSesion(c);
     const configuracion = await obtenerConfiguracionAutorizada(

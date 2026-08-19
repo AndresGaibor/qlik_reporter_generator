@@ -55,7 +55,9 @@ export function obtenerEjecucionesLocalesReporte(
 }
 
 export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
-  return clienteApi.get<ConfiguracionTenant>(`${RUTA}/configuracion-tenant`);
+  return clienteApi.get<ConfiguracionTenant>(
+    "/qlik/automatizaciones/configuracion-tenant",
+  );
 }
 
 export type {
