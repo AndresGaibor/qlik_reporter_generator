@@ -1,7 +1,8 @@
 import { act } from "react";
+import type React from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
-import { BarraFiltrosAutomatizaciones } from "./barra-filtros-automatizaciones";
+import { BarraFiltrosReportes } from "./barra-filtros-reportes";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -19,10 +20,10 @@ function montar() {
   root = createRoot(container);
   act(() => {
     root?.render(
-      <BarraFiltrosAutomatizaciones
+      <BarraFiltrosReportes
         busquedaTemp="clientes"
         setBusquedaTemp={() => undefined}
-        buscar={(evento) => evento.preventDefault()}
+        buscar={(evento: React.FormEvent) => evento.preventDefault()}
         limpiar={() => undefined}
         espacios={[{ id: "space-1", nombre: "Ventas" }]}
         espacioFiltrado="space-1"

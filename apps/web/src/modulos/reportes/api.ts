@@ -1,14 +1,16 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type {
-  ActualizarConfiguracionReporte,
-  ConfiguracionReporteDataflow,
-  CrearReporte,
   DetalleEjecucionReporte,
   DetalleReporte,
   PreflightDataflowReporte,
   ResumenReporte,
 } from "@qlik/contratos";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
+import type {
+  DataflowBaseDisponible,
+  ResultadoClonarDataflowBase,
+  ResumenReporteDataflow,
+} from "@qlik/contratos/flujos";
 
 const RUTA = "/reportes";
 const RUTA_AUTOMATIZACIONES_QLIK = "/qlik/automatizaciones";
@@ -31,19 +33,19 @@ export function obtenerReporte(id: string) {
   return clienteApi.get<DetalleReporte>(idUrl(id));
 }
 
-export function crearReporte(entrada: CrearReporte) {
-  return clienteApi.post<DetalleReporte>(RUTA, entrada);
+export function obtenerResumenReporte(flujoId: string) {
+  return clienteApi.get<ResumenReporteDataflow>(`${idUrl(flujoId)}/resumen`);
 }
 
-export function actualizarReporte(
-  id: string,
-  entrada: ActualizarConfiguracionReporte,
-) {
-  return clienteApi.put<DetalleReporte>(idUrl(id), entrada);
+export function obtenerDataflowBaseReporte() {
+  return clienteApi.get<DataflowBaseDisponible>(`${RUTA}/plantilla-base`);
 }
 
-export function clonarReporte(id: string, opciones?: { nombre?: string }) {
-  return clienteApi.post<DetalleReporte>(`${idUrl(id)}/clonar`, opciones ?? {});
+export function crearReporteDesdePlantilla(nombre: string) {
+  return clienteApi.post<ResultadoClonarDataflowBase>(
+    `${RUTA}/desde-plantilla`,
+    { nombre },
+  );
 }
 
 export function obtenerEjecucionesReporte(id: string) {
@@ -58,23 +60,8 @@ export function ejecutarReporte(id: string) {
 
 export function preflightDataflowReporte(flujoId: string) {
   return clienteApi.get<PreflightDataflowReporte>(
-    `${RUTA}/dataflows/${encodeURIComponent(flujoId)}/preflight`,
+    `${idUrl(flujoId)}/preflight`,
   );
-}
-
-export function obtenerConfiguracionReporte(id: string) {
-  return clienteApi.get<ConfiguracionReporteDataflow>(`${idUrl(id)}`);
-}
-
-export function actualizarConfiguracionReporte(
-  id: string,
-  entrada: ActualizarConfiguracionReporte,
-) {
-  return actualizarReporte(id, entrada);
-}
-
-export function obtenerEjecucionesLocalesReporte(id: string) {
-  return obtenerEjecucionesReporte(id);
 }
 
 export type { ResumenAutomatizacion };

@@ -11,10 +11,9 @@ test("la navegación administrativa usa Configuración sin Organizaciones", () =
   );
 });
 
-test("incluye /flujos en navegación como punto de entrada Dataflows", () => {
-  expect(NAVEGACION.some((item) => item.to === "/flujos")).toBe(true);
-  const item = NAVEGACION.find((item) => item.to === "/flujos");
-  expect(item?.etiqueta).toBe("Dataflows");
+test("integra Dataflows en Reportes y no conserva el item legacy", () => {
+  expect(NAVEGACION.some((item) => item.to === "/flujos")).toBe(false);
+  expect(NAVEGACION.some((item) => item.to === "/reportes")).toBe(true);
 });
 
 test("no conserva la navegación legacy de Resultados BigQuery", () => {

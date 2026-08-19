@@ -1,26 +1,40 @@
-import { type AnyRoute, createRoute, useParams } from "@tanstack/react-router";
+import {
+  type AnyRoute,
+  createRoute,
+  useNavigate,
+  useParams,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
 import { PaginaDetalleReporte } from "./pagina-detalle-reporte";
-import { PaginaNuevoReporte } from "./pagina-nuevo-reporte";
 import { PaginaReportes } from "./pagina-reportes";
 
+function RedirigirNueva() {
+  const navegar = useNavigate();
+  useEffect(() => {
+    void navegar({ to: "/reportes", replace: true });
+  }, [navegar]);
+  return null;
+}
+
 export function crearRutasReportes(rutaRaiz: AnyRoute) {
-  const listado = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/reportes",
-    component: PaginaReportes,
-  });
-  const nueva = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/reportes/nueva",
-    component: PaginaNuevoReporte,
-  });
-  const detalle = createRoute({
-    getParentRoute: () => rutaRaiz,
-    path: "/reportes/$id",
-    component: function RutaDetalleReporte() {
-      const { id } = useParams({ strict: false }) as { id: string };
-      return <PaginaDetalleReporte id={id} />;
-    },
-  });
-  return [listado, nueva, detalle];
+  return [
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/reportes",
+      component: PaginaReportes,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/reportes/nueva",
+      component: RedirigirNueva,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
+      path: "/reportes/$id",
+      component: function RutaDetalleReporte() {
+        const { id } = useParams({ strict: false }) as { id: string };
+        return <PaginaDetalleReporte id={id} />;
+      },
+    }),
+  ];
 }

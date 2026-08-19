@@ -9,22 +9,22 @@ const api = vi.hoisted(() => ({
     {
       id: "11111111-1111-4111-8111-111111111111",
       nombre: "Reporte Ventas",
-      flujoIdQlik: "df-1",
-      flujoNombreSnapshot: "Ventas",
-      flujoEspacioIdQlik: "sp-1",
-      destinoGcs: "gs://bucket/reportes/",
-      activa: true,
-      creadoPorUsuarioId: "22222222-2222-4222-8222-222222222222",
+      espacioId: "sp-1",
+      espacioNombre: "Ventas",
+      modificadoEn: "2026-08-18T12:00:00Z",
     },
   ]),
   ejecutarReporte: vi.fn(),
+  obtenerDataflowBaseReporte: vi.fn(async () => ({
+    id: "base",
+    nombre: "Base",
+  })),
 }));
 
 vi.mock("./api", () => api);
-vi.mock(
-  "@/modulos/reportes/componentes/barra-filtros-automatizaciones",
-  () => ({ BarraFiltrosAutomatizaciones: () => null }),
-);
+vi.mock("@/modulos/reportes/componentes/barra-filtros-reportes", () => ({
+  BarraFiltrosReportes: () => null,
+}));
 vi.mock("@/modulos/reportes/componentes/lista-reportes", () => ({
   ListaReportes: ({ reportes }: { reportes: Array<{ nombre: string }> }) => (
     <div>
@@ -126,14 +126,14 @@ test("filtra filas locales por nombre/Dataflow y espacio sin consultar Automates
     {
       id: "1",
       nombre: "Ventas",
-      flujoNombreSnapshot: "Clientes",
-      flujoEspacioIdQlik: "sp-1",
+      espacioNombre: "Clientes",
+      espacioId: "sp-1",
     },
     {
       id: "2",
       nombre: "Inventario",
-      flujoNombreSnapshot: "Ventas",
-      flujoEspacioIdQlik: "sp-2",
+      espacioNombre: "Ventas",
+      espacioId: "sp-2",
     },
   ] as never;
 

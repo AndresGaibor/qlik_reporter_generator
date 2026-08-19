@@ -16,7 +16,6 @@ export const NAVEGACION: readonly {
   superadmin?: boolean;
 }[] = [
   { to: "/", etiqueta: "Inicio", icono: "home" },
-  { to: "/flujos", etiqueta: "Dataflows", icono: "flow" },
   { to: "/reportes", etiqueta: "Reportes", icono: "file-text" },
   { to: "/descargas", etiqueta: "Descargas", icono: "cloud" },
   {

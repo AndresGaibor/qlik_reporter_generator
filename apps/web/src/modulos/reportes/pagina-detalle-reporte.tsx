@@ -1,31 +1,46 @@
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { PageHeader } from "@/compartido/componentes/ui/page-header";
+import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
+import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
+import { PestanaMetadataFlujo } from "@/modulos/flujos/componentes/detalle/pestana-metadata-flujo";
+import { PestanaScriptFlujo } from "@/modulos/flujos/componentes/detalle/pestana-script-flujo";
 import {
-  clonarReporte,
   ejecutarReporte,
   obtenerEjecucionesReporte,
   obtenerReporte,
+  obtenerResumenReporte,
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
-import { ConfiguracionDataflowReporte } from "@/modulos/reportes/componentes/detalle/configuracion-dataflow-reporte";
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
+import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 export function PaginaDetalleReporte({ id }: { id: string }) {
+  const { tenant: tenantActivo } = useTenantActivo();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const client = useQueryClient();
-  const navegar = useNavigate();
+  const [pestana, setPestana] = useState<"diseno" | "detalles" | "historial">(
+    "diseno",
+  );
   const reporte = useQuery({
     queryKey: ["reporte", id],
     queryFn: () => obtenerReporte(id),
     retry: false,
   });
+  const resumen = useQuery({
+    queryKey: ["resumen-reporte", id],
+    queryFn: () => obtenerResumenReporte(id),
+    retry: false,
+  });
   const preflight = useQuery({
-    queryKey: ["preflight-dataflow-reporte", reporte.data?.flujoIdQlik],
-    queryFn: () => preflightDataflowReporte(reporte.data?.flujoIdQlik ?? ""),
-    enabled: Boolean(reporte.data?.flujoIdQlik),
+    queryKey: ["preflight-reporte", id],
+    queryFn: () => preflightDataflowReporte(id),
     retry: false,
   });
   const ejecuciones = useQuery({
@@ -41,78 +56,104 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     },
     onError: (error: Error) => mostrarError(error.message),
   });
-  const clonar = useMutation({
-    mutationFn: (nombre: string) => clonarReporte(id, { nombre }),
-    onSuccess: (resultado) => {
-      mostrarExito("Reporte clonado");
-      navegar({ to: `/reportes/${resultado.id}` });
-    },
-    onError: (error: Error) => mostrarError(error.message),
-  });
+
   if (reporte.isLoading)
     return <p className="p-8 text-ink-500">Cargando reporte…</p>;
-  if (reporte.isError || !reporte.data)
+  if (reporte.isError || !reporte.data) {
     return (
       <EstadoError
         mensaje={reporte.error?.message ?? "No se pudo cargar el reporte"}
         onReintentar={() => void reporte.refetch()}
       />
     );
-  const local = reporte.data;
+  }
+  const dataflow = reporte.data;
+  const urlQlik = tenantActivo?.host
+    ? construirUrlVerFlujoQlik(tenantActivo.host, id, dataflow.espacioId ?? "")
+    : null;
+  const flujo = {
+    id,
+    nombre: dataflow.nombre,
+    espacioId: dataflow.espacioId ?? undefined,
+    espacioNombre: dataflow.espacioNombre ?? "Personal",
+    modificadoEn: dataflow.modificadoEn ?? undefined,
+  };
+
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <PageLayout>
       <Link
         to="/reportes"
-        className="inline-flex items-center gap-2 text-sm text-ink-500"
+        className="mb-4 inline-flex items-center gap-2 text-sm text-ink-500"
       >
-        <Icon name="chev" size="sm" className="rotate-180" />
-        Volver a reportes
+        <Icon name="chev" size="sm" className="rotate-180" /> Volver a reportes
       </Link>
-      <header className="border-b border-line-200 pb-5">
-        <h1 className="font-display text-2xl font-semibold text-ink-900">
-          {local.nombre}
-        </h1>
-        <p className="mt-1 text-sm text-ink-500">
-          Reporte local basado en el Dataflow seleccionado.
-        </p>
-      </header>
-      <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm text-ink-500">Estado</p>
-            <p className="font-semibold text-ink-900">
-              {local.activa ? "Disponible" : "Inactivo"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={!local.activa || ejecutar.isPending}
+      <PageHeader
+        title={dataflow.nombre}
+        description={`Dataflow de Qlik · Espacio ${dataflow.espacioNombre ?? "Personal"}`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {urlQlik ? (
+              <Button asChild variant="outline" size="sm">
+                <a href={urlQlik} target="_blank" rel="noopener noreferrer">
+                  <Icon name="ext" size="sm" /> Ver en Qlik Cloud
+                </a>
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              disabled={ejecutar.isPending}
               onClick={() => ejecutar.mutate()}
-              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
             >
+              <Icon name="play" size="sm" />{" "}
               {ejecutar.isPending ? "Ejecutando…" : "Ejecutar reporte"}
-            </button>
-            <button
-              type="button"
-              onClick={() => clonar.mutate(`${local.nombre} (copia)`)}
-              className="rounded-md border border-line-200 px-4 py-2 text-sm font-semibold"
-            >
-              Clonar reporte
-            </button>
+            </Button>
           </div>
+        }
+      />
+      <div className="flex max-w-fit rounded-xl bg-line-200/60 p-1 text-sm shadow-xs">
+        {(
+          [
+            ["diseno", "Diseño y validación"],
+            ["detalles", "Detalles"],
+            ["historial", "Historial"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setPestana(key)}
+            className={`rounded-lg px-4 py-2 font-semibold ${pestana === key ? "bg-surface text-ink-900 shadow-sm" : "text-ink-500"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {pestana === "diseno" ? (
+        <div className="space-y-6">
+          <PestanaScriptFlujo
+            resumen={resumen.data}
+            cargando={resumen.isLoading}
+            actualizando={resumen.isFetching}
+            error={resumen.error}
+            onActualizar={() => void resumen.refetch()}
+          />
+          <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
+            <h2 className="mb-3 font-semibold text-ink-900">Preflight</h2>
+            <EstadoPreflight
+              preflight={preflight.data}
+              validando={preflight.isLoading}
+              error={preflight.error}
+            />
+          </section>
         </div>
-      </section>
-      <ConfiguracionDataflowReporte
-        reporteId={id}
-        configuracion={local}
-        preflight={preflight.data}
-        validandoDataflow={preflight.isLoading}
-      />
-      <HistorialAuditoriaReporte
-        ejecuciones={ejecuciones.data ?? []}
-        mostrarDetallesTecnicos={false}
-      />
-    </div>
+      ) : null}
+      {pestana === "detalles" ? <PestanaMetadataFlujo flujo={flujo} /> : null}
+      {pestana === "historial" ? (
+        <HistorialAuditoriaReporte
+          ejecuciones={ejecuciones.data ?? []}
+          mostrarDetallesTecnicos={false}
+        />
+      ) : null}
+    </PageLayout>
   );
 }

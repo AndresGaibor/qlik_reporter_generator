@@ -6,13 +6,17 @@ import { useBusqueda } from "@/compartido/hooks/use-busqueda";
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
-import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
-import { ejecutarReporte, obtenerReportes } from "@/modulos/reportes/api";
+import {
+  ejecutarReporte,
+  obtenerDataflowBaseReporte,
+  obtenerReportes,
+} from "@/modulos/reportes/api";
 import type { ResumenReporte } from "@qlik/contratos";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { BarraFiltrosAutomatizaciones } from "./componentes/barra-filtros-automatizaciones";
+import { BarraFiltrosReportes } from "./componentes/barra-filtros-reportes";
 import { ListaReportes } from "./componentes/lista-reportes";
+import { ModalCrearReporteDesdePlantilla } from "./componentes/modal-crear-reporte-desde-plantilla";
 import { PaginacionLista } from "./componentes/paginacion-lista";
 
 export function filtrarReportes(
@@ -24,13 +28,10 @@ export function filtrarReportes(
   return reportes.filter((reporte) => {
     const coincideBusqueda =
       !termino ||
-      [reporte.nombre, reporte.flujoNombreSnapshot].some((valor) =>
+      [reporte.nombre, reporte.espacioNombre ?? ""].some((valor) =>
         valor.toLocaleLowerCase().includes(termino),
       );
-    return (
-      coincideBusqueda &&
-      (!espacioId || reporte.flujoEspacioIdQlik === espacioId)
-    );
+    return coincideBusqueda && (!espacioId || reporte.espacioId === espacioId);
   });
 }
 
@@ -49,36 +50,31 @@ export function PaginaReportes() {
     queryFn: () => obtenerReportes(),
     retry: false,
   });
-  const flujos = useQuery({
-    queryKey: ["flujos-espacios-reportes", tenantActivo?.id],
-    queryFn: () => obtenerFlujosConFiltros(),
+  const plantilla = useQuery({
+    queryKey: ["reportes-plantilla-base", tenantActivo?.id],
+    queryFn: obtenerDataflowBaseReporte,
     retry: false,
   });
+  const [modalAbierto, setModalAbierto] = useState(false);
   const filtrados = useMemo(
     () => filtrarReportes(consulta.data ?? [], busquedaActiva, espacioId),
     [consulta.data, busquedaActiva, espacioId],
   );
   const espacios = useMemo(() => {
-    const nombres = new Map(
-      (flujos.data ?? []).map((flujo) => [flujo.id, flujo]),
-    );
     return Array.from(
       new Map(
         (consulta.data ?? [])
-          .filter((reporte) => reporte.flujoEspacioIdQlik)
+          .filter((reporte) => reporte.espacioId)
           .map((reporte) => {
-            const espacioId = reporte.flujoEspacioIdQlik as string;
-            const flujo = Array.from(nombres.values()).find(
-              (item) => item.espacioId === espacioId,
-            );
+            const espacioId = reporte.espacioId as string;
             return [
               espacioId,
-              { id: espacioId, nombre: flujo?.espacioNombre ?? espacioId },
+              { id: espacioId, nombre: reporte.espacioNombre ?? espacioId },
             ] as const;
           }),
       ).values(),
     );
-  }, [consulta.data, flujos.data]);
+  }, [consulta.data]);
   const paginacion = usePaginacion(filtrados);
   const ejecutar = useMutation({
     mutationFn: ejecutarReporte,
@@ -109,16 +105,17 @@ export function PaginaReportes() {
             Reportes disponibles para tu usuario.
           </p>
         </header>
-        <BarraFiltrosAutomatizaciones
+        <BarraFiltrosReportes
           busquedaTemp={busquedaTemp}
           setBusquedaTemp={setBusquedaTemp}
           buscar={buscar}
           limpiar={limpiar}
           espacios={espacios}
-          errorEspacios={flujos.isError}
+          errorEspacios={false}
           espacioFiltrado={espacioId}
           onEspacioChange={establecerEspacioId}
           totalResultados={filtrados.length}
+          onCrearReporte={() => setModalAbierto(true)}
         />
         <ListaReportes
           reportes={paginacion.elementosPagina}
@@ -133,6 +130,17 @@ export function PaginaReportes() {
             onIrPagina={paginacion.irPagina}
             inicio={(paginacion.paginaActual - 1) * 10}
             total={filtrados.length}
+          />
+        ) : null}
+        {plantilla.data && tenantActivo?.host ? (
+          <ModalCrearReporteDesdePlantilla
+            abierto={modalAbierto}
+            nombrePlantilla={plantilla.data.nombre}
+            host={tenantActivo.host}
+            onCerrar={() => setModalAbierto(false)}
+            onCreado={() =>
+              void queryClient.invalidateQueries({ queryKey: ["reportes"] })
+            }
           />
         ) : null}
       </div>

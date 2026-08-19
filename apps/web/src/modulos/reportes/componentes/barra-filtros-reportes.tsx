@@ -2,7 +2,6 @@ import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
-import { sufijoBusqueda } from "@/compartido/utiles/automatizaciones";
 import type { FormEvent } from "react";
 
 interface Props {
@@ -19,9 +18,10 @@ interface Props {
   onAutorChange?: (id: string) => void;
   mostrarFiltroAutor?: boolean;
   totalResultados: number;
+  onCrearReporte?: () => void;
 }
 
-export function BarraFiltrosAutomatizaciones({
+export function BarraFiltrosReportes({
   busquedaTemp,
   setBusquedaTemp,
   buscar,
@@ -35,19 +35,14 @@ export function BarraFiltrosAutomatizaciones({
   onAutorChange,
   mostrarFiltroAutor = false,
   totalResultados,
+  onCrearReporte,
 }: Props) {
-  const busqueda = sufijoBusqueda(espacioFiltrado);
-
   return (
     <>
       <PageHeader
         title="Reportes"
         description="Crea y ejecuta reportes para consultar la información que necesitas, cuando la necesitas."
-        actions={
-          <Button asChild>
-            <a href={`/reportes/nueva${busqueda}`}>Crear reporte</a>
-          </Button>
-        }
+        actions={<Button onClick={onCrearReporte}>Crear reporte</Button>}
       />
 
       <div className="rounded-xl border border-line-200 bg-surface p-3 shadow-card sm:p-4">
