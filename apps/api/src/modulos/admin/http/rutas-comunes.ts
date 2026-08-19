@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderError } from "../../../nucleo/http/respuestas.js";
 import {
   type ContextoSesion,
@@ -25,6 +26,12 @@ export function obtenerParametroRequerido(c: Context, nombre: string): string {
 }
 
 export function responderErrorAdmin(c: Context, error: unknown) {
+  if (error instanceof ErrorAplicacion) {
+    return responderError(c, error.message, error.estadoHttp as never, {
+      codigo: error.codigo,
+      detalles: error.detalles,
+    });
+  }
   if (error instanceof Error && error.message === "No hay sesión") {
     return responderError(c, "Sesión requerida", 401, {
       codigo: "SESION_REQUERIDA",

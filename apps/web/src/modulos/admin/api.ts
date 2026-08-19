@@ -35,6 +35,20 @@ export type {
   CrearTenantQlik,
 };
 
+export interface WorkerDiagnostico {
+  id: string;
+  usuarioId: string;
+  usuarioNombre: string | null;
+  usuarioCorreo: string | null;
+  usuarioIdQlik: string | null;
+  usuarioNombreQlik: string | null;
+  usuarioCorreoQlik: string | null;
+  automatizacionIdQlik: string;
+  automatizacionNombre: string;
+  estado: "activo" | "error" | "desactivado";
+  mensajeError: string | null;
+}
+
 export function obtenerTenants() {
   return clienteApi.get<TenantResumen[]>(RUTA);
 }
@@ -172,6 +186,25 @@ export function configurarAutomatizacionBaseTenant(
       automatizacionBaseIdQlik,
       automatizacionBaseNombre,
     },
+  );
+}
+
+export function listarWorkersTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
+  return clienteApi.get<WorkerDiagnostico[]>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/workers`,
+  );
+}
+
+export function recrearWorkerTenant(
+  organizacionId: string,
+  tenantQlikId: string,
+  workerId: string,
+) {
+  return clienteApi.post<WorkerDiagnostico>(
+    `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/workers/${encodeURIComponent(workerId)}/recrear`,
   );
 }
 

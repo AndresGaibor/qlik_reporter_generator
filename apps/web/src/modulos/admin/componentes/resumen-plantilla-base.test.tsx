@@ -67,3 +67,36 @@ test("la sección configurada inicia en resumen y oculta el ID técnico", () => 
   expect(container.textContent).not.toContain("ac8fa98d");
   expect(container.textContent).toContain("Cambiar plantilla");
 });
+
+test("describe la plantilla como worker personal de primer uso, no por reporte", () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() =>
+    root?.render(
+      <SeccionAutomatizacionBaseTenant
+        organizacionId="org"
+        tenantsQlik={[
+          {
+            id: "q1",
+            organizacionId: "org",
+            tenantIdQlik: "tenant",
+            host: "empresa.qlikcloud.com",
+            nombre: "Producción",
+            estado: "activo",
+            esPrincipal: true,
+            creadoEn: "2026-07-25",
+            automatizacionBaseIdQlik: "base-1",
+            automatizacionBaseNombre: "Base",
+          },
+        ]}
+      />,
+    ),
+  );
+  expect(container.textContent).toContain(
+    "automatización personal de cada usuario en su primer uso",
+  );
+  expect(container.textContent).not.toContain(
+    "se copiará al crear cada reporte",
+  );
+});

@@ -61,6 +61,19 @@ export interface EntradaGuardarConfiguracionOauth {
   usuarioId?: string;
 }
 
+export interface IdentidadQlikAdministrable {
+  usuarioIdQlik: string;
+  nombreQlik?: string | null;
+  correoQlik?: string | null;
+}
+
+export interface PuertoConsultaIdentidadQlikAdmin {
+  obtener(
+    usuarioId: string,
+    tenantQlikId: string,
+  ): Promise<IdentidadQlikAdministrable | null>;
+}
+
 export interface ServicioCifradoAdministracion {
   cifrar(valor: string): { cifrado: string; iv: string; tag: string };
   descifrar(cifrado: string, iv: string, tag: string): string;

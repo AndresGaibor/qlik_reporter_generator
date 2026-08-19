@@ -6,8 +6,14 @@ import {
   CardTitle,
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
-import type { TenantQlik } from "@/modulos/admin/api";
-import { useState } from "react";
+import { construirUrlVerAutomatizacionQlik } from "@/compartido/utiles/qlik-urls";
+import {
+  type TenantQlik,
+  type WorkerDiagnostico,
+  listarWorkersTenant,
+  recrearWorkerTenant,
+} from "@/modulos/admin/api";
+import { useEffect, useState } from "react";
 import {
   nombreVisibleEntornoQlik,
   normalizarHostQlik,
@@ -33,7 +39,8 @@ export function SeccionAutomatizacionBaseTenant({
           Plantilla base de automatizaciones
         </CardTitle>
         <p className="mt-1 text-xs text-ink-500">
-          Define la automatización que se copiará al crear cada reporte.
+          Define la plantilla que se usará para crear la automatización personal
+          de cada usuario en su primer uso.
         </p>
       </CardHeader>
       <CardContent className="space-y-4 pt-6">
@@ -57,15 +64,23 @@ function PlantillaPorEntorno({
   const [editando, setEditando] = useState(!configurada);
   const nombreEntorno = nombreVisibleEntornoQlik(tenantQlik);
   const hostVisible = normalizarHostQlik(tenantQlik.host);
+  const diagnosticoProps = {
+    organizacionId,
+    tenantQlikId: tenantQlik.id,
+    host: tenantQlik.host,
+  };
 
   if (configurada && !editando) {
     return (
-      <ResumenPlantillaBase
-        nombre={tenantQlik.automatizacionBaseNombre || "Plantilla base"}
-        entorno={nombreEntorno}
-        host={hostVisible}
-        onCambiar={() => setEditando(true)}
-      />
+      <>
+        <ResumenPlantillaBase
+          nombre={tenantQlik.automatizacionBaseNombre || "Plantilla base"}
+          entorno={nombreEntorno}
+          host={hostVisible}
+          onCambiar={() => setEditando(true)}
+        />
+        <DiagnosticoWorkers {...diagnosticoProps} />
+      </>
     );
   }
 
@@ -97,6 +112,115 @@ function PlantillaPorEntorno({
         organizacionId={organizacionId}
         tenantQlik={tenantQlik}
       />
+      <DiagnosticoWorkers {...diagnosticoProps} />
     </section>
+  );
+}
+
+function DiagnosticoWorkers({
+  organizacionId,
+  tenantQlikId,
+  host,
+}: {
+  organizacionId: string;
+  tenantQlikId: string;
+  host: string;
+}) {
+  const [workers, setWorkers] = useState<WorkerDiagnostico[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [recreandoId, setRecreandoId] = useState<string | null>(null);
+  useEffect(() => {
+    let activo = true;
+    listarWorkersTenant(organizacionId, tenantQlikId)
+      .then((resultado) => activo && setWorkers(resultado))
+      .catch(() => undefined)
+      .finally(() => activo && setCargando(false));
+    return () => {
+      activo = false;
+    };
+  }, [organizacionId, tenantQlikId]);
+  if (!cargando && workers.length === 0) return null;
+  return (
+    <div className="rounded-lg border border-line-200 bg-surface p-3">
+      <p className="mb-2 text-xs font-semibold text-ink-800">
+        Workers personales
+      </p>
+      {cargando ? (
+        <p className="text-xs text-ink-500">Cargando diagnóstico…</p>
+      ) : (
+        <div className="space-y-2">
+          {workers.map((worker) => {
+            const problem = worker.estado !== "activo";
+            return (
+              <div
+                key={worker.id}
+                className="flex flex-col gap-2 rounded-md bg-app/40 p-2 text-xs sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-ink-900">
+                    {worker.usuarioNombre ?? worker.usuarioId}
+                  </p>
+                  <p className="truncate text-ink-500">
+                    {worker.usuarioNombreQlik ?? "Sin identidad Qlik"} ·{" "}
+                    {worker.usuarioIdQlik ?? "sin ID"}
+                  </p>
+                  {problem && (
+                    <p className="text-danger-600">
+                      {worker.mensajeError ?? "Worker requiere atención"}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span
+                    className={`rounded-full px-2 py-1 font-semibold ${problem ? "bg-red-50 text-danger-600" : "bg-brand-50 text-brand-700"}`}
+                  >
+                    {worker.estado}
+                  </span>
+                  <a
+                    className="text-brand-600 hover:underline"
+                    href={construirUrlVerAutomatizacionQlik(
+                      host,
+                      worker.automatizacionIdQlik,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Ver en Qlik
+                  </a>
+                  {problem && (
+                    <button
+                      type="button"
+                      className="font-semibold text-brand-600 hover:underline disabled:opacity-50"
+                      disabled={recreandoId === worker.id}
+                      onClick={async () => {
+                        setRecreandoId(worker.id);
+                        try {
+                          const actualizado = await recrearWorkerTenant(
+                            organizacionId,
+                            tenantQlikId,
+                            worker.id,
+                          );
+                          setWorkers((actuales) =>
+                            actuales.map((actual) =>
+                              actual.id === actualizado.id
+                                ? actualizado
+                                : actual,
+                            ),
+                          );
+                        } finally {
+                          setRecreandoId(null);
+                        }
+                      }}
+                    >
+                      Recrear desde plantilla
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

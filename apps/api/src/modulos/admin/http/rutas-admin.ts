@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
+import type { ServicioQlik } from "../../qlik/publico.js";
+import type { PuertoRepositorioAutomatizacionesPersonales } from "../../reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
+import type { PuertoConsultaIdentidadQlikAdmin } from "../aplicacion/puertos/repositorio-administracion.js";
+import { crearRutasAutomatizacionesPersonales } from "./rutas-automatizaciones-personales.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
 import {
   type OpcionesConfiguracionOAuth,
@@ -24,6 +28,9 @@ export interface DependenciasRutasAdmin extends OpcionesConfiguracionOAuth {
   guardarBigQuery?: Parameters<
     typeof crearRutasConfiguracionTenant
   >[0]["guardarBigQuery"];
+  resolverQlik?: (c: import("hono").Context) => Promise<ServicioQlik>;
+  repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
+  resolverIdentidadQlik?: PuertoConsultaIdentidadQlikAdmin;
 }
 
 export function crearRutasAdmin({
@@ -34,6 +41,9 @@ export function crearRutasAdmin({
   auditoria,
   obtenerBigQuery,
   guardarBigQuery,
+  resolverQlik,
+  repositorioAutomatizacionesPersonales,
+  resolverIdentidadQlik,
 }: DependenciasRutasAdmin) {
   const rutas = new Hono();
 
@@ -47,8 +57,25 @@ export function crearRutasAdmin({
       resolverContexto,
       obtenerBigQuery,
       guardarBigQuery,
+      resolverQlik,
     }),
   );
+  if (
+    repositorioAutomatizacionesPersonales &&
+    resolverIdentidadQlik &&
+    resolverQlik
+  ) {
+    rutas.route(
+      "/",
+      crearRutasAutomatizacionesPersonales({
+        repositorio,
+        repositorioAutomatizacionesPersonales,
+        resolverIdentidadQlik,
+        resolverContexto,
+        resolverQlik,
+      }),
+    );
+  }
   rutas.route(
     "/",
     crearRutasConfiguracionOAuth({

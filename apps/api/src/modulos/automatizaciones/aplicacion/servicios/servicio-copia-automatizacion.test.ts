@@ -97,6 +97,24 @@ describe("copiarAutomatizacion para reportes Dataflow", () => {
 });
 
 describe("copiarAutomatizacionPersonal", () => {
+  it("propaga un fallo al asignar el propietario Qlik", async () => {
+    const error = new Error("Qlik no permite asignar propietario");
+    const qlik = {
+      copiarAutomatizacion: vi.fn(async () => ({ id: "worker-owner-error" })),
+      cambiarPropietarioAutomatizacion: vi.fn(async () => {
+        throw error;
+      }),
+    } as unknown as ServicioQlik;
+
+    await expect(
+      copiarAutomatizacionPersonal(qlik, {
+        nombre: "Worker personal",
+        plantillaIdQlik: "base-1",
+        propietarioIdQlik: "owner-1",
+      }),
+    ).rejects.toBe(error);
+  });
+
   it("no inyecta metadata de reporte y conserva Credenciales", async () => {
     const workspace = await workspaceTalend();
     const actualizarAutomatizacion = vi.fn(async (_id, definicion) => ({

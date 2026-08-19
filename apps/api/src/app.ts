@@ -2,6 +2,8 @@ import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { and, desc, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import type { PuertoConsultaIdentidadQlikAdmin } from "./modulos/admin/aplicacion/puertos/repositorio-administracion.js";
+import { ConsultaIdentidadQlikPostgres } from "./modulos/admin/infraestructura/consulta-identidad-qlik-postgres.js";
 import {
   RepositorioAdministracionPostgres,
   ServicioBigQueryAdminPostgres,
@@ -98,6 +100,7 @@ export interface DependenciasAplicacion {
   repositorioReportes?: PuertoRepositorioReportes;
   consultaTenantQlik?: PuertoConsultaTenantQlik;
   repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
+  resolverIdentidadQlikAdmin?: PuertoConsultaIdentidadQlikAdmin;
   bloqueoEjecucion?: PuertoBloqueoEjecucion;
   resolverSesion?: (c: Context) => Promise<{
     tenantId: string;
@@ -343,6 +346,9 @@ export async function crearAplicacion(
   const repositorioWorkers =
     dependencias.repositorioAutomatizacionesPersonales ??
     new RepositorioAutomatizacionesPersonalesPostgres(db);
+  const resolverIdentidadQlikAdmin =
+    dependencias.resolverIdentidadQlikAdmin ??
+    new ConsultaIdentidadQlikPostgres(db);
   aplicacion.route(
     "/api/qlik/automatizaciones",
     crearRutasPanelAutomatizaciones({
@@ -423,6 +429,9 @@ export async function crearAplicacion(
     crearRutasAdmin({
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
+      resolverQlik,
+      repositorioAutomatizacionesPersonales: repositorioWorkers,
+      resolverIdentidadQlik: resolverIdentidadQlikAdmin,
       obtenerBigQuery: servicioBigQueryAdmin.obtenerBigQuery.bind(
         servicioBigQueryAdmin,
       ),

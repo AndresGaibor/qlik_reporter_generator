@@ -32,9 +32,7 @@ export async function copiarAutomatizacionPersonal(
   const id = copia.id;
 
   if (entrada.propietarioIdQlik) {
-    await qlik
-      .cambiarPropietarioAutomatizacion(id, entrada.propietarioIdQlik)
-      .catch(() => undefined);
+    await qlik.cambiarPropietarioAutomatizacion(id, entrada.propietarioIdQlik);
   }
 
   let automatizacion: AutomatizacionQlik;
