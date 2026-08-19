@@ -118,6 +118,6 @@ test("prueba la conexión directamente desde el resumen", async () => {
     boton("Probar conexión")?.click();
     await Promise.resolve();
   });
-  expect(api.probar).toHaveBeenCalledWith("conexion-1");
+  expect(api.probar).toHaveBeenCalledWith("org-1", "tenant-q1");
   expect(api.guardar).not.toHaveBeenCalled();
 });

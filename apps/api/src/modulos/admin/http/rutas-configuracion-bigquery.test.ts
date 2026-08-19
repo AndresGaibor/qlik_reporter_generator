@@ -22,6 +22,12 @@ function crearApp(configurada = true) {
     credencialesConfiguradas: true,
     mensajeError: null,
   }));
+  const probarBigQuery = vi.fn(
+    async (_organizacionId: string, _tenantQlikId: string) => ({
+      exitoso: true,
+      mensaje: "Conexión con BigQuery verificada",
+    }),
+  );
   const app = new Hono();
   app.route(
     "/api/admin",
@@ -54,9 +60,10 @@ function crearApp(configurada = true) {
             }
           : { configurada: false, credencialesConfiguradas: false },
       guardarBigQuery,
+      probarBigQuery,
     } as never),
   );
-  return { app, guardarBigQuery };
+  return { app, guardarBigQuery, probarBigQuery };
 }
 describe("configuración BigQuery administrativa", () => {
   it("devuelve una configuración saneada", async () => {
@@ -128,6 +135,21 @@ describe("configuración BigQuery administrativa", () => {
     expect(guardarBigQuery.mock.calls[0]?.[0]).not.toHaveProperty(
       "credencialesJson",
     );
+  });
+
+  it("prueba la conexión BigQuery dentro del recurso del tenant", async () => {
+    const { app, probarBigQuery } = crearApp();
+    const respuesta = await app.request(
+      "/api/admin/organizaciones/org-1/tenants-qlik/tenant-q1/bigquery/probar",
+      { method: "POST" },
+    );
+    expect(respuesta.status).toBe(200);
+    const cuerpo = await respuesta.json();
+    expect(probarBigQuery).toHaveBeenCalledWith("org-1", "tenant-q1");
+    expect(cuerpo.datos).toEqual({
+      exitoso: true,
+      mensaje: "Conexión con BigQuery verificada",
+    });
   });
 
   it("exige el JSON en la primera configuración", async () => {

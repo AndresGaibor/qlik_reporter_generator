@@ -1,4 +1,6 @@
+import { BigQuery } from "@google-cloud/bigquery";
 import { eq } from "drizzle-orm";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import { conexionesDestino } from "../../../plataforma/persistencia/esquema.js";
 
@@ -6,6 +8,7 @@ type DbType = ConexionDb;
 
 export interface ServicioCifradoBigQuery {
   cifrar(valor: string): { cifrado: string; iv: string; tag: string };
+  descifrar(cifrado: string, iv: string, tag: string): string;
 }
 
 export interface EntradaGuardarBigQueryAdmin {
@@ -61,6 +64,73 @@ export class ServicioBigQueryAdminPostgres {
       credencialesConfiguradas: Boolean(secretos.credencialesJson),
       mensajeError: fila.mensajeError,
     };
+  }
+
+  async probarBigQuery(organizacionId: string, tenantQlikId: string) {
+    const fila = await this.db.query.conexionesDestino.findFirst({
+      where: (tabla, { and, eq }) =>
+        and(
+          eq(tabla.organizacionId, organizacionId),
+          eq(tabla.tenantQlikId, tenantQlikId),
+          eq(tabla.tipo, "bigquery"),
+          eq(tabla.esPredeterminada, true),
+        ),
+    });
+    if (!fila) {
+      throw new ErrorAplicacion(
+        "BIGQUERY_NO_CONFIGURADO",
+        "BigQuery no está configurado para este entorno",
+        422,
+      );
+    }
+
+    const config = fila.config as Record<string, unknown>;
+    const projectId =
+      typeof config.projectId === "string" ? config.projectId.trim() : "";
+    const dataset =
+      typeof config.dataset === "string" ? config.dataset.trim() : "";
+    const secreto = (fila.secretoRefs as Record<string, unknown>)
+      .credencialesJson;
+    if (!projectId || !dataset || !secreto || typeof secreto !== "object") {
+      throw new ErrorAplicacion(
+        "BIGQUERY_INCOMPLETO",
+        "La configuración de BigQuery está incompleta",
+        422,
+      );
+    }
+
+    const cifrado = secreto as { cifrado: string; iv: string; tag: string };
+    const credenciales = JSON.parse(
+      this.cifrado.descifrar(cifrado.cifrado, cifrado.iv, cifrado.tag),
+    ) as Record<string, unknown>;
+
+    try {
+      const cliente = new BigQuery({ projectId, credentials: credenciales });
+      await cliente.dataset(dataset).getMetadata();
+      await this.db
+        .update(conexionesDestino)
+        .set({
+          estado: "activo",
+          mensajeError: null,
+          actualizadoEn: new Date(),
+        })
+        .where(eq(conexionesDestino.id, fila.id));
+      return { exitoso: true, mensaje: "Conexión con BigQuery verificada" };
+    } catch (error) {
+      const mensaje =
+        error instanceof Error
+          ? error.message
+          : "No se pudo conectar con BigQuery";
+      await this.db
+        .update(conexionesDestino)
+        .set({
+          estado: "error",
+          mensajeError: mensaje,
+          actualizadoEn: new Date(),
+        })
+        .where(eq(conexionesDestino.id, fila.id));
+      return { exitoso: false, mensaje };
+    }
   }
 
   async guardarBigQuery(entrada: EntradaGuardarBigQueryAdmin) {

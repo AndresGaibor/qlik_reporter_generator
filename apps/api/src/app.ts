@@ -442,6 +442,9 @@ export async function crearAplicacion(
       guardarBigQuery: servicioBigQueryAdmin.guardarBigQuery.bind(
         servicioBigQueryAdmin,
       ),
+      probarBigQuery: servicioBigQueryAdmin.probarBigQuery.bind(
+        servicioBigQueryAdmin,
+      ),
       redirectUri: redirectUriOAuth,
       configuracionHeredada: {
         clienteId: configuracion?.QLIK_CLIENT_ID ?? process.env.QLIK_CLIENT_ID,

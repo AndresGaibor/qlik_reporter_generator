@@ -94,13 +94,9 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
     boolean
   >({
     mutationFn: async (guardarPendientes) => {
-      let idActual = configuracion?.id;
-      if (guardarPendientes) {
-        const guardada = await guardar.mutateAsync();
-        idActual = guardada.id;
-      }
-      if (!idActual) throw new Error("Primero guarda BigQuery");
-      return probarConfiguracionBigQuery(idActual);
+      if (guardarPendientes) await guardar.mutateAsync();
+      if (!tenantQlikId) throw new Error("Primero configura Qlik Cloud");
+      return probarConfiguracionBigQuery(organizacionId, tenantQlikId);
     },
     onSuccess: async (resultado) => {
       await queryClient.invalidateQueries({

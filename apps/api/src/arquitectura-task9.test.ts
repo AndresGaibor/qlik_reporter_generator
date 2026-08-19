@@ -39,4 +39,16 @@ describe("guardas de retiro de semántica legacy de Automate por reporte", () =>
     }
     expect(violaciones).toEqual([]);
   });
+
+  it("no deja rutas frontend apuntando a superficies HTTP retiradas", async () => {
+    const raiz = join(import.meta.dir, "../../web/src");
+    const violaciones: string[] = [];
+    const rutasRetiradas =
+      /\/(?:destinos|tablas)(?:\/|["'`])|\/reportes\/configuracion-tenant/;
+    for (const archivo of await archivos(raiz)) {
+      const contenido = await Bun.file(archivo).text();
+      if (rutasRetiradas.test(contenido)) violaciones.push(archivo);
+    }
+    expect(violaciones).toEqual([]);
+  });
 });

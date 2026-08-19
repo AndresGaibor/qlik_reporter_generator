@@ -29,6 +29,10 @@ export interface DependenciasRutasConfiguracionTenant {
     organizacionId: string,
     tenantQlikId: string,
   ) => Promise<ConfiguracionBigQuery>;
+  probarBigQuery?: (
+    organizacionId: string,
+    tenantQlikId: string,
+  ) => Promise<{ exitoso: boolean; mensaje: string }>;
   guardarBigQuery?: (entrada: {
     organizacionId: string;
     tenantQlikId: string;
@@ -49,6 +53,7 @@ export function crearRutasConfiguracionTenant({
   resolverQlik,
   obtenerBigQuery,
   guardarBigQuery,
+  probarBigQuery,
 }: DependenciasRutasConfiguracionTenant) {
   const rutas = new Hono();
 
@@ -223,12 +228,30 @@ export function crearRutasConfiguracionTenant({
     }
   };
 
+  const handlerProbarBigQuery = async (c: Context) => {
+    try {
+      if (!probarBigQuery) {
+        return responderError(c, "Prueba BigQuery no disponible", 503);
+      }
+      const organizacionId = obtenerParametroRequerido(c, "id");
+      const tenantQlikId = obtenerParametroRequerido(c, "tenantQlikId");
+      exigirAccesoOrganizacion(await resolverContexto(c), organizacionId);
+      return responderExito(
+        c,
+        await probarBigQuery(organizacionId, tenantQlikId),
+      );
+    } catch (error) {
+      return responderErrorAdmin(c, error);
+    }
+  };
+
   for (const ruta of [
     "/organizaciones/:id/tenants-qlik/:tenantQlikId/bigquery",
     "/tenants/:id/qlik/:tenantQlikId/bigquery",
   ]) {
     rutas.get(ruta, handlerObtenerBigQuery);
     rutas.put(ruta, handlerGuardarBigQuery);
+    rutas.post(`${ruta}/probar`, handlerProbarBigQuery);
   }
 
   return rutas;

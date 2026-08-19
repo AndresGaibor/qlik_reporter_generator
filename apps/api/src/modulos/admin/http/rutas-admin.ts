@@ -28,6 +28,9 @@ export interface DependenciasRutasAdmin extends OpcionesConfiguracionOAuth {
   guardarBigQuery?: Parameters<
     typeof crearRutasConfiguracionTenant
   >[0]["guardarBigQuery"];
+  probarBigQuery?: Parameters<
+    typeof crearRutasConfiguracionTenant
+  >[0]["probarBigQuery"];
   resolverQlik: (c: import("hono").Context) => Promise<ServicioQlik>;
   repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
   resolverIdentidadQlik?: PuertoConsultaIdentidadQlikAdmin;
@@ -41,6 +44,7 @@ export function crearRutasAdmin({
   auditoria,
   obtenerBigQuery,
   guardarBigQuery,
+  probarBigQuery,
   resolverQlik,
   repositorioAutomatizacionesPersonales,
   resolverIdentidadQlik,
@@ -57,6 +61,7 @@ export function crearRutasAdmin({
       resolverContexto,
       obtenerBigQuery,
       guardarBigQuery,
+      probarBigQuery,
       resolverQlik,
     }),
   );

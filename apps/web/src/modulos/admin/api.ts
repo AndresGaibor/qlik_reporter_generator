@@ -167,10 +167,12 @@ export function guardarConfiguracionBigQuery(
   );
 }
 
-export function probarConfiguracionBigQuery(id: string) {
+export function probarConfiguracionBigQuery(
+  organizacionId: string,
+  tenantQlikId: string,
+) {
   return clienteApi.post<{ exitoso: boolean; mensaje: string }>(
-    `/destinos/conexiones/${encodeURIComponent(id)}/probar`,
-    {},
+    `${rutaBigQuery(organizacionId, tenantQlikId)}/probar`,
   );
 }
 
