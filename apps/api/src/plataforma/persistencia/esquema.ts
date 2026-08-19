@@ -217,38 +217,6 @@ export const sesionesUsuario = pgTable(
   }),
 );
 
-export const reportes = pgTable(
-  "reportes",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizacionId: uuid("organizacion_id")
-      .notNull()
-      .references(() => organizaciones.id, { onDelete: "cascade" }),
-    tenantQlikId: uuid("tenant_qlik_id")
-      .notNull()
-      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
-    creadoPorUsuarioId: uuid("creado_por_usuario_id")
-      .notNull()
-      .references(() => usuarios.id),
-    nombre: text("nombre").notNull(),
-    flujoIdQlik: text("flujo_id_qlik").notNull(),
-    flujoNombreSnapshot: text("flujo_nombre_snapshot").notNull(),
-    flujoEspacioIdQlik: text("flujo_espacio_id_qlik"),
-    estado: text("estado").notNull().default("pendiente"),
-    mensajeError: text("mensaje_error"),
-    creadoEn: timestamp("creado_en").notNull().defaultNow(),
-    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
-  },
-  (t) => ({
-    idxTenant: index("idx_reportes_tenant").on(t.tenantQlikId),
-    idxFlujo: index("idx_reportes_flujo").on(t.tenantQlikId, t.flujoIdQlik),
-    ckEstado: check(
-      "configuraciones_estado_check",
-      sql`${t.estado} IN ('pendiente', 'creando', 'activa', 'error', 'desactivada', 'eliminada')`,
-    ),
-  }),
-);
-
 export const automatizacionesPersonalesQlik = pgTable(
   "automatizaciones_personales_qlik",
   {
@@ -289,11 +257,12 @@ export const ejecucionesReportes = pgTable(
   "ejecuciones_reportes",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    reporteId: uuid("reporte_id")
+    organizacionId: uuid("organizacion_id")
       .notNull()
-      .references(() => reportes.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => organizaciones.id),
+    tenantQlikId: uuid("tenant_qlik_id")
+      .notNull()
+      .references(() => tenantsQlik.id),
     ejecutadoPorUsuarioId: uuid("ejecutado_por_usuario_id").references(
       () => usuarios.id,
       { onDelete: "set null" },
@@ -303,6 +272,8 @@ export const ejecucionesReportes = pgTable(
       { onDelete: "set null" },
     ),
     flujoIdQlik: text("flujo_id_qlik").notNull(),
+    flujoNombreSnapshot: text("flujo_nombre_snapshot").notNull(),
+    flujoEspacioIdQlik: text("flujo_espacio_id_qlik"),
     automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
     runIdQlik: text("run_id_qlik"),
     hashDataflowSha256: text("hash_dataflow_sha256").notNull(),
@@ -320,10 +291,9 @@ export const ejecucionesReportes = pgTable(
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
   (t) => ({
-    idxReporteFecha: index("idx_ejecuciones_reportes_reporte_fecha").on(
-      t.reporteId,
-      t.creadoEn,
-    ),
+    idxOrganizacionTenantFlujoFecha: index(
+      "idx_ejecuciones_reportes_scope_fecha",
+    ).on(t.organizacionId, t.tenantQlikId, t.flujoIdQlik, t.creadoEn),
     idxRunQlik: index("idx_ejecuciones_reportes_run_qlik").on(t.runIdQlik),
     idxEjecutorFecha: index("idx_ejecuciones_reportes_ejecutor_fecha").on(
       t.ejecutadoPorUsuarioId,

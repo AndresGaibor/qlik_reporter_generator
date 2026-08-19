@@ -43,6 +43,13 @@
       "when": 1787112680572,
       "tag": "0005_separar_reportes_workers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787119486360,
+      "tag": "0006_persistir_ejecuciones_dataflow",
+      "breakpoints": true
     }
   ]
 }

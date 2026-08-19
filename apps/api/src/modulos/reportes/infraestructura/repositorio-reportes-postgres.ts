@@ -1,82 +1,15 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
-import {
-  ejecucionesReportes,
-  reportes,
-} from "../../../plataforma/persistencia/esquema.js";
+import { ejecucionesReportes } from "../../../plataforma/persistencia/esquema.js";
 import type {
-  ActualizarReportePersistido,
   CrearEjecucionReportePersistida,
-  CrearReportePersistido,
   EjecucionReportePersistida,
   PuertoRepositorioReportes,
-  ReportePersistido,
   ResumenEjecucionDescarga,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
 export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   constructor(private readonly db: ConexionDb) {}
-
-  async crearReporte(
-    entrada: CrearReportePersistido,
-  ): Promise<ReportePersistido> {
-    const [fila] = await this.db.insert(reportes).values(entrada).returning();
-    if (!fila) throw new Error("No se pudo persistir el reporte");
-    return mapearReporte(fila);
-  }
-
-  async obtenerPorId(
-    reporteId: string,
-    tenantQlikId: string,
-    organizacionId: string,
-  ): Promise<ReportePersistido | null> {
-    const fila = await this.db.query.reportes.findFirst({
-      where: and(
-        eq(reportes.id, reporteId),
-        eq(reportes.tenantQlikId, tenantQlikId),
-        eq(reportes.organizacionId, organizacionId),
-      ),
-    });
-    return fila ? mapearReporte(fila) : null;
-  }
-
-  async listar(contexto: {
-    tenantQlikId: string;
-    organizacionId: string;
-  }): Promise<ReportePersistido[]> {
-    const filas = await this.db.query.reportes.findMany({
-      where: and(
-        eq(reportes.tenantQlikId, contexto.tenantQlikId),
-        eq(reportes.organizacionId, contexto.organizacionId),
-      ),
-      orderBy: [desc(reportes.creadoEn)],
-    });
-    return filas.map(mapearReporte);
-  }
-
-  async actualizarReporte(
-    id: string,
-    cambios: ActualizarReportePersistido,
-  ): Promise<ReportePersistido> {
-    const [fila] = await this.db
-      .update(reportes)
-      .set({ ...cambios, actualizadoEn: new Date() })
-      .where(eq(reportes.id, id))
-      .returning();
-    if (!fila) throw new Error("No se encontró el reporte a actualizar");
-    return mapearReporte(fila);
-  }
-
-  async clonarReporte(id: string, nombre: string): Promise<ReportePersistido> {
-    const [origen] = await this.db
-      .select()
-      .from(reportes)
-      .where(eq(reportes.id, id))
-      .limit(1);
-    if (!origen) throw new Error("No se encontró el reporte a clonar");
-    const { id: _id, ...entrada } = mapearReporte(origen);
-    return this.crearReporte({ ...entrada, nombre });
-  }
 
   async crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
@@ -96,12 +29,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
-      .set({
-        runIdQlik,
-        estado: "iniciada",
-        iniciadoEn,
-        actualizadoEn: new Date(),
-      })
+      .set({ runIdQlik, estado: "iniciada", iniciadoEn, actualizadoEn: new Date() })
       .where(eq(ejecucionesReportes.id, id));
   }
 
@@ -112,24 +40,20 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     finalizadoEn: Date,
     runIdQlik?: string,
   ): Promise<void> {
-    const cambios = {
-      ...(runIdQlik ? { runIdQlik } : {}),
-      estado: "error" as const,
-      etapaError,
-      mensajeError,
-      finalizadoEn,
-      actualizadoEn: new Date(),
-    };
     await this.db
       .update(ejecucionesReportes)
-      .set(cambios)
+      .set({
+        ...(runIdQlik ? { runIdQlik } : {}),
+        estado: "error",
+        etapaError,
+        mensajeError,
+        finalizadoEn,
+        actualizadoEn: new Date(),
+      })
       .where(eq(ejecucionesReportes.id, id));
   }
 
-  async marcarEjecucionCompletada(
-    id: string,
-    finalizadoEn: Date,
-  ): Promise<void> {
+  async marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
       .set({ estado: "completada", finalizadoEn, actualizadoEn: new Date() })
@@ -137,11 +61,17 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }
 
   async listarEjecuciones(
-    reporteId: string,
+    flujoIdQlik: string,
+    tenantQlikId: string,
+    organizacionId: string,
     limite = 50,
   ): Promise<EjecucionReportePersistida[]> {
     const filas = await this.db.query.ejecucionesReportes.findMany({
-      where: eq(ejecucionesReportes.reporteId, reporteId),
+      where: and(
+        eq(ejecucionesReportes.flujoIdQlik, flujoIdQlik),
+        eq(ejecucionesReportes.tenantQlikId, tenantQlikId),
+        eq(ejecucionesReportes.organizacionId, organizacionId),
+      ),
       orderBy: [desc(ejecucionesReportes.creadoEn)],
       limit: Math.min(Math.max(limite, 1), 200),
     });
@@ -170,16 +100,14 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<ResumenEjecucionDescarga[]> {
     const usuarioId = contexto.esAdministrador ? undefined : contexto.usuarioId;
     if (!contexto.esAdministrador && !usuarioId) {
-      throw new Error(
-        "usuarioId es obligatorio para consultar descargas personales",
-      );
+      throw new Error("usuarioId es obligatorio para consultar descargas personales");
     }
     const filas = await this.db
       .select({
         id: ejecucionesReportes.id,
-        reporteId: ejecucionesReportes.reporteId,
+        flujoIdQlik: ejecucionesReportes.flujoIdQlik,
+        flujoNombreSnapshot: ejecucionesReportes.flujoNombreSnapshot,
         creadoPorUsuarioId: ejecucionesReportes.ejecutadoPorUsuarioId,
-        reporteNombre: reportes.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -188,11 +116,10 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
-      .innerJoin(reportes, eq(ejecucionesReportes.reporteId, reportes.id))
       .where(
         and(
-          eq(reportes.tenantQlikId, contexto.tenantQlikId),
-          eq(reportes.organizacionId, contexto.organizacionId),
+          eq(ejecucionesReportes.tenantQlikId, contexto.tenantQlikId),
+          eq(ejecucionesReportes.organizacionId, contexto.organizacionId),
           ...(usuarioId
             ? [eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId)]
             : []),
@@ -212,16 +139,14 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }): Promise<ResumenEjecucionDescarga | null> {
     const usuarioId = contexto.esAdministrador ? undefined : contexto.usuarioId;
     if (!contexto.esAdministrador && !usuarioId) {
-      throw new Error(
-        "usuarioId es obligatorio para consultar una descarga personal",
-      );
+      throw new Error("usuarioId es obligatorio para consultar una descarga personal");
     }
     const [fila] = await this.db
       .select({
         id: ejecucionesReportes.id,
-        reporteId: ejecucionesReportes.reporteId,
+        flujoIdQlik: ejecucionesReportes.flujoIdQlik,
+        flujoNombreSnapshot: ejecucionesReportes.flujoNombreSnapshot,
         creadoPorUsuarioId: ejecucionesReportes.ejecutadoPorUsuarioId,
-        reporteNombre: reportes.nombre,
         automatizacionIdQlik: ejecucionesReportes.automatizacionIdQlik,
         estado: ejecucionesReportes.estado,
         mensajeError: ejecucionesReportes.mensajeError,
@@ -230,12 +155,11 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         finalizadoEn: ejecucionesReportes.finalizadoEn,
       })
       .from(ejecucionesReportes)
-      .innerJoin(reportes, eq(ejecucionesReportes.reporteId, reportes.id))
       .where(
         and(
           eq(ejecucionesReportes.id, contexto.id),
-          eq(reportes.tenantQlikId, contexto.tenantQlikId),
-          eq(reportes.organizacionId, contexto.organizacionId),
+          eq(ejecucionesReportes.tenantQlikId, contexto.tenantQlikId),
+          eq(ejecucionesReportes.organizacionId, contexto.organizacionId),
           ...(usuarioId
             ? [eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId)]
             : []),
@@ -246,28 +170,11 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }
 }
 
-function mapearReporte(fila: typeof reportes.$inferSelect): ReportePersistido {
-  return {
-    id: fila.id,
-    organizacionId: fila.organizacionId,
-    tenantQlikId: fila.tenantQlikId,
-    creadoPorUsuarioId: fila.creadoPorUsuarioId,
-    nombre: fila.nombre,
-    flujoIdQlik: fila.flujoIdQlik,
-    flujoNombreSnapshot: fila.flujoNombreSnapshot,
-    ...(fila.flujoEspacioIdQlik
-      ? { flujoEspacioIdQlik: fila.flujoEspacioIdQlik }
-      : {}),
-    estado: fila.estado as ReportePersistido["estado"],
-  };
-}
-
 function mapearEjecucion(
   fila: typeof ejecucionesReportes.$inferSelect,
 ): EjecucionReportePersistida {
   return {
     ...fila,
-    reporteId: fila.reporteId,
     ejecutadoPorUsuarioId: fila.ejecutadoPorUsuarioId,
     automatizacionPersonalId: fila.automatizacionPersonalId,
     estado: fila.estado as EjecucionReportePersistida["estado"],

@@ -32,19 +32,13 @@ export type PreflightDataflowReporte = z.infer<
   typeof esquemaPreflightDataflowReporte
 >;
 
-export const esquemaCrearReporte = z
-  .object({
-    nombre: z.string().trim().min(1).max(255),
-    flujoIdQlik: z.string().trim().min(1),
-    espacioIdQlik: z.string().trim().min(1).optional(),
-  })
-  .strict();
-export type CrearReporte = z.infer<typeof esquemaCrearReporte>;
-
 export const esquemaDetalleEjecucionReporte = z.object({
   id: z.string().uuid(),
-  reporteId: z.string().uuid(),
+  organizacionId: z.string().uuid(),
+  tenantQlikId: z.string().uuid(),
   flujoIdQlik: z.string(),
+  flujoNombreSnapshot: z.string(),
+  flujoEspacioIdQlik: z.string().nullable(),
   automatizacionIdQlik: z.string(),
   runIdQlik: z.string().nullable(),
   ejecutadoPorUsuarioId: z.string().uuid().nullable(),
@@ -66,35 +60,16 @@ export type DetalleEjecucionReporte = z.infer<
   typeof esquemaDetalleEjecucionReporte
 >;
 
-export const esquemaActualizarConfiguracionReporte = z
+export const esquemaResumenReporte = z
   .object({
-    nombre: z.string().trim().min(1).max(255).optional(),
-    flujoIdQlik: z.string().trim().min(1).optional(),
-    activa: z.boolean().optional(),
-  })
-  .strict();
-export type ActualizarConfiguracionReporte = z.infer<
-  typeof esquemaActualizarConfiguracionReporte
->;
-
-export const esquemaConfiguracionReporteDataflow = z
-  .object({
-    id: z.string().uuid(),
+    id: z.string().trim().min(1),
     nombre: z.string(),
-    flujoIdQlik: z.string(),
-    flujoNombreSnapshot: z.string(),
-    flujoEspacioIdQlik: z.string().nullable(),
-    destinoGcs: z.string().startsWith("gs://"),
-    activa: z.boolean(),
-    creadoPorUsuarioId: z.string().uuid(),
+    espacioId: z.string().nullable(),
+    espacioNombre: z.string().nullable(),
+    modificadoEn: z.string().datetime().nullable(),
   })
   .strict();
-export type ConfiguracionReporteDataflow = z.infer<
-  typeof esquemaConfiguracionReporteDataflow
->;
-
-export const esquemaResumenReporte = esquemaConfiguracionReporteDataflow;
 export type ResumenReporte = z.infer<typeof esquemaResumenReporte>;
 
-export const esquemaDetalleReporte = esquemaConfiguracionReporteDataflow;
+export const esquemaDetalleReporte = esquemaResumenReporte;
 export type DetalleReporte = z.infer<typeof esquemaDetalleReporte>;
