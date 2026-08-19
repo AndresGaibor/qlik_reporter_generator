@@ -12,7 +12,7 @@ test("la navegación administrativa usa Configuración sin Organizaciones", () =
 });
 
 test("integra Dataflows en Reportes y no conserva el item legacy", () => {
-  expect(NAVEGACION.some((item) => item.to === "/flujos")).toBe(false);
+  expect(NAVEGACION.some((item) => String(item.to) === "/flujos")).toBe(false);
   expect(NAVEGACION.some((item) => item.to === "/reportes")).toBe(true);
 });
 

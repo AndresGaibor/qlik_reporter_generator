@@ -2,7 +2,6 @@ import type { IconName } from "@/compartido/componentes/ui/icon";
 
 export type RutaNav =
   | "/"
-  | "/flujos"
   | "/reportes"
   | "/descargas"
   | "/configuracion"
