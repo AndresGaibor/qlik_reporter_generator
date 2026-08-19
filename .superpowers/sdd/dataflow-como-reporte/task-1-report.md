@@ -22,7 +22,7 @@ DONE_WITH_CONCERNS
 - Migración runtime: no ejecutada, según requisito de Task 5.
 
 ## Commit
-`a9eae3b17e2dcf0961f5beb25470364d86435266` (amended after report inclusion).
+`be9eb6d0f23ad9f4a8b96f1a08f9d3e366150b2d` (amended after report inclusion).
 
 ## Concerns
 La eliminación intencional de la superficie CRUD local deja consumidores legacy compilando contra el contrato anterior; la migración de esos consumidores debe completarse en tareas posteriores antes de exigir typecheck global verde.
