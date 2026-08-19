@@ -133,13 +133,5 @@ export function crearRutasPanelAutomatizaciones(
     );
   });
 
-  rutas.post("/:id/ejecuciones/:ejecucionId/detener", async (c) => {
-    const id = esquemaIdQlik.parse(c.req.param("id"));
-    const ejecucionId = esquemaIdQlik.parse(c.req.param("ejecucionId"));
-    const qlik = await dependencias.resolverQlik(c);
-    await qlik.detenerEjecucion(id, ejecucionId);
-    return responderExito(c, { detenida: true as const });
-  });
-
   return rutas;
 }

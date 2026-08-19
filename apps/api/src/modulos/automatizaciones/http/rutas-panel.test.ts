@@ -3,6 +3,33 @@ import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js"
 import { crearRutasPanelAutomatizaciones } from "./rutas-panel.js";
 
 describe("superficie técnica de automatizaciones", () => {
+  it("no expone una acción para detener ejecuciones de Qlik", async () => {
+    const detenerEjecucion = vi.fn(async () => undefined);
+    const resolverQlik = vi.fn(
+      async () =>
+        ({
+          detenerEjecucion,
+        }) as unknown as ServicioQlik,
+    );
+    const rutas = crearRutasPanelAutomatizaciones({
+      resolverQlik,
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "user-1",
+        organizacionId: "org-1",
+        usuarioIdQlik: "qlik-1",
+      }),
+      consultaTenant: {} as never,
+    });
+
+    const respuesta = await rutas.request("/auto-1/ejecuciones/run-1/detener", {
+      method: "POST",
+    });
+
+    expect(respuesta.status).toBe(404);
+    expect(detenerEjecucion).not.toHaveBeenCalled();
+  });
+
   it("no crea recursos de reportes desde el panel técnico", async () => {
     const resolverQlik = vi.fn(async () => ({}) as ServicioQlik);
     const rutas = crearRutasPanelAutomatizaciones({

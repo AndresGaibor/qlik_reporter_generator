@@ -9,7 +9,6 @@ import type {
   ResumenReporte,
 } from "@qlik/contratos";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
-import type { DetalleAutomatizacion } from "@qlik/contratos/automatizaciones";
 
 const RUTA = "/reportes";
 const RUTA_AUTOMATIZACIONES_QLIK = "/qlik/automatizaciones";
@@ -78,10 +77,7 @@ export function obtenerEjecucionesLocalesReporte(id: string) {
   return obtenerEjecucionesReporte(id);
 }
 
-// Compatibilidad temporal para módulos de Dataflow que Task 9 retirará.
 export type { ResumenAutomatizacion };
-export type { DetalleAutomatizacion };
-export type EjecucionResumen = DetalleAutomatizacion["ejecuciones"][number];
 export function obtenerAutomatizaciones() {
   return clienteApi.get<ResumenAutomatizacion[]>(RUTA_AUTOMATIZACIONES_QLIK);
 }
@@ -95,16 +91,4 @@ export function obtenerAutomatizacionesConFiltros(
       ...(busqueda ? { q: busqueda } : {}),
     },
   });
-}
-
-export interface WorkspaceAutomatizacion {
-  id: string;
-  nombre: string;
-  workspace: Record<string, unknown>;
-  schedules: Array<Record<string, unknown>>;
-}
-export function obtenerWorkspaceAutomatizacion(id: string) {
-  return clienteApi.get<WorkspaceAutomatizacion>(
-    `${RUTA_AUTOMATIZACIONES_QLIK}/${encodeURIComponent(id)}/workspace`,
-  );
 }

@@ -22,45 +22,6 @@ export type ResumenAutomatizacion = z.infer<
   typeof esquemaResumenAutomatizacion
 >;
 
-export const esquemaReemplazoWorkspace = z.object({
-  ruta: z
-    .string()
-    .min(1)
-    .max(1000)
-    .regex(
-      /^\/(?:[^/~]|~[01])+(?:\/(?:[^/~]|~[01])+)*$/,
-      "Ruta JSON Pointer inválida",
-    ),
-  valor: z.unknown(),
-});
-
-export const esquemaCrearDesdePlantilla = z
-  .object({
-    nombre: z.string().trim().min(1).max(255),
-    plantillaIdQlik: esquemaIdQlik,
-    espacioIdQlik: esquemaIdQlik.optional(),
-    propietarioIdQlik: esquemaIdQlik.optional(),
-    flujoId: z.string().trim().min(1),
-    autor: z.string().optional(),
-    reemplazosWorkspace: z
-      .array(esquemaReemplazoWorkspace)
-      .max(100)
-      .optional()
-      .default([]),
-    claveIdempotencia: z.string().trim().min(8).max(255).optional(),
-  })
-  .strict();
-export type CrearDesdePlantilla = z.infer<typeof esquemaCrearDesdePlantilla>;
-
-export const esquemaResultadoCrearDesdePlantilla = z.object({
-  id: esquemaIdQlik,
-  nombre: z.string(),
-  plantillaIdQlik: esquemaIdQlik,
-});
-export type ResultadoCrearDesdePlantilla = z.infer<
-  typeof esquemaResultadoCrearDesdePlantilla
->;
-
 export const esquemaEjecucionAutomatizacion = z.object({
   id: esquemaIdQlik,
   automatizacionId: esquemaIdQlik.optional(),

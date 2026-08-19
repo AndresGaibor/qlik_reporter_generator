@@ -68,7 +68,7 @@ describe("ClienteApi", () => {
 
     const cliente = new ClienteApi("/api");
     await cliente.post(
-      "/automatizaciones/desde-plantilla",
+      "/prueba",
       { nombre: "Nueva" },
       {
         headers: { "Idempotency-Key": "clave-12345678" },
