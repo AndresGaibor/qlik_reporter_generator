@@ -365,6 +365,8 @@ export async function crearAplicacion(
     "/api/reportes",
     crearRutasReportesDataflow({
       resolverQlik,
+      resolverConsultaFlujos: async (c) =>
+        new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
       repositorioReportes,

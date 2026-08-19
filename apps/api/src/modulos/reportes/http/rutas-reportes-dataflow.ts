@@ -1,14 +1,13 @@
-import {
-  esquemaActualizarConfiguracionReporte,
-  esquemaCrearReporte,
-} from "@qlik/contratos";
 import { type Context, Hono } from "hono";
-import { z } from "zod";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
+import { ListarFlujos } from "../../flujos/aplicacion/casos-de-uso/listar-flujos.js";
+import type { PuertoConsultaFlujos } from "../../flujos/aplicacion/puertos/puerto-consulta-flujos.js";
+import {
+  resumenScriptNoDisponible,
+  resumirDataflowParaUsuario,
+} from "../../flujos/aplicacion/resumir-dataflow.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
-import { ClonarReporte } from "../aplicacion/clonar-reporte.js";
-import { CrearReporte } from "../aplicacion/crear-reporte.js";
 import type { EntradaEjecutarReporte } from "../aplicacion/ejecutar-reporte.js";
 import {
   type AlcanceBigQueryReporte,
@@ -16,12 +15,10 @@ import {
   PreflightDataflow,
 } from "../aplicacion/preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
-import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
   estimador: EstimadorBigQueryReporte;
 };
-
 interface SesionReportes {
   tenantId: string;
   organizacionId: string;
@@ -31,6 +28,7 @@ interface SesionReportes {
 
 export interface DependenciasRutasReportesDataflow {
   resolverQlik(c: Context): Promise<PuertoQlik>;
+  resolverConsultaFlujos(c: Context): Promise<PuertoConsultaFlujos>;
   resolverBigQuery(c: Context): Promise<ResolucionBigQueryReporte>;
   resolverSesion(c: Context): Promise<SesionReportes>;
   repositorioReportes: PuertoRepositorioReportes;
@@ -47,322 +45,140 @@ export function crearRutasReportesDataflow(
   dependencias: DependenciasRutasReportesDataflow,
 ) {
   const rutas = new Hono();
+  const obtenerFlujo = async (c: Context) => {
+    const flujoId = c.req.param("flujoId")?.trim() ?? "";
+    const flujos = await (
+      await dependencias.resolverConsultaFlujos(c)
+    ).listar();
+    return flujos.find((flujo) => flujo.id === flujoId);
+  };
 
   rutas.get("/", async (c) => {
-    const sesion = await dependencias.resolverSesion(c);
-    const reportes = await dependencias.repositorioReportes.listar({
-      tenantQlikId: sesion.tenantId,
-      organizacionId: sesion.organizacionId,
-    });
-    return responderExito(c, reportes.map(serializarConfiguracion));
+    const espacioId = c.req.query("espacioId")?.trim() || undefined;
+    const q = (c.req.query("q") ?? c.req.query("busqueda"))
+      ?.trim()
+      .toLowerCase();
+    let flujos = await new ListarFlujos(
+      await dependencias.resolverConsultaFlujos(c),
+    ).ejecutar(espacioId);
+    if (q)
+      flujos = flujos.filter((flujo) => flujo.nombre.toLowerCase().includes(q));
+    return responderExito(c, flujos);
   });
 
-  rutas.post("/", async (c) => {
-    const validacion = esquemaCrearReporte.safeParse(
-      await c.req.json().catch(() => undefined),
-    );
-    if (!validacion.success) return respuestaValidacion(c, validacion.error);
+  rutas.get("/:flujoId", async (c) => {
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
+    return responderExito(c, flujo);
+  });
 
-    const sesion = await dependencias.resolverSesion(c);
+  rutas.get("/:flujoId/resumen", async (c) => {
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
     const qlik = await dependencias.resolverQlik(c);
-    const bigQuery = await dependencias.resolverBigQuery(c);
     try {
-      const reporte = await new CrearReporte(
-        qlik,
-        new PreflightDataflow(qlik, bigQuery.estimador, {
-          projectId: bigQuery.projectId,
-          dataset: bigQuery.dataset,
+      const { script } = await qlik.obtenerScriptApp(flujo.id, "current");
+      const validacion = await qlik.validarScriptApp(script);
+      return responderExito(
+        c,
+        resumirDataflowParaUsuario({
+          flujoId: flujo.id,
+          nombre: flujo.nombre,
+          script,
+          erroresQlik: validacion.errores.map(formatearValidacion),
+          advertenciasQlik: validacion.advertencias.map(formatearValidacion),
         }),
-        dependencias.repositorioReportes,
-      ).ejecutar(validacion.data, sesion);
-      return responderExito(c, serializarConfiguracion(reporte));
+      );
     } catch (error) {
-      return respuestaErrorAplicacion(c, error);
+      return responderExito(
+        c,
+        resumenScriptNoDisponible(
+          flujo.id,
+          flujo.nombre,
+          error instanceof Error
+            ? error.message
+            : "No se pudo obtener el script desde Qlik Cloud",
+        ),
+      );
     }
   });
 
-  rutas.post("/:reporteId/clonar", async (c) => {
-    const validacion = esquemaClonarReporte.safeParse(
-      await c.req.json().catch(() => undefined),
-    );
-    if (!validacion.success) return respuestaValidacion(c, validacion.error);
-    const sesion = await dependencias.resolverSesion(c);
-    try {
-      const reporte = await new ClonarReporte(
-        dependencias.repositorioReportes,
-      ).ejecutar(
-        c.req.param("reporteId") ?? "",
-        validacion.data.nombre,
-        sesion,
-      );
-      return responderExito(c, serializarConfiguracion(reporte));
-    } catch (error) {
-      return respuestaErrorAplicacion(c, error);
-    }
-  });
-
-  rutas.get("/dataflows/:flujoId/preflight", async (c) => {
-    const flujoIdQlik = c.req.param("flujoId").trim();
-    if (!flujoIdQlik) {
-      return c.json(
-        { exito: false, error: { mensaje: "El Dataflow es obligatorio" } },
-        400,
-      );
-    }
+  rutas.get("/:flujoId/preflight", async (c) => {
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
     const [qlik, bigQuery] = await Promise.all([
       dependencias.resolverQlik(c),
       dependencias.resolverBigQuery(c),
     ]);
-    const caso = new PreflightDataflow(qlik, bigQuery.estimador, {
-      projectId: bigQuery.projectId,
-      dataset: bigQuery.dataset,
-    });
-    return responderExito(c, await caso.ejecutar(flujoIdQlik));
-  });
-
-  rutas.all("/configuracion-tenant", (c) =>
-    c.json(
-      {
-        exito: false,
-        error: {
-          codigo: "ENDPOINT_DEPRECADO",
-          mensaje:
-            "La configuración del tenant se consulta en /api/qlik/automatizaciones/configuracion-tenant",
-        },
-      },
-      410,
-    ),
-  );
-
-  const obtenerDetalle = async (c: Context) => {
-    const sesion = await dependencias.resolverSesion(c);
-    const configuracion = await obtenerConfiguracionAutorizada(
-      dependencias.repositorioReportes,
-      sesion,
-      c.req.param("reporteId") ?? "",
-    );
-    if (!configuracion) return respuestaNoEncontrada(c);
-    return responderExito(c, serializarConfiguracion(configuracion));
-  };
-
-  rutas.get("/:reporteId", obtenerDetalle);
-  rutas.get("/:reporteId/configuracion", obtenerDetalle);
-
-  const actualizarDetalle = async (c: Context) => {
-    const json = await c.req.json().catch(() => undefined);
-    const validacion = esquemaActualizarConfiguracionReporte.safeParse(json);
-    if (!validacion.success) {
-      return c.json(
-        {
-          exito: false,
-          error: {
-            mensaje: "La configuración contiene campos no permitidos",
-            detalles: validacion.error.flatten(),
-          },
-        },
-        400,
-      );
-    }
-
-    const sesion = await dependencias.resolverSesion(c);
-    const reporteId = c.req.param("reporteId") ?? "";
-    const actual = await obtenerConfiguracionAutorizada(
-      dependencias.repositorioReportes,
-      sesion,
-      reporteId,
-    );
-    if (!actual) return respuestaNoEncontrada(c);
-
-    const cambios = validacion.data;
-    let flujoNombreSnapshot: string | undefined;
-    let flujoEspacioIdQlik: string | null | undefined;
-    if (cambios.flujoIdQlik && cambios.flujoIdQlik !== actual.flujoIdQlik) {
-      const [qlik, bigQuery] = await Promise.all([
-        dependencias.resolverQlik(c),
-        dependencias.resolverBigQuery(c),
-      ]);
-      const preflight = await new PreflightDataflow(qlik, bigQuery.estimador, {
+    return responderExito(
+      c,
+      await new PreflightDataflow(qlik, bigQuery.estimador, {
         projectId: bigQuery.projectId,
         dataset: bigQuery.dataset,
-      }).ejecutar(cambios.flujoIdQlik);
-      if (!preflight.compatible) {
-        return c.json(
-          {
-            exito: false,
-            error: {
-              codigo: "DATAFLOW_NO_COMPATIBLE",
-              mensaje: "El nuevo Dataflow no es compatible",
-              operacionesNoSoportadas: preflight.operacionesNoSoportadas,
-            },
-          },
-          422,
-        );
-      }
-      const flujo = (await qlik.listarFlujos()).find(
-        (item) => item.id === cambios.flujoIdQlik,
-      );
-      if (!flujo)
-        return c.json(
-          {
-            exito: false,
-            error: {
-              codigo: "DATAFLOW_NO_ENCONTRADO",
-              mensaje: "El Dataflow ya no existe en Qlik",
-            },
-          },
-          404,
-        );
-      flujoNombreSnapshot = flujo.name;
-      flujoEspacioIdQlik = flujo.spaceId ?? null;
-    }
-
-    const actualizada =
-      await dependencias.repositorioReportes.actualizarReporte(actual.id, {
-        ...(cambios.nombre ? { nombre: cambios.nombre } : {}),
-        ...(cambios.flujoIdQlik ? { flujoIdQlik: cambios.flujoIdQlik } : {}),
-        ...(flujoNombreSnapshot ? { flujoNombreSnapshot } : {}),
-        ...(flujoEspacioIdQlik !== undefined ? { flujoEspacioIdQlik } : {}),
-        ...(cambios.activa !== undefined
-          ? { estado: cambios.activa ? "activa" : "desactivada" }
-          : {}),
-      });
-    return responderExito(c, serializarConfiguracion(actualizada));
-  };
-
-  rutas.put("/:reporteId", actualizarDetalle);
-  rutas.put("/:reporteId/configuracion", actualizarDetalle);
-
-  const listarHistorial = async (c: Context) => {
-    const sesion = await dependencias.resolverSesion(c);
-    const reporteId = c.req.param("reporteId") ?? "";
-    const configuracion = await obtenerConfiguracionAutorizada(
-      dependencias.repositorioReportes,
-      sesion,
-      reporteId,
+      }).ejecutar(flujo.id),
     );
-    if (!configuracion) return respuestaNoEncontrada(c);
+  });
 
+  rutas.get("/:flujoId/ejecuciones", async (c) => {
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
+    const sesion = await dependencias.resolverSesion(c);
     const ejecuciones =
       await dependencias.repositorioReportes.listarEjecuciones(
-        configuracion.id,
+        flujo.id,
+        sesion.tenantId,
+        sesion.organizacionId,
         100,
       );
     return responderExito(c, ejecuciones.map(serializarEjecucion));
-  };
+  });
 
-  rutas.get("/:reporteId/ejecuciones", listarHistorial);
-  rutas.get("/:reporteId/ejecuciones-locales", listarHistorial);
-
-  rutas.post("/:reporteId/ejecuciones", async (c) => {
-    if (!dependencias.resolverEjecutarReporte) {
+  rutas.post("/:flujoId/ejecuciones", async (c) => {
+    if (!dependencias.resolverEjecutarReporte)
       throw new ErrorAplicacion(
         "EXECUTOR_NOT_CONFIGURED",
         "La ejecución de reportes no está configurada",
         500,
       );
-    }
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
     const sesion = await dependencias.resolverSesion(c);
     try {
-      const ejecutarReporte = await dependencias.resolverEjecutarReporte(c);
-      const resultado = await ejecutarReporte({
-        reporteId: c.req.param("reporteId") ?? "",
-        tenantId: sesion.tenantId,
-        organizacionId: sesion.organizacionId,
-        usuarioId: sesion.usuarioId,
-        usuarioIdQlik: sesion.usuarioIdQlik,
-      });
-      return responderExito(c, resultado);
+      const ejecutar = await dependencias.resolverEjecutarReporte(c);
+      return responderExito(
+        c,
+        await ejecutar({ flujoIdQlik: flujo.id, ...sesion }),
+      );
     } catch (error) {
       return respuestaErrorAplicacion(c, error);
     }
   });
-
   return rutas;
 }
 
-const esquemaClonarReporte = z
-  .object({
-    nombre: z.string().trim().min(1).max(255),
-  })
-  .strict();
-
-function respuestaValidacion(c: Context, error: z.ZodError) {
+function noEncontradoDataflow(c: Context) {
   return c.json(
     {
       exito: false,
-      error: { mensaje: "La solicitud es inválida", detalles: error.flatten() },
-    },
-    400,
-  );
-}
-
-function respuestaErrorAplicacion(c: Context, error: unknown) {
-  if (error instanceof ErrorAplicacion) {
-    return c.json(
-      {
-        exito: false,
-        error: {
-          codigo: error.codigo,
-          mensaje: error.message,
-          detalles: error.detalles,
-        },
+      error: {
+        codigo: "DATAFLOW_NO_ENCONTRADO",
+        mensaje: "El Dataflow no está disponible en el tenant",
       },
-      error.estadoHttp as 400 | 401 | 404 | 409 | 422,
-    );
-  }
-  throw error;
-}
-
-async function obtenerConfiguracionAutorizada(
-  repositorio: PuertoRepositorioReportes,
-  sesion: SesionReportes,
-  reporteId: string,
-) {
-  return repositorio.obtenerPorId(
-    reporteId,
-    sesion.tenantId,
-    sesion.organizacionId,
+    },
+    404,
   );
 }
-
-function serializarConfiguracion(
-  configuracion: Awaited<ReturnType<PuertoRepositorioReportes["obtenerPorId"]>>,
-) {
-  if (!configuracion) throw new Error("Configuración ausente");
-  return {
-    id: configuracion.id,
-    creadoPorUsuarioId: configuracion.creadoPorUsuarioId,
-    nombre: configuracion.nombre,
-    flujoIdQlik: configuracion.flujoIdQlik,
-    flujoNombreSnapshot: configuracion.flujoNombreSnapshot,
-    flujoEspacioIdQlik: configuracion.flujoEspacioIdQlik ?? null,
-    destinoGcs: URI_BASE_GCS_REPORTES,
-    activa: configuracion.estado === "activa",
-  };
-}
-
 function serializarEjecucion(
   ejecucion: Awaited<
     ReturnType<PuertoRepositorioReportes["listarEjecuciones"]>
   >[number],
 ) {
   return {
-    id: ejecucion.id,
-    reporteId: ejecucion.reporteId,
-    flujoIdQlik: ejecucion.flujoIdQlik,
-    automatizacionIdQlik: ejecucion.automatizacionIdQlik,
-    runIdQlik: ejecucion.runIdQlik ?? null,
+    ...ejecucion,
     ejecutadoPorUsuarioId: ejecucion.ejecutadoPorUsuarioId ?? null,
     automatizacionPersonalId: ejecucion.automatizacionPersonalId ?? null,
-    hashDataflowSha256: ejecucion.hashDataflowSha256,
-    scriptDataflow: ejecucion.scriptDataflow,
-    sqlBigQueryCompilado: ejecucion.sqlBigQueryCompilado,
-    scriptExportacion: ejecucion.scriptExportacion,
-    uriBaseGcs: ejecucion.uriBaseGcs,
-    estado: ejecucion.estado,
-    versionCompilador: ejecucion.versionCompilador,
-    etapaError: ejecucion.etapaError ?? null,
-    mensajeError: ejecucion.mensajeError ?? null,
+    runIdQlik: ejecucion.runIdQlik ?? null,
+    flujoEspacioIdQlik: ejecucion.flujoEspacioIdQlik ?? null,
     iniciadoEn: ejecucion.iniciadoEn?.toISOString() ?? null,
     finalizadoEn: ejecucion.finalizadoEn?.toISOString() ?? null,
     creadoEn: (
@@ -372,7 +188,31 @@ function serializarEjecucion(
     ).toISOString(),
   };
 }
-
-function respuestaNoEncontrada(c: Context, mensaje = "Reporte no encontrado") {
-  return c.json({ exito: false, error: { mensaje } }, 404);
+function respuestaErrorAplicacion(c: Context, error: unknown) {
+  if (!(error instanceof ErrorAplicacion)) throw error;
+  return c.json(
+    {
+      exito: false,
+      error: {
+        codigo: error.codigo,
+        mensaje: error.message,
+        detalles: error.detalles,
+      },
+    },
+    error.estadoHttp as 400 | 401 | 404 | 409 | 422,
+  );
+}
+function formatearValidacion(m: {
+  mensaje: string;
+  pestana?: number;
+  linea?: number;
+  columna?: number;
+  informacion?: string;
+}) {
+  const ubicacion = [
+    m.pestana !== undefined && `pestaña ${m.pestana}`,
+    m.linea !== undefined && `línea ${m.linea}`,
+    m.columna !== undefined && `columna ${m.columna}`,
+  ].filter(Boolean);
+  return `${m.mensaje}${ubicacion.length ? ` (${ubicacion.join(", ")})` : ""}${m.informacion ? `: ${m.informacion}` : ""}`;
 }

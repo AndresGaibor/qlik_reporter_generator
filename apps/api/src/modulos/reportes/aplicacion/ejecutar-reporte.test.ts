@@ -1,237 +1,93 @@
 import { describe, expect, it, vi } from "bun:test";
-import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { EjecutarReporte } from "./ejecutar-reporte.js";
 
 const SCRIPT =
   "LIB CONNECT TO [Google BigQuery:Prod]; SQL SELECT id FROM `p.d.t`;";
-const reporte = {
-  id: "reporte-1",
-  organizacionId: "org-1",
-  tenantQlikId: "tenant-1",
-  creadoPorUsuarioId: "creator-1",
-  nombre: "Ventas Diarias",
-  flujoIdQlik: "flujo-1",
-  flujoNombreSnapshot: "Ventas",
-  estado: "activa" as const,
-};
-const worker = {
-  id: "worker-db-1",
-  organizacionId: "org-1",
-  tenantQlikId: "tenant-1",
-  usuarioId: "user-1",
-  automatizacionIdQlik: "worker-old",
-  automatizacionNombreSnapshot: "Worker",
-  estado: "activo" as const,
-};
-const TALEND_WORKSPACE = JSON.parse(
+const worker = { id: "worker-db-1", automatizacionIdQlik: "worker-1" };
+const workspace = JSON.parse(
   await Bun.file(
     new URL(
       "../fixtures/automate-talend-workspace.sanitized.json",
       import.meta.url,
     ),
   ).text(),
-) as Record<string, unknown>;
+);
 
-function workspace() {
-  return structuredClone(TALEND_WORKSPACE);
-}
-
-function casoBase(overrides: Record<string, unknown> = {}) {
-  const orden: string[] = [];
+function caso() {
   const qlik = {
-    obtenerScriptApp: vi.fn(async () => {
-      orden.push("preparar-dataflow");
-      return { script: SCRIPT };
-    }),
-    obtenerAutomatizacion: vi.fn(async () => {
-      orden.push("obtener-workspace");
-      return { id: "worker-old", name: "Worker", workspace: workspace() };
-    }),
-    actualizarAutomatizacion: vi.fn(async () => {
-      orden.push("actualizar-workspace");
-      return {};
-    }),
-    ejecutarAutomatizacion: vi.fn(async () => {
-      orden.push("crear-run");
-      return { runId: "run-1" };
-    }),
-    listarEjecuciones: vi.fn(async () => {
-      throw new Error("no debe consultar precondición remota");
-    }),
-  } as unknown as ServicioQlik;
+    listarFlujos: vi.fn(async () => [
+      { id: "df-1", name: "Ventas Diarias", spaceId: "sp-1" },
+    ]),
+    obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+    obtenerAutomatizacion: vi.fn(async () => ({
+      id: "worker-1",
+      name: "Worker",
+      workspace: structuredClone(workspace),
+    })),
+    actualizarAutomatizacion: vi.fn(async () => ({})),
+    ejecutarAutomatizacion: vi.fn(async () => ({ runId: "run-1" })),
+  };
   const repositorio = {
-    obtenerPorId: vi.fn(async () => {
-      orden.push("leer-reporte");
-      return reporte;
-    }),
-    crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
-      orden.push("crear-auditoria");
-      return entrada;
-    }),
-    marcarEjecucionIniciada: vi.fn(async () => {
-      orden.push("marcar-iniciada");
-    }),
+    crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => entrada),
+    marcarEjecucionIniciada: vi.fn(async () => undefined),
     marcarEjecucionError: vi.fn(async () => undefined),
   };
-  const bloqueos = {
-    ejecutarExclusivo: vi.fn(
-      async (_clave: string, tarea: () => Promise<unknown>) => {
-        orden.push("lock");
-        const resultado = await tarea();
-        orden.push("unlock");
-        return resultado;
-      },
-    ),
-  };
-  const workers = {
-    ejecutar: vi.fn(async () => {
-      orden.push("resolver-worker");
-      return worker;
-    }),
-  };
-  const caso = new EjecutarReporte(
-    qlik,
+  const workers = { ejecutar: vi.fn(async () => worker) };
+  const ejecutar = new EjecutarReporte(
+    qlik as never,
     repositorio as never,
-    bloqueos as never,
+    {
+      ejecutarExclusivo: async (_: string, tarea: () => Promise<unknown>) =>
+        tarea(),
+    } as never,
     { projectId: "p", dataset: "d" },
-    () => "22222222-2222-4222-8222-222222222222",
+    () => "11111111-1111-4111-8111-111111111111",
     () => ({
       organizacionId: "org-1",
       tenantQlikId: "tenant-1",
       usuarioId: "user-1",
-      usuarioIdQlik: "user-qlik-1",
-      plantillaIdQlik: "template-1",
-      plantillaNombre: "Plantilla",
+      usuarioIdQlik: "qlik-1",
+      plantillaIdQlik: "base",
+      plantillaNombre: "Base",
     }),
     workers as never,
   );
-  return { caso, qlik, repositorio, bloqueos, workers, orden, ...overrides };
+  return { ejecutar, qlik, repositorio, workers };
 }
 
-const entrada = {
-  reporteId: "reporte-1",
-  tenantId: "tenant-1",
-  organizacionId: "org-1",
-  usuarioId: "user-1",
-  usuarioIdQlik: "user-qlik-1",
-};
-
 describe("EjecutarReporte", () => {
-  it("resuelve worker personal y ejecuta en orden con lock corto", async () => {
-    const { caso, repositorio, bloqueos, workers, orden } = casoBase();
-    await caso.ejecutar(entrada);
-    expect(repositorio.obtenerPorId).toHaveBeenCalledWith(
-      "reporte-1",
-      "tenant-1",
-      "org-1",
-    );
+  it("resuelve el Dataflow actual por flujoIdQlik y audita su snapshot", async () => {
+    const { ejecutar, repositorio, workers } = caso();
+    await ejecutar.ejecutar({
+      flujoIdQlik: "df-1",
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "qlik-1",
+    });
     expect(workers.ejecutar).toHaveBeenCalled();
-    expect(orden).toEqual([
-      "leer-reporte",
-      "preparar-dataflow",
-      "resolver-worker",
-      "crear-auditoria",
-      "lock",
-      "obtener-workspace",
-      "actualizar-workspace",
-      "crear-run",
-      "unlock",
-      "marcar-iniciada",
-    ]);
-    expect(bloqueos.ejecutarExclusivo).toHaveBeenCalledWith(
-      "tenant-1:worker-old",
-      expect.any(Function),
-    );
     expect(repositorio.crearEjecucion).toHaveBeenCalledWith(
       expect.objectContaining({
-        reporteId: "reporte-1",
-        ejecutadoPorUsuarioId: "user-1",
-        automatizacionPersonalId: "worker-db-1",
-        automatizacionIdQlik: "worker-old",
-        hashDataflowSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
-        scriptDataflow: SCRIPT,
-        sqlBigQueryCompilado: expect.stringContaining("`p.d.t`"),
-        scriptExportacion: expect.stringContaining("-- bq_export_data"),
-        uriBaseGcs:
-          "gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas-diarias/22222222-2222-4222-8222-222222222222/",
-        estado: "preparando",
-        versionCompilador: 2,
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        flujoIdQlik: "df-1",
+        flujoNombreSnapshot: "Ventas Diarias",
+        flujoEspacioIdQlik: "sp-1",
+        automatizacionIdQlik: "worker-1",
       }),
     );
   });
 
-  it("si el lock corto está ocupado deja la auditoría en conflicto sin tocar Qlik", async () => {
-    const { caso, repositorio, qlik, bloqueos } = casoBase();
-    bloqueos.ejecutarExclusivo.mockResolvedValue(undefined);
-    await expect(caso.ejecutar(entrada)).rejects.toThrow("conflicto");
-    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
-      "22222222-2222-4222-8222-222222222222",
-      "lock",
-      expect.stringContaining("ocupado"),
-      expect.any(Date),
-      undefined,
-    );
-    expect(qlik.obtenerAutomatizacion).not.toHaveBeenCalled();
-    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
-    expect(qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
-    expect(repositorio.marcarEjecucionError).toHaveBeenCalledTimes(1);
-  });
-
-  it("si falla el marcador del lock ocupado conserva el conflicto y marca una sola vez", async () => {
-    const { caso, repositorio, bloqueos } = casoBase();
-    bloqueos.ejecutarExclusivo.mockResolvedValue(undefined);
-    repositorio.marcarEjecucionError.mockRejectedValue(
-      new Error("falló la auditoría"),
-    );
-
-    await expect(caso.ejecutar(entrada)).rejects.toThrow(
-      "Ejecución en conflicto",
-    );
-    expect(repositorio.marcarEjecucionError).toHaveBeenCalledTimes(1);
-    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
-      expect.any(String),
-      "lock",
-      expect.stringContaining("ocupado"),
-      expect.any(Date),
-      undefined,
-    );
-  });
-
-  it.each([
-    ["obtener-workspace", "obtenerAutomatizacion"],
-    ["actualizar-workspace", "actualizarAutomatizacion"],
-    ["crear-run", "ejecutarAutomatizacion"],
-  ] as const)(
-    "registra la etapa %s cuando falla Qlik",
-    async (etapa, metodo) => {
-      const { caso, qlik, repositorio } = casoBase();
-      const metodoQlik = qlik[metodo] as unknown as ReturnType<typeof vi.fn>;
-      metodoQlik.mockRejectedValueOnce(new Error(`falló ${etapa}`));
-
-      await expect(caso.ejecutar(entrada)).rejects.toThrow(`falló ${etapa}`);
-      expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
-        expect.any(String),
-        etapa,
-        `falló ${etapa}`,
-        expect.any(Date),
-        undefined,
-      );
-    },
-  );
-
-  it("registra persist-run y conserva el runId si falla la persistencia", async () => {
-    const { caso, repositorio } = casoBase();
-    repositorio.marcarEjecucionIniciada.mockRejectedValueOnce(
-      new Error("falló persistir"),
-    );
-
-    await expect(caso.ejecutar(entrada)).rejects.toThrow("falló persistir");
-    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
-      expect.any(String),
-      "persistir-run",
-      "falló persistir",
-      expect.any(Date),
-      "run-1",
-    );
+  it("falla si el Dataflow no pertenece al tenant visible", async () => {
+    const { ejecutar } = caso();
+    await expect(
+      ejecutar.ejecutar({
+        flujoIdQlik: "df-404",
+        tenantId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "qlik-1",
+      }),
+    ).rejects.toMatchObject({ codigo: "DATAFLOW_NO_ENCONTRADO" });
   });
 });

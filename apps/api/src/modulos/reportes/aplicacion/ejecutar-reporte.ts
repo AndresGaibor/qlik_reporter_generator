@@ -1,7 +1,6 @@
 import {
   ErrorAplicacion,
   ErrorConflicto,
-  ErrorNoEncontrado,
 } from "../../../nucleo/errores/error-aplicacion.js";
 import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
@@ -25,15 +24,14 @@ const VERSION_COMPILADOR = 2;
 export interface EntradaEjecutarReporte {
   tenantId: string;
   organizacionId: string;
-  reporteId: string;
+  flujoIdQlik: string;
   usuarioId: string;
   usuarioIdQlik: string;
 }
 
 export type ResolverContextoWorker = (
   entrada: EntradaEjecutarReporte,
-  reporte: Awaited<ReturnType<PuertoRepositorioReportes["obtenerPorId"]>> &
-    object,
+  flujo: { id: string; name: string; spaceId?: string | null },
 ) => ContextoObtenerOCrearAutomatizacionPersonal;
 
 export class EjecutarReporte {
@@ -59,25 +57,19 @@ export class EjecutarReporte {
   async ejecutar(
     entrada: EntradaEjecutarReporte,
   ): Promise<{ runId: string; ejecucionReporteId: string }> {
-    const reporte = await this.repositorio.obtenerPorId(
-      entrada.reporteId,
-      entrada.tenantId,
-      entrada.organizacionId,
+    const flujo = (await this.qlik.listarFlujos()).find(
+      (item) => item.id === entrada.flujoIdQlik,
     );
-    if (!reporte) {
-      throw new ErrorNoEncontrado(
-        "El reporte no existe dentro del tenant y organización solicitados",
+    if (!flujo)
+      throw new ErrorAplicacion(
+        "DATAFLOW_NO_ENCONTRADO",
+        "El Dataflow no está disponible en el tenant",
+        404,
       );
-    }
-    if (reporte.estado !== "activa") {
-      throw new ErrorConflicto(
-        `El reporte no puede ejecutarse mientras está ${reporte.estado}`,
-      );
-    }
 
     const preparacion = await prepararDataflowActual(
       this.qlik,
-      reporte.flujoIdQlik,
+      flujo.id,
       this.alcanceBigQuery,
     );
     if (!preparacion.compatible) {
@@ -98,11 +90,11 @@ export class EjecutarReporte {
       );
     }
     const worker = await workers.ejecutar(
-      this.resolverContextoWorker(entrada, reporte),
+      this.resolverContextoWorker(entrada, flujo),
     );
     const resultado = await this.crearAuditoriaYEjecutar(
       entrada,
-      reporte,
+      flujo,
       worker,
       preparacion,
     );
@@ -114,9 +106,7 @@ export class EjecutarReporte {
 
   private async crearAuditoriaYEjecutar(
     entrada: EntradaEjecutarReporte,
-    configuracion: NonNullable<
-      Awaited<ReturnType<PuertoRepositorioReportes["obtenerPorId"]>>
-    >,
+    flujo: { id: string; name: string; spaceId?: string | null },
     worker: Awaited<
       ReturnType<
         NonNullable<
@@ -129,7 +119,7 @@ export class EjecutarReporte {
     const ejecucionReporteId = this.generarId();
     const uriBaseGcs = construirUriEjecucion(
       this.alcanceBigQuery.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/",
-      configuracion.nombre,
+      flujo.name,
       ejecucionReporteId,
       entrada.usuarioId,
     );
@@ -148,10 +138,13 @@ export class EjecutarReporte {
     try {
       await this.repositorio.crearEjecucion({
         id: ejecucionReporteId,
-        reporteId: configuracion.id,
+        organizacionId: entrada.organizacionId,
+        tenantQlikId: entrada.tenantId,
         ejecutadoPorUsuarioId: entrada.usuarioId,
         automatizacionPersonalId: worker.id,
-        flujoIdQlik: configuracion.flujoIdQlik,
+        flujoIdQlik: flujo.id,
+        flujoNombreSnapshot: flujo.name,
+        flujoEspacioIdQlik: flujo.spaceId ?? null,
         automatizacionIdQlik: worker.automatizacionIdQlik,
         hashDataflowSha256: preparacion.hashDataflowSha256,
         scriptDataflow: preparacion.scriptDataflow,

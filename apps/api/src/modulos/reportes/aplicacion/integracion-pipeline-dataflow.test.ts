@@ -62,6 +62,9 @@ function qlikConScripts(scripts: string[]) {
   let indice = 0;
   const workspaces: Record<string, unknown>[] = [];
   const qlik = {
+    listarFlujos: vi.fn(async () => [
+      { id: "flujo-1", name: "Ventas DF", spaceId: "space-1" },
+    ]),
     obtenerScriptApp: vi.fn(async () => ({
       script: scripts[Math.min(indice++, scripts.length - 1)] ?? SCRIPT_V1,
     })),
@@ -133,14 +136,14 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      reporteId: "reporte-1",
+      flujoIdQlik: "flujo-1",
       usuarioId: "user-1",
       usuarioIdQlik: "user-qlik-1",
     });
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      reporteId: "reporte-1",
+      flujoIdQlik: "flujo-1",
       usuarioId: "user-1",
       usuarioIdQlik: "user-qlik-1",
     });
@@ -222,7 +225,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      reporteId: "reporte-1",
+      flujoIdQlik: "flujo-1",
       usuarioId: "user-1",
       usuarioIdQlik: "user-qlik-1",
     });
@@ -233,13 +236,13 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(auditoria?.uriBaseGcs).toBe(
-      `gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas/${ejecucionId}/`,
+      `gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas-df/${ejecucionId}/`,
     );
     expect(valorVariable(workspace, "BqSelectData")).toContain(
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(valorVariable(workspace, "BqExportData")).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
     );
     expect(valorVariable(workspace, "BqNumberCsv")).toContain(
       "SELECT DISTINCT export_part",
