@@ -18,7 +18,6 @@ export class SincronizarEjecucionesReporte {
     reporteId: string,
     tenantQlikId: string,
     organizacionId: string,
-    automatizacionIdQlik: string,
   ) {
     const configuracion = await this.repositorio.obtenerPorId(
       reporteId,
@@ -40,15 +39,25 @@ export class SincronizarEjecucionesReporte {
     );
     if (pendientes.length === 0) return;
 
-    const remotas = await this.qlik.listarEjecuciones(automatizacionIdQlik, {
-      limit: 100,
-      sort: "desc",
-    });
-    const porId = new Map(remotas.map((item) => [item.id, item]));
+    const porAutomate = new Map<string, Map<string, EjecucionQlik>>();
+    for (const automatizacionIdQlik of new Set(
+      pendientes.map((item) => item.automatizacionIdQlik),
+    )) {
+      const remotas = await this.qlik.listarEjecuciones(automatizacionIdQlik, {
+        limit: 100,
+        sort: "desc",
+      });
+      porAutomate.set(
+        automatizacionIdQlik,
+        new Map(remotas.map((item) => [item.id, item])),
+      );
+    }
 
     for (const local of pendientes) {
       if (!local.runIdQlik) continue;
-      const remota = porId.get(local.runIdQlik);
+      const remota = porAutomate
+        .get(local.automatizacionIdQlik)
+        ?.get(local.runIdQlik);
       if (!remota) continue;
       const estado = TERMINALES.get(remota.status.toLowerCase());
       if (!estado) continue;
@@ -56,7 +65,7 @@ export class SincronizarEjecucionesReporte {
 
       if (estado === "error") {
         const detalle = await this.obtenerDetalleError(
-          automatizacionIdQlik,
+          local.automatizacionIdQlik,
           local.runIdQlik,
           remota,
         );

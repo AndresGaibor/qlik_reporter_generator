@@ -2,231 +2,164 @@ import { describe, expect, it, vi } from "bun:test";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { EjecutarReporte } from "./ejecutar-reporte.js";
 
-const SCRIPT = `
-LIB CONNECT TO [Google BigQuery:Prod];
-[ventas]: LOAD [id], Upper([categoria]) AS [categoria];
-SQL SELECT id, categoria FROM \`p.d.ventas\` WHERE id > 0;
-`;
+const SCRIPT =
+  "LIB CONNECT TO [Google BigQuery:Prod]; SQL SELECT id FROM `p.d.t`;";
+const reporte = {
+  id: "reporte-1",
+  organizacionId: "org-1",
+  tenantQlikId: "tenant-1",
+  creadoPorUsuarioId: "creator-1",
+  nombre: "Ventas Diarias",
+  flujoIdQlik: "flujo-1",
+  flujoNombreSnapshot: "Ventas",
+  estado: "activa" as const,
+};
+const worker = {
+  id: "worker-db-1",
+  organizacionId: "org-1",
+  tenantQlikId: "tenant-1",
+  usuarioId: "user-1",
+  automatizacionIdQlik: "worker-old",
+  automatizacionNombreSnapshot: "Worker",
+  estado: "activo" as const,
+};
+const TALEND_WORKSPACE = JSON.parse(
+  await Bun.file(
+    new URL(
+      "../fixtures/automate-talend-workspace.sanitized.json",
+      import.meta.url,
+    ),
+  ).text(),
+) as Record<string, unknown>;
 
-async function workspaceTalend(): Promise<Record<string, unknown>> {
-  const fixture = new URL(
-    "../fixtures/automate-talend-workspace.sanitized.json",
-    import.meta.url,
-  );
-  return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
+function workspace() {
+  return structuredClone(TALEND_WORKSPACE);
 }
 
-function valorVariable(
-  workspace: Record<string, unknown>,
-  nombre: string,
-): string | undefined {
-  const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
-  const block = blocks.find(
-    (item) =>
-      typeof item === "object" &&
-      item !== null &&
-      (item as Record<string, unknown>).name === nombre,
-  ) as Record<string, unknown> | undefined;
-  const operations = Array.isArray(block?.operations) ? block.operations : [];
-  const setValue = operations.find(
-    (item) =>
-      typeof item === "object" &&
-      item !== null &&
-      (item as Record<string, unknown>).id === "set_value",
-  ) as Record<string, unknown> | undefined;
-  return typeof setValue?.value === "string" ? setValue.value : undefined;
-}
-
-function configuracion() {
-  return {
-    id: "11111111-1111-4111-8111-111111111111",
-    organizacionId: "org-1",
-    tenantQlikId: "tenant-1",
-    creadoPorUsuarioId: "user-1",
-    nombre: "Ventas Diarias",
-    flujoIdQlik: "flujo-1",
-    flujoNombreSnapshot: "Ventas DF",
-    automatizacionIdQlik: "auto-1",
-    reporteId: "reporte-1",
-    automatizacionNombreSnapshot: "Ventas",
-    estado: "activa" as const,
+function casoBase(overrides: Record<string, unknown> = {}) {
+  const orden: string[] = [];
+  const qlik = {
+    obtenerScriptApp: vi.fn(async () => {
+      orden.push("preparar-dataflow");
+      return { script: SCRIPT };
+    }),
+    obtenerAutomatizacion: vi.fn(async () => {
+      orden.push("obtener-workspace");
+      return { id: "worker-old", name: "Worker", workspace: workspace() };
+    }),
+    actualizarAutomatizacion: vi.fn(async () => {
+      orden.push("actualizar-workspace");
+      return {};
+    }),
+    ejecutarAutomatizacion: vi.fn(async () => {
+      orden.push("crear-run");
+      return { runId: "run-1" };
+    }),
+    listarEjecuciones: vi.fn(async () => {
+      throw new Error("no debe consultar precondición remota");
+    }),
+  } as unknown as ServicioQlik;
+  const repositorio = {
+    obtenerPorId: vi.fn(async () => {
+      orden.push("leer-reporte");
+      return reporte;
+    }),
+    crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
+      orden.push("crear-auditoria");
+      return entrada;
+    }),
+    marcarEjecucionIniciada: vi.fn(async () => undefined),
+    marcarEjecucionError: vi.fn(async () => undefined),
   };
+  const bloqueos = {
+    ejecutarExclusivo: vi.fn(
+      async (_clave: string, tarea: () => Promise<unknown>) => {
+        orden.push("lock");
+        const resultado = await tarea();
+        orden.push("unlock");
+        return resultado;
+      },
+    ),
+  };
+  const workers = {
+    ejecutar: vi.fn(async () => {
+      orden.push("resolver-worker");
+      return worker;
+    }),
+  };
+  const caso = new EjecutarReporte(
+    qlik,
+    repositorio as never,
+    bloqueos as never,
+    { projectId: "p", dataset: "d" },
+    () => "22222222-2222-4222-8222-222222222222",
+    () => ({
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
+      plantillaIdQlik: "template-1",
+      plantillaNombre: "Plantilla",
+    }),
+    workers as never,
+  );
+  return { caso, qlik, repositorio, bloqueos, workers, orden, ...overrides };
 }
+
+const entrada = {
+  reporteId: "reporte-1",
+  tenantId: "tenant-1",
+  organizacionId: "org-1",
+  usuarioId: "user-1",
+  usuarioIdQlik: "user-qlik-1",
+};
 
 describe("EjecutarReporte", () => {
-  it("recompila current, audita, actualiza las cuatro queries Talend y luego crea el run", async () => {
-    const orden: string[] = [];
-    let workspaceActualizado: Record<string, unknown> | undefined;
-    const qlik = {
-      listarEjecuciones: vi.fn(async () => []),
-      obtenerScriptApp: vi.fn(async () => {
-        orden.push("current");
-        return { script: SCRIPT };
-      }),
-      obtenerAutomatizacion: vi.fn(async () => ({
-        id: "auto-1",
-        name: "Ventas",
-        schedules: [],
-        workspace: await workspaceTalend(),
-        description: "",
-        maxConcurrentRuns: 1,
-      })),
-      actualizarAutomatizacion: vi.fn(async (_id, definicion) => {
-        orden.push("actualizar-automate");
-        workspaceActualizado = (
-          definicion as { workspace: Record<string, unknown> }
-        ).workspace;
-        return { id: "auto-1", name: "Ventas", ...definicion };
-      }),
-      ejecutarAutomatizacion: vi.fn(async () => {
-        orden.push("run");
-        return { runId: "run-1" };
-      }),
-    } as unknown as ServicioQlik;
-
-    const ejecuciones: Array<Record<string, unknown>> = [];
-    const repositorio = {
-      obtenerPorId: vi.fn(async () => configuracion()),
-      crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
-        orden.push("auditar");
-        ejecuciones.push(entrada);
-        return entrada;
-      }),
-      marcarEjecucionIniciada: vi.fn(async (_id: string, runId: string) => {
-        orden.push(`iniciada:${runId}`);
-      }),
-      marcarEjecucionError: vi.fn(async () => undefined),
-    };
-    const bloqueos = {
-      ejecutarExclusivo: async (
-        _clave: string,
-        tarea: () => Promise<unknown>,
-      ) => {
-        orden.push("lock");
-        return tarea();
-      },
-    };
-    const ejecucionId = "22222222-2222-4222-8222-222222222222";
-    const caso = new EjecutarReporte(
-      qlik,
-      repositorio as never,
-      bloqueos as never,
-      { projectId: "p", dataset: "d" },
-      () => ejecucionId,
+  it("resuelve worker personal y ejecuta en orden con lock corto", async () => {
+    const { caso, repositorio, bloqueos, workers, orden } = casoBase();
+    await caso.ejecutar(entrada);
+    expect(repositorio.obtenerPorId).toHaveBeenCalledWith(
+      "reporte-1",
+      "tenant-1",
+      "org-1",
     );
-
-    const resultado = await caso.ejecutar({
-      tenantId: "tenant-1",
-      organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
-      reporteId: "reporte-1",
-      usuarioId: "user-1",
-    });
-
-    expect(resultado).toEqual({
-      runId: "run-1",
-      ejecucionReporteId: ejecucionId,
-    });
+    expect(workers.ejecutar).toHaveBeenCalled();
     expect(orden).toEqual([
+      "leer-reporte",
+      "preparar-dataflow",
+      "resolver-worker",
+      "crear-auditoria",
       "lock",
-      "current",
-      "auditar",
-      "actualizar-automate",
-      "run",
-      "iniciada:run-1",
+      "obtener-workspace",
+      "actualizar-workspace",
+      "crear-run",
+      "unlock",
     ]);
-    expect(ejecuciones[0]).toMatchObject({
-      hashDataflowSha256: expect.stringMatching(/^[a-f0-9]{64}$/),
-      scriptDataflow: SCRIPT,
-      sqlBigQueryCompilado: expect.stringContaining("`p.d.ventas`"),
-      scriptExportacion: expect.stringContaining("-- bq_export_data"),
-      uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/`,
-      estado: "preparando",
-      versionCompilador: 2,
-    });
-    expect(valorVariable(workspaceActualizado ?? {}, "BqSelectData")).toContain(
-      `__qlik_reportes_${ejecucionId.replaceAll("-", "_")}`,
+    expect(bloqueos.ejecutarExclusivo).toHaveBeenCalledWith(
+      "tenant-1:worker-old",
+      expect.any(Function),
     );
-    expect(valorVariable(workspaceActualizado ?? {}, "BqExportData")).toContain(
-      `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz`,
-    );
-    expect(valorVariable(workspaceActualizado ?? {}, "Credenciales")).toBe(
-      "CREDENCIAL_SANITIZADA",
+    expect(repositorio.crearEjecucion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ejecutadoPorUsuarioId: "user-1",
+        automatizacionPersonalId: "worker-db-1",
+        automatizacionIdQlik: "worker-old",
+      }),
     );
   });
 
-  it("rechaza una segunda solicitud cuando no adquiere el lock", async () => {
-    const caso = new EjecutarReporte(
-      {} as ServicioQlik,
-      {} as never,
-      { ejecutarExclusivo: async () => undefined },
-      { projectId: "p", dataset: "d" },
-    );
-    await expect(
-      caso.ejecutar({
-        tenantId: "tenant-1",
-        organizacionId: "org-1",
-        automatizacionIdQlik: "auto-1",
-        reporteId: "reporte-1",
-      }),
-    ).rejects.toThrow("solicitud de ejecución");
-  });
-
-  it("marca error y no dispara Talend si falla la actualización de Automate", async () => {
-    const marcarEjecucionError = vi.fn(async () => undefined);
-    const ejecutarAutomatizacion = vi.fn(async () => ({
-      runId: "no-debe-ejecutarse",
-    }));
-    const qlik = {
-      listarEjecuciones: vi.fn(async () => []),
-      obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
-      obtenerAutomatizacion: vi.fn(async () => ({
-        id: "auto-1",
-        name: "Ventas",
-        schedules: [],
-        workspace: await workspaceTalend(),
-        description: "",
-        maxConcurrentRuns: 1,
-      })),
-      actualizarAutomatizacion: vi.fn(async () => {
-        throw new Error("Qlik no aceptó el workspace");
-      }),
-      ejecutarAutomatizacion,
-    } as unknown as ServicioQlik;
-    const repositorio = {
-      obtenerPorId: async () => configuracion(),
-      crearEjecucion: vi.fn(async (entrada: unknown) => entrada),
-      marcarEjecucionIniciada: vi.fn(async () => undefined),
-      marcarEjecucionError,
-    };
-    const caso = new EjecutarReporte(
-      qlik,
-      repositorio as never,
-      {
-        ejecutarExclusivo: async (
-          _clave: string,
-          tarea: () => Promise<unknown>,
-        ) => tarea(),
-      } as never,
-      { projectId: "p", dataset: "d" },
-      () => "22222222-2222-4222-8222-222222222222",
-    );
-
-    await expect(
-      caso.ejecutar({
-        tenantId: "tenant-1",
-        organizacionId: "org-1",
-        automatizacionIdQlik: "auto-1",
-        reporteId: "reporte-1",
-      }),
-    ).rejects.toThrow("Qlik no aceptó");
-
-    expect(ejecutarAutomatizacion).not.toHaveBeenCalled();
-    expect(marcarEjecucionError).toHaveBeenCalledWith(
+  it("si el lock corto está ocupado deja la auditoría en conflicto sin tocar Qlik", async () => {
+    const { caso, repositorio, qlik, bloqueos } = casoBase();
+    bloqueos.ejecutarExclusivo.mockResolvedValue(undefined);
+    await expect(caso.ejecutar(entrada)).rejects.toThrow("conflicto");
+    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
       "22222222-2222-4222-8222-222222222222",
-      "actualizar-automate",
-      "Qlik no aceptó el workspace",
+      "lock",
+      expect.stringContaining("ocupado"),
       expect.any(Date),
     );
+    expect(qlik.obtenerAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
   });
 });

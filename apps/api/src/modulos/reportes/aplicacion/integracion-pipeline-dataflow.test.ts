@@ -62,7 +62,6 @@ function qlikConScripts(scripts: string[]) {
   let indice = 0;
   const workspaces: Record<string, unknown>[] = [];
   const qlik = {
-    listarEjecuciones: vi.fn(async () => []),
     obtenerScriptApp: vi.fn(async () => ({
       script: scripts[Math.min(indice++, scripts.length - 1)] ?? SCRIPT_V1,
     })),
@@ -110,19 +109,40 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       } as never,
       { projectId: "p", dataset: "d" },
       () => `22222222-2222-4222-8222-${String(++id).padStart(12, "0")}`,
+      () => ({
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "user-qlik-1",
+        plantillaIdQlik: "template-1",
+        plantillaNombre: "Plantilla",
+      }),
+      {
+        ejecutar: vi.fn(async () => ({
+          id: "44444444-4444-4444-8444-444444444444",
+          organizacionId: "org-1",
+          tenantQlikId: "tenant-1",
+          usuarioId: "user-1",
+          automatizacionIdQlik: "auto-1",
+          automatizacionNombreSnapshot: "Worker",
+          estado: "activo" as const,
+        })),
+      } as never,
     );
 
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
       reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
       reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
 
     expect(qlik.obtenerScriptApp).toHaveBeenCalledTimes(2);
@@ -178,13 +198,33 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       } as never,
       { projectId: "poc-bigquery-talend", dataset: "demo_lafavorita" },
       () => ejecucionId,
+      () => ({
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "user-qlik-1",
+        plantillaIdQlik: "template-1",
+        plantillaNombre: "Plantilla",
+      }),
+      {
+        ejecutar: vi.fn(async () => ({
+          id: "44444444-4444-4444-8444-444444444444",
+          organizacionId: "org-1",
+          tenantQlikId: "tenant-1",
+          usuarioId: "user-1",
+          automatizacionIdQlik: "auto-1",
+          automatizacionNombreSnapshot: "Worker",
+          estado: "activo" as const,
+        })),
+      } as never,
     );
 
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
       reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
 
     const auditoria = auditorias[0];
