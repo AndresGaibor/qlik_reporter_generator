@@ -97,14 +97,6 @@ export function PaginaReportes() {
   return (
     <PageLayout>
       <div className="space-y-4">
-        <header>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">
-            Reportes
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Reportes disponibles para tu usuario.
-          </p>
-        </header>
         <BarraFiltrosReportes
           busquedaTemp={busquedaTemp}
           setBusquedaTemp={setBusquedaTemp}

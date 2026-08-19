@@ -23,7 +23,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock("./api", () => api);
 vi.mock("@/modulos/reportes/componentes/barra-filtros-reportes", () => ({
-  BarraFiltrosReportes: () => null,
+  BarraFiltrosReportes: () => <h1>Reportes</h1>,
 }));
 vi.mock("@/modulos/reportes/componentes/lista-reportes", () => ({
   ListaReportes: ({ reportes }: { reportes: Array<{ nombre: string }> }) => (
@@ -116,6 +116,26 @@ test("muestra reportes locales y no consulta ni ofrece Automates de Qlik", async
   );
   expect(container?.textContent).not.toContain("Automate manual Qlik");
   expect(api.obtenerReportes).toHaveBeenCalled();
+});
+
+test("muestra un solo encabezado principal de Reportes", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaReportes />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Reporte Ventas"),
+  );
+  expect(container?.querySelectorAll("h1")).toHaveLength(1);
 });
 
 test("filtra filas locales por nombre/Dataflow y espacio sin consultar Automates", () => {
