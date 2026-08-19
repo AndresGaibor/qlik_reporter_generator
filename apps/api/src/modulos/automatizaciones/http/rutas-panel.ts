@@ -211,22 +211,6 @@ export function crearRutasPanelAutomatizaciones(
     ),
   );
 
-  rutas.post("/:id/clonar", async (c) => {
-    const id = esquemaIdQlik.parse(c.req.param("id"));
-    const cuerpo = (await c.req.json().catch(() => ({}))) as {
-      nombre?: string;
-      espacioIdQlik?: string;
-    };
-    const qlik = await dependencias.resolverQlik(c);
-    const original = await qlik.obtenerAutomatizacion(id);
-    const nombreCopia = cuerpo.nombre?.trim() || `${original.name} (Copia)`;
-    const copia = await qlik.copiarAutomatizacion(id, nombreCopia);
-    if (cuerpo.espacioIdQlik) {
-      await qlik.cambiarEspacioAutomatizacion(copia.id, cuerpo.espacioIdQlik);
-    }
-    return responderExito(c, { id: copia.id, nombre: nombreCopia }, 201);
-  });
-
   rutas.get("/:id", async (c) => {
     const id = esquemaIdQlik.parse(c.req.param("id"));
     const qlik = await dependencias.resolverQlik(c);

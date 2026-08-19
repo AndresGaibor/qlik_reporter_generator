@@ -36,6 +36,7 @@ import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
+import type { PuertoRepositorioReportes } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import {
   type ResolucionBigQueryReporte,
   crearRutasReportesDataflow,
@@ -88,6 +89,7 @@ export interface DependenciasAplicacion {
   servicioAutenticacion?: ServicioAutenticacionQlik;
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
   resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
+  repositorioReportes?: PuertoRepositorioReportes;
   resolverSesion?: (c: Context) => Promise<{
     tenantId: string;
     usuarioId: string;
@@ -323,7 +325,8 @@ export async function crearAplicacion(
     }),
   );
 
-  const repositorioReportes = new RepositorioReportesPostgres(db);
+  const repositorioReportes =
+    dependencias.repositorioReportes ?? new RepositorioReportesPostgres(db);
   aplicacion.route(
     "/api/reportes",
     crearRutasPanelAutomatizaciones({

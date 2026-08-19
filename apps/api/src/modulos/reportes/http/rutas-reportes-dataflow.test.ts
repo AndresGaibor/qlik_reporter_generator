@@ -400,4 +400,229 @@ describe("rutas reportes Dataflow", () => {
     );
     expect(actualizarAutomatizacion).not.toHaveBeenCalled();
   });
+
+  it("edita el Dataflow con preflight y snapshot nuevos sin actualizar Automate", async () => {
+    const actualizarReporte = vi.fn(async (_id, cambios) => ({
+      id: "reporte-1",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: cambios.flujoIdQlik,
+      flujoNombreSnapshot: cambios.flujoNombreSnapshot,
+      flujoEspacioIdQlik: cambios.flujoEspacioIdQlik,
+      estado: "activa" as const,
+    }));
+    const preflightScript = vi.fn(async () => ({ script: SCRIPT }));
+    const actualizarAutomatizacion = vi.fn();
+    const repo = {
+      obtenerPorId: vi.fn(async () => ({
+        id: "reporte-1",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        creadoPorUsuarioId: "user-1",
+        nombre: "Ventas",
+        flujoIdQlik: "df-1",
+        flujoNombreSnapshot: "Ventas anterior",
+        estado: "activa" as const,
+      })),
+      actualizarReporte,
+    };
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: preflightScript,
+            listarFlujos: vi.fn(async () => [
+              { id: "df-2", name: "Ventas nueva", spaceId: "space-2" },
+            ]),
+            actualizarAutomatizacion,
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: repo as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(preflightScript).toHaveBeenCalledWith("df-2", "current");
+    expect(actualizarReporte).toHaveBeenCalledWith(
+      "reporte-1",
+      expect.objectContaining({
+        flujoIdQlik: "df-2",
+        flujoNombreSnapshot: "Ventas nueva",
+        flujoEspacioIdQlik: "space-2",
+      }),
+    );
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("no persiste edición ante Dataflow incompatible", async () => {
+    const actualizarReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: "LET v = 1;" })),
+            listarFlujos: vi.fn(),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: {
+          obtenerPorId: vi.fn(async () => ({
+            id: "reporte-1",
+            organizacionId: "org-1",
+            tenantQlikId: "tenant-1",
+            creadoPorUsuarioId: "user-1",
+            nombre: "Ventas",
+            flujoIdQlik: "df-1",
+            flujoNombreSnapshot: "Ventas anterior",
+            estado: "activa" as const,
+          })),
+          actualizarReporte,
+        } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+    const body = await respuesta.json();
+
+    expect(respuesta.status).toBe(422);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_COMPATIBLE");
+    expect(actualizarReporte).not.toHaveBeenCalled();
+  });
+
+  it("no persiste edición ante Dataflow ausente", async () => {
+    const actualizarReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => []),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: {
+          obtenerPorId: vi.fn(async () => ({
+            id: "reporte-1",
+            organizacionId: "org-1",
+            tenantQlikId: "tenant-1",
+            creadoPorUsuarioId: "user-1",
+            nombre: "Ventas",
+            flujoIdQlik: "df-1",
+            flujoNombreSnapshot: "Ventas anterior",
+            estado: "activa" as const,
+          })),
+          actualizarReporte,
+        } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+    const body = await respuesta.json();
+
+    expect(respuesta.status).toBe(404);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_ENCONTRADO");
+    expect(actualizarReporte).not.toHaveBeenCalled();
+  });
+
+  it("mapea a DATAFLOW_NO_ENCONTRADO una creación sin Dataflow", async () => {
+    const crearReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => []),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+        }),
+        repositorioReportes: { crearReporte } as never,
+      }),
+    );
+    const respuesta = await app.request("/api/reportes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nombre: "Ventas", flujoIdQlik: "df-1" }),
+    });
+    const body = await respuesta.json();
+    expect(respuesta.status).toBe(404);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_ENCONTRADO");
+    expect(crearReporte).not.toHaveBeenCalled();
+  });
 });

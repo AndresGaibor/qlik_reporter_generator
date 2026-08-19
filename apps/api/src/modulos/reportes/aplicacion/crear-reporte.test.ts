@@ -43,4 +43,38 @@ describe("CrearReporte", () => {
     });
     expect(copiarAutomatizacion).not.toHaveBeenCalled();
   });
+
+  it("rechaza un Dataflow incompatible antes de listar o persistir", async () => {
+    const listarFlujos = vi.fn();
+    const crearReporte = vi.fn();
+    const preflight = vi.fn(async () => ({ compatible: false }));
+
+    await expect(
+      new CrearReporte({ listarFlujos } as never, { ejecutar: preflight }, {
+        crearReporte,
+      } as never).ejecutar({ nombre: "Ventas", flujoIdQlik: "df-1" }, contexto),
+    ).rejects.toMatchObject({
+      codigo: "DATAFLOW_NO_COMPATIBLE",
+      estadoHttp: 422,
+    });
+    expect(listarFlujos).not.toHaveBeenCalled();
+    expect(crearReporte).not.toHaveBeenCalled();
+  });
+
+  it("rechaza un Dataflow ausente después del preflight sin persistir", async () => {
+    const crearReporte = vi.fn();
+    const preflight = vi.fn(async () => ({ compatible: true }));
+    const listarFlujos = vi.fn(async () => []);
+
+    await expect(
+      new CrearReporte({ listarFlujos } as never, { ejecutar: preflight }, {
+        crearReporte,
+      } as never).ejecutar({ nombre: "Ventas", flujoIdQlik: "df-1" }, contexto),
+    ).rejects.toMatchObject({
+      codigo: "DATAFLOW_NO_ENCONTRADO",
+      estadoHttp: 404,
+    });
+    expect(preflight).toHaveBeenCalledWith("df-1");
+    expect(crearReporte).not.toHaveBeenCalled();
+  });
 });

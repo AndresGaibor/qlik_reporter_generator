@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, vi } from "bun:test";
 import { crearAplicacion } from "./app.js";
 import type { Registrador } from "./plataforma/observabilidad/registrador.js";
 
@@ -295,5 +295,51 @@ describe("API", () => {
     const cuerpo = await respuesta.json();
     expect(respuesta.status).toBe(200);
     expect(cuerpo.datos.compatible).toBe(true);
+  });
+
+  it("resuelve el clonado público como reporte local en la composición completa", async () => {
+    const copiarAutomatizacion = vi.fn();
+    const crearReporte = vi.fn(async (entrada: Record<string, unknown>) => ({
+      id: "reporte-copia",
+      ...entrada,
+    }));
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik: async () => ({ copiarAutomatizacion }) as never,
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        usuarioId: "user-2",
+        organizacionId: "org-1",
+        usuarioIdQlik: "user-2-qlik",
+      }),
+      repositorioReportes: {
+        obtenerPorId: vi.fn(async () => ({
+          id: "reporte-1",
+          tenantQlikId: "tenant-1",
+          organizacionId: "org-1",
+          creadoPorUsuarioId: "user-1",
+          nombre: "Ventas",
+          flujoIdQlik: "df-1",
+          flujoNombreSnapshot: "Ventas DF",
+          estado: "activa" as const,
+        })),
+        crearReporte,
+      } as never,
+    });
+
+    const respuesta = await app.request("/api/reportes/reporte-1/clonar", {
+      method: "POST",
+      headers: {
+        Origin: "http://localhost:4525",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ nombre: "Ventas copia" }),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(crearReporte).toHaveBeenCalledWith(
+      expect.objectContaining({ nombre: "Ventas copia" }),
+    );
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
   });
 });

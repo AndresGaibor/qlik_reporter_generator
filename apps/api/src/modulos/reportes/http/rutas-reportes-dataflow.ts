@@ -151,6 +151,7 @@ export function crearRutasReportesDataflow(
           {
             exito: false,
             error: {
+              codigo: "DATAFLOW_NO_COMPATIBLE",
               mensaje: "El nuevo Dataflow no es compatible",
               operacionesNoSoportadas: preflight.operacionesNoSoportadas,
             },
@@ -162,7 +163,16 @@ export function crearRutasReportesDataflow(
         (item) => item.id === cambios.flujoIdQlik,
       );
       if (!flujo)
-        return respuestaNoEncontrada(c, "El Dataflow ya no existe en Qlik");
+        return c.json(
+          {
+            exito: false,
+            error: {
+              codigo: "DATAFLOW_NO_ENCONTRADO",
+              mensaje: "El Dataflow ya no existe en Qlik",
+            },
+          },
+          404,
+        );
       flujoNombreSnapshot = flujo.name;
       flujoEspacioIdQlik = flujo.spaceId ?? null;
     }
