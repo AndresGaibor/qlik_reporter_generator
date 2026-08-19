@@ -29,7 +29,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
-      .set({ runIdQlik, estado: "iniciada", iniciadoEn, actualizadoEn: new Date() })
+      .set({
+        runIdQlik,
+        estado: "iniciada",
+        iniciadoEn,
+        actualizadoEn: new Date(),
+      })
       .where(eq(ejecucionesReportes.id, id));
   }
 
@@ -53,7 +58,10 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .where(eq(ejecucionesReportes.id, id));
   }
 
-  async marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void> {
+  async marcarEjecucionCompletada(
+    id: string,
+    finalizadoEn: Date,
+  ): Promise<void> {
     await this.db
       .update(ejecucionesReportes)
       .set({ estado: "completada", finalizadoEn, actualizadoEn: new Date() })
@@ -100,7 +108,9 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   ): Promise<ResumenEjecucionDescarga[]> {
     const usuarioId = contexto.esAdministrador ? undefined : contexto.usuarioId;
     if (!contexto.esAdministrador && !usuarioId) {
-      throw new Error("usuarioId es obligatorio para consultar descargas personales");
+      throw new Error(
+        "usuarioId es obligatorio para consultar descargas personales",
+      );
     }
     const filas = await this.db
       .select({
@@ -139,7 +149,9 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   }): Promise<ResumenEjecucionDescarga | null> {
     const usuarioId = contexto.esAdministrador ? undefined : contexto.usuarioId;
     if (!contexto.esAdministrador && !usuarioId) {
-      throw new Error("usuarioId es obligatorio para consultar una descarga personal");
+      throw new Error(
+        "usuarioId es obligatorio para consultar una descarga personal",
+      );
     }
     const [fila] = await this.db
       .select({
