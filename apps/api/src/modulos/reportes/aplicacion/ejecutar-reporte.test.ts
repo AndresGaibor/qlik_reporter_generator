@@ -117,7 +117,7 @@ describe("EjecutarReporte", () => {
       Record<string, unknown>
     >;
     expect(operations.find((item) => item.id === "set_value")?.value).toBe(
-      '{"type":"service_account","project_id":"p"}',
+      "/etc/credentials/gsc.json",
     );
   });
 

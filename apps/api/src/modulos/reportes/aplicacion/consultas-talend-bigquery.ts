@@ -51,8 +51,17 @@ SELECT
   DIV(export_row_number - 1, ${maximoFilasPorArchivo}) AS export_part
 FROM numbered;`;
 
-  const bqNumberCsv = `SELECT DISTINCT export_part
-FROM ${tabla}
+  const bqNumberCsv = `WITH source AS (
+  ${indentar(sqlFuente, 2)}
+),
+params AS (
+  SELECT
+    CAST(CEIL(COUNT(*) / ${maximoFilasPorArchivo}.0) AS INT64) AS totalparts
+  FROM source
+)
+SELECT DISTINCT export_part
+FROM params,
+UNNEST(GENERATE_ARRAY(0, totalparts - 1)) AS export_part
 ORDER BY export_part;`;
 
   const bqExportData = `EXPORT DATA OPTIONS(
@@ -63,21 +72,21 @@ ORDER BY export_part;`;
   header = true,
   field_delimiter = '|'
 ) AS
-SELECT * EXCEPT (export_row_number, export_part)
-FROM ${tabla}
-WHERE export_part = __PART__
+WITH source AS (
+  ${indentar(sqlFuente, 2)}
+),
+numbered AS (
+  SELECT
+    source.*,
+    ROW_NUMBER() OVER (${ventanaOrden}) AS export_row_number
+  FROM source
+)
+SELECT * EXCEPT (export_row_number)
+FROM numbered
+WHERE export_row_number BETWEEN __START_ROW__ AND __END_ROW__
 ORDER BY export_row_number;`;
 
-  const bqDrop = `DROP TABLE IF EXISTS ${tabla};
-
-EXPORT DATA OPTIONS(
-  uri = '${uri}/__finalizado__-*.csv.gz',
-  format = 'CSV',
-  compression = 'GZIP',
-  overwrite = true,
-  header = false
-) AS
-SELECT 'ok' AS estado;`;
+  const bqDrop = `DROP TABLE IF EXISTS ${tabla};`;
 
   return { bqSelectData, bqNumberCsv, bqExportData, bqDrop };
 }

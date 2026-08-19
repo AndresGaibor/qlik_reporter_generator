@@ -19,13 +19,19 @@ describe("construirConsultasTalendBigQuery", () => {
       "DIV(export_row_number - 1, 1000000) AS export_part",
     );
     expect(consultas.bqSelectData).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqNumberCsv).toContain("SELECT DISTINCT export_part");
+    expect(consultas.bqNumberCsv).toContain("CEIL(COUNT(*) / 1000000.0)");
+    expect(consultas.bqNumberCsv).toContain(
+      "GENERATE_ARRAY(0, totalparts - 1)",
+    );
+    expect(consultas.bqNumberCsv).toContain("Fecha = DATE '2026-06-01'");
     expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv.gz");
-    expect(consultas.bqExportData).toContain("WHERE export_part = __PART__");
+    expect(consultas.bqExportData).toContain(
+      "BETWEEN __START_ROW__ AND __END_ROW__",
+    );
+    expect(consultas.bqExportData).toContain("Fecha = DATE '2026-06-01'");
     expect(consultas.bqExportData).toContain("compression = 'GZIP'");
     expect(consultas.bqDrop).toContain("DROP TABLE IF EXISTS");
-    expect(consultas.bqDrop).toContain("__finalizado__-*.csv.gz");
-    expect(consultas.bqDrop).toContain("SELECT 'ok' AS estado");
+    expect(consultas.bqDrop).not.toContain("EXPORT DATA");
   });
 
   it("usa una staging única por ejecución dentro del proyecto y dataset configurados", () => {
@@ -34,8 +40,8 @@ describe("construirConsultasTalendBigQuery", () => {
       "`poc-bigquery-talend.demo_lafavorita.__qlik_reportes_410c97de_5802_4576_aa71_8dc8ee2d4499`";
 
     expect(consultas.bqSelectData).toContain(staging);
-    expect(consultas.bqNumberCsv).toContain(staging);
-    expect(consultas.bqExportData).toContain(staging);
+    expect(consultas.bqNumberCsv).not.toContain(staging);
+    expect(consultas.bqExportData).not.toContain(staging);
     expect(consultas.bqDrop).toContain(staging);
   });
 

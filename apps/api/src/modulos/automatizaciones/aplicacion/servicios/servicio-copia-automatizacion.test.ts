@@ -55,7 +55,7 @@ describe("copiarAutomatizacionPersonal", () => {
     >;
     expect(definicion.schedules).toEqual([]);
     expect(JSON.stringify(definicion.workspace)).toContain(
-      "CREDENCIAL_SANITIZADA",
+      "/etc/credentials/gsc.json",
     );
     expect(JSON.stringify(definicion.workspace)).not.toContain("dataflow");
     expect(JSON.stringify(definicion.workspace)).not.toContain("Appid");

@@ -21,7 +21,9 @@
     {
       "name": "Credenciales",
       "type": "VariableBlock",
-      "operations": [{ "id": "set_value", "value": "CREDENCIAL_SANITIZADA" }]
+      "operations": [
+        { "id": "set_value", "value": "/etc/credentials/gsc.json" }
+      ]
     },
     {
       "name": "BqSelectData",

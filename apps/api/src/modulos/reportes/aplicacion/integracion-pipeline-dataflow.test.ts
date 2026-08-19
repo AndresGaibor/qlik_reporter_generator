@@ -176,7 +176,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       valorVariable(workspaces[1] ?? {}, "BqSelectData"),
     );
     expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
-      '{"type":"service_account","project_id":"p"}',
+      "/etc/credentials/gsc.json",
     );
   });
 
