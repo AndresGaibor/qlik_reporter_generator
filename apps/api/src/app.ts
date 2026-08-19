@@ -108,6 +108,7 @@ export interface DependenciasAplicacion {
     usuarioId: string;
     organizacionId: string;
     usuarioIdQlik: string;
+    usuarioCorreo?: string | null;
     roles?: Array<"admin" | "usuario">;
     esSuperadmin?: boolean;
   }>;
@@ -168,6 +169,7 @@ export async function crearAplicacion(
         usuarioId: contexto.usuarioId,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,
+        usuarioCorreo: contexto.usuarioCorreo,
         esSuperadmin: contexto.esSuperadmin ?? false,
         roles: contexto.roles ?? [],
       };

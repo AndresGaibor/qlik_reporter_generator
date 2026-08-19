@@ -16,6 +16,7 @@ export interface ContextoSolicitud {
   tenantHost?: string;
   identidadQlikId?: string;
   usuarioIdQlik?: string;
+  usuarioCorreo?: string | null;
   esSuperadmin?: boolean;
   roles?: Array<"admin" | "usuario">;
 }
@@ -45,6 +46,7 @@ export interface ContextoSolicitudAutenticado extends ContextoSolicitud {
   tenantHost: string;
   identidadQlikId: string;
   usuarioIdQlik: string;
+  usuarioCorreo: string | null;
   esSuperadmin: boolean;
   roles: Array<"admin" | "usuario">;
 }
@@ -70,6 +72,10 @@ export function construirContextoSolicitud(entrada: {
     tenantHost: entrada.sesion.tenantHost,
     identidadQlikId: entrada.sesion.identidadQlikId,
     usuarioIdQlik: entrada.sesion.usuarioIdQlik,
+    usuarioCorreo:
+      entrada.sesionPublica.usuario?.correo ??
+      entrada.sesionPublica.identidad?.correoQlik ??
+      null,
     esSuperadmin: entrada.sesionPublica.esSuperadmin,
     roles,
   };

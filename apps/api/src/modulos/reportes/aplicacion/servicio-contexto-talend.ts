@@ -53,18 +53,61 @@ function actualizarVariable(
       String((item as Record<string, unknown>).id ?? "") === "set_value",
   ) as Record<string, unknown> | undefined;
   if (!setValue) {
-    throw new Error(`La automatización base no contiene set_value en ${nombre}`);
+    throw new Error(
+      `La automatización base no contiene set_value en ${nombre}`,
+    );
   }
   setValue.value = valor;
 }
 
-export function validarContratoTalend(
+export function diagnosticarContratoTalend(
   workspace: Record<string, unknown>,
-): void {
+): string[] {
   const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
-  validarExecuteTask(blocks);
-  for (const [claveTalend, definicion] of Object.entries(VARIABLES_TALEND)) {
-    const bloque = buscarBloque(blocks, definicion.bloque);
+  const problemas: string[] = [];
+  const contextos = {
+    credenciales: { bloque: "Credenciales" },
+    ...VARIABLES_TALEND,
+  } as const;
+
+  const executeTask = encontrarBloque(blocks, "executeTask");
+  if (!executeTask) {
+    problemas.push('Falta el bloque "executeTask"');
+  } else {
+    const inputs = Array.isArray(executeTask.inputs) ? executeTask.inputs : [];
+    const keyValueInput = inputs.find(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        (item as Record<string, unknown>).mode === "keyValue" &&
+        Array.isArray((item as Record<string, unknown>).value),
+    ) as Record<string, unknown> | undefined;
+    if (!keyValueInput || !Array.isArray(keyValueInput.value)) {
+      problemas.push(
+        'El bloque "executeTask" no contiene el contexto key/value requerido por Talend',
+      );
+    } else {
+      const contexto = keyValueInput.value as Array<Record<string, unknown>>;
+      for (const [clave, definicion] of Object.entries(contextos)) {
+        const item = contexto.find((entrada) => entrada.key === clave);
+        const referenciaEsperada = `{ $.${definicion.bloque} }`;
+        if (!item) {
+          problemas.push(`Falta el contexto "${clave}" en executeTask`);
+        } else if (item.value !== referenciaEsperada) {
+          problemas.push(
+            `El contexto "${clave}" debe referenciar ${referenciaEsperada}`,
+          );
+        }
+      }
+    }
+  }
+
+  for (const definicion of Object.values(contextos)) {
+    const bloque = encontrarBloque(blocks, definicion.bloque);
+    if (!bloque) {
+      problemas.push(`Falta el bloque "${definicion.bloque}"`);
+      continue;
+    }
     const operaciones = Array.isArray(bloque.operations)
       ? bloque.operations
       : [];
@@ -75,52 +118,31 @@ export function validarContratoTalend(
         String((item as Record<string, unknown>).id ?? "") === "set_value",
     );
     if (!setValue) {
-      throw new Error(
-        `La automatización base no contiene set_value en ${definicion.bloque} para ${claveTalend}`,
-      );
+      problemas.push(`Falta set_value en el bloque "${definicion.bloque}"`);
     }
+  }
+  return problemas;
+}
+
+export function validarContratoTalend(
+  workspace: Record<string, unknown>,
+): void {
+  const problemas = diagnosticarContratoTalend(workspace);
+  if (problemas.length > 0) {
+    throw new Error(problemas.join("; "));
   }
 }
 
-function validarExecuteTask(blocks: unknown[]): void {
-  const executeTask = buscarBloque(blocks, "executeTask");
-  const inputs = Array.isArray(executeTask.inputs) ? executeTask.inputs : [];
-  const keyValueInput = inputs.find(
+function encontrarBloque(
+  blocks: unknown[],
+  nombre: string,
+): Record<string, unknown> | undefined {
+  return blocks.find(
     (item) =>
       typeof item === "object" &&
       item !== null &&
-      (item as Record<string, unknown>).mode === "keyValue" &&
-      Array.isArray((item as Record<string, unknown>).value),
+      String((item as Record<string, unknown>).name ?? "") === nombre,
   ) as Record<string, unknown> | undefined;
-
-  if (!keyValueInput || !Array.isArray(keyValueInput.value)) {
-    throw new Error(
-      'El bloque "executeTask" no contiene el contexto key/value requerido por Talend',
-    );
-  }
-
-  const contexto = keyValueInput.value as Array<Record<string, unknown>>;
-  const credenciales = contexto.find((item) => item.key === "credenciales");
-  if (!credenciales) {
-    throw new Error(
-      'El bloque "executeTask" no referencia el contexto "credenciales" requerido por Talend',
-    );
-  }
-
-  for (const [clave, definicion] of Object.entries(VARIABLES_TALEND)) {
-    const item = contexto.find((entrada) => entrada.key === clave);
-    const referenciaEsperada = `{ $.${definicion.bloque} }`;
-    if (!item) {
-      throw new Error(
-        `El bloque "executeTask" no referencia el contexto "${clave}" requerido por Talend`,
-      );
-    }
-    if (item.value !== referenciaEsperada) {
-      throw new Error(
-        `El contexto "${clave}" debe referenciar ${referenciaEsperada}`,
-      );
-    }
-  }
 }
 
 function buscarBloque(

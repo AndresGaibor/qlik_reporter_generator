@@ -28,6 +28,7 @@ interface SesionReportes {
   organizacionId: string;
   usuarioId: string;
   usuarioIdQlik: string;
+  usuarioCorreo?: string | null;
 }
 
 export interface DependenciasRutasReportesDataflow {

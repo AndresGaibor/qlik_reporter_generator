@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
-import { inyectarContextoTalend } from "./servicio-contexto-talend.js";
+import {
+  diagnosticarContratoTalend,
+  inyectarContextoTalend,
+} from "./servicio-contexto-talend.js";
 
 const consultas: ConsultasTalendBigQuery = {
   bqSelectData: "CREATE OR REPLACE TABLE `p.d.staging` AS SELECT 1",
@@ -83,6 +86,23 @@ describe("inyectarContextoTalend", () => {
 
     expect(() => inyectarContextoTalend(workspace, consultas, "{}")).toThrow(
       "BqExportData",
+    );
+  });
+});
+
+describe("diagnosticarContratoTalend", () => {
+  it("enumera todos los VariableBlocks faltantes", async () => {
+    const workspace = await cargarFixture();
+    const blocks = workspace.blocks as Array<Record<string, unknown>>;
+    workspace.blocks = blocks.filter(
+      (block) => block.name !== "BqSelectData" && block.name !== "BqDrop",
+    );
+
+    expect(diagnosticarContratoTalend(workspace)).toEqual(
+      expect.arrayContaining([
+        'Falta el bloque "BqSelectData"',
+        'Falta el bloque "BqDrop"',
+      ]),
     );
   });
 });

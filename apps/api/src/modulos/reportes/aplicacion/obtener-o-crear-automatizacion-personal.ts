@@ -123,19 +123,20 @@ export class ObtenerOCrearAutomatizacionPersonal {
       if (!esNoEncontradoQlik(error)) throw error;
       throw new ErrorAplicacion(
         "WORKER_TEMPLATE_INCOMPATIBLE",
-        `La plantilla ${contexto.plantillaIdQlik} no existe o no cumple el contrato Talend; no se reparará automáticamente`,
+        `La plantilla ${contexto.plantillaIdQlik} no existe en Qlik; no se reparará automáticamente`,
         422,
-        { causa: error },
+        { causa: error instanceof Error ? error.message : String(error) },
       );
     }
     try {
       validarContratoTalend(plantilla.workspace ?? {});
     } catch (error) {
+      const causa = error instanceof Error ? error.message : String(error);
       throw new ErrorAplicacion(
         "WORKER_TEMPLATE_INCOMPATIBLE",
-        `La plantilla ${contexto.plantillaIdQlik} no existe o no cumple el contrato Talend; no se reparará automáticamente`,
+        `La plantilla ${contexto.plantillaIdQlik} no cumple el contrato Talend: ${causa}; no se reparará automáticamente`,
         422,
-        { causa: error },
+        { causa },
       );
     }
   }

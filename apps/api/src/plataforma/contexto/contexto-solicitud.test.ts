@@ -16,8 +16,17 @@ describe("ContextoSolicitud", () => {
       },
       sesionPublica: {
         tenantHost: "dos.eu.qlikcloud.com",
-        usuario: null,
-        identidad: null,
+        usuario: {
+          id: "u1",
+          nombre: "Andrés",
+          correo: "Andres.Gaibor@correo.com",
+          avatarUrl: null,
+        },
+        identidad: {
+          id: "i2",
+          nombreQlik: "Andrés",
+          correoQlik: "qlik@correo.com",
+        },
         esSuperadmin: false,
         membresias: [
           { organizacionId: "o1", organizacionNombre: "Org", rol: "admin" },
@@ -28,5 +37,6 @@ describe("ContextoSolicitud", () => {
     });
     expect(contexto.tenantQlikId).toBe("t2");
     expect(contexto.roles).toEqual(["admin"]);
+    expect(contexto.usuarioCorreo).toBe("Andres.Gaibor@correo.com");
   });
 });

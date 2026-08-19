@@ -77,6 +77,7 @@ describe("EjecutarReporte", () => {
       organizacionId: "org-1",
       usuarioId: "user-1",
       usuarioIdQlik: "qlik-1",
+      usuarioCorreo: "Andres.Gaibor+reportes@correo.com",
     });
     expect(workers.ejecutar).toHaveBeenCalled();
     expect(repositorio.crearEjecucion).toHaveBeenCalledWith(
@@ -87,6 +88,8 @@ describe("EjecutarReporte", () => {
         flujoNombreSnapshot: "Ventas Diarias",
         flujoEspacioIdQlik: "sp-1",
         automatizacionIdQlik: "worker-1",
+        uriBaseGcs:
+          "gs://bkt_dwh/POCs/TalendDescargados/andresgaiborreportes/ventas-diarias/11111111-1111-4111-8111-111111111111/",
       }),
     );
   });

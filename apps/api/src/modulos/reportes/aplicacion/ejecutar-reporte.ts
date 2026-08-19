@@ -27,6 +27,7 @@ export interface EntradaEjecutarReporte {
   flujoIdQlik: string;
   usuarioId: string;
   usuarioIdQlik: string;
+  usuarioCorreo?: string | null;
 }
 
 export type ResolverContextoWorker = (
@@ -94,7 +95,9 @@ export class EjecutarReporte {
         500,
       );
     }
-    await this.alcanceBigQuery.estimador.estimarConsulta(preparacion.sqlBigQuery);
+    await this.alcanceBigQuery.estimador.estimarConsulta(
+      preparacion.sqlBigQuery,
+    );
 
     const workers = this.workers;
     if (!workers) {
@@ -136,6 +139,7 @@ export class EjecutarReporte {
       this.alcanceBigQuery.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/",
       flujo.name,
       ejecucionReporteId,
+      entrada.usuarioCorreo,
       entrada.usuarioId,
     );
     const consultasTalend = construirConsultasTalendBigQuery({
@@ -236,6 +240,7 @@ function construirUriEjecucion(
   uriBase: string,
   nombreReporte: string,
   ejecucionId: string,
+  usuarioCorreo?: string | null,
   usuarioId?: string,
 ): string {
   const segmento =
@@ -250,6 +255,18 @@ function construirUriEjecucion(
   if (!base.startsWith("gs://")) {
     throw new Error("La ruta GCS debe iniciar con gs://");
   }
-  const propietario = usuarioId ? `usuarios/${usuarioId}/` : "";
-  return `${base}/${propietario}${segmento}/${ejecucionId}/`;
+  const nombreCorreo = (usuarioCorreo?.split("@", 1)[0] ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}+/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 80);
+  const propietario =
+    nombreCorreo ||
+    (usuarioId ?? "usuario")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "")
+      .slice(0, 80) ||
+    "usuario";
+  return `${base}/${propietario}/${segmento}/${ejecucionId}/`;
 }

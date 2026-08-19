@@ -128,9 +128,14 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     expect(qlik.copiarAutomatizacion).toHaveBeenCalledTimes(1);
   });
 
-  it("valida la plantilla antes de copiar", async () => {
+  it("valida la plantilla antes de copiar y detalla todos los bloques faltantes", async () => {
+    const workspace = await workspaceValido();
+    const blocks = workspace.blocks as Array<Record<string, unknown>>;
+    workspace.blocks = blocks.filter(
+      (block) => block.name !== "BqSelectData" && block.name !== "BqDrop",
+    );
     const qlik = {
-      obtenerAutomatizacion: vi.fn(async () => ({ workspace: {} })),
+      obtenerAutomatizacion: vi.fn(async () => ({ workspace })),
       copiarAutomatizacion: vi.fn(),
     };
     const { caso } = construir({
@@ -138,7 +143,11 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     });
     await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
       codigo: "WORKER_TEMPLATE_INCOMPATIBLE",
+      message: expect.stringContaining('Falta el bloque "BqSelectData"'),
     });
+    await expect(caso.ejecutar(ctx)).rejects.toThrow(
+      'Falta el bloque "BqDrop"',
+    );
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
   });
 

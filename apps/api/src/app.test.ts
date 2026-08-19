@@ -146,6 +146,7 @@ describe("API", () => {
                   ],
                 },
                 ...[
+                  "Credenciales",
                   "BqSelectData",
                   "BqNumberCsv",
                   "BqExportData",
@@ -408,7 +409,7 @@ describe("API", () => {
             {
               mode: "keyValue",
               value: [
-                { key: "credenciales", value: "credenciales" },
+                { key: "credenciales", value: "{ $.Credenciales }" },
                 { key: "bq_select_data", value: "{ $.BqSelectData }" },
                 { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
                 { key: "bq_export_data", value: "{ $.BqExportData }" },
@@ -418,6 +419,7 @@ describe("API", () => {
           ],
         },
         ...[
+          "Credenciales",
           "Credenciales",
           "BqSelectData",
           "BqNumberCsv",
@@ -483,6 +485,7 @@ describe("API", () => {
         usuarioId: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         usuarioIdQlik: "usuario-qlik-1",
+        usuarioCorreo: "Andres.Gaibor@correo.com",
       }),
       resolverQlik: async () => qlik as never,
       resolverBigQueryReporte: async () => ({
@@ -529,6 +532,7 @@ describe("API", () => {
       expect.objectContaining({
         flujoIdQlik: "flujo-1",
         automatizacionPersonalId: "66666666-6666-4666-8666-666666666666",
+        uriBaseGcs: expect.stringContaining("/andresgaibor/ventas/"),
       }),
     );
   });
