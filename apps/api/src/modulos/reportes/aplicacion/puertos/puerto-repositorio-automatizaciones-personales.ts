@@ -36,6 +36,12 @@ export interface PuertoRepositorioAutomatizacionesPersonales {
     id: string,
     cambios: ActualizarAutomatizacionPersonalPersistida,
   ): Promise<AutomatizacionPersonalPersistida>;
+  actualizarScoped(
+    id: string,
+    organizacionId: string,
+    tenantQlikId: string,
+    cambios: ActualizarAutomatizacionPersonalPersistida,
+  ): Promise<AutomatizacionPersonalPersistida>;
   listarPorTenant(
     tenantQlikId: string,
     organizacionId: string,

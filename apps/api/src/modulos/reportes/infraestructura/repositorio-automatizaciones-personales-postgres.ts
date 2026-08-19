@@ -51,6 +51,27 @@ export class RepositorioAutomatizacionesPersonalesPostgres
     return mapear(fila);
   }
 
+  async actualizarScoped(
+    id: string,
+    organizacionId: string,
+    tenantQlikId: string,
+    cambios: ActualizarAutomatizacionPersonalPersistida,
+  ): Promise<AutomatizacionPersonalPersistida> {
+    const [fila] = await this.db
+      .update(automatizacionesPersonalesQlik)
+      .set({ ...cambios, actualizadoEn: new Date() })
+      .where(
+        and(
+          eq(automatizacionesPersonalesQlik.id, id),
+          eq(automatizacionesPersonalesQlik.organizacionId, organizacionId),
+          eq(automatizacionesPersonalesQlik.tenantQlikId, tenantQlikId),
+        ),
+      )
+      .returning();
+    if (!fila) throw new Error("No se encontró la automatización personal");
+    return mapear(fila);
+  }
+
   async listarPorTenant(
     tenantQlikId: string,
     organizacionId: string,

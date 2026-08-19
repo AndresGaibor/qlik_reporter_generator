@@ -54,6 +54,51 @@ describe("RepositorioAutomatizacionesPersonalesPostgres", () => {
     expect(resultado.automatizacionIdQlik).toBe("auto-2");
   });
 
+  it("actualiza el worker solo dentro de organización y tenant", async () => {
+    let condicion: unknown;
+    const fila = { id: "worker-1", ...entrada, automatizacionIdQlik: "auto-2" };
+    const db = {
+      update: () => ({
+        set: () => ({
+          where: (valor: unknown) => {
+            condicion = valor;
+            return { returning: async () => [fila] };
+          },
+        }),
+      }),
+    };
+
+    const repo = new RepositorioAutomatizacionesPersonalesPostgres(db as never);
+    await repo.actualizarScoped(
+      "worker-1",
+      entrada.organizacionId,
+      entrada.tenantQlikId,
+      { automatizacionIdQlik: "auto-2" },
+    );
+
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("worker");
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("organizacion");
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("tenant");
+  });
+
+  it("falla si la actualización scoped no encuentra el worker", async () => {
+    const db = {
+      update: () => ({
+        set: () => ({ where: () => ({ returning: async () => [] }) }),
+      }),
+    };
+    const repo = new RepositorioAutomatizacionesPersonalesPostgres(db as never);
+
+    await expect(
+      repo.actualizarScoped(
+        "worker-1",
+        entrada.organizacionId,
+        entrada.tenantQlikId,
+        { automatizacionIdQlik: "auto-2" },
+      ),
+    ).rejects.toThrow("No se encontró la automatización personal");
+  });
+
   it("rechaza el segundo worker del mismo usuario y tenant, pero permite otros pares", async () => {
     const pares = new Set<string>();
     const db = {

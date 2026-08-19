@@ -205,7 +205,7 @@ describe("administración de automatizaciones personales", () => {
 
   it("recrea el mismo worker resolviendo el propietario Qlik en servidor", async () => {
     const worker = workerPersistido();
-    const actualizar = vi.fn(
+    const actualizarScoped = vi.fn(
       async (_id: string, cambios: Record<string, unknown>) => ({
         ...worker,
         ...cambios,
@@ -234,7 +234,7 @@ describe("administración de automatizaciones personales", () => {
     } as unknown as ServicioQlik;
     const repositorioWorkers = {
       listarPorTenant: vi.fn(async () => [worker]),
-      actualizar,
+      actualizarScoped,
     } as unknown as PuertoRepositorioAutomatizacionesPersonales;
     const repositorio = {
       listarTenantsQlik: vi.fn(async () => [
@@ -268,8 +268,10 @@ describe("administración de automatizaciones personales", () => {
       "new-auto",
       "server-owner",
     );
-    expect(actualizar).toHaveBeenCalledWith(
+    expect(actualizarScoped).toHaveBeenCalledWith(
       "worker-row-1",
+      "org-1",
+      "tenant-1",
       expect.objectContaining({
         automatizacionIdQlik: "new-auto",
         estado: "activo",
@@ -314,7 +316,7 @@ describe("administración de automatizaciones personales", () => {
       },
       repositorioAutomatizacionesPersonales: {
         listarPorTenant: vi.fn(async () => [worker]),
-        actualizar,
+        actualizarScoped: actualizar,
       },
       resolverIdentidadQlik: {
         obtener: vi.fn(async () => ({ usuarioIdQlik: "server-owner" })),
@@ -328,6 +330,109 @@ describe("administración de automatizaciones personales", () => {
 
     expect(respuesta.status).toBe(422);
     expect(actualizar).not.toHaveBeenCalled();
+    expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
+    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
+      "old-broken-auto",
+    );
+  });
+
+  it.each(["owner", "GET", "PUT"] as const)(
+    "limpia la copia nueva si falla %s",
+    async (_nombre) => {
+      const worker = workerPersistido();
+      const error = new Error(`${_nombre} down`);
+      const obtenerAutomatizacion = vi.fn();
+      obtenerAutomatizacion.mockResolvedValueOnce({
+        id: "base-1",
+        workspace: workspaceValido(),
+      });
+      if (_nombre === "GET") obtenerAutomatizacion.mockRejectedValueOnce(error);
+      else
+        obtenerAutomatizacion.mockResolvedValueOnce({
+          id: "new-auto",
+          workspace: workspaceValido(),
+        });
+      const qlik = {
+        obtenerAutomatizacion,
+        copiarAutomatizacion: vi.fn(async () => ({ id: "new-auto" })),
+        cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+        actualizarAutomatizacion: vi.fn(async () => ({ id: "new-auto" })),
+        eliminarAutomatizacion: vi.fn(async () => undefined),
+      };
+      if (_nombre === "owner")
+        qlik.cambiarPropietarioAutomatizacion.mockRejectedValueOnce(error);
+      if (_nombre === "PUT")
+        qlik.actualizarAutomatizacion.mockRejectedValueOnce(error);
+      const actualizar = vi.fn();
+      const respuesta = await crearApp({
+        repositorio: {
+          listarTenantsQlik: vi.fn(async () => [
+            { id: "tenant-1", automatizacionBaseIdQlik: "base-1" },
+          ]),
+        },
+        repositorioAutomatizacionesPersonales: {
+          listarPorTenant: vi.fn(async () => [worker]),
+          actualizarScoped: actualizar,
+        },
+        resolverIdentidadQlik: {
+          obtener: vi.fn(async () => ({ usuarioIdQlik: "server-owner" })),
+        },
+        resolverContexto: async () => contextoAdmin(),
+        resolverQlik: async () => qlik as unknown as ServicioQlik,
+      }).request(
+        "/api/admin/organizaciones/org-1/tenants-qlik/tenant-1/workers/worker-row-1/recrear",
+        { method: "POST" },
+      );
+
+      expect(respuesta.status).toBe(500);
+      expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
+      expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
+        "old-broken-auto",
+      );
+      expect(actualizar).not.toHaveBeenCalled();
+    },
+  );
+
+  it("limpia la copia nueva si falla la asociación scoped", async () => {
+    const worker = workerPersistido();
+    const error = new Error("db down");
+    const actualizarScoped = vi.fn(async () => {
+      throw error;
+    });
+    const qlik = {
+      obtenerAutomatizacion: vi
+        .fn()
+        .mockResolvedValueOnce({ id: "base-1", workspace: workspaceValido() })
+        .mockResolvedValueOnce({
+          id: "new-auto",
+          workspace: workspaceValido(),
+        }),
+      copiarAutomatizacion: vi.fn(async () => ({ id: "new-auto" })),
+      cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+      actualizarAutomatizacion: vi.fn(async () => ({ id: "new-auto" })),
+      eliminarAutomatizacion: vi.fn(async () => undefined),
+    } as unknown as ServicioQlik;
+    const respuesta = await crearApp({
+      repositorio: {
+        listarTenantsQlik: vi.fn(async () => [
+          { id: "tenant-1", automatizacionBaseIdQlik: "base-1" },
+        ]),
+      },
+      repositorioAutomatizacionesPersonales: {
+        listarPorTenant: vi.fn(async () => [worker]),
+        actualizarScoped,
+      },
+      resolverIdentidadQlik: {
+        obtener: vi.fn(async () => ({ usuarioIdQlik: "server-owner" })),
+      },
+      resolverContexto: async () => contextoAdmin(),
+      resolverQlik: async () => qlik,
+    }).request(
+      "/api/admin/organizaciones/org-1/tenants-qlik/tenant-1/workers/worker-row-1/recrear",
+      { method: "POST" },
+    );
+
+    expect(respuesta.status).toBe(500);
     expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
     expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
       "old-broken-auto",
@@ -352,7 +457,7 @@ describe("administración de automatizaciones personales", () => {
     const worker = workerPersistido();
     const base = {
       listarPorTenant: vi.fn(async () => [worker]),
-      actualizar,
+      actualizarScoped: actualizar,
     } as unknown as PuertoRepositorioAutomatizacionesPersonales;
     const respuestaSinBase = await crearApp({
       repositorio: {

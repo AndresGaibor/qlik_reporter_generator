@@ -137,39 +137,49 @@ export function crearRutasAutomatizacionesPersonales(
         }
 
         const nombre = "Automatización personal";
-        const copia = await copiarAutomatizacionPersonal(qlik, {
-          nombre,
-          plantillaIdQlik: tenant.automatizacionBaseIdQlik,
-          propietarioIdQlik: identidad.usuarioIdQlik,
-        });
-        if (copia.incompatible) {
-          await qlik.eliminarAutomatizacion(copia.id).catch(() => undefined);
-          throw new ErrorAplicacion(
-            "PLANTILLA_INCOMPATIBLE",
-            "La nueva copia no cumple el contrato Talend requerido",
-            422,
-            {
-              tipo: "estructura",
-              razon:
-                copia.error instanceof Error
-                  ? copia.error.message
-                  : "Contrato inválido",
-            },
+        let copiaId: string | undefined;
+        try {
+          const copia = await copiarAutomatizacionPersonal(qlik, {
+            nombre,
+            plantillaIdQlik: tenant.automatizacionBaseIdQlik,
+            propietarioIdQlik: identidad.usuarioIdQlik,
+          });
+          copiaId = copia.id;
+          if (copia.incompatible) {
+            throw new ErrorAplicacion(
+              "PLANTILLA_INCOMPATIBLE",
+              "La nueva copia no cumple el contrato Talend requerido",
+              422,
+              {
+                tipo: "estructura",
+                razon:
+                  copia.error instanceof Error
+                    ? copia.error.message
+                    : "Contrato inválido",
+              },
+            );
+          }
+          if (copia.error) throw copia.error;
+          return responderExito(
+            c,
+            await dependencias.repositorioAutomatizacionesPersonales.actualizarScoped(
+              worker.id,
+              organizacionId,
+              tenantQlikId,
+              {
+                automatizacionIdQlik: copia.id,
+                automatizacionNombreSnapshot: copia.nombre,
+                estado: "activo",
+                mensajeError: null,
+              },
+            ),
           );
+        } catch (error) {
+          if (copiaId) {
+            await qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
+          }
+          throw error;
         }
-        if (copia.error) throw copia.error;
-        return responderExito(
-          c,
-          await dependencias.repositorioAutomatizacionesPersonales.actualizar(
-            worker.id,
-            {
-              automatizacionIdQlik: copia.id,
-              automatizacionNombreSnapshot: copia.nombre,
-              estado: "activo",
-              mensajeError: null,
-            },
-          ),
-        );
       } catch (error) {
         return responderErrorAdmin(c, error);
       }

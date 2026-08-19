@@ -32,7 +32,21 @@ export async function copiarAutomatizacionPersonal(
   const id = copia.id;
 
   if (entrada.propietarioIdQlik) {
-    await qlik.cambiarPropietarioAutomatizacion(id, entrada.propietarioIdQlik);
+    try {
+      await qlik.cambiarPropietarioAutomatizacion(
+        id,
+        entrada.propietarioIdQlik,
+      );
+    } catch (error) {
+      return {
+        id,
+        nombre: entrada.nombre,
+        plantillaIdQlik: entrada.plantillaIdQlik,
+        error,
+        incompatible: false,
+        tipoError: "integracion",
+      };
+    }
   }
 
   let automatizacion: AutomatizacionQlik;

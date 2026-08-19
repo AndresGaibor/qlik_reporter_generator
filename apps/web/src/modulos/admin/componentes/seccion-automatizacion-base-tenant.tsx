@@ -1,3 +1,4 @@
+import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
 import {
   Card,
@@ -129,6 +130,7 @@ function DiagnosticoWorkers({
   const [workers, setWorkers] = useState<WorkerDiagnostico[]>([]);
   const [cargando, setCargando] = useState(true);
   const [recreandoId, setRecreandoId] = useState<string | null>(null);
+  const { mostrarError } = useNotificaciones();
   useEffect(() => {
     let activo = true;
     listarWorkersTenant(organizacionId, tenantQlikId)
@@ -150,7 +152,7 @@ function DiagnosticoWorkers({
       ) : (
         <div className="space-y-2">
           {workers.map((worker) => {
-            const problem = worker.estado !== "activo";
+            const problem = worker.estado === "error";
             return (
               <div
                 key={worker.id}
@@ -206,6 +208,12 @@ function DiagnosticoWorkers({
                                 ? actualizado
                                 : actual,
                             ),
+                          );
+                        } catch (error) {
+                          mostrarError(
+                            error instanceof Error
+                              ? error.message
+                              : "No se pudo recrear el worker desde la plantilla",
                           );
                         } finally {
                           setRecreandoId(null);

@@ -24,7 +24,7 @@ import {
 export interface DependenciasRutasConfiguracionTenant {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
-  resolverQlik?: (c: Context) => Promise<ServicioQlik>;
+  resolverQlik: (c: Context) => Promise<ServicioQlik>;
   obtenerBigQuery?: (
     organizacionId: string,
     tenantQlikId: string,
@@ -61,24 +61,21 @@ export function crearRutasConfiguracionTenant({
       const cuerpo = await c.req.json();
       const entrada = esquemaConfigurarAutomatizacionBase.parse(cuerpo);
 
-      if (resolverQlik) {
-        const automatizacion = await resolverQlik(c).then((qlik) =>
-          qlik.obtenerAutomatizacion(entrada.automatizacionBaseIdQlik),
+      const automatizacion = await resolverQlik(c).then((qlik) =>
+        qlik.obtenerAutomatizacion(entrada.automatizacionBaseIdQlik),
+      );
+      try {
+        validarContratoTalend(automatizacion.workspace ?? {});
+      } catch (error) {
+        throw new ErrorAplicacion(
+          "PLANTILLA_INCOMPATIBLE",
+          "La automatización seleccionada no cumple el contrato Talend requerido",
+          422,
+          {
+            tipo: "estructura",
+            razon: error instanceof Error ? error.message : "Contrato inválido",
+          },
         );
-        try {
-          validarContratoTalend(automatizacion.workspace ?? {});
-        } catch (error) {
-          throw new ErrorAplicacion(
-            "PLANTILLA_INCOMPATIBLE",
-            "La automatización seleccionada no cumple el contrato Talend requerido",
-            422,
-            {
-              tipo: "estructura",
-              razon:
-                error instanceof Error ? error.message : "Contrato inválido",
-            },
-          );
-        }
       }
 
       const resultado = await repositorio.configurarAutomatizacionBase(
