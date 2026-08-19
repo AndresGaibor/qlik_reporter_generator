@@ -11,6 +11,58 @@ export interface ResultadoCopiaAutomatizacion {
   error?: unknown;
 }
 
+export interface EntradaCopiaAutomatizacionPersonal {
+  nombre: string;
+  plantillaIdQlik: string;
+  propietarioIdQlik?: string;
+}
+
+/** Copia un worker sin mezclarle datos específicos de ningún reporte. */
+export async function copiarAutomatizacionPersonal(
+  qlik: PuertoQlik,
+  entrada: EntradaCopiaAutomatizacionPersonal,
+): Promise<ResultadoCopiaAutomatizacion> {
+  const copia = await qlik.copiarAutomatizacion(
+    entrada.plantillaIdQlik,
+    entrada.nombre,
+  );
+  const id = copia.id;
+
+  if (entrada.propietarioIdQlik) {
+    await qlik
+      .cambiarPropietarioAutomatizacion(id, entrada.propietarioIdQlik)
+      .catch(() => undefined);
+  }
+
+  try {
+    const automatizacion = await qlik.obtenerAutomatizacion(id);
+    const workspace = structuredClone(automatizacion.workspace ?? {}) as Record<
+      string,
+      unknown
+    >;
+    validarContratoTalend(workspace);
+    await qlik.actualizarAutomatizacion(id, {
+      name: entrada.nombre,
+      description: "Worker personal reutilizable",
+      schedules: [],
+      workspace,
+      maxConcurrentRuns: automatizacion.maxConcurrentRuns ?? 1,
+    });
+    return {
+      id,
+      nombre: entrada.nombre,
+      plantillaIdQlik: entrada.plantillaIdQlik,
+    };
+  } catch (error) {
+    return {
+      id,
+      nombre: entrada.nombre,
+      plantillaIdQlik: entrada.plantillaIdQlik,
+      error,
+    };
+  }
+}
+
 export async function copiarAutomatizacion(
   qlik: PuertoQlik,
   entrada: CrearDesdePlantilla,
