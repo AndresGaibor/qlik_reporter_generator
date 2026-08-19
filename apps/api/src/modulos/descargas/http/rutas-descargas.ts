@@ -52,9 +52,14 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     const configuracion = await dependencias.resolverConfiguracionGcs(c);
     const almacenamiento = await dependencias.resolverAlmacenamiento(c);
     if (!almacenamiento.listarDirectorio) {
-      return responderError(c, "El almacenamiento no permite explorar carpetas", 501, {
-        codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
-      });
+      return responderError(
+        c,
+        "El almacenamiento no permite explorar carpetas",
+        501,
+        {
+          codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
+        },
+      );
     }
     const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
     try {
@@ -130,9 +135,14 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     const sesion = await dependencias.resolverSesion(c);
     const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
     if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs) {
-      return responderError(c, "No se pudo resolver la carpeta del usuario", 422, {
-        codigo: "CARPETA_USUARIO_NO_DISPONIBLE",
-      });
+      return responderError(
+        c,
+        "No se pudo resolver la carpeta del usuario",
+        422,
+        {
+          codigo: "CARPETA_USUARIO_NO_DISPONIBLE",
+        },
+      );
     }
     const configuracion = await dependencias.resolverConfiguracionGcs(c);
     const cuerpo = await c.req.json<{ ruta?: string }>();
@@ -263,17 +273,30 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
         codigo: "SOLO_ADMIN",
       });
     }
-    if (!dependencias.resolverConfiguracionGcs || !dependencias.resolverUsuariosOrganizacion) {
-      return responderError(c, "No se pudo resolver las carpetas de usuarios", 422, {
-        codigo: "CARPETAS_USUARIO_NO_CONFIGURADAS",
-      });
+    if (
+      !dependencias.resolverConfiguracionGcs ||
+      !dependencias.resolverUsuariosOrganizacion
+    ) {
+      return responderError(
+        c,
+        "No se pudo resolver las carpetas de usuarios",
+        422,
+        {
+          codigo: "CARPETAS_USUARIO_NO_CONFIGURADAS",
+        },
+      );
     }
     const configuracion = await dependencias.resolverConfiguracionGcs(c);
     const almacenamiento = await dependencias.resolverAlmacenamiento(c);
     if (!almacenamiento.listarDirectorio) {
-      return responderError(c, "El almacenamiento no permite explorar carpetas", 501, {
-        codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
-      });
+      return responderError(
+        c,
+        "El almacenamiento no permite explorar carpetas",
+        501,
+        {
+          codigo: "GCS_EXPLORADOR_NO_DISPONIBLE",
+        },
+      );
     }
     try {
       const [directorio, usuarios] = await Promise.all([
@@ -361,7 +384,7 @@ function carpetaDesdeCorreo(correo: string | null | undefined): string | null {
   const local = correo
     ?.split("@")[0]
     ?.normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\p{M}+/gu, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
   return local || null;

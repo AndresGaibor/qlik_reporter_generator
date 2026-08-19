@@ -77,7 +77,7 @@ describe("EjecutarReporte", () => {
       organizacionId: "org-1",
       usuarioId: "user-1",
       usuarioIdQlik: "qlik-1",
-      usuarioCorreo: "Andres.Gaibor+reportes@correo.com",
+      correo: "Andres.Gaibor+reportes@correo.com",
     });
     expect(workers.ejecutar).toHaveBeenCalled();
     expect(repositorio.crearEjecucion).toHaveBeenCalledWith(

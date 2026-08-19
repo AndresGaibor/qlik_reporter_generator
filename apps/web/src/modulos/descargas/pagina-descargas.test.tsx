@@ -22,15 +22,29 @@ vi.mock("@/modulos/descargas/api", () => ({
     carpetaUsuario: "byronnasimba",
     carpetas: [],
     archivos: [
-      { nombre: "pruebagcp.csv", formato: "CSV", tamano: 27, fecha: "2026-08-18T22:34:00.000Z" },
+      {
+        nombre: "pruebagcp.csv",
+        formato: "CSV",
+        tamano: 27,
+        fecha: "2026-08-18T22:34:00.000Z",
+      },
     ],
   }),
   listarCarpetasUsuariosGcs: vi.fn().mockResolvedValue([
-    { usuarioId: "u-1", correo: "andres.gaibor@aliwareint.com", carpeta: "andresgaibor" },
-    { usuarioId: "u-2", correo: "byron.nasimba@aliwareint.com", carpeta: "byronnasimba" },
+    {
+      usuarioId: "u-1",
+      correo: "andres.gaibor@aliwareint.com",
+      carpeta: "andresgaibor",
+    },
+    {
+      usuarioId: "u-2",
+      correo: "byron.nasimba@aliwareint.com",
+      carpeta: "byronnasimba",
+    },
   ]),
   firmarArchivoCarpetaUsuarioGcs: vi.fn().mockResolvedValue({
-    nombre: "pruebagcp.csv", url: "https://storage.example.com/user-signed",
+    nombre: "pruebagcp.csv",
+    url: "https://storage.example.com/user-signed",
   }),
   listarDescargasAdministracion: vi.fn().mockResolvedValue([
     {
@@ -96,7 +110,10 @@ vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
 }));
 
 import { VistaContext } from "@/app/contexto-vista";
-import { firmarArchivoCarpetaUsuarioGcs, listarExploradorGcs } from "@/modulos/descargas/api";
+import {
+  firmarArchivoCarpetaUsuarioGcs,
+  listarExploradorGcs,
+} from "@/modulos/descargas/api";
 import { PaginaDescargas } from "./pagina-descargas";
 
 let root: Root | undefined;
@@ -174,7 +191,9 @@ test("renderiza el explorador GCS para administradores", async () => {
 });
 
 test("descarga un archivo de la carpeta privada usando la URL firmada", async () => {
-  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
   const vista = await montar();
   const boton = [...vista.querySelectorAll("button")].find(
     (elemento) => elemento.textContent?.trim() === "Descargar",
@@ -184,7 +203,9 @@ test("descarga un archivo de la carpeta privada usando la URL firmada", async ()
     boton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
   await vi.waitFor(() => {
-    expect(firmarArchivoCarpetaUsuarioGcs).toHaveBeenCalledWith("pruebagcp.csv");
+    expect(firmarArchivoCarpetaUsuarioGcs).toHaveBeenCalledWith(
+      "pruebagcp.csv",
+    );
     expect(click).toHaveBeenCalledOnce();
   });
   click.mockRestore();

@@ -97,7 +97,12 @@ function crearAppCarpetas(rol: "admin" | "usuario") {
       prefijos.push(prefijo);
       if (prefijo === "POCs/TalendDescargados/") {
         return {
-          carpetas: ["andresgaibor/", "byronnasimba/", "byron.nasimba/", "reportes/"],
+          carpetas: [
+            "andresgaibor/",
+            "byronnasimba/",
+            "byron.nasimba/",
+            "reportes/",
+          ],
           archivos: [],
         };
       }
@@ -141,7 +146,7 @@ function crearAppCarpetas(rol: "admin" | "usuario") {
       { id: "user-2", correo: "andres.gaibor@aliwareint.com" },
       { id: "user-3", correo: null },
     ],
-  } as any);
+  } satisfies Parameters<typeof crearRutasDescargas>[0]);
   const app = new Hono();
   app.route("/api/descargas", rutas);
   return { app, prefijos };
@@ -163,9 +168,8 @@ describe("carpetas GCS por usuario registrado", () => {
     const res = await app.request("/api/descargas/administracion/carpetas");
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.datos.map((item: { carpeta: string }) => item.carpeta)).toEqual([
-      "andresgaibor",
-      "byronnasimba",
-    ]);
+    expect(json.datos.map((item: { carpeta: string }) => item.carpeta)).toEqual(
+      ["andresgaibor", "byronnasimba"],
+    );
   });
 });

@@ -37,6 +37,6 @@ describe("ContextoSolicitud", () => {
     });
     expect(contexto.tenantQlikId).toBe("t2");
     expect(contexto.roles).toEqual(["admin"]);
-    expect(contexto.usuarioCorreo).toBe("Andres.Gaibor@correo.com");
+    expect(contexto.correo).toBe("Andres.Gaibor@correo.com");
   });
 });

@@ -16,7 +16,7 @@ export interface ContextoSolicitud {
   tenantHost?: string;
   identidadQlikId?: string;
   usuarioIdQlik?: string;
-  usuarioCorreo?: string | null;
+  correo?: string | null;
   esSuperadmin?: boolean;
   roles?: Array<"admin" | "usuario">;
 }
@@ -47,7 +47,6 @@ export interface ContextoSolicitudAutenticado extends ContextoSolicitud {
   tenantHost: string;
   identidadQlikId: string;
   usuarioIdQlik: string;
-  usuarioCorreo: string | null;
   esSuperadmin: boolean;
   roles: Array<"admin" | "usuario">;
 }
@@ -68,16 +67,15 @@ export function construirContextoSolicitud(entrada: {
     ...(entrada.agenteUsuario ? { agenteUsuario: entrada.agenteUsuario } : {}),
     sesionId: entrada.sesion.sesionId,
     usuarioId: entrada.sesion.usuarioId,
-    correo: entrada.sesionPublica.usuario?.correo ?? null,
+    correo:
+      entrada.sesionPublica.usuario?.correo ??
+      entrada.sesionPublica.identidad?.correoQlik ??
+      null,
     organizacionId: entrada.sesion.organizacionId,
     tenantQlikId: entrada.sesion.tenantId,
     tenantHost: entrada.sesion.tenantHost,
     identidadQlikId: entrada.sesion.identidadQlikId,
     usuarioIdQlik: entrada.sesion.usuarioIdQlik,
-    usuarioCorreo:
-      entrada.sesionPublica.usuario?.correo ??
-      entrada.sesionPublica.identidad?.correoQlik ??
-      null,
     esSuperadmin: entrada.sesionPublica.esSuperadmin,
     roles,
   };

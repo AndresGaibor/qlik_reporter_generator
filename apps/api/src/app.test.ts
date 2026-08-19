@@ -485,7 +485,7 @@ describe("API", () => {
         usuarioId: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         usuarioIdQlik: "usuario-qlik-1",
-        usuarioCorreo: "Andres.Gaibor@correo.com",
+        correo: "Andres.Gaibor@correo.com",
       }),
       resolverQlik: async () => qlik as never,
       resolverBigQueryReporte: async () => ({

@@ -27,7 +27,7 @@ export interface EntradaEjecutarReporte {
   flujoIdQlik: string;
   usuarioId: string;
   usuarioIdQlik: string;
-  usuarioCorreo?: string | null;
+  correo?: string | null;
 }
 
 export type ResolverContextoWorker = (
@@ -139,7 +139,7 @@ export class EjecutarReporte {
       this.alcanceBigQuery.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/",
       flujo.name,
       ejecucionReporteId,
-      entrada.usuarioCorreo,
+      entrada.correo,
       entrada.usuarioId,
     );
     const consultasTalend = construirConsultasTalendBigQuery({
@@ -240,7 +240,7 @@ function construirUriEjecucion(
   uriBase: string,
   nombreReporte: string,
   ejecucionId: string,
-  usuarioCorreo?: string | null,
+  correo?: string | null,
   usuarioId?: string,
 ): string {
   const segmento =
@@ -255,7 +255,7 @@ function construirUriEjecucion(
   if (!base.startsWith("gs://")) {
     throw new Error("La ruta GCS debe iniciar con gs://");
   }
-  const nombreCorreo = (usuarioCorreo?.split("@", 1)[0] ?? "")
+  const nombreCorreo = (correo?.split("@", 1)[0] ?? "")
     .normalize("NFD")
     .replace(/\p{M}+/gu, "")
     .toLowerCase()

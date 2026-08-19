@@ -8,8 +8,8 @@ import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
-  type ExploradorGcs,
   type CarpetaRegistradaGcs,
+  type ExploradorGcs,
   type ResumenDescargaEjecucion,
   firmarArchivoCarpetaUsuarioGcs,
   firmarArchivoExploradorGcs,
@@ -130,15 +130,22 @@ export function PaginaDescargas() {
                 </span>
               </div>
               <p className="mt-1 max-w-2xl text-sm text-ink-500">
-                Aquí se guardan únicamente tus ejecuciones y archivos generados. Nadie fuera de tu cuenta puede acceder a esta carpeta.
+                Aquí se guardan únicamente tus ejecuciones y archivos generados.
+                Nadie fuera de tu cuenta puede acceder a esta carpeta.
               </p>
               {correoUsuario && (
-                <p className="mt-2 truncate text-xs text-ink-400">{correoUsuario}</p>
+                <p className="mt-2 truncate text-xs text-ink-400">
+                  {correoUsuario}
+                </p>
               )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:min-w-[220px]">
-            <MetricaCarpeta icono="file-text" etiqueta="Ejecuciones" valor={descargas.length} />
+            <MetricaCarpeta
+              icono="file-text"
+              etiqueta="Ejecuciones"
+              valor={descargas.length}
+            />
             <MetricaCarpeta
               icono="download"
               etiqueta="Archivos"
@@ -153,7 +160,11 @@ export function PaginaDescargas() {
         mostrarBucket={false}
         datos={carpetaUsuario.data ?? null}
         cargando={carpetaUsuario.isLoading}
-        error={carpetaUsuario.error instanceof Error ? carpetaUsuario.error.message : null}
+        error={
+          carpetaUsuario.error instanceof Error
+            ? carpetaUsuario.error.message
+            : null
+        }
         onAbrirCarpeta={(carpeta) => setRutaCarpeta(`${rutaCarpeta}${carpeta}`)}
         onSubir={() => {
           const partes = rutaCarpeta.split("/").filter(Boolean);
@@ -161,25 +172,38 @@ export function PaginaDescargas() {
           setRutaCarpeta(partes.length ? `${partes.join("/")}/` : "");
         }}
         onDescargar={async (nombre) => {
-          const firmado = await firmarArchivoCarpetaUsuarioGcs(`${rutaCarpeta}${nombre}`);
+          const firmado = await firmarArchivoCarpetaUsuarioGcs(
+            `${rutaCarpeta}${nombre}`,
+          );
           descargarDesdeEnlace(firmado);
         }}
       />
 
       <div className="mt-7 flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-600">Actividad de la aplicaci?n</p>
-          <h2 className="mt-1 font-display text-lg font-semibold text-ink-900">Historial de ejecuciones</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-600">
+            Actividad de la aplicación
+          </p>
+          <h2 className="mt-1 font-display text-lg font-semibold text-ink-900">
+            Historial de ejecuciones
+          </h2>
         </div>
-        <span className="text-sm text-ink-500">{descargas.length} {descargas.length === 1 ? "reporte" : "reportes"}</span>
+        <span className="text-sm text-ink-500">
+          {descargas.length} {descargas.length === 1 ? "reporte" : "reportes"}
+        </span>
       </div>
       {descargas.length === 0 ? (
         <div className="mt-3 rounded-xl border border-dashed border-line-300 bg-surface p-8 text-center">
           <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-surface-subtle text-ink-400">
             <Icon name="folder" />
           </span>
-          <p className="mt-3 font-medium text-ink-800">A?n no tienes reportes descargables</p>
-          <p className="mt-1 text-sm text-ink-500">Cuando ejecutes un reporte, sus archivos aparecer?n autom?ticamente aqu?.</p>
+          <p className="mt-3 font-medium text-ink-800">
+            Aún no tienes reportes descargables
+          </p>
+          <p className="mt-1 text-sm text-ink-500">
+            Cuando ejecutes un reporte, sus archivos aparecerán automáticamente
+            aquí.
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -228,7 +252,6 @@ export function PaginaDescargas() {
   );
 }
 
-
 function descargarDesdeEnlace(firmado: { nombre: string; url: string }) {
   const enlace = document.createElement("a");
   enlace.href = firmado.url;
@@ -245,7 +268,9 @@ function nombreDesdeCorreo(correo: string | null | undefined): string {
   return local
     .split(/[._-]+/)
     .filter(Boolean)
-    .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase())
+    .map(
+      (parte) => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase(),
+    )
     .join(" ");
 }
 
@@ -279,9 +304,12 @@ function SeccionCarpetasUsuariosGcs({
   if (carpetas.length === 0) return null;
   return (
     <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
-      <h2 className="font-display text-lg font-semibold text-ink-900">Carpetas de usuarios</h2>
+      <h2 className="font-display text-lg font-semibold text-ink-900">
+        Carpetas de usuarios
+      </h2>
       <p className="mt-1 text-sm text-ink-500">
-        Carpetas reales de Google Cloud Storage asociadas a usuarios registrados.
+        Carpetas reales de Google Cloud Storage asociadas a usuarios
+        registrados.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {carpetas.map((item) => (
@@ -293,8 +321,12 @@ function SeccionCarpetasUsuariosGcs({
           >
             <Icon name="folder" />
             <span className="min-w-0">
-              <span className="block font-semibold text-ink-900">{item.carpeta}</span>
-              <span className="block truncate text-xs text-ink-500">{item.correo}</span>
+              <span className="block font-semibold text-ink-900">
+                {item.carpeta}
+              </span>
+              <span className="block truncate text-xs text-ink-500">
+                {item.correo}
+              </span>
             </span>
           </button>
         ))}
@@ -326,17 +358,25 @@ function SeccionAdministracion({
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Administración de descargas</h2>
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">Solo administradores</span>
+            <h2 className="font-display text-lg font-semibold text-ink-900">
+              Administración de descargas
+            </h2>
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
+              Solo administradores
+            </span>
           </div>
           <p className="mt-1 text-sm text-ink-500">
-            Consulta las carpetas privadas de los usuarios de esta organización sin mezclar su contenido con tu espacio personal.
+            Consulta las carpetas privadas de los usuarios de esta organización
+            sin mezclar su contenido con tu espacio personal.
           </p>
         </div>
       </div>
       <div className="mt-4 space-y-4">
         {Object.entries(grupos).map(([propietario, items]) => (
-          <div key={propietario} className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4">
+          <div
+            key={propietario}
+            className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4"
+          >
             <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-800">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-brand-700 shadow-sm">
                 <Icon name="folder" size="sm" />
@@ -349,7 +389,6 @@ function SeccionAdministracion({
               <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-500">
                 {items.length} {items.length === 1 ? "reporte" : "reportes"}
               </span>
-
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((descarga) => (

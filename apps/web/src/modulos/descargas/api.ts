@@ -60,7 +60,6 @@ export function firmarArchivoExploradorGcs(ruta: string) {
   );
 }
 
-
 export interface CarpetaUsuarioGcs extends ExploradorGcs {
   carpetaUsuario: string;
 }

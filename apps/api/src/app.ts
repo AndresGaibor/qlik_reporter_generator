@@ -108,7 +108,7 @@ export interface DependenciasAplicacion {
     usuarioId: string;
     organizacionId: string;
     usuarioIdQlik: string;
-    usuarioCorreo?: string | null;
+    correo?: string | null;
     roles?: Array<"admin" | "usuario">;
     esSuperadmin?: boolean;
   }>;
@@ -170,7 +170,6 @@ export async function crearAplicacion(
         correo: contexto.correo,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,
-        usuarioCorreo: contexto.usuarioCorreo,
         esSuperadmin: contexto.esSuperadmin ?? false,
         roles: contexto.roles ?? [],
       };
@@ -490,10 +489,12 @@ export async function crearAplicacion(
         });
       },
       resolverUsuariosOrganizacion: async (organizacionId) =>
-        (await repositorioAdministracion.listarUsuarios(organizacionId)).map((usuario) => ({
-          id: usuario.id,
-          correo: usuario.correo,
-        })),
+        (await repositorioAdministracion.listarUsuarios(organizacionId)).map(
+          (usuario) => ({
+            id: usuario.id,
+            correo: usuario.correo,
+          }),
+        ),
       resolverConfiguracionGcs: async (c) => {
         const sesion = await resolverSesion(c);
         const google = await resolverGoogle.resolver(
