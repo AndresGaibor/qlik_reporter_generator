@@ -129,4 +129,47 @@ describe("copiarAutomatizacionPersonal", () => {
     expect(JSON.stringify(definicion.workspace)).not.toContain("Appid");
     expect(JSON.stringify(definicion.workspace)).not.toContain("autor");
   });
+
+  it("distingue un GET fallido de una copia estructuralmente inválida", async () => {
+    const error = new Error("Qlik temporalmente no disponible");
+    const qlik = {
+      copiarAutomatizacion: vi.fn(async () => ({ id: "worker-1" })),
+      cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+      obtenerAutomatizacion: vi.fn(async () => {
+        throw error;
+      }),
+    } as unknown as ServicioQlik;
+
+    const resultado = await copiarAutomatizacionPersonal(qlik, {
+      nombre: "Worker personal",
+      plantillaIdQlik: "base-1",
+    });
+
+    expect(resultado.error).toBe(error);
+    expect(resultado.tipoError).toBe("integracion");
+    expect(resultado.incompatible).toBe(false);
+  });
+
+  it("distingue un PUT fallido de una copia estructuralmente inválida", async () => {
+    const error = new Error("Qlik temporalmente no disponible");
+    const qlik = {
+      copiarAutomatizacion: vi.fn(async () => ({ id: "worker-1" })),
+      cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+      obtenerAutomatizacion: vi.fn(async () => ({
+        workspace: await workspaceTalend(),
+      })),
+      actualizarAutomatizacion: vi.fn(async () => {
+        throw error;
+      }),
+    } as unknown as ServicioQlik;
+
+    const resultado = await copiarAutomatizacionPersonal(qlik, {
+      nombre: "Worker personal",
+      plantillaIdQlik: "base-1",
+    });
+
+    expect(resultado.error).toBe(error);
+    expect(resultado.tipoError).toBe("integracion");
+    expect(resultado.incompatible).toBe(false);
+  });
 });

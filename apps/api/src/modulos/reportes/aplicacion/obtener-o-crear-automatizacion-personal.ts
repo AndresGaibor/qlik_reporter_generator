@@ -2,6 +2,7 @@ import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import { copiarAutomatizacionPersonal } from "../../automatizaciones/aplicacion/servicios/servicio-copia-automatizacion.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { AutomatizacionQlik } from "../../qlik/dominio/modelos-qlik.js";
 import { ErrorApiQlik } from "../../qlik/infraestructura/error-api-qlik.js";
 import type {
   AutomatizacionPersonalPersistida,
@@ -43,8 +44,9 @@ export class ObtenerOCrearAutomatizacionPersonal {
       contexto.usuarioId,
       contexto.tenantQlikId,
     );
-    if (despuesDelLock)
-      return this.resolverPersistida(despuesDelLock, contexto);
+    if (despuesDelLock) {
+      return this.resolverPersistida(despuesDelLock, contexto, false);
+    }
     throw new ErrorAplicacion(
       "WORKER_LOCK_BUSY",
       "No se pudo obtener el lock del worker personal; reintenta la ejecución",
@@ -55,20 +57,20 @@ export class ObtenerOCrearAutomatizacionPersonal {
   private async resolverPersistida(
     persistida: AutomatizacionPersonalPersistida,
     contexto: ContextoObtenerOCrearAutomatizacionPersonal,
+    puedeRecrear = true,
   ): Promise<AutomatizacionPersonalPersistida> {
+    let automatizacion: AutomatizacionQlik;
     try {
-      const automatizacion = await this.qlik.obtenerAutomatizacion(
+      automatizacion = await this.qlik.obtenerAutomatizacion(
         persistida.automatizacionIdQlik,
       );
-      validarContratoTalend(automatizacion.workspace ?? {});
-      return persistida;
     } catch (error) {
-      if (!esNoEncontradoQlik(error)) {
+      if (!esNoEncontradoQlik(error)) throw error;
+      if (!puedeRecrear) {
         throw new ErrorAplicacion(
-          "WORKER_INCOMPATIBLE",
-          `El worker personal ${persistida.automatizacionIdQlik} no cumple el contrato Talend; requiere reparación explícita`,
-          422,
-          { causa: error },
+          "WORKER_LOCK_BUSY",
+          "El worker personal desapareció mientras otro proceso mantiene el lock; reintenta la ejecución",
+          409,
         );
       }
       await this.validarPlantilla(contexto);
@@ -80,6 +82,18 @@ export class ObtenerOCrearAutomatizacionPersonal {
         mensajeError: null,
       });
     }
+
+    try {
+      validarContratoTalend(automatizacion.workspace ?? {});
+    } catch (error) {
+      throw new ErrorAplicacion(
+        "WORKER_INCOMPATIBLE",
+        `El worker personal ${persistida.automatizacionIdQlik} no cumple el contrato Talend; requiere reparación explícita`,
+        422,
+        { causa: error },
+      );
+    }
+    return persistida;
   }
 
   private async crearDesdePlantilla(
@@ -100,10 +114,21 @@ export class ObtenerOCrearAutomatizacionPersonal {
   private async validarPlantilla(
     contexto: ContextoObtenerOCrearAutomatizacionPersonal,
   ): Promise<void> {
+    let plantilla: AutomatizacionQlik;
     try {
-      const plantilla = await this.qlik.obtenerAutomatizacion(
+      plantilla = await this.qlik.obtenerAutomatizacion(
         contexto.plantillaIdQlik,
       );
+    } catch (error) {
+      if (!esNoEncontradoQlik(error)) throw error;
+      throw new ErrorAplicacion(
+        "WORKER_TEMPLATE_INCOMPATIBLE",
+        `La plantilla ${contexto.plantillaIdQlik} no existe o no cumple el contrato Talend; no se reparará automáticamente`,
+        422,
+        { causa: error },
+      );
+    }
+    try {
       validarContratoTalend(plantilla.workspace ?? {});
     } catch (error) {
       throw new ErrorAplicacion(
@@ -124,6 +149,7 @@ export class ObtenerOCrearAutomatizacionPersonal {
       propietarioIdQlik: contexto.usuarioIdQlik,
     });
     if (resultado.error) {
+      if (!resultado.incompatible) throw resultado.error;
       await this.qlik
         .eliminarAutomatizacion(resultado.id)
         .catch(() => undefined);

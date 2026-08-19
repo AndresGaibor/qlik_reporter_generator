@@ -1,6 +1,7 @@
 import type { CrearDesdePlantilla } from "@qlik/contratos/automatizaciones";
 import { generarUuid } from "../../../../nucleo/valores/generar-uuid.js";
 import type { PuertoQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { AutomatizacionQlik } from "../../../qlik/dominio/modelos-qlik.js";
 import { validarContratoTalend } from "../../../reportes/aplicacion/servicio-contexto-talend.js";
 import { aplicarReemplazosEnWorkspace } from "./servicio-reemplazo-workspace.js";
 
@@ -9,6 +10,8 @@ export interface ResultadoCopiaAutomatizacion {
   nombre: string;
   plantillaIdQlik: string;
   error?: unknown;
+  incompatible?: boolean;
+  tipoError?: "incompatible" | "integracion";
 }
 
 export interface EntradaCopiaAutomatizacionPersonal {
@@ -34,13 +37,38 @@ export async function copiarAutomatizacionPersonal(
       .catch(() => undefined);
   }
 
+  let automatizacion: AutomatizacionQlik;
   try {
-    const automatizacion = await qlik.obtenerAutomatizacion(id);
-    const workspace = structuredClone(automatizacion.workspace ?? {}) as Record<
-      string,
-      unknown
-    >;
+    automatizacion = await qlik.obtenerAutomatizacion(id);
+  } catch (error) {
+    return {
+      id,
+      nombre: entrada.nombre,
+      plantillaIdQlik: entrada.plantillaIdQlik,
+      error,
+      incompatible: false,
+      tipoError: "integracion",
+    };
+  }
+
+  const workspace = structuredClone(automatizacion.workspace ?? {}) as Record<
+    string,
+    unknown
+  >;
+  try {
     validarContratoTalend(workspace);
+  } catch (error) {
+    return {
+      id,
+      nombre: entrada.nombre,
+      plantillaIdQlik: entrada.plantillaIdQlik,
+      error,
+      incompatible: true,
+      tipoError: "incompatible",
+    };
+  }
+
+  try {
     await qlik.actualizarAutomatizacion(id, {
       name: entrada.nombre,
       description: "Worker personal reutilizable",
@@ -52,6 +80,7 @@ export async function copiarAutomatizacionPersonal(
       id,
       nombre: entrada.nombre,
       plantillaIdQlik: entrada.plantillaIdQlik,
+      incompatible: false,
     };
   } catch (error) {
     return {
@@ -59,6 +88,8 @@ export async function copiarAutomatizacionPersonal(
       nombre: entrada.nombre,
       plantillaIdQlik: entrada.plantillaIdQlik,
       error,
+      incompatible: false,
+      tipoError: "integracion",
     };
   }
 }

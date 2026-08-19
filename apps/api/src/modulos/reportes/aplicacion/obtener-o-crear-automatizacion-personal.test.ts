@@ -206,4 +206,109 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
     expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
   });
+
+  it("si el lock está ocupado reutiliza una fila compatible sin mutarla", async () => {
+    const lock: PuertoBloqueoEjecucion = {
+      ejecutarExclusivo: vi.fn(async () => undefined),
+    };
+    const { caso, repo, qlik } = construir({
+      lock,
+      repo: { obtener: vi.fn(async () => persistida()) },
+    });
+
+    const resultado = await caso.ejecutar(ctx);
+
+    expect(resultado.id).toBe("row-1");
+    expect(repo.actualizar).not.toHaveBeenCalled();
+    expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("si el lock está ocupado y no hay fila devuelve WORKER_LOCK_BUSY", async () => {
+    const lock: PuertoBloqueoEjecucion = {
+      ejecutarExclusivo: vi.fn(async () => undefined),
+    };
+    const { caso, qlik } = construir({ lock });
+
+    await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
+      codigo: "WORKER_LOCK_BUSY",
+    });
+    expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("si el lock está ocupado y la fila da 404 no recrea fuera del lock", async () => {
+    const lock: PuertoBloqueoEjecucion = {
+      ejecutarExclusivo: vi.fn(async () => undefined),
+    };
+    const { caso, repo, qlik } = construir({
+      lock,
+      repo: { obtener: vi.fn(async () => persistida()) },
+      qlik: {
+        obtenerAutomatizacion: vi.fn(async () => {
+          throw new ErrorApiQlik(404, "Not Found", "/workers/worker-1");
+        }),
+      },
+    });
+
+    await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
+      codigo: "WORKER_LOCK_BUSY",
+    });
+    expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+    expect(repo.actualizar).not.toHaveBeenCalled();
+    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it.each([401, 403, 429, 503])(
+    "propaga un GET del worker con estado %s sin marcar incompatibilidad",
+    async (estado) => {
+      const error = new ErrorApiQlik(estado, "Qlik error", "/workers/worker-1");
+      const { caso, repo } = construir({
+        repo: { obtener: vi.fn(async () => persistida()) },
+        qlik: {
+          obtenerAutomatizacion: vi.fn(async () => {
+            throw error;
+          }),
+        },
+      });
+
+      await expect(caso.ejecutar(ctx)).rejects.toBe(error);
+      expect(repo.actualizar).not.toHaveBeenCalled();
+    },
+  );
+
+  it("propaga un fallo de integración al validar la plantilla", async () => {
+    const error = new ErrorApiQlik(
+      429,
+      "Too Many Requests",
+      "/templates/template-1",
+    );
+    const { caso, qlik } = construir({
+      qlik: {
+        obtenerAutomatizacion: vi.fn(async () => {
+          throw error;
+        }),
+      },
+    });
+
+    await expect(caso.ejecutar(ctx)).rejects.toBe(error);
+    expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("no elimina una copia cuando su GET posterior falla por integración", async () => {
+    const error = new ErrorApiQlik(503, "Unavailable", "/workers/worker-new");
+    const qlik = {
+      obtenerAutomatizacion: vi
+        .fn()
+        .mockResolvedValueOnce({ workspace: await workspaceValido() })
+        .mockRejectedValueOnce(error),
+      eliminarAutomatizacion: vi.fn(async () => undefined),
+    };
+    const { caso, repo } = construir({
+      qlik: qlik as unknown as Partial<ServicioQlik>,
+    });
+
+    await expect(caso.ejecutar(ctx)).rejects.toBe(error);
+    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
+    expect(repo.crear).not.toHaveBeenCalled();
+  });
 });
