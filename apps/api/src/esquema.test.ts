@@ -184,21 +184,8 @@ describe("Esquema Drizzle", () => {
     expect(idxs).toContain("idx_sesiones_usuario_expira");
   });
 
-  it("reportes no persiste propiedad de Qlik Automate", () => {
-    const cols = colNames(getTableConfig(esquema.reportes));
-    expect(cols).toContain("flujo_id_qlik");
-    expect(cols).toContain("estado");
-    expect(cols).not.toContain("automatizacion_id_qlik");
-    expect(cols).not.toContain("automatizacion_nombre_snapshot");
-    for (const legacy of [
-      "programar",
-      "destino_proveedor",
-      "destino_id_externo",
-      "destino_nombre_snapshot",
-      "clave_idempotencia",
-    ]) {
-      expect(cols).not.toContain(legacy);
-    }
+  it("no exporta reportes porque el catálogo vive en Qlik", () => {
+    expect(esquema).not.toHaveProperty("reportes");
   });
 
   it("automatizaciones personales son únicas por usuario y tenant", () => {
@@ -225,7 +212,7 @@ describe("Esquema Drizzle", () => {
     const migraciones = readMigrationFiles({
       migrationsFolder: new URL("../drizzle/", import.meta.url).pathname,
     });
-    expect(migraciones).toHaveLength(6);
+    expect(migraciones).toHaveLength(7);
     const journal = JSON.parse(
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
@@ -238,6 +225,7 @@ describe("Esquema Drizzle", () => {
       "0003_even_spectrum",
       "0004_nice_speed_demon",
       "0005_separar_reportes_workers",
+      "0006_persistir_ejecuciones_dataflow",
     ]);
   });
 
@@ -245,8 +233,11 @@ describe("Esquema Drizzle", () => {
     const cols = colNames(getTableConfig(ejecucionesReportes));
     expect(cols).toEqual(
       expect.arrayContaining([
-        "reporte_id",
+        "organizacion_id",
+        "tenant_qlik_id",
         "flujo_id_qlik",
+        "flujo_nombre_snapshot",
+        "flujo_espacio_id_qlik",
         "automatizacion_id_qlik",
         "ejecutado_por_usuario_id",
         "automatizacion_personal_id",

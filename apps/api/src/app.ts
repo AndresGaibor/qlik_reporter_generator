@@ -123,12 +123,13 @@ export async function crearAplicacion(
 ): Promise<Hono> {
   const configuracion = dependencias.configuracion;
   const registrador = dependencias.registrador ?? registradorConsola;
-  const frontendUrlGuardado = await obtenerFrontendUrlGuardado();
+  const frontendUrlConfigurado =
+    configuracion?.FRONTEND_URL ?? process.env.FRONTEND_URL;
+  const frontendUrlGuardado = frontendUrlConfigurado
+    ? null
+    : await obtenerFrontendUrlGuardado();
   const frontendUrl =
-    frontendUrlGuardado ??
-    configuracion?.FRONTEND_URL ??
-    process.env.FRONTEND_URL ??
-    "http://localhost:4525";
+    frontendUrlGuardado ?? frontendUrlConfigurado ?? "http://localhost:4525";
   const produccion =
     (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
   const redirectUriConfigurado =
