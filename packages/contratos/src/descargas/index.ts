@@ -34,7 +34,7 @@ export type ArchivoResumenDescarga = z.infer<
 
 export const esquemaResumenDescargaEjecucion = z.object({
   id: z.string().uuid(),
-  reporteId: z.string().uuid().optional(),
+  flujoIdQlik: z.string(),
   creadoPorUsuarioId: z.string().uuid().nullable().optional(),
   reporteNombre: z.string(),
   automatizacionIdQlik: z.string(),

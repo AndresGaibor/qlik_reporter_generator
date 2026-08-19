@@ -15,19 +15,14 @@ export class SincronizarEjecucionesReporte {
   ) {}
 
   async ejecutar(
-    reporteId: string,
+    flujoIdQlik: string,
     tenantQlikId: string,
     organizacionId: string,
   ) {
-    const configuracion = await this.repositorio.obtenerPorId(
-      reporteId,
+    const locales = await this.repositorio.listarEjecuciones(
+      flujoIdQlik,
       tenantQlikId,
       organizacionId,
-    );
-    if (!configuracion) return;
-
-    const locales = await this.repositorio.listarEjecuciones(
-      configuracion.id,
       100,
     );
     const pendientes = locales.filter(

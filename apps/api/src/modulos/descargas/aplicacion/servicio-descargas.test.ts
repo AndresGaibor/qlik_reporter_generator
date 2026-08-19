@@ -14,7 +14,7 @@ function crearRepoMock() {
         [] as Array<{
           id: string;
           creadoPorUsuarioId?: string | null;
-          reporteNombre: string;
+          flujoNombreSnapshot: string;
           automatizacionIdQlik: string;
           estado: string;
           mensajeError: string | null;
@@ -29,7 +29,7 @@ function crearRepoMock() {
         null as {
           id: string;
           creadoPorUsuarioId?: string | null;
-          reporteNombre: string;
+          flujoNombreSnapshot: string;
           automatizacionIdQlik: string;
           estado: string;
           mensajeError: string | null;
@@ -79,7 +79,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-activa",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "iniciada",
       mensajeError: null,
@@ -103,7 +103,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-lista",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "iniciada",
       mensajeError: null,
@@ -137,7 +137,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-vacia",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -161,7 +161,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-completa",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -195,7 +195,7 @@ describe("ServicioDescargas", () => {
       {
         id: "e-2",
         creadoPorUsuarioId: "33333333-3333-4333-8333-333333333333",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
         mensajeError: null,
@@ -205,7 +205,7 @@ describe("ServicioDescargas", () => {
       },
       {
         id: "e-1",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "error",
         mensajeError: "Falló Talend",
@@ -242,7 +242,7 @@ describe("ServicioDescargas", () => {
     repo.listarEjecucionesDescargas.mockResolvedValue([
       {
         id: "e-lista",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "iniciada",
         mensajeError: null,
@@ -273,7 +273,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-invalida",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -298,7 +298,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-completa",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -327,7 +327,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-permisos",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -356,7 +356,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-firma",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
       mensajeError: null,
@@ -385,7 +385,7 @@ describe("ServicioDescargas", () => {
     const repo = crearRepoMock();
     repo.obtenerEjecucionDescarga.mockResolvedValue({
       id: "e-activa-permisos",
-      reporteNombre: "Ventas",
+      flujoNombreSnapshot: "Ventas",
       automatizacionIdQlik: "auto-1",
       estado: "iniciada",
       mensajeError: null,

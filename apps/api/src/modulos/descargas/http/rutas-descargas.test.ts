@@ -99,7 +99,7 @@ describe("GET /api/descargas", () => {
       listarEjecucionesDescargas: async () => [
         {
           id: "e-1",
-          reporteNombre: "Ventas",
+          flujoNombreSnapshot: "Ventas",
           automatizacionIdQlik: "auto-1",
           estado: "completada",
           mensajeError: null,
@@ -132,6 +132,88 @@ describe("GET /api/descargas", () => {
     expect(json.datos[0].id).toBe("e-1");
     expect(json.datos[0].estado).toBe("completada");
     expect(json.datos[0].archivos).toEqual([]);
+    expect(json.datos[0].reporteId).toBeUndefined();
+  });
+
+  it("sincroniza una ejecución histórica por su flujo y conserva su snapshot", async () => {
+    const sesion = {
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+    };
+    const listarEjecucionesDescargas = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          id: "e-vieja",
+          flujoIdQlik: "flujo-viejo",
+          flujoNombreSnapshot: "Ventas antiguas",
+          creadoPorUsuarioId: "user-1",
+          automatizacionIdQlik: "auto-viejo",
+          estado: "iniciada",
+          mensajeError: null,
+          uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-vieja/",
+          creadoEn: new Date("2026-08-15T00:00:00Z"),
+          finalizadoEn: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+    const listarEjecuciones = vi.fn(async () => []);
+    const listarHistorial = vi.fn(async () => [
+      {
+        id: "e-vieja",
+        flujoIdQlik: "flujo-viejo",
+        flujoNombreSnapshot: "Ventas antiguas",
+        automatizacionIdQlik: "auto-viejo",
+        estado: "iniciada" as const,
+        runIdQlik: "run-viejo",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        hashDataflowSha256: "hash",
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "sql",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-vieja/",
+        creadoEn: new Date(),
+      },
+    ]);
+    const resolverQlik = vi.fn(
+      async () => ({ listarEjecuciones }) as unknown as ServicioQlik,
+    );
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => sesion,
+      resolverQlik,
+      repositorioReportes: {
+        listarEjecucionesDescargas,
+        listarEjecuciones: listarHistorial,
+        obtenerEjecucionDescarga: async () => null,
+      } as unknown as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () =>
+        ({
+          listar: async () => [],
+          estaFinalizada: async () => false,
+        }) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono();
+    app.route("/api/descargas", rutas);
+
+    const respuesta = await app.request("/api/descargas", {
+      headers: crearSesionHeaders(sesion),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(resolverQlik).toHaveBeenCalledTimes(1);
+    expect(listarEjecucionesDescargas).toHaveBeenCalledTimes(2);
+    expect(listarHistorial).toHaveBeenCalledWith(
+      "flujo-viejo",
+      "tenant-1",
+      "org-1",
+      100,
+    );
+    expect(listarEjecuciones).toHaveBeenCalledWith("auto-viejo", {
+      limit: 100,
+      sort: "desc",
+    });
   });
 });
 
@@ -193,7 +275,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       listarEjecucionesDescargas: async () => [],
       obtenerEjecucionDescarga: async () => ({
         id: "e-1",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
         mensajeError: null,
@@ -279,7 +361,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       listarEjecucionesDescargas: async () => [],
       obtenerEjecucionDescarga: async () => ({
         id: "e-iniciada",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "iniciada",
         mensajeError: null,
@@ -325,7 +407,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
       listarEjecucionesDescargas: async () => [],
       obtenerEjecucionDescarga: async () => ({
         id: "e-vacia",
-        reporteNombre: "Ventas",
+        flujoNombreSnapshot: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
         mensajeError: null,

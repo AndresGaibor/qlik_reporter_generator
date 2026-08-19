@@ -4,7 +4,7 @@ import { SincronizarEjecucionesReporte } from "./sincronizar-ejecuciones-reporte
 
 function llamada(repo: Record<string, unknown>, qlik: ServicioQlik) {
   return new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-    "reporte-1",
+    "flujo-1",
     "tenant-1",
     "organizacion-1",
   );
@@ -13,7 +13,6 @@ function llamada(repo: Record<string, unknown>, qlik: ServicioQlik) {
 describe("SincronizarEjecucionesReporte", () => {
   it("usa el automate histórico almacenado para cada ejecución", async () => {
     const repo = {
-      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-old",
@@ -53,7 +52,6 @@ describe("SincronizarEjecucionesReporte", () => {
     const marcarEstado = vi.fn(async () => undefined);
     const marcarError = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-old",
@@ -110,7 +108,6 @@ describe("SincronizarEjecucionesReporte", () => {
   it("no marca completada solo porque Qlik responde finished", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-1",
@@ -132,7 +129,6 @@ describe("SincronizarEjecucionesReporte", () => {
   it("mapea stopped a detenida", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         {
           id: "e-1",
