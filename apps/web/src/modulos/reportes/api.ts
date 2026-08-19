@@ -12,6 +12,7 @@ import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 import type { DetalleAutomatizacion } from "@qlik/contratos/automatizaciones";
 
 const RUTA = "/reportes";
+const RUTA_AUTOMATIZACIONES_QLIK = "/qlik/automatizaciones";
 
 function idUrl(id: string) {
   return `${RUTA}/${encodeURIComponent(id)}`;
@@ -82,13 +83,13 @@ export type { ResumenAutomatizacion };
 export type { DetalleAutomatizacion };
 export type EjecucionResumen = DetalleAutomatizacion["ejecuciones"][number];
 export function obtenerAutomatizaciones() {
-  return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA_AUTOMATIZACIONES_QLIK);
 }
 export function obtenerAutomatizacionesConFiltros(
   espacioId?: string,
   busqueda?: string,
 ) {
-  return clienteApi.get<ResumenAutomatizacion[]>(RUTA, {
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA_AUTOMATIZACIONES_QLIK, {
     parametros: {
       ...(espacioId ? { espacioId } : {}),
       ...(busqueda ? { q: busqueda } : {}),
@@ -103,5 +104,7 @@ export interface WorkspaceAutomatizacion {
   schedules: Array<Record<string, unknown>>;
 }
 export function obtenerWorkspaceAutomatizacion(id: string) {
-  return clienteApi.get<WorkspaceAutomatizacion>(`${idUrl(id)}/workspace`);
+  return clienteApi.get<WorkspaceAutomatizacion>(
+    `${RUTA_AUTOMATIZACIONES_QLIK}/${encodeURIComponent(id)}/workspace`,
+  );
 }

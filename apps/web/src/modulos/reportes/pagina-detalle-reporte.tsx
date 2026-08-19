@@ -104,7 +104,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         </div>
       </section>
       <ConfiguracionDataflowReporte
-        automatizacionId={id}
+        reporteId={id}
         configuracion={local}
         preflight={preflight.data}
         validandoDataflow={preflight.isLoading}

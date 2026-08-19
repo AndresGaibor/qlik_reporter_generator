@@ -87,7 +87,7 @@ vi.mock("@/compartido/hooks/use-tenant-activo", () => ({
   useTenantActivo: () => ({ tenant: undefined }),
 }));
 
-import { PaginaReportes } from "./pagina-reportes";
+import { PaginaReportes, filtrarReportes } from "./pagina-reportes";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -116,4 +116,27 @@ test("muestra reportes locales y no consulta ni ofrece Automates de Qlik", async
   );
   expect(container?.textContent).not.toContain("Automate manual Qlik");
   expect(api.obtenerReportes).toHaveBeenCalled();
+});
+
+test("filtra filas locales por nombre/Dataflow y espacio sin consultar Automates", () => {
+  const reportes = [
+    { ...api.obtenerReportes.mock.results[0]?.value, nombre: "Ventas" },
+  ] as never;
+  const filas = [
+    {
+      id: "1",
+      nombre: "Ventas",
+      flujoNombreSnapshot: "Clientes",
+      flujoEspacioIdQlik: "sp-1",
+    },
+    {
+      id: "2",
+      nombre: "Inventario",
+      flujoNombreSnapshot: "Ventas",
+      flujoEspacioIdQlik: "sp-2",
+    },
+  ] as never;
+
+  expect(filtrarReportes(filas, "ventas", "sp-2")).toEqual([filas[1]]);
+  expect(reportes).toBeDefined();
 });

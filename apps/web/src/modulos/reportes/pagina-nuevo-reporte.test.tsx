@@ -3,12 +3,13 @@ import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 
-const { crear, preflight } = vi.hoisted(() => ({
+const { crear, preflight, navegar } = vi.hoisted(() => ({
   crear: vi.fn(async (_entrada: Record<string, unknown>) => ({
-    id: "auto-1",
+    id: "44444444-4444-4444-8444-444444444444",
     nombre: "Ventas",
     plantillaIdQlik: "base",
   })),
+  navegar: vi.fn(),
   preflight: vi.fn(async () => ({
     flujoIdQlik: "flujo-1",
     hashDataflowSha256: "a".repeat(64),
@@ -49,6 +50,7 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: unknown }) => (
     <a href="/reportes">{children as never}</a>
   ),
+  useNavigate: () => navegar,
 }));
 
 import { PaginaNuevoReporte } from "./pagina-nuevo-reporte";
@@ -164,6 +166,9 @@ test("envía solo flujoId sin programacion", async () => {
   expect(entrada).not.toHaveProperty("tablaId");
   expect(entrada).not.toHaveProperty("columnas");
   expect(entrada).not.toHaveProperty("fechaDesde");
+  expect(navegar).toHaveBeenCalledWith({
+    to: "/reportes/44444444-4444-4444-8444-444444444444",
+  });
 });
 
 test("muestra el mensaje de error de Qlik cuando la sesión es requerida", async () => {

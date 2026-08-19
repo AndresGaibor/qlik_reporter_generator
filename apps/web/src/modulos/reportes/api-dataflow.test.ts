@@ -5,9 +5,12 @@ import {
   clonarReporte,
   crearReporte,
   ejecutarReporte,
+  obtenerAutomatizaciones,
+  obtenerAutomatizacionesConFiltros,
   obtenerEjecucionesReporte,
   obtenerReporte,
   obtenerReportes,
+  obtenerWorkspaceAutomatizacion,
   preflightDataflowReporte,
 } from "./api";
 
@@ -63,4 +66,18 @@ test("preflightDataflowReporte usa el endpoint server-side del Dataflow", async 
   expect(get).toHaveBeenCalledWith(
     "/reportes/dataflows/flujo%20con%20espacio/preflight",
   );
+});
+
+test("los helpers de compatibilidad consultan la ruta técnica de Qlik", async () => {
+  const get = vi.spyOn(clienteApi, "get").mockResolvedValue([]);
+
+  await obtenerAutomatizaciones();
+  await obtenerAutomatizacionesConFiltros("space-1", "ventas");
+  await obtenerWorkspaceAutomatizacion("auto 1");
+
+  expect(get).toHaveBeenCalledWith("/qlik/automatizaciones");
+  expect(get).toHaveBeenCalledWith("/qlik/automatizaciones", {
+    parametros: { espacioId: "space-1", q: "ventas" },
+  });
+  expect(get).toHaveBeenCalledWith("/qlik/automatizaciones/auto%201/workspace");
 });

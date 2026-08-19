@@ -14,12 +14,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 export function ConfiguracionDataflowReporte({
-  automatizacionId,
+  reporteId,
   configuracion,
   preflight,
   validandoDataflow,
 }: {
-  automatizacionId: string;
+  reporteId: string;
   configuracion: ConfiguracionReporteDataflow;
   preflight: Awaited<ReturnType<typeof preflightDataflowReporte>> | undefined;
   validandoDataflow: boolean;
@@ -58,17 +58,17 @@ export function ConfiguracionDataflowReporte({
         flujoIdQlik: flujoId,
         activa,
       };
-      return actualizarConfiguracionReporte(automatizacionId, cambios);
+      return actualizarConfiguracionReporte(reporteId, cambios);
     },
     onSuccess: async () => {
       mostrarExito("Configuración actualizada");
       setEditando(false);
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["configuracion-reporte", automatizacionId],
+          queryKey: ["reporte", reporteId],
         }),
         queryClient.invalidateQueries({
-          queryKey: ["preflight-dataflow-detalle"],
+          queryKey: ["preflight-dataflow-reporte"],
         }),
       ]);
     },
@@ -199,7 +199,7 @@ export function ConfiguracionDataflowReporte({
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 border-t border-line-200 pt-5 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 border-t border-line-200 pt-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg bg-app px-4 py-3">
           <p className="text-xs font-medium text-ink-400">Dataflow</p>
           <div className="mt-1 text-sm font-semibold text-ink-900">
@@ -214,6 +214,18 @@ export function ConfiguracionDataflowReporte({
                   : "Requiere atención"}
             </span>
           </div>
+        </div>
+        <div className="rounded-lg bg-app px-4 py-3">
+          <p className="text-xs font-medium text-ink-400">Espacio Qlik</p>
+          <p className="mt-1 break-all font-mono text-xs font-semibold text-ink-900">
+            {configuracion.flujoEspacioIdQlik ?? "Espacio no disponible"}
+          </p>
+        </div>
+        <div className="rounded-lg bg-app px-4 py-3">
+          <p className="text-xs font-medium text-ink-400">Creado por</p>
+          <p className="mt-1 break-all font-mono text-xs font-semibold text-ink-900">
+            {configuracion.creadoPorUsuarioId || "Usuario no disponible"}
+          </p>
         </div>
         <div className="rounded-lg bg-app px-4 py-3">
           <p className="text-xs font-medium text-ink-400">Destino GCS</p>

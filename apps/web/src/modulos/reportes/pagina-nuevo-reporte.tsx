@@ -6,7 +6,7 @@ import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { extraerMensajeError } from "@/modulos/reportes/utiles-presentacion-reporte";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   crearReporte as crearReporteApi,
@@ -21,6 +21,7 @@ export function PaginaNuevoReporte() {
 
 function FormularioDataflow() {
   const { mostrarExito, mostrarError } = useNotificaciones();
+  const navegar = useNavigate();
   const parametros = useMemo(
     () => new URLSearchParams(window.location.search),
     [],
@@ -66,7 +67,7 @@ function FormularioDataflow() {
         ...(flujo.espacioId ? { espacioIdQlik: flujo.espacioId } : {}),
       });
       mostrarExito("Reporte creado");
-      window.location.href = `/reportes/${resultado.id}`;
+      navegar({ to: `/reportes/${resultado.id}` });
     } catch (error) {
       mostrarError(
         error instanceof Error ? error.message : "No se pudo crear el reporte",
