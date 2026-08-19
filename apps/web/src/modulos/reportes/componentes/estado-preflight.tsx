@@ -74,20 +74,51 @@ export function EstadoPreflight({
           plural="campos"
         />
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-emerald-200 pt-3 text-xs text-emerald-900">
-        <span>
-          Dry-run: <strong>{formatearBytes(preflight.bytesProcesados)}</strong>{" "}
-          · <strong>${preflight.costoEstimadoUsd.toFixed(6)} USD</strong>
-        </span>
-        <details className="max-w-full">
-          <summary className="cursor-pointer font-semibold">
-            Ver SQL generado
-          </summary>
-          <pre className="mt-2 max-h-56 max-w-3xl overflow-auto rounded-md bg-slate-950 p-3 text-[11px] text-slate-100">
+      <div className="grid gap-3 border-t border-emerald-200 pt-4 sm:grid-cols-2">
+        <MetricaCosto
+          etiqueta="Datos a procesar"
+          valor={formatearBytes(preflight.bytesProcesados)}
+          detalle="Estimación del dry-run de BigQuery"
+        />
+        <MetricaCosto
+          etiqueta="Costo estimado"
+          valor={formatearCostoUsd(preflight.costoEstimadoUsd)}
+          detalle="Costo aproximado por ejecución"
+          destacado={preflight.costoEstimadoUsd >= 1}
+        />
+      </div>
+      {preflight.costoEstimadoUsd >= 1 ? (
+        <div className="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-900">
+          Esta ejecución podría procesar aproximadamente{" "}
+          <strong>{formatearBytes(preflight.bytesProcesados)}</strong> y tener
+          un costo aproximado de{" "}
+          <strong>{formatearCostoUsd(preflight.costoEstimadoUsd)}</strong>.
+        </div>
+      ) : null}
+      <details
+        open
+        className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+      >
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-900">
+          SQL generado
+        </summary>
+        <div className="border-t border-slate-200 bg-slate-50 p-3">
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard.writeText(preflight.sqlBigQuery);
+              }}
+              className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-100 hover:text-slate-900"
+            >
+              Copiar SQL
+            </button>
+          </div>
+          <pre className="max-h-72 overflow-auto rounded-md bg-slate-950 p-3 text-[11px] leading-relaxed text-slate-100">
             {preflight.sqlBigQuery}
           </pre>
-        </details>
-      </div>
+        </div>
+      </details>
     </section>
   );
 }
@@ -110,9 +141,45 @@ function Metrica({
   );
 }
 
+function MetricaCosto({
+  etiqueta,
+  valor,
+  detalle,
+  destacado = false,
+}: {
+  etiqueta: string;
+  valor: string;
+  detalle: string;
+  destacado?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg border bg-white px-4 py-3 ${
+        destacado ? "border-warning-300" : "border-emerald-100"
+      }`}
+    >
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+        {etiqueta}
+      </p>
+      <p className="mt-1 text-2xl font-bold tabular-nums text-ink-950">
+        {valor}
+      </p>
+      <p className="mt-1 text-xs text-ink-500">{detalle}</p>
+    </div>
+  );
+}
+
 function formatearBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(2)} KB`;
-  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
-  return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(2)} KiB`;
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(2)} MiB`;
+  return `${(bytes / 1024 ** 3).toFixed(2)} GiB`;
+}
+
+function formatearCostoUsd(costo: number): string {
+  if (costo > 0 && costo < 0.01) return "< $0.01 USD";
+  return `$${costo.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} USD`;
 }
