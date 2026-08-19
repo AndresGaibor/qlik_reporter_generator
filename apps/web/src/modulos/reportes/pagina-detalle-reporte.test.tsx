@@ -29,6 +29,7 @@ const api = vi.hoisted(() => ({
     sqlBigQuery: "SELECT 1",
     bytesProcesados: 0,
     costoEstimadoUsd: 0,
+    validacionBigQuery: { exitosa: true, mensajeError: null },
     resumen: { fuentes: 1, filtros: 0, joins: 0, camposSalida: 1 },
   })),
   obtenerEjecucionesReporte: vi.fn(async () => []),

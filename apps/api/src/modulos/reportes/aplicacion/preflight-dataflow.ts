@@ -57,23 +57,49 @@ export class PreflightDataflow {
         sqlBigQuery: "",
         bytesProcesados: 0,
         costoEstimadoUsd: 0,
+        validacionBigQuery: {
+          exitosa: false,
+          mensajeError:
+            "No se ejecutó el dry-run porque el Dataflow no es compatible",
+        },
         resumen: preparacion.resumen,
       };
     }
 
-    const estimacion = await this.estimador.estimarConsulta(
-      preparacion.sqlBigQuery,
-    );
-    return {
-      flujoIdQlik,
-      hashDataflowSha256: preparacion.hashDataflowSha256,
-      compatible: true,
-      operacionesNoSoportadas: [],
-      sqlBigQuery: preparacion.sqlBigQuery,
-      bytesProcesados: estimacion.bytesProcesados,
-      costoEstimadoUsd: estimacion.costoEstimadoUsd,
-      resumen: preparacion.resumen,
-    };
+    try {
+      const estimacion = await this.estimador.estimarConsulta(
+        preparacion.sqlBigQuery,
+      );
+      return {
+        flujoIdQlik,
+        hashDataflowSha256: preparacion.hashDataflowSha256,
+        compatible: true,
+        operacionesNoSoportadas: [],
+        sqlBigQuery: preparacion.sqlBigQuery,
+        bytesProcesados: estimacion.bytesProcesados,
+        costoEstimadoUsd: estimacion.costoEstimadoUsd,
+        validacionBigQuery: { exitosa: true, mensajeError: null },
+        resumen: preparacion.resumen,
+      };
+    } catch (error) {
+      return {
+        flujoIdQlik,
+        hashDataflowSha256: preparacion.hashDataflowSha256,
+        compatible: true,
+        operacionesNoSoportadas: [],
+        sqlBigQuery: preparacion.sqlBigQuery,
+        bytesProcesados: 0,
+        costoEstimadoUsd: 0,
+        validacionBigQuery: {
+          exitosa: false,
+          mensajeError:
+            error instanceof Error
+              ? error.message
+              : "Error desconocido de BigQuery",
+        },
+        resumen: preparacion.resumen,
+      };
+    }
   }
 }
 

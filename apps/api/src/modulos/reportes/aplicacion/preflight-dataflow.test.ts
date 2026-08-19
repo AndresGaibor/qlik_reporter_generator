@@ -69,6 +69,32 @@ describe("PreflightDataflow", () => {
     expect(estimador.estimarConsulta).not.toHaveBeenCalled();
   });
 
+  it("devuelve el SQL compilado cuando BigQuery no puede validar el dry-run", async () => {
+    const qlik = {
+      obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT_OK })),
+    };
+    const estimador = {
+      estimarConsulta: vi.fn(async () => {
+        throw new Error("Access Denied: Table proyecto.dataset.ventas");
+      }),
+    };
+    const caso = new PreflightDataflow(qlik, estimador, {
+      projectId: "proyecto",
+      dataset: "dataset",
+    });
+
+    const resultado = await caso.ejecutar("flujo-error-iam");
+
+    expect(resultado.compatible).toBe(true);
+    expect(resultado.sqlBigQuery).toContain("`proyecto.dataset.ventas`");
+    expect(resultado.validacionBigQuery).toEqual({
+      exitosa: false,
+      mensajeError: "Access Denied: Table proyecto.dataset.ventas",
+    });
+    expect(resultado.bytesProcesados).toBe(0);
+    expect(resultado.costoEstimadoUsd).toBe(0);
+  });
+
   it("acepta una fuente totalmente calificada fuera del proyecto y dataset de staging", async () => {
     const qlik = {
       obtenerScriptApp: vi.fn(async () => ({

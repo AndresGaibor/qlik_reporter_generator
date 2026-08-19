@@ -45,6 +45,7 @@ export function EstadoPreflight({
       </section>
     );
   }
+  const bigQueryValidado = preflight.validacionBigQuery.exitosa;
   return (
     <section className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -77,17 +78,45 @@ export function EstadoPreflight({
       <div className="grid gap-3 border-t border-emerald-200 pt-4 sm:grid-cols-2">
         <MetricaCosto
           etiqueta="Datos a procesar"
-          valor={formatearBytes(preflight.bytesProcesados)}
-          detalle="Estimación del dry-run de BigQuery"
+          valor={
+            bigQueryValidado
+              ? formatearBytes(preflight.bytesProcesados)
+              : "No disponible"
+          }
+          detalle={
+            bigQueryValidado
+              ? "Estimación del dry-run de BigQuery"
+              : "BigQuery no pudo validar la consulta"
+          }
         />
         <MetricaCosto
           etiqueta="Costo estimado"
-          valor={formatearCostoUsd(preflight.costoEstimadoUsd)}
-          detalle="Costo aproximado por ejecución"
-          destacado={preflight.costoEstimadoUsd >= 1}
+          valor={
+            bigQueryValidado
+              ? formatearCostoUsd(preflight.costoEstimadoUsd)
+              : "No disponible"
+          }
+          detalle={
+            bigQueryValidado
+              ? "Costo aproximado por ejecución"
+              : "Sin estimación hasta corregir la validación"
+          }
+          destacado={bigQueryValidado && preflight.costoEstimadoUsd >= 1}
         />
       </div>
-      {preflight.costoEstimadoUsd >= 1 ? (
+      {!bigQueryValidado ? (
+        <div className="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
+          <p className="font-semibold">No se pudo validar en BigQuery</p>
+          <p className="mt-1 break-words">
+            {preflight.validacionBigQuery.mensajeError ??
+              "BigQuery no devolvió detalles del error"}
+          </p>
+          <p className="mt-2 text-xs">
+            El SQL sí fue generado y puedes revisarlo abajo. La ejecución
+            seguirá bloqueada hasta resolver esta validación.
+          </p>
+        </div>
+      ) : preflight.costoEstimadoUsd >= 1 ? (
         <div className="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-900">
           Esta ejecución podría procesar aproximadamente{" "}
           <strong>{formatearBytes(preflight.bytesProcesados)}</strong> y tener

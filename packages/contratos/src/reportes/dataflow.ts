@@ -26,6 +26,10 @@ export const esquemaPreflightDataflowReporte = z.object({
   sqlBigQuery: z.string(),
   bytesProcesados: z.number().nonnegative(),
   costoEstimadoUsd: z.number().nonnegative(),
+  validacionBigQuery: z.object({
+    exitosa: z.boolean(),
+    mensajeError: z.string().nullable(),
+  }),
   resumen: esquemaResumenDataflowReporte,
 });
 export type PreflightDataflowReporte = z.infer<
