@@ -30,6 +30,7 @@ describe("formulario BigQuery", () => {
     expect(
       puedeGuardarBigQuery({
         dataset: "demo_lafavorita",
+        gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
         credencialesJson: "",
         credencialesConfiguradas: true,
       }),
@@ -40,9 +41,40 @@ describe("formulario BigQuery", () => {
     expect(
       puedeGuardarBigQuery({
         dataset: "demo_lafavorita",
+        gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
         credencialesJson: "",
         credencialesConfiguradas: false,
       }),
     ).toBe(false);
+  });
+
+  it("rechaza una ruta GCS con traversal", () => {
+    expect(
+      puedeGuardarBigQuery({
+        dataset: "demo_lafavorita",
+        gcsUri: "gs://otro-bucket/../secreto/",
+        credencialesJson: "",
+        credencialesConfiguradas: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("campos de almacenamiento GCS", () => {
+  it("separa bucket y prefijo de la URI configurada", async () => {
+    const modulo = await import("./bigquery-formulario");
+    expect(
+      modulo.separarUriGcs("gs://bkt_dwh/POCs/TalendDescargados/"),
+    ).toEqual({
+      bucket: "bkt_dwh",
+      prefijo: "POCs/TalendDescargados/",
+    });
+  });
+
+  it("construye la URI desde bucket y prefijo", async () => {
+    const modulo = await import("./bigquery-formulario");
+    expect(modulo.construirUriGcs("bkt_reportes", "salidas/talend")).toBe(
+      "gs://bkt_reportes/salidas/talend/",
+    );
   });
 });

@@ -272,7 +272,7 @@ export function LayoutPrincipal() {
         )}
 
         <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 sm:py-10 lg:px-16">
-          <VistaContext.Provider value={{ modoUsuarioFinal }}>
+          <VistaContext.Provider value={{ modoUsuarioFinal, esAdmin }}>
             <Outlet />
           </VistaContext.Provider>
         </main>

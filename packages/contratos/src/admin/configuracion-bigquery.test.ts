@@ -48,3 +48,13 @@ describe("configuración BigQuery", () => {
     expect("credencialesJson" in salida).toBe(false);
   });
 });
+
+describe("configuración GCS", () => {
+  it("acepta un bucket y prefijo GCS válidos distintos del valor inicial", () => {
+    const salida = esquemaConfigurarBigQuery.parse({
+      dataset: "demo_lafavorita",
+      gcsUri: "gs://bkt_reportes_pruebas/salidas/talend/",
+    });
+    expect(salida.gcsUri).toBe("gs://bkt_reportes_pruebas/salidas/talend/");
+  });
+});

@@ -32,6 +32,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   const { mostrarError, mostrarExito } = useNotificaciones();
   const [editando, setEditando] = useState(false);
   const [dataset, setDataset] = useState("");
+  const [gcsUri, setGcsUri] = useState("gs://bkt_dwh/POCs/TalendDescargados/");
   const [credencialesJson, setCredencialesJson] = useState("");
   const consulta = useQuery({
     queryKey: [CLAVE_CONSULTA, organizacionId, tenantQlikId],
@@ -42,7 +43,8 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   const configuracion = consulta.data;
   useEffect(() => {
     if (configuracion?.dataset !== undefined) setDataset(configuracion.dataset);
-  }, [configuracion?.dataset]);
+    if (configuracion?.gcsUri) setGcsUri(configuracion.gcsUri);
+  }, [configuracion?.dataset, configuracion?.gcsUri]);
   const analisis = useMemo(
     () =>
       credencialesJson.trim()
@@ -52,6 +54,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   );
   const habilitado = puedeGuardarBigQuery({
     dataset,
+    gcsUri,
     credencialesJson,
     credencialesConfiguradas: configuracion?.credencialesConfiguradas ?? false,
   });
@@ -66,6 +69,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
         );
       return guardarConfiguracionBigQuery(organizacionId, tenantQlikId, {
         dataset: dataset.trim(),
+        gcsUri: gcsUri.trim(),
         ...(credencialesJson.trim()
           ? { credencialesJson: credencialesJson.trim() }
           : {}),
@@ -112,6 +116,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   const configurada = Boolean(configuracion?.configurada && configuracion.id);
   const cancelar = () => {
     setDataset(configuracion?.dataset ?? "");
+    setGcsUri(configuracion?.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/");
     setCredencialesJson("");
     setEditando(false);
   };
@@ -151,12 +156,14 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
           <FormularioBigQuery
             configuracion={configuracion}
             dataset={dataset}
+            gcsUri={gcsUri}
             credencialesJson={credencialesJson}
             analisis={analisis}
             habilitado={habilitado}
             guardando={guardar.isPending || probar.isPending}
             mostrarCancelar={configurada}
             onDataset={setDataset}
+            onGcsUri={setGcsUri}
             onCredenciales={setCredencialesJson}
             onCancelar={cancelar}
             onGuardar={() => guardar.mutate()}

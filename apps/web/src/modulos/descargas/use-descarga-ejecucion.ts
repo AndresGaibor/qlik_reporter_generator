@@ -28,7 +28,10 @@ export interface DescargaEjecucionEstado {
 
 export interface UseDescargaEjecucionReturn {
   estado: DescargaEjecucionEstado;
-  iniciarDescarga: (ejecucionId: string) => Promise<void>;
+  iniciarDescarga: (
+    ejecucionId: string,
+    nombreArchivo?: string,
+  ) => Promise<void>;
   cancelar: () => void;
 }
 
@@ -65,16 +68,38 @@ export function useDescargaEjecucion(): UseDescargaEjecucionReturn {
     }));
   }, []);
 
-  const iniciarDescarga = useCallback(async (ejecucionId: string) => {
-    const controller = new AbortController();
-    controllerRef.current = controller;
-    let carpeta: CarpetaDestino | undefined;
+  const iniciarDescarga = useCallback(
+    async (ejecucionId: string, nombreArchivo?: string) => {
+      const controller = new AbortController();
+      controllerRef.current = controller;
+      let carpeta: CarpetaDestino | undefined;
 
-    try {
-      const selector = (window as VentanaConCarpeta).showDirectoryPicker;
-      if (selector) {
+      try {
+        const selector = (window as VentanaConCarpeta).showDirectoryPicker;
+        if (selector) {
+          establecerEstado({
+            estado: "seleccionando_destino",
+            progreso: 0,
+            porcentaje: 0,
+            bytesDescargados: 0,
+            totalBytes: 0,
+            totalArchivos: 0,
+            archivoActual: "",
+            error: null,
+          });
+          try {
+            carpeta = (await selector()) as unknown as CarpetaDestino;
+          } catch (error) {
+            if (esCancelacion(error)) {
+              establecerEstado((prev) => ({ ...prev, estado: "idle" }));
+              return;
+            }
+            throw error;
+          }
+        }
+
         establecerEstado({
-          estado: "seleccionando_destino",
+          estado: "solicitando_manifiesto",
           progreso: 0,
           porcentaje: 0,
           bytesDescargados: 0,
@@ -83,31 +108,90 @@ export function useDescargaEjecucion(): UseDescargaEjecucionReturn {
           archivoActual: "",
           error: null,
         });
+
+        let manifiesto: ManifiestoDescarga;
         try {
-          carpeta = (await selector()) as unknown as CarpetaDestino;
+          manifiesto = await solicitarManifiesto(ejecucionId);
         } catch (error) {
           if (esCancelacion(error)) {
             establecerEstado((prev) => ({ ...prev, estado: "idle" }));
             return;
           }
-          throw error;
+          establecerEstado((prev) => ({
+            ...prev,
+            estado: "error",
+            error:
+              error instanceof Error
+                ? error.message
+                : "Error al obtener manifiesto",
+          }));
+          return;
         }
-      }
 
-      establecerEstado({
-        estado: "solicitando_manifiesto",
-        progreso: 0,
-        porcentaje: 0,
-        bytesDescargados: 0,
-        totalBytes: 0,
-        totalArchivos: 0,
-        archivoActual: "",
-        error: null,
-      });
+        if (controller.signal.aborted) {
+          establecerEstado((prev) => ({ ...prev, estado: "idle" }));
+          return;
+        }
 
-      let manifiesto: ManifiestoDescarga;
-      try {
-        manifiesto = await solicitarManifiesto(ejecucionId);
+        const archivosSeleccionados = nombreArchivo
+          ? manifiesto.archivos.filter(
+              (archivo) => archivo.nombre === nombreArchivo,
+            )
+          : manifiesto.archivos;
+        if (archivosSeleccionados.length === 0) {
+          throw new Error("El archivo solicitado ya no está disponible");
+        }
+        const totalBytes = archivosSeleccionados.reduce(
+          (total, archivo) => total + archivo.tamano,
+          0,
+        );
+        establecerEstado((prev) => ({
+          ...prev,
+          estado: "descargando",
+          totalArchivos: archivosSeleccionados.length,
+          totalBytes,
+        }));
+
+        if (carpeta) {
+          await descargarArchivosSecuencialmente({
+            archivos: archivosSeleccionados,
+            carpeta,
+            senal: controller.signal,
+            onProgreso: (progreso) => {
+              establecerEstado((prev) => ({
+                ...prev,
+                progreso: progreso.indice,
+                porcentaje: progreso.porcentaje,
+                bytesDescargados: progreso.bytesDescargados,
+                totalBytes: progreso.totalBytes,
+                totalArchivos: progreso.total,
+                archivoActual: progreso.archivo,
+              }));
+            },
+          });
+        } else {
+          await iniciarDescargasNavegador(archivosSeleccionados, {
+            senal: controller.signal,
+          });
+          establecerEstado((prev) => ({
+            ...prev,
+            progreso: archivosSeleccionados.length,
+            porcentaje: 100,
+            bytesDescargados: totalBytes,
+            totalBytes,
+          }));
+        }
+
+        if (!controller.signal.aborted) {
+          establecerEstado((prev) => ({
+            ...prev,
+            estado: "completada",
+            progreso: archivosSeleccionados.length,
+            porcentaje: 100,
+            bytesDescargados: totalBytes,
+            totalBytes,
+          }));
+        }
       } catch (error) {
         if (esCancelacion(error)) {
           establecerEstado((prev) => ({ ...prev, estado: "idle" }));
@@ -116,82 +200,12 @@ export function useDescargaEjecucion(): UseDescargaEjecucionReturn {
         establecerEstado((prev) => ({
           ...prev,
           estado: "error",
-          error:
-            error instanceof Error
-              ? error.message
-              : "Error al obtener manifiesto",
-        }));
-        return;
-      }
-
-      if (controller.signal.aborted) {
-        establecerEstado((prev) => ({ ...prev, estado: "idle" }));
-        return;
-      }
-
-      const totalBytes = manifiesto.archivos.reduce(
-        (total, archivo) => total + archivo.tamano,
-        0,
-      );
-      establecerEstado((prev) => ({
-        ...prev,
-        estado: "descargando",
-        totalArchivos: manifiesto.archivos.length,
-        totalBytes,
-      }));
-
-      if (carpeta) {
-        await descargarArchivosSecuencialmente({
-          archivos: manifiesto.archivos,
-          carpeta,
-          senal: controller.signal,
-          onProgreso: (progreso) => {
-            establecerEstado((prev) => ({
-              ...prev,
-              progreso: progreso.indice,
-              porcentaje: progreso.porcentaje,
-              bytesDescargados: progreso.bytesDescargados,
-              totalBytes: progreso.totalBytes,
-              totalArchivos: progreso.total,
-              archivoActual: progreso.archivo,
-            }));
-          },
-        });
-      } else {
-        await iniciarDescargasNavegador(manifiesto.archivos, {
-          senal: controller.signal,
-        });
-        establecerEstado((prev) => ({
-          ...prev,
-          progreso: manifiesto.archivos.length,
-          porcentaje: 100,
-          bytesDescargados: totalBytes,
-          totalBytes,
+          error: error instanceof Error ? error.message : "Error en descarga",
         }));
       }
-
-      if (!controller.signal.aborted) {
-        establecerEstado((prev) => ({
-          ...prev,
-          estado: "completada",
-          progreso: manifiesto.archivos.length,
-          porcentaje: 100,
-          bytesDescargados: totalBytes,
-          totalBytes,
-        }));
-      }
-    } catch (error) {
-      if (esCancelacion(error)) {
-        establecerEstado((prev) => ({ ...prev, estado: "idle" }));
-        return;
-      }
-      establecerEstado((prev) => ({
-        ...prev,
-        estado: "error",
-        error: error instanceof Error ? error.message : "Error en descarga",
-      }));
-    }
-  }, []);
+    },
+    [],
+  );
 
   return { estado, iniciarDescarga, cancelar };
 }

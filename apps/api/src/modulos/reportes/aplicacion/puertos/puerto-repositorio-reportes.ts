@@ -34,6 +34,7 @@ export type EstadoEjecucionReportePersistida =
 export interface CrearEjecucionReportePersistida {
   id: string;
   configuracionId: string;
+  creadoPorUsuarioId?: string | null;
   flujoIdQlik: string;
   automatizacionIdQlik: string;
   hashDataflowSha256: string;
@@ -67,6 +68,7 @@ export interface ActualizarConfiguracionReportePersistida {
 
 export interface ResumenEjecucionDescarga {
   id: string;
+  creadoPorUsuarioId: string | null;
   reporteNombre: string;
   automatizacionIdQlik: string;
   estado: string;
@@ -116,12 +118,19 @@ export interface PuertoRepositorioReportes {
     cambios: ActualizarConfiguracionReportePersistida,
   ): Promise<ConfiguracionReportePersistida>;
   listarEjecucionesDescargas(
-    contexto: { tenantQlikId: string; organizacionId: string },
+    contexto: {
+      tenantQlikId: string;
+      organizacionId: string;
+      usuarioId?: string;
+      esAdministrador?: boolean;
+    },
     limite?: number,
   ): Promise<ResumenEjecucionDescarga[]>;
   obtenerEjecucionDescarga(contexto: {
     id: string;
     tenantQlikId: string;
     organizacionId: string;
+    usuarioId?: string;
+    esAdministrador?: boolean;
   }): Promise<ResumenEjecucionDescarga | null>;
 }

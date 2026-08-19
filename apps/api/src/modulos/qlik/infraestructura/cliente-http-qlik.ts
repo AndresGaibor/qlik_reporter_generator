@@ -299,27 +299,48 @@ export class ClienteHttpQlik implements ServicioQlik {
     atributos: { espacioId?: string; descripcion?: string },
   ) {
     const respuesta = await this.solicitarJson<{
-      attributes?: { id?: string; name?: string };
+      details?: {
+        attributes?: Record<string, unknown> & {
+          id?: string;
+          name?: string;
+        };
+      };
     }>({
       metodo: "POST",
-      ruta: `/api/v1/apps/${encodeURIComponent(id)}/copy`,
+      ruta: `/api/v1/dataflow-apps/${encodeURIComponent(id)}/actions/copy`,
       cuerpo: {
-        attributes: {
-          name: nombre,
-          usage: "DATAFLOW_PREP",
-          ...(atributos.espacioId ? { spaceId: atributos.espacioId } : {}),
-          ...(atributos.descripcion
-            ? { description: atributos.descripcion }
-            : {}),
-        },
+        name: nombre,
+        usage: "DATAFLOW_PREP",
+        ...(atributos.espacioId ? { spaceId: atributos.espacioId } : {}),
       },
     });
-    if (!respuesta.attributes?.id) {
+    const atributosCopia = respuesta.details?.attributes;
+    if (!atributosCopia?.id) {
       throw new Error("Qlik no devolvió el ID de la copia creada");
     }
+    const { custom: atributosPersonalizados = {}, ...atributosRecurso } =
+      atributosCopia;
+    await this.solicitarJson<unknown>({
+      metodo: "POST",
+      ruta: "/api/v1/items",
+      cuerpo: {
+        name: atributosCopia.name || nombre,
+        resourceId: atributosCopia.id,
+        resourceType: "app",
+        description: String(
+          atributosCopia.description ?? atributos.descripcion ?? "",
+        ).slice(0, 200),
+        resourceAttributes: atributosRecurso,
+        resourceCustomAttributes: atributosPersonalizados,
+        resourceCreatedAt:
+          atributosCopia.createdDate ?? new Date().toISOString(),
+        resourceCreatedBySubject: atributosCopia.owner,
+        spaceId: atributosCopia.spaceId ?? atributos.espacioId,
+      },
+    });
     return {
-      id: respuesta.attributes.id,
-      nombre: respuesta.attributes.name || nombre,
+      id: atributosCopia.id,
+      nombre: atributosCopia.name || nombre,
     };
   }
 

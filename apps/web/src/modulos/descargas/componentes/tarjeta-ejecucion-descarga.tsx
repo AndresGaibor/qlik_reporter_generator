@@ -8,6 +8,7 @@ import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenDescargaEjecucion } from "@qlik/contratos/descargas";
 import {
   formatearFechaISO,
+  formatearTamano,
   presentarEjecucion,
 } from "../presentacion-ejecucion";
 import type { EstadoDescarga } from "../use-descarga-ejecucion";
@@ -24,6 +25,7 @@ interface TarjetaEjecucionDescargaProps {
   archivoActual: string;
   error: string | null;
   onDescargar: () => void;
+  onDescargarArchivo: (nombre: string) => void;
   onCancelar: () => void;
 }
 
@@ -38,9 +40,11 @@ export function TarjetaEjecucionDescarga({
   archivoActual,
   error,
   onDescargar,
+  onDescargarArchivo,
   onCancelar,
 }: TarjetaEjecucionDescargaProps) {
   const presentacion = presentarEjecucion(ejecucion);
+  const archivos = ejecucion.archivos ?? [];
 
   return (
     <Card>
@@ -58,6 +62,42 @@ export function TarjetaEjecucionDescarga({
 
         {presentacion.tipo === "error" && presentacion.mensaje && (
           <p className="text-sm text-danger-600">{presentacion.mensaje}</p>
+        )}
+
+        {archivos.length > 0 && (
+          <div className="space-y-2">
+            {archivos.map((archivo) => (
+              <div
+                key={archivo.nombre}
+                className="flex items-center justify-between gap-3 rounded-md border border-line-200 px-3 py-2 text-xs"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-ink-800">
+                    {archivo.nombre}
+                  </p>
+                  <p className="text-ink-500">
+                    {archivo.formato} · {formatearTamano(archivo.tamano)}
+                    {archivo.fecha
+                      ? ` · ${formatearFechaISO(archivo.fecha)}`
+                      : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 font-semibold text-brand-700 hover:underline"
+                  onClick={() => onDescargarArchivo(archivo.nombre)}
+                >
+                  Descargar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {presentacion.tipo === "completada" && archivos.length === 0 && (
+          <p className="text-xs text-ink-500">
+            No hay archivos disponibles en GCS.
+          </p>
         )}
 
         <DescargaEjecucion

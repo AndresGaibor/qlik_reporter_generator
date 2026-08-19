@@ -138,7 +138,8 @@ describe("EjecutarReporte", () => {
       scriptDataflow: SCRIPT,
       sqlBigQueryCompilado: expect.stringContaining("`p.d.ventas`"),
       scriptExportacion: expect.stringContaining("-- bq_export_data"),
-      uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/`,
+      creadoPorUsuarioId: "user-1",
+      uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas-diarias/${ejecucionId}/`,
       estado: "preparando",
       versionCompilador: 2,
     });
@@ -146,7 +147,7 @@ describe("EjecutarReporte", () => {
       `__qlik_reportes_${ejecucionId.replaceAll("-", "_")}`,
     );
     expect(valorVariable(workspaceActualizado ?? {}, "BqExportData")).toContain(
-      `gs://bkt_dwh/POCs/TalendDescargados/ventas-diarias/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz`,
+      `gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas-diarias/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz`,
     );
     expect(valorVariable(workspaceActualizado ?? {}, "Credenciales")).toBe(
       "CREDENCIAL_SANITIZADA",

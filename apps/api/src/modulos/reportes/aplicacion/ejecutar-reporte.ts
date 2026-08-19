@@ -7,7 +7,6 @@ import { generarUuid } from "../../../nucleo/valores/generar-uuid.js";
 import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import { estaEjecucionEnCurso } from "../../automatizaciones/dominio/estado-ejecucion.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
-import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 import {
   construirConsultasTalendBigQuery,
   serializarConsultasTalend,
@@ -99,8 +98,10 @@ export class EjecutarReporte {
 
     const ejecucionReporteId = this.generarId();
     const uriBaseGcs = construirUriEjecucion(
+      this.alcanceBigQuery.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/",
       configuracion.nombre,
       ejecucionReporteId,
+      entrada.usuarioId,
     );
     const consultasTalend = construirConsultasTalendBigQuery({
       sql: preparacion.sqlBigQuery,
@@ -117,6 +118,7 @@ export class EjecutarReporte {
       await this.repositorio.crearEjecucion({
         id: ejecucionReporteId,
         configuracionId: configuracion.id,
+        creadoPorUsuarioId: entrada.usuarioId ?? null,
         flujoIdQlik: configuracion.flujoIdQlik,
         automatizacionIdQlik: entrada.automatizacionIdQlik,
         hashDataflowSha256: preparacion.hashDataflowSha256,
@@ -169,8 +171,10 @@ export class EjecutarReporte {
 }
 
 function construirUriEjecucion(
+  uriBase: string,
   nombreReporte: string,
   ejecucionId: string,
+  usuarioId?: string,
 ): string {
   const segmento =
     nombreReporte
@@ -180,5 +184,10 @@ function construirUriEjecucion(
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80) || "reporte";
-  return `${URI_BASE_GCS_REPORTES}${segmento}/${ejecucionId}/`;
+  const base = uriBase.trim().replace(/\/+$/, "");
+  if (!base.startsWith("gs://")) {
+    throw new Error("La ruta GCS debe iniciar con gs://");
+  }
+  const propietario = usuarioId ? `usuarios/${usuarioId}/` : "";
+  return `${base}/${propietario}${segmento}/${ejecucionId}/`;
 }

@@ -248,7 +248,11 @@ export function crearRutasPanelAutomatizaciones(
       qlik,
       dependencias.repositorioReportes,
       dependencias.bloqueos,
-      { projectId: bigQuery.projectId, dataset: bigQuery.dataset },
+      {
+        projectId: bigQuery.projectId,
+        dataset: bigQuery.dataset,
+        gcsUri: bigQuery.gcsUri,
+      },
     ).ejecutar({
       tenantId: sesion.tenantId,
       organizacionId: sesion.organizacionId,

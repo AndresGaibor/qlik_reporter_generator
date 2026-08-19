@@ -3,8 +3,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { iniciarDescargasNavegador } from "./descargador-navegador";
 
 const archivos: ArchivoDescarga[] = [
-  { nombre: "parte-001.csv.gz", tamano: 10, url: "https://storage/1" },
-  { nombre: "parte-002.csv.gz", tamano: 20, url: "https://storage/2" },
+  {
+    nombre: "parte-001.csv.gz",
+    tamano: 10,
+    formato: "CSV",
+    fecha: null,
+    url: "https://storage/1",
+  },
+  {
+    nombre: "parte-002.csv.gz",
+    tamano: 20,
+    formato: "CSV.GZ",
+    fecha: null,
+    url: "https://storage/2",
+  },
 ];
 
 afterEach(() => vi.restoreAllMocks());

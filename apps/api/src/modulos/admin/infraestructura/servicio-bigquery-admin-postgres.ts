@@ -12,6 +12,7 @@ export interface EntradaGuardarBigQueryAdmin {
   organizacionId: string;
   tenantQlikId: string;
   dataset: string;
+  gcsUri?: string;
   credencialesJson?: string;
   projectId?: string;
   clientEmail?: string;
@@ -51,6 +52,10 @@ export class ServicioBigQueryAdminPostgres {
       projectId:
         typeof config.projectId === "string" ? config.projectId : undefined,
       dataset: typeof config.dataset === "string" ? config.dataset : undefined,
+      gcsUri:
+        typeof config.gcsUri === "string"
+          ? config.gcsUri
+          : "gs://bkt_dwh/POCs/TalendDescargados/",
       clientEmail:
         typeof config.clientEmail === "string" ? config.clientEmail : undefined,
       credencialesConfiguradas: Boolean(secretos.credencialesJson),
@@ -87,6 +92,12 @@ export class ServicioBigQueryAdminPostgres {
       projectId: entrada.projectId,
       clientEmail: entrada.clientEmail,
       dataset: entrada.dataset,
+      gcsUri:
+        entrada.gcsUri ??
+        (typeof (existente?.config as Record<string, unknown> | undefined)
+          ?.gcsUri === "string"
+          ? String((existente?.config as Record<string, unknown>).gcsUri)
+          : "gs://bkt_dwh/POCs/TalendDescargados/"),
       ...(entrada.limiteMiB === undefined
         ? {}
         : { limiteMiB: entrada.limiteMiB }),
@@ -125,6 +136,7 @@ export class ServicioBigQueryAdminPostgres {
       estado: "desconectado" as const,
       projectId: entrada.projectId,
       dataset: entrada.dataset,
+      gcsUri: config.gcsUri,
       clientEmail: entrada.clientEmail,
       credencialesConfiguradas: true,
       mensajeError: null,

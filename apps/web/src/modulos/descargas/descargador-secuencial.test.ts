@@ -7,7 +7,13 @@ import {
 } from "./descargador-secuencial";
 
 function archivo(nombre: string, tamano: number): ArchivoDescarga {
-  return { nombre, tamano, url: `https://storage.test/${nombre}` };
+  return {
+    nombre,
+    tamano,
+    formato: "CSV",
+    fecha: null,
+    url: `https://storage.test/${nombre}`,
+  };
 }
 
 function respuestaPorChunks(chunks: number[][]): Response {
