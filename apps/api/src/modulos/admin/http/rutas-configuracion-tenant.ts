@@ -6,10 +6,13 @@ import {
   esquemaCredencialesBigQuery,
 } from "@qlik/contratos/admin";
 import { type Context, Hono } from "hono";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import {
   responderError,
   responderExito,
 } from "../../../nucleo/http/respuestas.js";
+import type { ServicioQlik } from "../../qlik/publico.js";
+import { validarContratoTalend } from "../../reportes/aplicacion/servicio-contexto-talend.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
 import type { ResolverContextoAdmin } from "./rutas-comunes.js";
 import {
@@ -21,6 +24,7 @@ import {
 export interface DependenciasRutasConfiguracionTenant {
   repositorio: RepositorioAdministracion;
   resolverContexto: ResolverContextoAdmin;
+  resolverQlik: (c: Context) => Promise<ServicioQlik>;
   obtenerBigQuery?: (
     organizacionId: string,
     tenantQlikId: string,
@@ -42,6 +46,7 @@ export interface DependenciasRutasConfiguracionTenant {
 export function crearRutasConfiguracionTenant({
   repositorio,
   resolverContexto,
+  resolverQlik,
   obtenerBigQuery,
   guardarBigQuery,
 }: DependenciasRutasConfiguracionTenant) {
@@ -56,6 +61,23 @@ export function crearRutasConfiguracionTenant({
 
       const cuerpo = await c.req.json();
       const entrada = esquemaConfigurarAutomatizacionBase.parse(cuerpo);
+
+      const automatizacion = await resolverQlik(c).then((qlik) =>
+        qlik.obtenerAutomatizacion(entrada.automatizacionBaseIdQlik),
+      );
+      try {
+        validarContratoTalend(automatizacion.workspace ?? {});
+      } catch (error) {
+        throw new ErrorAplicacion(
+          "PLANTILLA_INCOMPATIBLE",
+          "La automatización seleccionada no cumple el contrato Talend requerido",
+          422,
+          {
+            tipo: "estructura",
+            razon: error instanceof Error ? error.message : "Contrato inválido",
+          },
+        );
+      }
 
       const resultado = await repositorio.configurarAutomatizacionBase(
         organizacionId,

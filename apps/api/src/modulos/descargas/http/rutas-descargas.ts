@@ -144,18 +144,22 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     );
 
     if (pendientes.length > 0) {
-      const automatizacionesDistintas = [
-        ...new Set(pendientes.map((p) => p.automatizacionIdQlik)),
+      const reportesDistintos = [
+        ...new Set(
+          pendientes
+            .map((p) => p.reporteId)
+            .filter((reporteId): reporteId is string => Boolean(reporteId)),
+        ),
       ];
 
       const qlik = await dependencias.resolverQlik(c);
 
       await Promise.all(
-        automatizacionesDistintas.map((automatizacionIdQlik) =>
+        reportesDistintos.map((reporteId) =>
           new SincronizarEjecucionesReporte(
             qlik,
             dependencias.repositorioReportes,
-          ).ejecutar(sesion.tenantId, automatizacionIdQlik),
+          ).ejecutar(reporteId, sesion.tenantId, sesion.organizacionId),
         ),
       );
 

@@ -9,18 +9,38 @@ function crearApp(rol: "admin" | "usuario") {
   const almacenamiento = {
     listarDirectorio: async () => ({
       carpetas: ["reportes/"],
-      archivos: [{ nombre: "mini-test-000000000000.csv.gz", rutaCompleta: "POCs/TalendDescargados/mini-test-000000000000.csv.gz", tamanoBytes: 120, formato: "CSV.GZ", fecha: "2026-08-18T15:00:00.000Z" }],
+      archivos: [
+        {
+          nombre: "mini-test-000000000000.csv.gz",
+          rutaCompleta: "POCs/TalendDescargados/mini-test-000000000000.csv.gz",
+          tamanoBytes: 120,
+          formato: "CSV.GZ",
+          fecha: "2026-08-18T15:00:00.000Z",
+        },
+      ],
     }),
     listar: async () => [],
     estaFinalizada: async () => false,
     firmar: async () => "https://storage.example.com/signed",
   } as unknown as PuertoAlmacenamientoDescargas;
   const rutas = crearRutasDescargas({
-    resolverSesion: async () => ({ tenantId: "tenant-1", organizacionId: "org-1", usuarioId: "user-1", roles: [rol], esSuperadmin: false }),
+    resolverSesion: async () => ({
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+      roles: [rol],
+      esSuperadmin: false,
+    }),
     resolverQlik: async () => ({}) as unknown as ServicioQlik,
-    repositorioReportes: { listarEjecucionesDescargas: async () => [], obtenerEjecucionDescarga: async () => null } as unknown as PuertoRepositorioReportes,
+    repositorioReportes: {
+      listarEjecucionesDescargas: async () => [],
+      obtenerEjecucionDescarga: async () => null,
+    } as unknown as PuertoRepositorioReportes,
     resolverAlmacenamiento: async () => almacenamiento,
-    resolverConfiguracionGcs: async () => ({ bucket: "bkt_dwh", prefijo: "POCs/TalendDescargados/" }),
+    resolverConfiguracionGcs: async () => ({
+      bucket: "bkt_dwh",
+      prefijo: "POCs/TalendDescargados/",
+    }),
     minutosFirma: 15,
   });
   const app = new Hono();
@@ -44,7 +64,14 @@ describe("explorador GCS administrativo", () => {
   });
 
   it("rechaza firmar objetos fuera del prefijo configurado", async () => {
-    const res = await crearApp("admin").request("/api/descargas/explorador/firma", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ruta: "otra-carpeta/secreto.csv" }) });
+    const res = await crearApp("admin").request(
+      "/api/descargas/explorador/firma",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ruta: "otra-carpeta/secreto.csv" }),
+      },
+    );
     expect(res.status).toBe(422);
   });
 });

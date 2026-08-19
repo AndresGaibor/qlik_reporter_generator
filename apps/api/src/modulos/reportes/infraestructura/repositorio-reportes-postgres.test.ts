@@ -9,155 +9,242 @@ const entrada = {
   flujoIdQlik: "flujo-1",
   flujoNombreSnapshot: "Ventas Dataflow",
   flujoEspacioIdQlik: "espacio-1",
-  automatizacionIdQlik: "auto-1",
-  automatizacionNombreSnapshot: "Ventas",
   estado: "activa" as const,
 };
 
 describe("RepositorioReportesPostgres", () => {
-  it("persiste la asociación Dataflow-Automate-GCS", async () => {
-    let valores: unknown;
+  it("conserva el runId conocido al marcar una ejecución con error", async () => {
+    let cambios: Record<string, unknown> | undefined;
+    const db = {
+      update: () => ({
+        set: (recibidos: Record<string, unknown>) => {
+          cambios = recibidos;
+          return { where: async () => undefined };
+        },
+      }),
+    };
+
+    await new RepositorioReportesPostgres(db as never).marcarEjecucionError(
+      "ejecucion-1",
+      "persistir-run",
+      "falló persistir",
+      new Date("2026-01-01T00:00:00.000Z"),
+      "run-1",
+    );
+
+    expect(cambios).toMatchObject({
+      runIdQlik: "run-1",
+      etapaError: "persistir-run",
+      mensajeError: "falló persistir",
+    });
+  });
+
+  it("crea un reporte sin persistir propiedad de Qlik Automate", async () => {
+    let valores: Record<string, unknown> | undefined;
     const db = {
       insert: () => ({
-        values: (entradaInsert: unknown) => {
-          valores = entradaInsert;
+        values: (recibidos: Record<string, unknown>) => {
+          valores = recibidos;
+          return { returning: async () => [{ id: "reporte-1", ...recibidos }] };
+        },
+      }),
+    };
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).crearReporte(entrada);
+    expect(resultado.id).toBe("reporte-1");
+    expect(valores).not.toHaveProperty("automatizacionIdQlik");
+    expect(valores).not.toHaveProperty("nombreSnapshot");
+  });
+
+  it("crea la ejecución con reporte y worker históricos nullable", async () => {
+    let valores: Record<string, unknown> | undefined;
+    const db = {
+      insert: () => ({
+        values: (recibidos: Record<string, unknown>) => {
+          valores = recibidos;
           return {
             returning: async () => [
               {
-                id: "44444444-4444-4444-8444-444444444444",
-                ...(entradaInsert as object),
+                ...recibidos,
+                ejecutadoPorUsuarioId: null,
+                automatizacionPersonalId: null,
               },
             ],
           };
         },
       }),
-      update: () => ({
-        set: () => ({ where: () => ({ returning: async () => [entrada] }) }),
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
-
-    const resultado = await repo.crearConfiguracion(entrada);
-
-    expect(valores).toMatchObject({
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).crearEjecucion({
+      id: "ejecucion-1",
+      reporteId: "reporte-1",
       flujoIdQlik: "flujo-1",
-      automatizacionIdQlik: "auto-1",
+      automatizacionIdQlik: "legacy-auto",
+      hashDataflowSha256: "a".repeat(64),
+      scriptDataflow: "script",
+      sqlBigQueryCompilado: "SELECT 1",
+      scriptExportacion: "EXPORT DATA",
+      uriBaseGcs: "gs://bkt/ejecucion-1/",
+      estado: "preparando",
+      versionCompilador: 1,
     });
-    expect(resultado.id).toBe("44444444-4444-4444-8444-444444444444");
+    expect(valores).toMatchObject({
+      reporteId: "reporte-1",
+      automatizacionIdQlik: "legacy-auto",
+    });
+    expect(resultado.ejecutadoPorUsuarioId).toBeNull();
+    expect(resultado.automatizacionPersonalId).toBeNull();
   });
 
-  it("resuelve el reporte por tenant y automatización", async () => {
-    let consultaRecibida = false;
-    const fila = { id: "config-1", ...entrada };
+  it("aplica tenant y organización al obtener y listar", async () => {
+    const condiciones: unknown[] = [];
+    const fila = {
+      id: "reporte-1",
+      organizacionId: "organizacion-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "usuario-1",
+      nombre: "Ventas",
+      flujoIdQlik: "flujo-1",
+      flujoNombreSnapshot: "Ventas",
+      estado: "activa",
+    };
+    const contieneAlcanceCorrecto = (where: unknown) => {
+      const valores: string[] = [];
+      const visitar = (valor: unknown) => {
+        if (!valor || typeof valor !== "object") return;
+        const objeto = valor as { value?: string[]; queryChunks?: unknown[] };
+        if (objeto.value) valores.push(...objeto.value);
+        objeto.queryChunks?.forEach(visitar);
+      };
+      visitar(where);
+      return (
+        valores.join("").includes("reporte-1") &&
+        valores.join("").includes("tenant-1") &&
+        valores.join("").includes("organizacion-1")
+      );
+    };
     const db = {
       query: {
-        configuracionesAutomatizacion: {
-          findFirst: async (opciones: unknown) => {
-            consultaRecibida = Boolean(opciones);
-            return fila;
+        reportes: {
+          findFirst: async ({ where }: { where: unknown }) => {
+            condiciones.push(where);
+            return contieneAlcanceCorrecto(where) ? fila : null;
+          },
+          findMany: async ({ where }: { where: unknown }) => {
+            condiciones.push(where);
+            return contieneAlcanceCorrecto(where) ? [fila] : [];
           },
         },
       },
     };
     const repo = new RepositorioReportesPostgres(db as never);
-
     expect(
-      await repo.obtenerPorAutomatizacion(entrada.tenantQlikId, "auto-1"),
-    ).toEqual(fila);
-    expect(consultaRecibida).toBe(true);
+      await repo.obtenerPorId("reporte-1", "tenant-1", "organizacion-1"),
+    ).toMatchObject({
+      id: "reporte-1",
+    });
+    expect(
+      await repo.obtenerPorId("reporte-1", "tenant-2", "organizacion-2"),
+    ).toBeNull();
+    await repo.listar({
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+    });
+
+    const valores = condiciones.flatMap((condicion) => {
+      const encontrados: string[] = [];
+      const visitar = (valor: unknown) => {
+        if (!valor || typeof valor !== "object") return;
+        const objeto = valor as { value?: string[]; queryChunks?: unknown[] };
+        if (objeto.value) encontrados.push(...objeto.value);
+        objeto.queryChunks?.forEach(visitar);
+      };
+      visitar(condicion);
+      return encontrados;
+    });
+    expect(valores.join("")).toContain("reporte-1");
+    expect(valores.join("")).toContain("tenant-1");
+    expect(valores.join("")).toContain("organizacion-1");
+    expect(valores.join("")).toContain("tenant-2");
+    expect(valores.join("")).toContain("organizacion-2");
   });
 
-  it("crea la auditoría y actualiza sus estados", async () => {
-    const sets: Array<Record<string, unknown>> = [];
+  it("conserva el worker y GCS históricos sin consultar el worker vigente", async () => {
+    const fila = {
+      id: "ejecucion-historica",
+      reporteId: "reporte-historico",
+      creadoPorUsuarioId: "usuario-1",
+      reporteNombre: "Ventas históricas",
+      automatizacionIdQlik: "auto-viejo",
+      estado: "completada",
+      mensajeError: null,
+      uriBaseGcs:
+        "gs://bkt_dwh/POCs/TalendDescargados/ventas/ejecucion-historica/",
+      creadoEn: new Date("2026-01-01T00:00:00.000Z"),
+      finalizadoEn: new Date("2026-01-01T00:01:00.000Z"),
+    };
     const db = {
-      insert: () => ({
-        values: (valor: Record<string, unknown>) => ({
-          returning: async () => [
-            {
-              ...valor,
-              runIdQlik: null,
-              etapaError: null,
-              mensajeError: null,
-              iniciadoEn: null,
-              finalizadoEn: null,
-            },
-          ],
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: () => ({ limit: async () => [fila] }),
+          }),
         }),
       }),
-      update: () => ({
-        set: (valor: Record<string, unknown>) => {
-          sets.push(valor);
-          return { where: async () => undefined };
+      query: {
+        get automatizacionesPersonalesQlik() {
+          throw new Error("el historial no debe consultar el worker vigente");
         },
-      }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
+      },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
-    const id = "55555555-5555-4555-8555-555555555555";
 
-    await repo.crearEjecucion({
-      id,
-      configuracionId: "44444444-4444-4444-8444-444444444444",
-      flujoIdQlik: "flujo-1",
-      automatizacionIdQlik: "auto-1",
-      hashDataflowSha256: "a".repeat(64),
-      scriptDataflow: "script",
-      sqlBigQueryCompilado: "SELECT 1",
-      scriptExportacion: "EXPORT DATA",
-      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/r/e/",
-      estado: "preparando",
-      versionCompilador: 1,
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).obtenerEjecucionDescarga({
+      id: "ejecucion-historica",
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+      usuarioId: "usuario-1",
     });
-    await repo.marcarEjecucionIniciada(
-      id,
-      "run-1",
-      new Date("2026-08-14T23:00:00Z"),
-    );
-    await repo.marcarEjecucionError(
-      id,
-      "talend",
-      "falló",
-      new Date("2026-08-14T23:01:00Z"),
-    );
-    await repo.marcarEjecucionCompletada(id, new Date("2026-08-14T23:02:00Z"));
 
-    expect(sets[0]).toMatchObject({ estado: "iniciada", runIdQlik: "run-1" });
-    expect(sets[1]).toMatchObject({
-      estado: "error",
-      etapaError: "talend",
-      mensajeError: "falló",
-    });
-    expect(sets[2]).toMatchObject({
-      estado: "completada",
-      finalizadoEn: new Date("2026-08-14T23:02:00Z"),
+    expect(resultado).toMatchObject({
+      automatizacionIdQlik: "auto-viejo",
+      uriBaseGcs: fila.uriBaseGcs,
     });
   });
 
-  it("actualiza configuración sin programacion", async () => {
-    const sets: Array<Record<string, unknown>> = [];
-    const fila = {
-      id: "44444444-4444-4444-8444-444444444444",
-      ...entrada,
-      nombre: "Ventas v2",
-      estado: "activa",
-    };
+  it("lista descargas por reporte dentro del tenant y organización", async () => {
+    let condicion: unknown;
     const db = {
-      update: () => ({
-        set: (valor: Record<string, unknown>) => {
-          sets.push(valor);
-          return {
-            where: () => ({ returning: async () => [fila] }),
-          };
-        },
+      select: () => ({
+        from: () => ({
+          innerJoin: () => ({
+            where: (valor: unknown) => {
+              condicion = valor;
+              return {
+                orderBy: () => ({ limit: async () => [] }),
+              };
+            },
+          }),
+        }),
       }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
 
-    await repo.actualizarConfiguracion(fila.id, { nombre: "Ventas v2" });
+    await new RepositorioReportesPostgres(
+      db as never,
+    ).listarEjecucionesDescargas({
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+      usuarioId: "usuario-1",
+    });
 
-    expect(sets[0]).toMatchObject({ nombre: "Ventas v2" });
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("tenant_qlik_id");
+    expect(Bun.inspect(condicion, { depth: 20 })).toContain("organizacion_id");
+    expect(Bun.inspect(condicion, { depth: 20 })).not.toContain(
+      "automatizaciones_personales_qlik",
+    );
   });
 
   it("rechaza consultas personales sin usuarioId para evitar lecturas globales", async () => {
@@ -165,23 +252,25 @@ describe("RepositorioReportesPostgres", () => {
 
     await expect(
       repo.listarEjecucionesDescargas({
-        tenantQlikId: "22222222-2222-4222-8222-222222222222",
-        organizacionId: "11111111-1111-4111-8111-111111111111",
+        tenantQlikId: "tenant-1",
+        organizacionId: "organizacion-1",
         esAdministrador: false,
       }),
     ).rejects.toThrow("usuarioId");
   });
 
-  it("listarEjecucionesDescargas hace join y filtra por tenant y organizacion", async () => {
-    const filasMock = [
+  it("permite a administración listar descargas de todos los ejecutores", async () => {
+    const filas = [
       {
         id: "e-1",
-        creadoPorUsuarioId: null,
+        reporteId: "reporte-1",
+        creadoPorUsuarioId: "usuario-otro",
         reporteNombre: "Ventas",
         automatizacionIdQlik: "auto-1",
         estado: "completada",
         mensajeError: null,
-        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-1/",
+        uriBaseGcs:
+          "gs://bkt_dwh/POCs/TalendDescargados/usuarios/usuario-otro/ventas/e-1/",
         creadoEn: new Date(),
         finalizadoEn: new Date(),
       },
@@ -191,48 +280,41 @@ describe("RepositorioReportesPostgres", () => {
         from: () => ({
           innerJoin: () => ({
             where: () => ({
-              orderBy: () => ({
-                limit: () => filasMock,
-              }),
+              orderBy: () => ({ limit: async () => filas }),
             }),
           }),
         }),
       }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
 
-    const resultado = await repo.listarEjecucionesDescargas(
-      {
-        tenantQlikId: "22222222-2222-4222-8222-222222222222",
-        organizacionId: "11111111-1111-4111-8111-111111111111",
-        esAdministrador: true,
-      },
-      10,
-    );
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).listarEjecucionesDescargas({
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
+      esAdministrador: true,
+    });
 
-    expect(resultado).toEqual(filasMock);
+    expect(resultado).toEqual(filas);
   });
 
-  it("obtenerEjecucionDescarga devuelve null cuando no existe", async () => {
+  it("obtenerEjecucionDescarga devuelve null cuando no existe para administración", async () => {
     const db = {
       select: () => ({
         from: () => ({
           innerJoin: () => ({
-            where: () => ({
-              limit: () => [],
-            }),
+            where: () => ({ limit: async () => [] }),
           }),
         }),
       }),
-      query: { configuracionesAutomatizacion: { findFirst: async () => null } },
     };
-    const repo = new RepositorioReportesPostgres(db as never);
 
-    const resultado = await repo.obtenerEjecucionDescarga({
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).obtenerEjecucionDescarga({
       id: "no-existe",
-      tenantQlikId: "22222222-2222-4222-8222-222222222222",
-      organizacionId: "11111111-1111-4111-8111-111111111111",
+      tenantQlikId: "tenant-1",
+      organizacionId: "organizacion-1",
       esAdministrador: true,
     });
 

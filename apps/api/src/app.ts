@@ -2,6 +2,8 @@ import { esquemaSesionPublica } from "@qlik/contratos/autenticacion";
 import { and, desc, eq } from "drizzle-orm";
 import { type Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
+import type { PuertoConsultaIdentidadQlikAdmin } from "./modulos/admin/aplicacion/puertos/repositorio-administracion.js";
+import { ConsultaIdentidadQlikPostgres } from "./modulos/admin/infraestructura/consulta-identidad-qlik-postgres.js";
 import {
   RepositorioAdministracionPostgres,
   ServicioBigQueryAdminPostgres,
@@ -22,6 +24,8 @@ import {
   ServicioAutenticacionQlik,
   crearRutasAutenticacionQlik,
 } from "./modulos/autenticacion-qlik/publico.js";
+import type { PuertoBloqueoEjecucion } from "./modulos/automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
+import type { PuertoConsultaTenantQlik } from "./modulos/automatizaciones/aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 import { ConsultaTenantQlikPostgres } from "./modulos/automatizaciones/infraestructura/consulta-tenant-qlik-postgres.js";
 import { BloqueoEjecucionPostgres } from "./modulos/automatizaciones/infraestructura/publico.js";
 import { crearRutasPanelAutomatizaciones } from "./modulos/automatizaciones/publico.js";
@@ -37,10 +41,15 @@ import {
   type ServicioQlik,
   crearRutasProxyQlik,
 } from "./modulos/qlik/publico.js";
+import { EjecutarReporte } from "./modulos/reportes/aplicacion/ejecutar-reporte.js";
+import { ObtenerOCrearAutomatizacionPersonal } from "./modulos/reportes/aplicacion/obtener-o-crear-automatizacion-personal.js";
+import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
+import type { PuertoRepositorioReportes } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import {
   type ResolucionBigQueryReporte,
   crearRutasReportesDataflow,
 } from "./modulos/reportes/http/rutas-reportes-dataflow.js";
+import { RepositorioAutomatizacionesPersonalesPostgres } from "./modulos/reportes/infraestructura/repositorio-automatizaciones-personales-postgres.js";
 import { RepositorioReportesPostgres } from "./modulos/reportes/infraestructura/repositorio-reportes-postgres.js";
 import { ConfiguracionAppPostgres } from "./modulos/setup/infraestructura/configuracion-app-postgres.js";
 import { crearRutasSetup } from "./modulos/setup/publico.js";
@@ -89,6 +98,11 @@ export interface DependenciasAplicacion {
   servicioAutenticacion?: ServicioAutenticacionQlik;
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
   resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
+  repositorioReportes?: PuertoRepositorioReportes;
+  consultaTenantQlik?: PuertoConsultaTenantQlik;
+  repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
+  resolverIdentidadQlikAdmin?: PuertoConsultaIdentidadQlikAdmin;
+  bloqueoEjecucion?: PuertoBloqueoEjecucion;
   resolverSesion?: (c: Context) => Promise<{
     tenantId: string;
     usuarioId: string;
@@ -327,18 +341,24 @@ export async function crearAplicacion(
     }),
   );
 
-  const repositorioReportes = new RepositorioReportesPostgres(db);
+  const repositorioReportes =
+    dependencias.repositorioReportes ?? new RepositorioReportesPostgres(db);
+  const consultaTenantAutomatizaciones =
+    dependencias.consultaTenantQlik ?? new ConsultaTenantQlikPostgres();
+  const bloqueosEjecucion =
+    dependencias.bloqueoEjecucion ?? new BloqueoEjecucionPostgres(db);
+  const repositorioWorkers =
+    dependencias.repositorioAutomatizacionesPersonales ??
+    new RepositorioAutomatizacionesPersonalesPostgres(db);
+  const resolverIdentidadQlikAdmin =
+    dependencias.resolverIdentidadQlikAdmin ??
+    new ConsultaIdentidadQlikPostgres(db);
   aplicacion.route(
-    "/api/reportes",
+    "/api/qlik/automatizaciones",
     crearRutasPanelAutomatizaciones({
       resolverQlik,
       resolverSesion,
-      consultaTenant: new ConsultaTenantQlikPostgres(),
-      bloqueos: new BloqueoEjecucionPostgres(db),
-      idempotencia,
-      auditoria,
-      repositorioReportes,
-      resolverBigQueryReporte,
+      consultaTenant: consultaTenantAutomatizaciones,
     }),
   );
   aplicacion.route(
@@ -348,6 +368,46 @@ export async function crearAplicacion(
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
       repositorioReportes,
+      resolverEjecutarReporte: async (c) => {
+        const sesion = await resolverSesion(c);
+        const tenant = await consultaTenantAutomatizaciones.obtenerTenant(
+          sesion.tenantId,
+        );
+        if (!tenant?.automatizacionBaseIdQlik) {
+          throw new ErrorAplicacion(
+            "SIN_AUTOMATIZACION_BASE",
+            "El tenant no tiene configurada una automatización base para crear el worker personal",
+            422,
+          );
+        }
+        const [qlik, bigQuery] = await Promise.all([
+          resolverQlik(c),
+          resolverBigQueryReporte(c),
+        ]);
+        const worker = new ObtenerOCrearAutomatizacionPersonal(
+          qlik,
+          repositorioWorkers,
+          bloqueosEjecucion,
+        );
+        const caso = new EjecutarReporte(
+          qlik,
+          repositorioReportes,
+          bloqueosEjecucion,
+          bigQuery,
+          generarUuid,
+          (entrada) => ({
+            organizacionId: entrada.organizacionId,
+            tenantQlikId: entrada.tenantId,
+            usuarioId: entrada.usuarioId,
+            usuarioIdQlik: entrada.usuarioIdQlik,
+            plantillaIdQlik: tenant.automatizacionBaseIdQlik as string,
+            plantillaNombre:
+              tenant.automatizacionBaseNombre ?? "Automatización base",
+          }),
+          worker,
+        );
+        return caso.ejecutar.bind(caso);
+      },
     }),
   );
   aplicacion.route("/api/qlik", crearRutasProxyQlik(resolverQlik));
@@ -373,6 +433,9 @@ export async function crearAplicacion(
     crearRutasAdmin({
       repositorio: repositorioAdministracion,
       resolverContexto: resolverContextoAdmin,
+      resolverQlik,
+      repositorioAutomatizacionesPersonales: repositorioWorkers,
+      resolverIdentidadQlik: resolverIdentidadQlikAdmin,
       obtenerBigQuery: servicioBigQueryAdmin.obtenerBigQuery.bind(
         servicioBigQueryAdmin,
       ),

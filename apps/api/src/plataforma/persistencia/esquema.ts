@@ -217,8 +217,8 @@ export const sesionesUsuario = pgTable(
   }),
 );
 
-export const configuracionesAutomatizacion = pgTable(
-  "configuraciones_automatizacion",
+export const reportes = pgTable(
+  "reportes",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     organizacionId: uuid("organizacion_id")
@@ -234,26 +234,53 @@ export const configuracionesAutomatizacion = pgTable(
     flujoIdQlik: text("flujo_id_qlik").notNull(),
     flujoNombreSnapshot: text("flujo_nombre_snapshot").notNull(),
     flujoEspacioIdQlik: text("flujo_espacio_id_qlik"),
-    automatizacionIdQlik: text("automatizacion_id_qlik"),
-    automatizacionNombreSnapshot: text("automatizacion_nombre_snapshot"),
     estado: text("estado").notNull().default("pendiente"),
     mensajeError: text("mensaje_error"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
   (t) => ({
-    idxTenant: index("idx_configuraciones_tenant").on(t.tenantQlikId),
-    idxFlujo: index("idx_configuraciones_flujo").on(
-      t.tenantQlikId,
-      t.flujoIdQlik,
-    ),
-    idxAutomatizacion: index("idx_configuraciones_automatizacion").on(
-      t.tenantQlikId,
-      t.automatizacionIdQlik,
-    ),
+    idxTenant: index("idx_reportes_tenant").on(t.tenantQlikId),
+    idxFlujo: index("idx_reportes_flujo").on(t.tenantQlikId, t.flujoIdQlik),
     ckEstado: check(
       "configuraciones_estado_check",
       sql`${t.estado} IN ('pendiente', 'creando', 'activa', 'error', 'desactivada', 'eliminada')`,
+    ),
+  }),
+);
+
+export const automatizacionesPersonalesQlik = pgTable(
+  "automatizaciones_personales_qlik",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizacionId: uuid("organizacion_id")
+      .notNull()
+      .references(() => organizaciones.id, { onDelete: "cascade" }),
+    tenantQlikId: uuid("tenant_qlik_id")
+      .notNull()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
+    usuarioId: uuid("usuario_id")
+      .notNull()
+      .references(() => usuarios.id, { onDelete: "cascade" }),
+    automatizacionIdQlik: text("automatizacion_id_qlik").notNull(),
+    automatizacionNombreSnapshot: text(
+      "automatizacion_nombre_snapshot",
+    ).notNull(),
+    estado: text("estado").notNull().default("activo"),
+    mensajeError: text("mensaje_error"),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqUsuarioTenant: unique(
+      "automatizaciones_personales_usuario_tenant_unique",
+    ).on(t.usuarioId, t.tenantQlikId),
+    idxTenant: index("idx_automatizaciones_personales_tenant").on(
+      t.tenantQlikId,
+    ),
+    ckEstado: check(
+      "automatizaciones_personales_estado_check",
+      sql`${t.estado} IN ('activo', 'error', 'desactivado')`,
     ),
   }),
 );
@@ -262,13 +289,17 @@ export const ejecucionesReportes = pgTable(
   "ejecuciones_reportes",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    configuracionId: uuid("configuracion_id")
+    reporteId: uuid("reporte_id")
       .notNull()
-      .references(() => configuracionesAutomatizacion.id, {
+      .references(() => reportes.id, {
         onDelete: "cascade",
       }),
-    creadoPorUsuarioId: uuid("creado_por_usuario_id").references(
+    ejecutadoPorUsuarioId: uuid("ejecutado_por_usuario_id").references(
       () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    automatizacionPersonalId: uuid("automatizacion_personal_id").references(
+      () => automatizacionesPersonalesQlik.id,
       { onDelete: "set null" },
     ),
     flujoIdQlik: text("flujo_id_qlik").notNull(),
@@ -289,13 +320,13 @@ export const ejecucionesReportes = pgTable(
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },
   (t) => ({
-    idxConfiguracionFecha: index("idx_ejecuciones_reportes_config_fecha").on(
-      t.configuracionId,
+    idxReporteFecha: index("idx_ejecuciones_reportes_reporte_fecha").on(
+      t.reporteId,
       t.creadoEn,
     ),
     idxRunQlik: index("idx_ejecuciones_reportes_run_qlik").on(t.runIdQlik),
-    idxPropietarioFecha: index("idx_ejecuciones_reportes_propietario_fecha").on(
-      t.creadoPorUsuarioId,
+    idxEjecutorFecha: index("idx_ejecuciones_reportes_ejecutor_fecha").on(
+      t.ejecutadoPorUsuarioId,
       t.creadoEn,
     ),
     ckEstado: check(

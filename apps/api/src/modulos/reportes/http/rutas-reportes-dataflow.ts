@@ -1,14 +1,21 @@
-import { esquemaActualizarConfiguracionReporte } from "@qlik/contratos";
+import {
+  esquemaActualizarConfiguracionReporte,
+  esquemaCrearReporte,
+} from "@qlik/contratos";
 import { type Context, Hono } from "hono";
+import { z } from "zod";
+import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { ClonarReporte } from "../aplicacion/clonar-reporte.js";
+import { CrearReporte } from "../aplicacion/crear-reporte.js";
+import type { EntradaEjecutarReporte } from "../aplicacion/ejecutar-reporte.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
   PreflightDataflow,
 } from "../aplicacion/preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
-import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
 import { URI_BASE_GCS_REPORTES } from "../dominio/destino-gcs.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
@@ -19,6 +26,7 @@ interface SesionReportes {
   tenantId: string;
   organizacionId: string;
   usuarioId: string;
+  usuarioIdQlik: string;
 }
 
 export interface DependenciasRutasReportesDataflow {
@@ -26,12 +34,72 @@ export interface DependenciasRutasReportesDataflow {
   resolverBigQuery(c: Context): Promise<ResolucionBigQueryReporte>;
   resolverSesion(c: Context): Promise<SesionReportes>;
   repositorioReportes: PuertoRepositorioReportes;
+  resolverEjecutarReporte?: (
+    c: Context,
+  ) => Promise<
+    (
+      entrada: EntradaEjecutarReporte,
+    ) => Promise<{ runId: string; ejecucionReporteId: string }>
+  >;
 }
 
 export function crearRutasReportesDataflow(
   dependencias: DependenciasRutasReportesDataflow,
 ) {
   const rutas = new Hono();
+
+  rutas.get("/", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const reportes = await dependencias.repositorioReportes.listar({
+      tenantQlikId: sesion.tenantId,
+      organizacionId: sesion.organizacionId,
+    });
+    return responderExito(c, reportes.map(serializarConfiguracion));
+  });
+
+  rutas.post("/", async (c) => {
+    const validacion = esquemaCrearReporte.safeParse(
+      await c.req.json().catch(() => undefined),
+    );
+    if (!validacion.success) return respuestaValidacion(c, validacion.error);
+
+    const sesion = await dependencias.resolverSesion(c);
+    const qlik = await dependencias.resolverQlik(c);
+    const bigQuery = await dependencias.resolverBigQuery(c);
+    try {
+      const reporte = await new CrearReporte(
+        qlik,
+        new PreflightDataflow(qlik, bigQuery.estimador, {
+          projectId: bigQuery.projectId,
+          dataset: bigQuery.dataset,
+        }),
+        dependencias.repositorioReportes,
+      ).ejecutar(validacion.data, sesion);
+      return responderExito(c, serializarConfiguracion(reporte));
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
+  });
+
+  rutas.post("/:reporteId/clonar", async (c) => {
+    const validacion = esquemaClonarReporte.safeParse(
+      await c.req.json().catch(() => undefined),
+    );
+    if (!validacion.success) return respuestaValidacion(c, validacion.error);
+    const sesion = await dependencias.resolverSesion(c);
+    try {
+      const reporte = await new ClonarReporte(
+        dependencias.repositorioReportes,
+      ).ejecutar(
+        c.req.param("reporteId") ?? "",
+        validacion.data.nombre,
+        sesion,
+      );
+      return responderExito(c, serializarConfiguracion(reporte));
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
+  });
 
   rutas.get("/dataflows/:flujoId/preflight", async (c) => {
     const flujoIdQlik = c.req.param("flujoId").trim();
@@ -52,18 +120,35 @@ export function crearRutasReportesDataflow(
     return responderExito(c, await caso.ejecutar(flujoIdQlik));
   });
 
-  rutas.get("/:automatizacionId/configuracion", async (c) => {
+  rutas.all("/configuracion-tenant", (c) =>
+    c.json(
+      {
+        exito: false,
+        error: {
+          codigo: "ENDPOINT_DEPRECADO",
+          mensaje:
+            "La configuración del tenant se consulta en /api/qlik/automatizaciones/configuracion-tenant",
+        },
+      },
+      410,
+    ),
+  );
+
+  const obtenerDetalle = async (c: Context) => {
     const sesion = await dependencias.resolverSesion(c);
     const configuracion = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
-      c.req.param("automatizacionId"),
+      c.req.param("reporteId") ?? "",
     );
     if (!configuracion) return respuestaNoEncontrada(c);
     return responderExito(c, serializarConfiguracion(configuracion));
-  });
+  };
 
-  rutas.put("/:automatizacionId/configuracion", async (c) => {
+  rutas.get("/:reporteId", obtenerDetalle);
+  rutas.get("/:reporteId/configuracion", obtenerDetalle);
+
+  const actualizarDetalle = async (c: Context) => {
     const json = await c.req.json().catch(() => undefined);
     const validacion = esquemaActualizarConfiguracionReporte.safeParse(json);
     if (!validacion.success) {
@@ -80,11 +165,11 @@ export function crearRutasReportesDataflow(
     }
 
     const sesion = await dependencias.resolverSesion(c);
-    const automatizacionId = c.req.param("automatizacionId");
+    const reporteId = c.req.param("reporteId") ?? "";
     const actual = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
-      automatizacionId,
+      reporteId,
     );
     if (!actual) return respuestaNoEncontrada(c);
 
@@ -105,6 +190,7 @@ export function crearRutasReportesDataflow(
           {
             exito: false,
             error: {
+              codigo: "DATAFLOW_NO_COMPATIBLE",
               mensaje: "El nuevo Dataflow no es compatible",
               operacionesNoSoportadas: preflight.operacionesNoSoportadas,
             },
@@ -116,130 +202,140 @@ export function crearRutasReportesDataflow(
         (item) => item.id === cambios.flujoIdQlik,
       );
       if (!flujo)
-        return respuestaNoEncontrada(c, "El Dataflow ya no existe en Qlik");
+        return c.json(
+          {
+            exito: false,
+            error: {
+              codigo: "DATAFLOW_NO_ENCONTRADO",
+              mensaje: "El Dataflow ya no existe en Qlik",
+            },
+          },
+          404,
+        );
       flujoNombreSnapshot = flujo.name;
       flujoEspacioIdQlik = flujo.spaceId ?? null;
     }
 
-    let qlikRenombrado:
-      | {
-          cliente: PuertoQlik;
-          original: Awaited<ReturnType<PuertoQlik["obtenerAutomatizacion"]>>;
-        }
-      | undefined;
-    if (cambios.nombre && cambios.nombre !== actual.nombre) {
-      const qlik = await dependencias.resolverQlik(c);
-      const original = await qlik.obtenerAutomatizacion(automatizacionId);
-      await qlik.actualizarAutomatizacion(automatizacionId, {
-        name: cambios.nombre,
-        schedules: [],
-        workspace: original.workspace ?? {},
-        description: original.description ?? "",
-        maxConcurrentRuns: original.maxConcurrentRuns ?? 1,
+    const actualizada =
+      await dependencias.repositorioReportes.actualizarReporte(actual.id, {
+        ...(cambios.nombre ? { nombre: cambios.nombre } : {}),
+        ...(cambios.flujoIdQlik ? { flujoIdQlik: cambios.flujoIdQlik } : {}),
+        ...(flujoNombreSnapshot ? { flujoNombreSnapshot } : {}),
+        ...(flujoEspacioIdQlik !== undefined ? { flujoEspacioIdQlik } : {}),
+        ...(cambios.activa !== undefined
+          ? { estado: cambios.activa ? "activa" : "desactivada" }
+          : {}),
       });
-      qlikRenombrado = { cliente: qlik, original };
-    }
-
-    let actualizada: Awaited<
-      ReturnType<PuertoRepositorioReportes["actualizarConfiguracion"]>
-    >;
-    try {
-      actualizada =
-        await dependencias.repositorioReportes.actualizarConfiguracion(
-          actual.id,
-          {
-            ...(cambios.nombre
-              ? {
-                  nombre: cambios.nombre,
-                  automatizacionNombreSnapshot: cambios.nombre,
-                }
-              : {}),
-            ...(cambios.flujoIdQlik
-              ? { flujoIdQlik: cambios.flujoIdQlik }
-              : {}),
-            ...(flujoNombreSnapshot ? { flujoNombreSnapshot } : {}),
-            ...(flujoEspacioIdQlik !== undefined ? { flujoEspacioIdQlik } : {}),
-            ...(cambios.activa !== undefined
-              ? { estado: cambios.activa ? "activa" : "desactivada" }
-              : {}),
-          },
-        );
-    } catch (error) {
-      if (qlikRenombrado) {
-        const { cliente, original } = qlikRenombrado;
-        await cliente.actualizarAutomatizacion(automatizacionId, {
-          name: original.name,
-          schedules: [],
-          workspace: original.workspace ?? {},
-          description: original.description ?? "",
-          maxConcurrentRuns: original.maxConcurrentRuns ?? 1,
-        });
-      }
-      throw error;
-    }
     return responderExito(c, serializarConfiguracion(actualizada));
-  });
+  };
 
-  rutas.get("/:automatizacionId/ejecuciones-locales", async (c) => {
-    const [sesion, qlik] = await Promise.all([
-      dependencias.resolverSesion(c),
-      dependencias.resolverQlik(c),
-    ]);
-    const automatizacionId = c.req.param("automatizacionId");
+  rutas.put("/:reporteId", actualizarDetalle);
+  rutas.put("/:reporteId/configuracion", actualizarDetalle);
+
+  const listarHistorial = async (c: Context) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const reporteId = c.req.param("reporteId") ?? "";
     const configuracion = await obtenerConfiguracionAutorizada(
       dependencias.repositorioReportes,
       sesion,
-      automatizacionId,
+      reporteId,
     );
     if (!configuracion) return respuestaNoEncontrada(c);
 
-    await new SincronizarEjecucionesReporte(
-      qlik,
-      dependencias.repositorioReportes,
-    ).ejecutar(sesion.tenantId, automatizacionId);
     const ejecuciones =
       await dependencias.repositorioReportes.listarEjecuciones(
         configuracion.id,
         100,
       );
     return responderExito(c, ejecuciones.map(serializarEjecucion));
+  };
+
+  rutas.get("/:reporteId/ejecuciones", listarHistorial);
+  rutas.get("/:reporteId/ejecuciones-locales", listarHistorial);
+
+  rutas.post("/:reporteId/ejecuciones", async (c) => {
+    if (!dependencias.resolverEjecutarReporte) {
+      throw new ErrorAplicacion(
+        "EXECUTOR_NOT_CONFIGURED",
+        "La ejecución de reportes no está configurada",
+        500,
+      );
+    }
+    const sesion = await dependencias.resolverSesion(c);
+    try {
+      const ejecutarReporte = await dependencias.resolverEjecutarReporte(c);
+      const resultado = await ejecutarReporte({
+        reporteId: c.req.param("reporteId") ?? "",
+        tenantId: sesion.tenantId,
+        organizacionId: sesion.organizacionId,
+        usuarioId: sesion.usuarioId,
+        usuarioIdQlik: sesion.usuarioIdQlik,
+      });
+      return responderExito(c, resultado);
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
   });
 
   return rutas;
 }
 
+const esquemaClonarReporte = z
+  .object({
+    nombre: z.string().trim().min(1).max(255),
+  })
+  .strict();
+
+function respuestaValidacion(c: Context, error: z.ZodError) {
+  return c.json(
+    {
+      exito: false,
+      error: { mensaje: "La solicitud es inválida", detalles: error.flatten() },
+    },
+    400,
+  );
+}
+
+function respuestaErrorAplicacion(c: Context, error: unknown) {
+  if (error instanceof ErrorAplicacion) {
+    return c.json(
+      {
+        exito: false,
+        error: {
+          codigo: error.codigo,
+          mensaje: error.message,
+          detalles: error.detalles,
+        },
+      },
+      error.estadoHttp as 400 | 401 | 404 | 409 | 422,
+    );
+  }
+  throw error;
+}
+
 async function obtenerConfiguracionAutorizada(
   repositorio: PuertoRepositorioReportes,
   sesion: SesionReportes,
-  automatizacionIdQlik: string,
+  reporteId: string,
 ) {
-  const configuracion = await repositorio.obtenerPorAutomatizacion(
+  return repositorio.obtenerPorId(
+    reporteId,
     sesion.tenantId,
-    automatizacionIdQlik,
+    sesion.organizacionId,
   );
-  if (
-    !configuracion ||
-    configuracion.organizacionId !== sesion.organizacionId
-  ) {
-    return null;
-  }
-  return configuracion;
 }
 
 function serializarConfiguracion(
-  configuracion: Awaited<
-    ReturnType<PuertoRepositorioReportes["obtenerPorAutomatizacion"]>
-  >,
+  configuracion: Awaited<ReturnType<PuertoRepositorioReportes["obtenerPorId"]>>,
 ) {
   if (!configuracion) throw new Error("Configuración ausente");
   return {
     id: configuracion.id,
+    creadoPorUsuarioId: configuracion.creadoPorUsuarioId,
     nombre: configuracion.nombre,
     flujoIdQlik: configuracion.flujoIdQlik,
     flujoNombreSnapshot: configuracion.flujoNombreSnapshot,
     flujoEspacioIdQlik: configuracion.flujoEspacioIdQlik ?? null,
-    automatizacionIdQlik: configuracion.automatizacionIdQlik,
-    automatizacionNombreSnapshot: configuracion.automatizacionNombreSnapshot,
     destinoGcs: URI_BASE_GCS_REPORTES,
     activa: configuracion.estado === "activa",
   };
@@ -252,10 +348,12 @@ function serializarEjecucion(
 ) {
   return {
     id: ejecucion.id,
-    configuracionId: ejecucion.configuracionId,
+    reporteId: ejecucion.reporteId,
     flujoIdQlik: ejecucion.flujoIdQlik,
     automatizacionIdQlik: ejecucion.automatizacionIdQlik,
     runIdQlik: ejecucion.runIdQlik ?? null,
+    ejecutadoPorUsuarioId: ejecucion.ejecutadoPorUsuarioId ?? null,
+    automatizacionPersonalId: ejecucion.automatizacionPersonalId ?? null,
     hashDataflowSha256: ejecucion.hashDataflowSha256,
     scriptDataflow: ejecucion.scriptDataflow,
     sqlBigQueryCompilado: ejecucion.sqlBigQueryCompilado,

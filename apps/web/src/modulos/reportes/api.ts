@@ -2,80 +2,24 @@ import { clienteApi } from "@/compartido/api/cliente";
 import type {
   ActualizarConfiguracionReporte,
   ConfiguracionReporteDataflow,
+  CrearReporte,
   DetalleEjecucionReporte,
+  DetalleReporte,
   PreflightDataflowReporte,
+  ResumenReporte,
 } from "@qlik/contratos";
-import type {
-  CrearDesdePlantilla,
-  DetalleAutomatizacion,
-  EspacioDisponible,
-  ResultadoCrearDesdePlantilla,
-  ResumenAutomatizacion,
-} from "@qlik/contratos/automatizaciones";
+import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 
 const RUTA = "/reportes";
+const RUTA_AUTOMATIZACIONES_QLIK = "/qlik/automatizaciones";
 
-export interface ConfiguracionTenant {
-  automatizacionBaseIdQlik: string | null;
-  automatizacionBaseNombre: string | null;
+function idUrl(id: string) {
+  return `${RUTA}/${encodeURIComponent(id)}`;
 }
 
-export function preflightDataflowReporte(
-  flujoId: string,
-): Promise<PreflightDataflowReporte> {
-  return clienteApi.get<PreflightDataflowReporte>(
-    `${RUTA}/dataflows/${encodeURIComponent(flujoId)}/preflight`,
-  );
-}
-
-export function obtenerConfiguracionReporte(
-  automatizacionId: string,
-): Promise<ConfiguracionReporteDataflow> {
-  return clienteApi.get<ConfiguracionReporteDataflow>(
-    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
-  );
-}
-
-export function actualizarConfiguracionReporte(
-  automatizacionId: string,
-  entrada: ActualizarConfiguracionReporte,
-): Promise<ConfiguracionReporteDataflow> {
-  return clienteApi.put<ConfiguracionReporteDataflow>(
-    `${RUTA}/${encodeURIComponent(automatizacionId)}/configuracion`,
-    entrada,
-  );
-}
-
-export function obtenerEjecucionesLocalesReporte(
-  automatizacionId: string,
-): Promise<DetalleEjecucionReporte[]> {
-  return clienteApi.get<DetalleEjecucionReporte[]>(
-    `${RUTA}/${encodeURIComponent(automatizacionId)}/ejecuciones-locales`,
-  );
-}
-
-export function obtenerConfiguracionTenant(): Promise<ConfiguracionTenant> {
-  return clienteApi.get<ConfiguracionTenant>(`${RUTA}/configuracion-tenant`);
-}
-
-export type {
-  CrearDesdePlantilla,
-  DetalleAutomatizacion,
-  EspacioDisponible,
-  ResumenAutomatizacion,
-  ResultadoCrearDesdePlantilla,
-};
-export type EjecucionResumen = DetalleAutomatizacion["ejecuciones"][number];
-
-export function obtenerAutomatizaciones() {
-  return clienteApi.get<ResumenAutomatizacion[]>(RUTA);
-}
-
-export function obtenerAutomatizacionesConFiltros(
-  espacioId?: string,
-  busqueda?: string,
-) {
-  return clienteApi.get<ResumenAutomatizacion[]>(RUTA, {
+export function obtenerReportes(espacioId?: string, busqueda?: string) {
+  if (!espacioId && !busqueda) return clienteApi.get<ResumenReporte[]>(RUTA);
+  return clienteApi.get<ResumenReporte[]>(RUTA, {
     parametros: {
       ...(espacioId ? { espacioId } : {}),
       ...(busqueda ? { q: busqueda } : {}),
@@ -83,60 +27,68 @@ export function obtenerAutomatizacionesConFiltros(
   });
 }
 
-export function obtenerDetalleAutomatizacion(id: string) {
-  return clienteApi.get<DetalleAutomatizacion>(
-    `${RUTA}/${encodeURIComponent(id)}`,
-  );
+export function obtenerReporte(id: string) {
+  return clienteApi.get<DetalleReporte>(idUrl(id));
 }
 
-export function obtenerEspacios() {
-  return clienteApi.get<EspacioDisponible[]>(`${RUTA}/espacios`);
+export function crearReporte(entrada: CrearReporte) {
+  return clienteApi.post<DetalleReporte>(RUTA, entrada);
 }
 
-export function ejecutarAutomatizacion(id: string) {
-  return clienteApi.post<{ runId: string }>(
-    `${RUTA}/${encodeURIComponent(id)}/ejecuciones`,
-  );
-}
-
-export function detenerEjecucion(id: string, ejecucionId: string) {
-  return clienteApi.post<{ detenida: true }>(
-    `${RUTA}/${encodeURIComponent(id)}/ejecuciones/${encodeURIComponent(ejecucionId)}/detener`,
-  );
-}
-
-export function crearAutomatizacionDesdePlantilla(
-  entrada: Omit<CrearDesdePlantilla, "plantillaIdQlik"> & {
-    plantillaIdQlik?: string;
-  },
-) {
-  const clave = entrada.claveIdempotencia ?? crypto.randomUUID();
-  return clienteApi.post<ResultadoCrearDesdePlantilla>(
-    `${RUTA}/desde-plantilla`,
-    { ...entrada, claveIdempotencia: clave },
-    { headers: { "idempotency-key": clave } },
-  );
-}
-
-export interface WorkspaceAutomatizacion {
-  id: string;
-  nombre: string;
-  workspace: Record<string, unknown>;
-  schedules: Array<Record<string, unknown>>;
-}
-
-export function obtenerWorkspaceAutomatizacion(id: string) {
-  return clienteApi.get<WorkspaceAutomatizacion>(
-    `${RUTA}/${encodeURIComponent(id)}/workspace`,
-  );
-}
-
-export function clonarAutomatizacion(
+export function actualizarReporte(
   id: string,
-  opciones?: { nombre?: string; espacioIdQlik?: string },
+  entrada: ActualizarConfiguracionReporte,
 ) {
-  return clienteApi.post<{ id: string; nombre: string }>(
-    `${RUTA}/${encodeURIComponent(id)}/clonar`,
-    opciones ?? {},
+  return clienteApi.put<DetalleReporte>(idUrl(id), entrada);
+}
+
+export function clonarReporte(id: string, opciones?: { nombre?: string }) {
+  return clienteApi.post<DetalleReporte>(`${idUrl(id)}/clonar`, opciones ?? {});
+}
+
+export function obtenerEjecucionesReporte(id: string) {
+  return clienteApi.get<DetalleEjecucionReporte[]>(`${idUrl(id)}/ejecuciones`);
+}
+
+export function ejecutarReporte(id: string) {
+  return clienteApi.post<{ runId: string; ejecucionReporteId?: string }>(
+    `${idUrl(id)}/ejecuciones`,
   );
+}
+
+export function preflightDataflowReporte(flujoId: string) {
+  return clienteApi.get<PreflightDataflowReporte>(
+    `${RUTA}/dataflows/${encodeURIComponent(flujoId)}/preflight`,
+  );
+}
+
+export function obtenerConfiguracionReporte(id: string) {
+  return clienteApi.get<ConfiguracionReporteDataflow>(`${idUrl(id)}`);
+}
+
+export function actualizarConfiguracionReporte(
+  id: string,
+  entrada: ActualizarConfiguracionReporte,
+) {
+  return actualizarReporte(id, entrada);
+}
+
+export function obtenerEjecucionesLocalesReporte(id: string) {
+  return obtenerEjecucionesReporte(id);
+}
+
+export type { ResumenAutomatizacion };
+export function obtenerAutomatizaciones() {
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA_AUTOMATIZACIONES_QLIK);
+}
+export function obtenerAutomatizacionesConFiltros(
+  espacioId?: string,
+  busqueda?: string,
+) {
+  return clienteApi.get<ResumenAutomatizacion[]>(RUTA_AUTOMATIZACIONES_QLIK, {
+    parametros: {
+      ...(espacioId ? { espacioId } : {}),
+      ...(busqueda ? { q: busqueda } : {}),
+    },
+  });
 }

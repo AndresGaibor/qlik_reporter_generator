@@ -14,7 +14,9 @@ export function listarDescargas(): Promise<ResumenDescargaEjecucion[]> {
 export function listarDescargasAdministracion(): Promise<
   ResumenDescargaEjecucion[]
 > {
-  return clienteApi.get<ResumenDescargaEjecucion[]>("/descargas/administracion");
+  return clienteApi.get<ResumenDescargaEjecucion[]>(
+    "/descargas/administracion",
+  );
 }
 
 export function solicitarManifiesto(id: string): Promise<ManifiestoDescarga> {

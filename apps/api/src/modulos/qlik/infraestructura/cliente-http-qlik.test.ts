@@ -214,14 +214,16 @@ describe("ClienteHttpQlik", () => {
     });
     const registro = fetchFn.mock.calls[1] as unknown[];
     expect(new URL(String(registro[0])).pathname).toBe("/api/v1/items");
-    expect(JSON.parse(String((registro[1] as RequestInit).body))).toMatchObject({
-      name: "Copia ventas",
-      resourceId: "copia-1",
-      resourceType: "app",
-      description: "qlik generator",
-      spaceId: "space-1",
-      resourceCustomAttributes: {},
-    });
+    expect(JSON.parse(String((registro[1] as RequestInit).body))).toMatchObject(
+      {
+        name: "Copia ventas",
+        resourceId: "copia-1",
+        resourceType: "app",
+        description: "qlik generator",
+        spaceId: "space-1",
+        resourceCustomAttributes: {},
+      },
+    );
   });
 
   it("propaga estado, cuerpo y trace id de Qlik", async () => {

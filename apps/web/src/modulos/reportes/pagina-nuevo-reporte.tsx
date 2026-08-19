@@ -6,21 +6,22 @@ import { obtenerFlujosConFiltros } from "@/modulos/flujos/api";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { extraerMensajeError } from "@/modulos/reportes/utiles-presentacion-reporte";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  crearAutomatizacionDesdePlantilla,
+  crearReporte as crearReporteApi,
   preflightDataflowReporte,
 } from "./api";
 
 const DESTINO_GCS = "gs://bkt_dwh/POCs/TalendDescargados/";
 
-export function PaginaNuevaAutomatizacion() {
+export function PaginaNuevoReporte() {
   return <FormularioDataflow />;
 }
 
 function FormularioDataflow() {
   const { mostrarExito, mostrarError } = useNotificaciones();
+  const navegar = useNavigate();
   const parametros = useMemo(
     () => new URLSearchParams(window.location.search),
     [],
@@ -60,14 +61,13 @@ function FormularioDataflow() {
     if (!flujo || !preflight?.compatible) return;
     setGuardando(true);
     try {
-      const resultado = await crearAutomatizacionDesdePlantilla({
+      const resultado = await crearReporteApi({
         nombre: nombreFinal,
-        flujoId: flujo.id,
+        flujoIdQlik: flujo.id,
         ...(flujo.espacioId ? { espacioIdQlik: flujo.espacioId } : {}),
-        reemplazosWorkspace: [],
       });
-      mostrarExito("Reporte creado y asociado al Dataflow actual");
-      window.location.href = `/reportes/${resultado.id}`;
+      mostrarExito("Reporte creado");
+      navegar({ to: `/reportes/${resultado.id}` });
     } catch (error) {
       mostrarError(
         error instanceof Error ? error.message : "No se pudo crear el reporte",

@@ -38,6 +38,7 @@ function crearApp(configurada = true) {
           },
         ],
       }),
+      resolverQlik: async () => ({}) as never,
       obtenerBigQuery: async () =>
         configurada
           ? {

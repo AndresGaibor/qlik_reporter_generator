@@ -6,3 +6,8 @@ export type {
 export { ServicioAdmin } from "./aplicacion/servicio-admin.js";
 export type { ContextoSesion } from "./aplicacion/servicio-admin.js";
 export type { RepositorioAdministracion } from "./aplicacion/puertos/repositorio-administracion.js";
+export type {
+  IdentidadQlikAdministrable,
+  PuertoConsultaIdentidadQlikAdmin,
+} from "./aplicacion/puertos/repositorio-administracion.js";
+export { ConsultaIdentidadQlikPostgres } from "./infraestructura/consulta-identidad-qlik-postgres.js";

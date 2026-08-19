@@ -2,163 +2,152 @@ import { describe, expect, it, vi } from "bun:test";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { SincronizarEjecucionesReporte } from "./sincronizar-ejecuciones-reporte.js";
 
-describe("SincronizarEjecucionesReporte", () => {
-  it("mapea Qlik stopped a detenida", async () => {
-    const marcar = vi.fn(async () => undefined);
-    const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
-      listarEjecuciones: vi.fn(async () => [
-        { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
-      ]),
-      marcarEstadoPorRunQlik: marcar,
-    };
-    const qlik = {
-      listarEjecuciones: vi.fn(async () => [
-        {
-          id: "run-1",
-          status: "stopped",
-          stopTime: "2026-08-14T23:05:00.000Z",
-        },
-      ]),
-    } as unknown as ServicioQlik;
-
-    await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-      "tenant-1",
-      "auto-1",
-    );
-
-    expect(marcar).toHaveBeenCalledWith(
-      "run-1",
-      "detenida",
-      new Date("2026-08-14T23:05:00.000Z"),
-    );
-  });
-
-  it.each(["finished", "finished with warnings"])(
-    "no marca completada solo porque Qlik terminó con %s",
-    async (status) => {
-      const marcar = vi.fn(async () => undefined);
-      const repo = {
-        obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
-        listarEjecuciones: vi.fn(async () => [
-          { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
-        ]),
-        marcarEstadoPorRunQlik: marcar,
-      };
-      const qlik = {
-        listarEjecuciones: vi.fn(async () => [{ id: "run-1", status }]),
-      } as unknown as ServicioQlik;
-
-      await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-        "tenant-1",
-        "auto-1",
-      );
-
-      expect(marcar).not.toHaveBeenCalled();
-    },
+function llamada(repo: Record<string, unknown>, qlik: ServicioQlik) {
+  return new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
+    "reporte-1",
+    "tenant-1",
+    "organizacion-1",
   );
+}
 
-  it("persiste el mensaje real de Talend cuando Qlik termina failed", async () => {
-    const marcarError = vi.fn(async () => undefined);
-    const marcarEstado = vi.fn(async () => undefined);
+describe("SincronizarEjecucionesReporte", () => {
+  it("usa el automate histórico almacenado para cada ejecución", async () => {
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
-      listarEjecuciones: vi.fn(async () => [
-        { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
-      ]),
-      marcarEjecucionError: marcarError,
-      marcarEstadoPorRunQlik: marcarEstado,
-    };
-    const qlik = {
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
       listarEjecuciones: vi.fn(async () => [
         {
-          id: "run-1",
-          status: "failed",
-          stopTime: "2026-08-17T19:14:19.000Z",
+          id: "e-old",
+          runIdQlik: "run-old",
+          automatizacionIdQlik: "auto-old",
+          estado: "iniciada",
+        },
+        {
+          id: "e-new",
+          runIdQlik: "run-new",
+          automatizacionIdQlik: "auto-new",
+          estado: "iniciada",
         },
       ]),
-      solicitarJson: vi.fn(async () => ({
-        id: "run-1",
-        status: "failed",
-        error: [
-          {
-            endpoint: { datasource: "Talend Cloud", name: "Execute Task" },
-            error: 'Error calling endpoint "Talend Cloud - Execute Task"',
-            response: {
-              status: 400,
-              body: {
-                message: "Talend rechazó los parámetros de contexto del Task",
-              },
-            },
-          },
-        ],
-      })),
-    } as unknown as ServicioQlik;
-
-    await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-      "tenant-1",
-      "auto-1",
-    );
-
-    expect(marcarError).toHaveBeenCalledWith(
-      "e-1",
-      "talend",
-      "Talend rechazó los parámetros de contexto del Task",
-      new Date("2026-08-17T19:14:19.000Z"),
-    );
-    expect(marcarEstado).not.toHaveBeenCalled();
-  });
-
-  it("guarda un error útil si Qlik falla sin detalle estructurado", async () => {
-    const marcarError = vi.fn(async () => undefined);
-    const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({ id: "config-1" })),
-      listarEjecuciones: vi.fn(async () => [
-        { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
-      ]),
-      marcarEjecucionError: marcarError,
       marcarEstadoPorRunQlik: vi.fn(async () => undefined),
     };
-    const qlik = {
-      listarEjecuciones: vi.fn(async () => [
-        { id: "run-1", status: "exceeded limit" },
-      ]),
-      solicitarJson: vi.fn(async () => {
-        throw new Error("detalle no disponible");
-      }),
-    } as unknown as ServicioQlik;
+    const listarEjecuciones = vi.fn(async (id: string) => [
+      {
+        id: id === "auto-old" ? "run-old" : "run-new",
+        status: "stopped",
+      },
+    ]);
 
-    await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-      "tenant-1",
-      "auto-1",
-    );
+    await llamada(repo, { listarEjecuciones } as unknown as ServicioQlik);
 
-    expect(marcarError).toHaveBeenCalledWith(
-      "e-1",
-      "ejecucion-qlik",
-      "La ejecución Qlik finalizó con estado exceeded limit",
-      expect.any(Date),
-    );
+    expect(listarEjecuciones).toHaveBeenNthCalledWith(1, "auto-old", {
+      limit: 100,
+      sort: "desc",
+    });
+    expect(listarEjecuciones).toHaveBeenNthCalledWith(2, "auto-new", {
+      limit: 100,
+      sort: "desc",
+    });
   });
 
-  it("no modifica auditorías si Qlik sigue running", async () => {
+  it("actualiza solo la ejecución asociada y obtiene el detalle con su automate histórico", async () => {
+    const marcarEstado = vi.fn(async () => undefined);
+    const marcarError = vi.fn(async () => undefined);
+    const repo = {
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-old",
+          runIdQlik: "run-old",
+          automatizacionIdQlik: "auto-old",
+          estado: "iniciada",
+        },
+        {
+          id: "e-new",
+          runIdQlik: "run-new",
+          automatizacionIdQlik: "auto-new",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoPorRunQlik: marcarEstado,
+      marcarEjecucionError: marcarError,
+    };
+    const listar = vi.fn(async (automatizacionIdQlik: string) =>
+      automatizacionIdQlik === "auto-old"
+        ? [{ id: "run-old", status: "failed", error: { message: "viejo" } }]
+        : [{ id: "run-new", status: "stopped" }],
+    );
+    const solicitarJson = vi.fn(async ({ ruta }: { ruta: string }) => ({
+      id: "run-old",
+      status: "failed",
+      error: { message: `detalle-${ruta}` },
+    }));
+
+    await llamada(repo, { listarEjecuciones: listar, solicitarJson } as never);
+
+    expect(marcarError).toHaveBeenCalledWith(
+      "e-old",
+      "ejecucion-qlik",
+      expect.stringContaining("detalle-/api/workflows/automations/auto-old"),
+      expect.any(Date),
+    );
+    expect(marcarEstado).toHaveBeenCalledWith(
+      "run-new",
+      "detenida",
+      expect.any(Date),
+    );
+    expect(marcarError).not.toHaveBeenCalledWith(
+      "e-new",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(solicitarJson).toHaveBeenCalledWith({
+      metodo: "GET",
+      ruta: "/api/workflows/automations/auto-old/runs/run-old",
+    });
+  });
+
+  it("no marca completada solo porque Qlik responde finished", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {
-      obtenerPorAutomatizacion: async () => ({ id: "config-1" }),
-      listarEjecuciones: async () => [
-        { id: "e-1", runIdQlik: "run-1", estado: "iniciada" },
-      ],
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "iniciada",
+        },
+      ]),
       marcarEstadoPorRunQlik: marcar,
     };
-    const qlik = {
-      listarEjecuciones: async () => [{ id: "run-1", status: "running" }],
-    } as unknown as ServicioQlik;
-
-    await new SincronizarEjecucionesReporte(qlik, repo as never).ejecutar(
-      "tenant-1",
-      "auto-1",
-    );
-
+    await llamada(repo, {
+      listarEjecuciones: vi.fn(async () => [
+        { id: "run-1", status: "finished" },
+      ]),
+    } as unknown as ServicioQlik);
     expect(marcar).not.toHaveBeenCalled();
+  });
+
+  it("mapea stopped a detenida", async () => {
+    const marcar = vi.fn(async () => undefined);
+    const repo = {
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoPorRunQlik: marcar,
+    };
+    await llamada(repo, {
+      listarEjecuciones: vi.fn(async () => [
+        { id: "run-1", status: "stopped" },
+      ]),
+    } as unknown as ServicioQlik);
+    expect(marcar).toHaveBeenCalledWith("run-1", "detenida", expect.any(Date));
   });
 });

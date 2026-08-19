@@ -1,3 +1,4 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
 import type { TenantQlik } from "@/modulos/admin/api";
@@ -28,6 +29,9 @@ export function SeccionConfigurarAutomatizacionBase({
   const [nombreManual, setNombreManual] = useState(
     tenantQlik.automatizacionBaseNombre || "",
   );
+  const [validacion, setValidacion] = useState<"validada" | string | null>(
+    null,
+  );
 
   const { data: automatizaciones = [], isLoading } = useQuery<
     ResumenAutomatizacion[]
@@ -45,12 +49,22 @@ export function SeccionConfigurarAutomatizacionBase({
         auto.nombre,
       ),
     onSuccess: () => {
+      setValidacion("validada");
       queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
       mostrarExito("Plantilla base del tenant configurada");
     },
-    onError: (err: Error) => mostrarError(err.message),
+    onError: (err: Error) => {
+      const detalle =
+        err instanceof ErrorClienteApi &&
+        typeof err.detalles === "object" &&
+        err.detalles !== null
+          ? String((err.detalles as { razon?: unknown }).razon ?? "")
+          : "";
+      setValidacion(detalle || err.message);
+      mostrarError(err.message);
+    },
   });
 
   const opcionesBase = automatizaciones.map((a) => ({
@@ -96,6 +110,15 @@ export function SeccionConfigurarAutomatizacionBase({
 
   return (
     <div className="space-y-3">
+      {validacion && (
+        <div
+          className={`rounded-lg border p-3 text-xs ${validacion === "validada" ? "border-brand-100 bg-brand-50 text-brand-800" : "border-red-100 bg-red-50 text-danger-600"}`}
+        >
+          {validacion === "validada"
+            ? "Contrato de plantilla validado correctamente."
+            : `La plantilla no es compatible: ${validacion}`}
+        </div>
+      )}
       {!modoManual ? (
         <>
           <SelectBuscable

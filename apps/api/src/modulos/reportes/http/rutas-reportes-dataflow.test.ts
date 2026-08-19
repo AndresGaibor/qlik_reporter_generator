@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
+import { esquemaDetalleEjecucionReporte } from "@qlik/contratos";
 import { Hono } from "hono";
 import { crearRutasReportesDataflow } from "./rutas-reportes-dataflow.js";
 
@@ -9,6 +10,298 @@ SQL SELECT id FROM \`p.d.t\`;
 `;
 
 describe("rutas reportes Dataflow", () => {
+  it("lista solo reportes PostgreSQL scoped al tenant y organización", async () => {
+    const reporte = {
+      id: "11111111-1111-4111-8111-111111111111",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas actual",
+      flujoEspacioIdQlik: null,
+      estado: "activa" as const,
+    };
+    const listar = vi.fn(async () => [reporte]);
+    const resolverQlik = vi.fn(async () => ({}) as never);
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: { listar } as never,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes");
+
+    expect(respuesta.status).toBe(200);
+    expect(listar).toHaveBeenCalledWith({
+      tenantQlikId: "tenant-1",
+      organizacionId: "org-1",
+    });
+    expect((await respuesta.json()).datos[0]).not.toHaveProperty(
+      "automatizacionIdQlik",
+    );
+    expect(resolverQlik).not.toHaveBeenCalled();
+  });
+
+  it("ejecuta un reporte local con identidad exacta de la sesión", async () => {
+    const ejecutarReporte = vi.fn(async () => ({
+      runId: "run-1",
+      ejecucionReporteId: "ejecucion-1",
+    }));
+    const resolverEjecutarReporte = vi.fn(async () => ejecutarReporte);
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () => ({}) as never,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: {} as never,
+        resolverEjecutarReporte,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes/reporte-1/ejecuciones", {
+      method: "POST",
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(resolverEjecutarReporte).toHaveBeenCalled();
+    expect(ejecutarReporte).toHaveBeenCalledWith({
+      reporteId: "reporte-1",
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "qlik-1",
+    });
+  });
+
+  it("consulta historial local por el UUID del reporte", async () => {
+    const listarEjecuciones = vi.fn(async () => [
+      {
+        id: "22222222-2222-4222-8222-222222222222",
+        reporteId: "11111111-1111-4111-8111-111111111111",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "auto-legacy",
+        runIdQlik: null,
+        ejecutadoPorUsuarioId: null,
+        automatizacionPersonalId: null,
+        hashDataflowSha256: "a".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "select 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://reportes/legacy",
+        estado: "completada" as const,
+        versionCompilador: 2,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: null,
+        finalizadoEn: null,
+        creadoEn: new Date("2026-01-01T00:00:00.000Z"),
+      },
+      {
+        id: "33333333-3333-4333-8333-333333333333",
+        reporteId: "11111111-1111-4111-8111-111111111111",
+        flujoIdQlik: "df-1",
+        automatizacionIdQlik: "auto-modern",
+        runIdQlik: "run-1",
+        ejecutadoPorUsuarioId: "44444444-4444-4444-8444-444444444444",
+        automatizacionPersonalId: "55555555-5555-4555-8555-555555555555",
+        hashDataflowSha256: "b".repeat(64),
+        scriptDataflow: "script",
+        sqlBigQueryCompilado: "select 1",
+        scriptExportacion: "export",
+        uriBaseGcs: "gs://reportes/modern",
+        estado: "iniciada" as const,
+        versionCompilador: 2,
+        etapaError: null,
+        mensajeError: null,
+        iniciadoEn: new Date("2026-01-02T00:00:00.000Z"),
+        finalizadoEn: null,
+        creadoEn: new Date("2026-01-02T00:00:00.000Z"),
+      },
+    ]);
+    const resolverQlik = vi.fn(
+      async () =>
+        ({
+          listarAutomatizaciones: vi.fn(async () => [{ id: "arbitrario" }]),
+        }) as never,
+    );
+    const obtenerPorId = vi.fn(async () => ({
+      id: "reporte-1",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas",
+      estado: "activa" as const,
+    }));
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: { obtenerPorId, listarEjecuciones } as never,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes/reporte-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(obtenerPorId).toHaveBeenCalledWith("reporte-1", "tenant-1", "org-1");
+    expect(listarEjecuciones).toHaveBeenCalledWith("reporte-1", 100);
+    const cuerpo = await respuesta.json();
+    for (const ejecucion of cuerpo.datos) {
+      esquemaDetalleEjecucionReporte.parse(ejecucion);
+    }
+    expect(cuerpo.datos[0]).toMatchObject({
+      ejecutadoPorUsuarioId: null,
+      automatizacionPersonalId: null,
+    });
+    expect(cuerpo.datos[1]).toMatchObject({
+      ejecutadoPorUsuarioId: "44444444-4444-4444-8444-444444444444",
+      automatizacionPersonalId: "55555555-5555-4555-8555-555555555555",
+    });
+    expect(resolverQlik).not.toHaveBeenCalled();
+  });
+
+  it("crea un reporte local sin copiar un Automate", async () => {
+    const crearReporte = vi.fn(async (entrada: Record<string, unknown>) => ({
+      id: "11111111-1111-4111-8111-111111111111",
+      ...entrada,
+    }));
+    const copiarAutomatizacion = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => [
+              { id: "df-1", name: "Ventas actual", spaceId: "space-1" },
+            ]),
+            copiarAutomatizacion,
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: { crearReporte } as never,
+      }),
+    );
+
+    const respuesta = await app.request("/api/reportes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nombre: "Ventas", flujoIdQlik: "df-1" }),
+    });
+
+    expect(respuesta.status).toBe(200);
+    expect(crearReporte).toHaveBeenCalledTimes(1);
+    expect(copiarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("clona un reporte localmente sin consultar ni copiar Qlik Automate", async () => {
+    const crearReporte = vi.fn(async (entrada: Record<string, unknown>) => ({
+      id: "22222222-2222-4222-8222-222222222222",
+      ...entrada,
+    }));
+    const obtenerPorId = vi.fn(async () => ({
+      id: "11111111-1111-4111-8111-111111111111",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: "df-1",
+      flujoNombreSnapshot: "Ventas actual",
+      flujoEspacioIdQlik: "space-1",
+      estado: "activa" as const,
+    }));
+    const listarFlujos = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () => ({ listarFlujos }) as never,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-2",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: { obtenerPorId, crearReporte } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/11111111-1111-4111-8111-111111111111/clonar",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ nombre: "Ventas copia" }),
+      },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(obtenerPorId).toHaveBeenCalledWith(
+      "11111111-1111-4111-8111-111111111111",
+      "tenant-1",
+      "org-1",
+    );
+    expect(crearReporte).toHaveBeenCalledWith(
+      expect.objectContaining({ nombre: "Ventas copia" }),
+    );
+    expect(listarFlujos).not.toHaveBeenCalled();
+  });
+
   it("expone preflight usando Qlik y BigQuery resueltos en servidor", async () => {
     const obtenerScriptApp = vi.fn(async () => ({ script: SCRIPT }));
     const estimarConsulta = vi.fn(async () => ({
@@ -28,6 +321,7 @@ describe("rutas reportes Dataflow", () => {
           tenantId: "tenant-1",
           organizacionId: "org-1",
           usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
         }),
         repositorioReportes: {} as never,
       }),
@@ -51,7 +345,7 @@ describe("rutas reportes Dataflow", () => {
 
   it("devuelve la configuración local sin programación", async () => {
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -61,6 +355,7 @@ describe("rutas reportes Dataflow", () => {
         flujoNombreSnapshot: "Ventas DF",
         flujoEspacioIdQlik: "espacio-1",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: "Ventas",
         programar: false,
         estado: "activa",
@@ -86,12 +381,13 @@ describe("rutas reportes Dataflow", () => {
           tenantId: "tenant-1",
           organizacionId: "org-1",
           usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
         }),
         repositorioReportes: repo,
       } as never),
     );
 
-    const respuesta = await app.request("/api/reportes/auto-1/configuracion");
+    const respuesta = await app.request("/api/reportes/auto-1");
     const body = (await respuesta.json()) as {
       datos?: Record<string, unknown>;
     };
@@ -106,7 +402,7 @@ describe("rutas reportes Dataflow", () => {
   });
 
   it("rechaza campos de edición que pertenecen al SQL o workspace", async () => {
-    const actualizarConfiguracion = vi.fn();
+    const actualizarReporte = vi.fn();
     const app = new Hono().route(
       "/api/reportes",
       crearRutasReportesDataflow({
@@ -120,18 +416,19 @@ describe("rutas reportes Dataflow", () => {
           tenantId: "tenant-1",
           organizacionId: "org-1",
           usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
         }),
-        repositorioReportes: { actualizarConfiguracion },
+        repositorioReportes: { actualizarReporte },
       } as never),
     );
 
-    const respuesta = await app.request("/api/reportes/auto-1/configuracion", {
+    const respuesta = await app.request("/api/reportes/auto-1", {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ nombre: "Ventas", gcp_script: "SELECT 1" }),
     });
     expect(respuesta.status).toBe(400);
-    expect(actualizarConfiguracion).not.toHaveBeenCalled();
+    expect(actualizarReporte).not.toHaveBeenCalled();
   });
 
   it("mantiene iniciada hasta que GCS confirme y devuelve las auditorías locales", async () => {
@@ -141,6 +438,7 @@ describe("rutas reportes Dataflow", () => {
       configuracionId: "11111111-1111-4111-8111-111111111111",
       flujoIdQlik: "flujo-1",
       automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
       runIdQlik: "run-1",
       hashDataflowSha256: "a".repeat(64),
       scriptDataflow: "LOAD ...",
@@ -156,7 +454,7 @@ describe("rutas reportes Dataflow", () => {
       creadoEn: new Date("2026-08-14T22:59:59Z"),
     };
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: ejecucion.configuracionId,
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -182,6 +480,7 @@ describe("rutas reportes Dataflow", () => {
           tenantId: "tenant-1",
           organizacionId: "org-1",
           usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
         }),
         repositorioReportes: repo,
       } as never),
@@ -202,7 +501,7 @@ describe("rutas reportes Dataflow", () => {
     });
   });
 
-  it("sincroniza el nombre local con la copia de Qlik Automate", async () => {
+  it("edita el nombre solo localmente y no llama a Qlik Automate", async () => {
     const actualizarAutomatizacion = vi.fn(
       async (_id: string, definicion: Record<string, unknown>) => ({
         id: "auto-1",
@@ -210,7 +509,7 @@ describe("rutas reportes Dataflow", () => {
         ...definicion,
       }),
     );
-    const actualizarConfiguracion = vi.fn(
+    const actualizarReporte = vi.fn(
       async (_id: string, cambios: Record<string, unknown>) => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
@@ -220,6 +519,7 @@ describe("rutas reportes Dataflow", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas DF",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: String(
           cambios.automatizacionNombreSnapshot ?? "Ventas",
         ),
@@ -228,7 +528,7 @@ describe("rutas reportes Dataflow", () => {
       }),
     );
     const repo = {
-      obtenerPorAutomatizacion: vi.fn(async () => ({
+      obtenerPorId: vi.fn(async () => ({
         id: "11111111-1111-4111-8111-111111111111",
         organizacionId: "org-1",
         tenantQlikId: "tenant-1",
@@ -237,12 +537,13 @@ describe("rutas reportes Dataflow", () => {
         flujoIdQlik: "flujo-1",
         flujoNombreSnapshot: "Ventas DF",
         automatizacionIdQlik: "auto-1",
+        reporteId: "reporte-1",
         automatizacionNombreSnapshot: "Ventas",
         programar: false,
         estado: "activa" as const,
       })),
       obtenerProgramacion: vi.fn(async () => null),
-      actualizarConfiguracion,
+      actualizarReporte,
     };
     const qlik = {
       obtenerAutomatizacion: vi.fn(async () => ({
@@ -273,6 +574,7 @@ describe("rutas reportes Dataflow", () => {
           tenantId: "tenant-1",
           organizacionId: "org-1",
           usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
         }),
         repositorioReportes: repo as never,
       }),
@@ -285,16 +587,241 @@ describe("rutas reportes Dataflow", () => {
     });
 
     expect(respuesta.status).toBe(200);
-    expect(actualizarAutomatizacion).toHaveBeenCalledWith(
-      "auto-1",
-      expect.objectContaining({ name: "Ventas Comercial v2", schedules: [] }),
-    );
-    expect(actualizarConfiguracion).toHaveBeenCalledWith(
+    expect(actualizarReporte).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",
       expect.objectContaining({
         nombre: "Ventas Comercial v2",
-        automatizacionNombreSnapshot: "Ventas Comercial v2",
       }),
     );
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("edita el Dataflow con preflight y snapshot nuevos sin actualizar Automate", async () => {
+    const actualizarReporte = vi.fn(async (_id, cambios) => ({
+      id: "reporte-1",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      creadoPorUsuarioId: "user-1",
+      nombre: "Ventas",
+      flujoIdQlik: cambios.flujoIdQlik,
+      flujoNombreSnapshot: cambios.flujoNombreSnapshot,
+      flujoEspacioIdQlik: cambios.flujoEspacioIdQlik,
+      estado: "activa" as const,
+    }));
+    const preflightScript = vi.fn(async () => ({ script: SCRIPT }));
+    const actualizarAutomatizacion = vi.fn();
+    const repo = {
+      obtenerPorId: vi.fn(async () => ({
+        id: "reporte-1",
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        creadoPorUsuarioId: "user-1",
+        nombre: "Ventas",
+        flujoIdQlik: "df-1",
+        flujoNombreSnapshot: "Ventas anterior",
+        estado: "activa" as const,
+      })),
+      actualizarReporte,
+    };
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: preflightScript,
+            listarFlujos: vi.fn(async () => [
+              { id: "df-2", name: "Ventas nueva", spaceId: "space-2" },
+            ]),
+            actualizarAutomatizacion,
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: repo as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(preflightScript).toHaveBeenCalledWith("df-2", "current");
+    expect(actualizarReporte).toHaveBeenCalledWith(
+      "reporte-1",
+      expect.objectContaining({
+        flujoIdQlik: "df-2",
+        flujoNombreSnapshot: "Ventas nueva",
+        flujoEspacioIdQlik: "space-2",
+      }),
+    );
+    expect(actualizarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("no persiste edición ante Dataflow incompatible", async () => {
+    const actualizarReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: "LET v = 1;" })),
+            listarFlujos: vi.fn(),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: { estimarConsulta: vi.fn() },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: {
+          obtenerPorId: vi.fn(async () => ({
+            id: "reporte-1",
+            organizacionId: "org-1",
+            tenantQlikId: "tenant-1",
+            creadoPorUsuarioId: "user-1",
+            nombre: "Ventas",
+            flujoIdQlik: "df-1",
+            flujoNombreSnapshot: "Ventas anterior",
+            estado: "activa" as const,
+          })),
+          actualizarReporte,
+        } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+    const body = await respuesta.json();
+
+    expect(respuesta.status).toBe(422);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_COMPATIBLE");
+    expect(actualizarReporte).not.toHaveBeenCalled();
+  });
+
+  it("no persiste edición ante Dataflow ausente", async () => {
+    const actualizarReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => []),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: {
+          obtenerPorId: vi.fn(async () => ({
+            id: "reporte-1",
+            organizacionId: "org-1",
+            tenantQlikId: "tenant-1",
+            creadoPorUsuarioId: "user-1",
+            nombre: "Ventas",
+            flujoIdQlik: "df-1",
+            flujoNombreSnapshot: "Ventas anterior",
+            estado: "activa" as const,
+          })),
+          actualizarReporte,
+        } as never,
+      }),
+    );
+
+    const respuesta = await app.request(
+      "/api/reportes/reporte-1/configuracion",
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ flujoIdQlik: "df-2" }),
+      },
+    );
+    const body = await respuesta.json();
+
+    expect(respuesta.status).toBe(404);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_ENCONTRADO");
+    expect(actualizarReporte).not.toHaveBeenCalled();
+  });
+
+  it("mapea a DATAFLOW_NO_ENCONTRADO una creación sin Dataflow", async () => {
+    const crearReporte = vi.fn();
+    const app = new Hono().route(
+      "/api/reportes",
+      crearRutasReportesDataflow({
+        resolverQlik: async () =>
+          ({
+            obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+            listarFlujos: vi.fn(async () => []),
+          }) as never,
+        resolverBigQuery: async () => ({
+          estimador: {
+            estimarConsulta: vi.fn(async () => ({
+              bytesProcesados: 1,
+              costoEstimadoUsd: 0,
+            })),
+          },
+          projectId: "p",
+          dataset: "d",
+        }),
+        resolverSesion: async () => ({
+          tenantId: "tenant-1",
+          organizacionId: "org-1",
+          usuarioId: "user-1",
+          usuarioIdQlik: "qlik-1",
+        }),
+        repositorioReportes: { crearReporte } as never,
+      }),
+    );
+    const respuesta = await app.request("/api/reportes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ nombre: "Ventas", flujoIdQlik: "df-1" }),
+    });
+    const body = await respuesta.json();
+    expect(respuesta.status).toBe(404);
+    expect(body.error.codigo).toBe("DATAFLOW_NO_ENCONTRADO");
+    expect(crearReporte).not.toHaveBeenCalled();
   });
 });

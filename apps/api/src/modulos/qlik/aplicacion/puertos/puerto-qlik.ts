@@ -52,7 +52,6 @@ export interface PuertoQlik {
     opciones?: { limit?: number; sort?: "asc" | "desc" },
   ): Promise<import("../../dominio/modelos-qlik.js").EjecucionQlik[]>;
   ejecutarAutomatizacion(id: string): Promise<{ runId: string }>;
-  detenerEjecucion(automatizacionId: string, runId: string): Promise<void>;
   copiarAutomatizacion(id: string, nombre: string): Promise<{ id: string }>;
   cambiarEspacioAutomatizacion(id: string, espacioId: string): Promise<void>;
   cambiarPropietarioAutomatizacion(

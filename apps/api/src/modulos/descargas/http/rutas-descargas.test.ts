@@ -55,11 +55,12 @@ describe("GET /api/descargas", () => {
         listarEjecucionesDescargas,
         obtenerEjecucionDescarga: async () => null,
       } as unknown as PuertoRepositorioReportes,
-      resolverAlmacenamiento: async () => ({
-        listar: async () => [],
-        estaFinalizada: async () => false,
-        firmar: async () => "https://signed.url",
-      }) as unknown as PuertoAlmacenamientoDescargas,
+      resolverAlmacenamiento: async () =>
+        ({
+          listar: async () => [],
+          estaFinalizada: async () => false,
+          firmar: async () => "https://signed.url",
+        }) as unknown as PuertoAlmacenamientoDescargas,
     });
     const app = new Hono();
     app.route("/api/descargas", rutas);
@@ -161,11 +162,12 @@ describe("GET /api/descargas/administracion", () => {
         listarEjecucionesDescargas,
         obtenerEjecucionDescarga: async () => null,
       } as unknown as PuertoRepositorioReportes,
-      resolverAlmacenamiento: async () => ({
-        listar: async () => [],
-        estaFinalizada: async () => false,
-        firmar: async () => "https://signed.url",
-      }) as unknown as PuertoAlmacenamientoDescargas,
+      resolverAlmacenamiento: async () =>
+        ({
+          listar: async () => [],
+          estaFinalizada: async () => false,
+          firmar: async () => "https://signed.url",
+        }) as unknown as PuertoAlmacenamientoDescargas,
     });
     const app = new Hono();
     app.route("/api/descargas", rutas);

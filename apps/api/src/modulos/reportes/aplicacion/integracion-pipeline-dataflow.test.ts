@@ -23,6 +23,7 @@ function configuracion() {
     flujoIdQlik: "flujo-1",
     flujoNombreSnapshot: "Ventas DF",
     automatizacionIdQlik: "auto-1",
+    reporteId: "reporte-1",
     automatizacionNombreSnapshot: "Ventas",
     estado: "activa" as const,
   };
@@ -61,7 +62,6 @@ function qlikConScripts(scripts: string[]) {
   let indice = 0;
   const workspaces: Record<string, unknown>[] = [];
   const qlik = {
-    listarEjecuciones: vi.fn(async () => []),
     obtenerScriptApp: vi.fn(async () => ({
       script: scripts[Math.min(indice++, scripts.length - 1)] ?? SCRIPT_V1,
     })),
@@ -90,7 +90,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     const auditorias: Array<Record<string, unknown>> = [];
     let id = 0;
     const repo = {
-      obtenerPorAutomatizacion: async () => configuracion(),
+      obtenerPorId: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         auditorias.push(entrada);
         return entrada;
@@ -109,17 +109,40 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       } as never,
       { projectId: "p", dataset: "d" },
       () => `22222222-2222-4222-8222-${String(++id).padStart(12, "0")}`,
+      () => ({
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "user-qlik-1",
+        plantillaIdQlik: "template-1",
+        plantillaNombre: "Plantilla",
+      }),
+      {
+        ejecutar: vi.fn(async () => ({
+          id: "44444444-4444-4444-8444-444444444444",
+          organizacionId: "org-1",
+          tenantQlikId: "tenant-1",
+          usuarioId: "user-1",
+          automatizacionIdQlik: "auto-1",
+          automatizacionNombreSnapshot: "Worker",
+          estado: "activo" as const,
+        })),
+      } as never,
     );
 
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
 
     expect(qlik.obtenerScriptApp).toHaveBeenCalledTimes(2);
@@ -155,7 +178,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     const { qlik, workspaces } = qlikConScripts([scriptReal]);
     const auditorias: Array<Record<string, unknown>> = [];
     const repo = {
-      obtenerPorAutomatizacion: async () => configuracion(),
+      obtenerPorId: async () => configuracion(),
       crearEjecucion: vi.fn(async (entrada: Record<string, unknown>) => {
         auditorias.push(entrada);
         return entrada;
@@ -175,12 +198,33 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       } as never,
       { projectId: "poc-bigquery-talend", dataset: "demo_lafavorita" },
       () => ejecucionId,
+      () => ({
+        organizacionId: "org-1",
+        tenantQlikId: "tenant-1",
+        usuarioId: "user-1",
+        usuarioIdQlik: "user-qlik-1",
+        plantillaIdQlik: "template-1",
+        plantillaNombre: "Plantilla",
+      }),
+      {
+        ejecutar: vi.fn(async () => ({
+          id: "44444444-4444-4444-8444-444444444444",
+          organizacionId: "org-1",
+          tenantQlikId: "tenant-1",
+          usuarioId: "user-1",
+          automatizacionIdQlik: "auto-1",
+          automatizacionNombreSnapshot: "Worker",
+          estado: "activo" as const,
+        })),
+      } as never,
     );
 
     await caso.ejecutar({
       tenantId: "tenant-1",
       organizacionId: "org-1",
-      automatizacionIdQlik: "auto-1",
+      reporteId: "reporte-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "user-qlik-1",
     });
 
     const auditoria = auditorias[0];
@@ -189,13 +233,13 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(auditoria?.uriBaseGcs).toBe(
-      `gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/`,
+      `gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas/${ejecucionId}/`,
     );
     expect(valorVariable(workspace, "BqSelectData")).toContain(
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(valorVariable(workspace, "BqExportData")).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/ventas/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/usuarios/user-1/ventas/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
     );
     expect(valorVariable(workspace, "BqNumberCsv")).toContain(
       "SELECT DISTINCT export_part",

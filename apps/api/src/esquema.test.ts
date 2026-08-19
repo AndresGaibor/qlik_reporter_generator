@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { readdir } from "node:fs/promises";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
 import {
   auditoriaEventos,
-  configuracionesAutomatizacion,
+  automatizacionesPersonalesQlik,
   configuracionesOauthQlik,
   credencialesQlik,
   ejecucionesReportes,
@@ -183,11 +184,12 @@ describe("Esquema Drizzle", () => {
     expect(idxs).toContain("idx_sesiones_usuario_expira");
   });
 
-  it("configuracionesAutomatizacion solo persiste Dataflow, Automate y estado", () => {
-    const cols = colNames(getTableConfig(configuracionesAutomatizacion));
+  it("reportes no persiste propiedad de Qlik Automate", () => {
+    const cols = colNames(getTableConfig(esquema.reportes));
     expect(cols).toContain("flujo_id_qlik");
-    expect(cols).toContain("automatizacion_id_qlik");
     expect(cols).toContain("estado");
+    expect(cols).not.toContain("automatizacion_id_qlik");
+    expect(cols).not.toContain("automatizacion_nombre_snapshot");
     for (const legacy of [
       "programar",
       "destino_proveedor",
@@ -199,13 +201,55 @@ describe("Esquema Drizzle", () => {
     }
   });
 
+  it("automatizaciones personales son únicas por usuario y tenant", () => {
+    const config = getTableConfig(automatizacionesPersonalesQlik);
+    expect(colNames(config)).toEqual(
+      expect.arrayContaining([
+        "usuario_id",
+        "tenant_qlik_id",
+        "automatizacion_id_qlik",
+      ]),
+    );
+    const constraint = config.uniqueConstraints.find(
+      (item) =>
+        item.name === "automatizaciones_personales_usuario_tenant_unique",
+    );
+    expect(constraint).toBeDefined();
+    expect(constraint?.columns.map((column) => column.name)).toEqual([
+      "usuario_id",
+      "tenant_qlik_id",
+    ]);
+  });
+
+  it("mantiene la cadena de migraciones sin entradas huérfanas", async () => {
+    const migraciones = readMigrationFiles({
+      migrationsFolder: new URL("../drizzle/", import.meta.url).pathname,
+    });
+    expect(migraciones).toHaveLength(6);
+    const journal = JSON.parse(
+      await Bun.file(
+        new URL("../drizzle/meta/_journal.json", import.meta.url),
+      ).text(),
+    ) as { entries: Array<{ tag: string }> };
+    expect(journal.entries.map(({ tag }) => tag)).toEqual([
+      "0000_tan_zeigeist",
+      "0001_spooky_marvel_apes",
+      "0002_absent_thing",
+      "0003_even_spectrum",
+      "0004_nice_speed_demon",
+      "0005_separar_reportes_workers",
+    ]);
+  });
+
   it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {
     const cols = colNames(getTableConfig(ejecucionesReportes));
     expect(cols).toEqual(
       expect.arrayContaining([
-        "configuracion_id",
+        "reporte_id",
         "flujo_id_qlik",
         "automatizacion_id_qlik",
+        "ejecutado_por_usuario_id",
+        "automatizacion_personal_id",
         "hash_dataflow_sha256",
         "script_dataflow",
         "sql_bigquery_compilado",
@@ -214,6 +258,7 @@ describe("Esquema Drizzle", () => {
         "estado",
       ]),
     );
+    expect(cols).not.toContain("configuracion_id");
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {

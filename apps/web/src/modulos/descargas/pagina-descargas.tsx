@@ -121,7 +121,9 @@ export function PaginaDescargas() {
             datos={explorador.data ?? null}
             cargando={explorador.isLoading}
             error={
-              explorador.error instanceof Error ? explorador.error.message : null
+              explorador.error instanceof Error
+                ? explorador.error.message
+                : null
             }
             onAbrirCarpeta={(carpeta) => setRutaGcs(`${rutaGcs}${carpeta}`)}
             onSubir={() => {
@@ -155,7 +157,9 @@ function SeccionAdministracion({
   const grupos = descargas.reduce<Record<string, ResumenDescargaEjecucion[]>>(
     (acumulado, descarga) => {
       const clave = descarga.creadoPorUsuarioId ?? "historico";
-      (acumulado[clave] ??= []).push(descarga);
+      const grupo = acumulado[clave] ?? [];
+      grupo.push(descarga);
+      acumulado[clave] = grupo;
       return acumulado;
     },
     {},
@@ -175,7 +179,10 @@ function SeccionAdministracion({
       </div>
       <div className="mt-4 space-y-4">
         {Object.entries(grupos).map(([propietario, items]) => (
-          <div key={propietario} className="rounded-lg border border-line-200 p-4">
+          <div
+            key={propietario}
+            className="rounded-lg border border-line-200 p-4"
+          >
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink-800">
               <Icon name="folder" size="sm" />
               {propietario === "historico"
@@ -191,7 +198,9 @@ function SeccionAdministracion({
           </div>
         ))}
         {descargas.length === 0 && (
-          <p className="text-sm text-ink-500">No hay ejecuciones para administrar.</p>
+          <p className="text-sm text-ink-500">
+            No hay ejecuciones para administrar.
+          </p>
         )}
       </div>
     </section>
