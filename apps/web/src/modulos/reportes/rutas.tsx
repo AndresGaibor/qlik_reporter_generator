@@ -1,25 +1,25 @@
 import { type AnyRoute, createRoute, useParams } from "@tanstack/react-router";
-import { PaginaAutomatizaciones } from "./pagina-automatizaciones";
-import { PaginaDetalleAutomatizacion } from "./pagina-detalle-automatizacion";
-import { PaginaNuevaAutomatizacion } from "./pagina-nueva-automatizacion";
+import { PaginaDetalleReporte } from "./pagina-detalle-reporte";
+import { PaginaNuevoReporte } from "./pagina-nuevo-reporte";
+import { PaginaReportes } from "./pagina-reportes";
 
 export function crearRutasReportes(rutaRaiz: AnyRoute) {
   const listado = createRoute({
     getParentRoute: () => rutaRaiz,
     path: "/reportes",
-    component: PaginaAutomatizaciones,
+    component: PaginaReportes,
   });
   const nueva = createRoute({
     getParentRoute: () => rutaRaiz,
     path: "/reportes/nueva",
-    component: PaginaNuevaAutomatizacion,
+    component: PaginaNuevoReporte,
   });
   const detalle = createRoute({
     getParentRoute: () => rutaRaiz,
     path: "/reportes/$id",
-    component: function RutaDetalleAutomatizacion() {
+    component: function RutaDetalleReporte() {
       const { id } = useParams({ strict: false }) as { id: string };
-      return <PaginaDetalleAutomatizacion id={id} />;
+      return <PaginaDetalleReporte id={id} />;
     },
   });
   return [listado, nueva, detalle];

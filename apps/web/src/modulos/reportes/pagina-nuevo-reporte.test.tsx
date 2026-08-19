@@ -34,7 +34,7 @@ vi.mock("@/modulos/flujos/api", () => ({
 
 vi.mock("./api", () => ({
   preflightDataflowReporte: preflight,
-  crearAutomatizacionDesdePlantilla: crear,
+  crearReporte: crear,
 }));
 
 vi.mock("@/modulos/autenticacion/api", () => ({
@@ -51,7 +51,7 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 
-import { PaginaNuevaAutomatizacion } from "./pagina-nueva-automatizacion";
+import { PaginaNuevoReporte } from "./pagina-nuevo-reporte";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -79,7 +79,7 @@ async function montar() {
   await act(async () => {
     root?.render(
       <QueryClientProvider client={queryClient}>
-        <PaginaNuevaAutomatizacion />
+        <PaginaNuevoReporte />
       </QueryClientProvider>,
     );
   });
@@ -159,7 +159,7 @@ test("envía solo flujoId sin programacion", async () => {
     string,
     unknown
   >;
-  expect(entrada.flujoId).toBe("flujo-1");
+  expect(entrada.flujoIdQlik).toBe("flujo-1");
   expect(entrada).not.toHaveProperty("programacion");
   expect(entrada).not.toHaveProperty("tablaId");
   expect(entrada).not.toHaveProperty("columnas");
@@ -181,7 +181,7 @@ test("muestra el mensaje de error de Qlik cuando la sesión es requerida", async
   await act(async () => {
     root?.render(
       <QueryClientProvider client={queryClient}>
-        <PaginaNuevaAutomatizacion />
+        <PaginaNuevoReporte />
       </QueryClientProvider>,
     );
   });

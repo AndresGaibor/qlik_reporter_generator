@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
 const aqui = dirname(fileURLToPath(import.meta.url));
-const ruta = resolve(aqui, "pagina-nueva-automatizacion.tsx");
+const ruta = resolve(aqui, "pagina-nuevo-reporte.tsx");
 
 test("el creador usa Dataflow y delega BigQuery al preflight del backend", () => {
   const fuente = readFileSync(ruta, "utf8");

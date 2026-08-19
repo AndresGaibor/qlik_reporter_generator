@@ -9,13 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  crearAutomatizacionDesdePlantilla,
+  crearReporte as crearReporteApi,
   preflightDataflowReporte,
 } from "./api";
 
 const DESTINO_GCS = "gs://bkt_dwh/POCs/TalendDescargados/";
 
-export function PaginaNuevaAutomatizacion() {
+export function PaginaNuevoReporte() {
   return <FormularioDataflow />;
 }
 
@@ -60,13 +60,12 @@ function FormularioDataflow() {
     if (!flujo || !preflight?.compatible) return;
     setGuardando(true);
     try {
-      const resultado = await crearAutomatizacionDesdePlantilla({
+      const resultado = await crearReporteApi({
         nombre: nombreFinal,
-        flujoId: flujo.id,
+        flujoIdQlik: flujo.id,
         ...(flujo.espacioId ? { espacioIdQlik: flujo.espacioId } : {}),
-        reemplazosWorkspace: [],
       });
-      mostrarExito("Reporte creado y asociado al Dataflow actual");
+      mostrarExito("Reporte creado");
       window.location.href = `/reportes/${resultado.id}`;
     } catch (error) {
       mostrarError(
