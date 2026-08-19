@@ -110,16 +110,19 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     etapaError: string,
     mensajeError: string,
     finalizadoEn: Date,
+    runIdQlik?: string,
   ): Promise<void> {
+    const cambios = {
+      ...(runIdQlik ? { runIdQlik } : {}),
+      estado: "error" as const,
+      etapaError,
+      mensajeError,
+      finalizadoEn,
+      actualizadoEn: new Date(),
+    };
     await this.db
       .update(ejecucionesReportes)
-      .set({
-        estado: "error",
-        etapaError,
-        mensajeError,
-        finalizadoEn,
-        actualizadoEn: new Date(),
-      })
+      .set(cambios)
       .where(eq(ejecucionesReportes.id, id));
   }
 

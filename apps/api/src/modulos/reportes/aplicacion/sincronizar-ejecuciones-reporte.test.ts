@@ -49,6 +49,64 @@ describe("SincronizarEjecucionesReporte", () => {
     });
   });
 
+  it("actualiza solo la ejecución asociada y obtiene el detalle con su automate histórico", async () => {
+    const marcarEstado = vi.fn(async () => undefined);
+    const marcarError = vi.fn(async () => undefined);
+    const repo = {
+      obtenerPorId: vi.fn(async () => ({ id: "config-1" })),
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-old",
+          runIdQlik: "run-old",
+          automatizacionIdQlik: "auto-old",
+          estado: "iniciada",
+        },
+        {
+          id: "e-new",
+          runIdQlik: "run-new",
+          automatizacionIdQlik: "auto-new",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoPorRunQlik: marcarEstado,
+      marcarEjecucionError: marcarError,
+    };
+    const listar = vi.fn(async (automatizacionIdQlik: string) =>
+      automatizacionIdQlik === "auto-old"
+        ? [{ id: "run-old", status: "failed", error: { message: "viejo" } }]
+        : [{ id: "run-new", status: "stopped" }],
+    );
+    const solicitarJson = vi.fn(async ({ ruta }: { ruta: string }) => ({
+      id: "run-old",
+      status: "failed",
+      error: { message: `detalle-${ruta}` },
+    }));
+
+    await llamada(repo, { listarEjecuciones: listar, solicitarJson } as never);
+
+    expect(marcarError).toHaveBeenCalledWith(
+      "e-old",
+      "ejecucion-qlik",
+      expect.stringContaining("detalle-/api/workflows/automations/auto-old"),
+      expect.any(Date),
+    );
+    expect(marcarEstado).toHaveBeenCalledWith(
+      "run-new",
+      "detenida",
+      expect.any(Date),
+    );
+    expect(marcarError).not.toHaveBeenCalledWith(
+      "e-new",
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(solicitarJson).toHaveBeenCalledWith({
+      metodo: "GET",
+      ruta: "/api/workflows/automations/auto-old/runs/run-old",
+    });
+  });
+
   it("no marca completada solo porque Qlik responde finished", async () => {
     const marcar = vi.fn(async () => undefined);
     const repo = {

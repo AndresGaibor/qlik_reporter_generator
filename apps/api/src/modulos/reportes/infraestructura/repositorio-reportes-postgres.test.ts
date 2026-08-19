@@ -13,6 +13,32 @@ const entrada = {
 };
 
 describe("RepositorioReportesPostgres", () => {
+  it("conserva el runId conocido al marcar una ejecución con error", async () => {
+    let cambios: Record<string, unknown> | undefined;
+    const db = {
+      update: () => ({
+        set: (recibidos: Record<string, unknown>) => {
+          cambios = recibidos;
+          return { where: async () => undefined };
+        },
+      }),
+    };
+
+    await new RepositorioReportesPostgres(db as never).marcarEjecucionError(
+      "ejecucion-1",
+      "persistir-run",
+      "falló persistir",
+      new Date("2026-01-01T00:00:00.000Z"),
+      "run-1",
+    );
+
+    expect(cambios).toMatchObject({
+      runIdQlik: "run-1",
+      etapaError: "persistir-run",
+      mensajeError: "falló persistir",
+    });
+  });
+
   it("crea un reporte sin persistir propiedad de Qlik Automate", async () => {
     let valores: Record<string, unknown> | undefined;
     const db = {

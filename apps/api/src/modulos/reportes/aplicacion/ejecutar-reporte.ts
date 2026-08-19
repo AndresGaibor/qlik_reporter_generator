@@ -142,8 +142,8 @@ export class EjecutarReporte {
     const scriptExportacion = serializarConsultasTalend(consultasTalend);
 
     let auditoriaCreada = false;
-    let errorMarcado = false;
     let etapa = "auditoria";
+    let runIdQlik: string | undefined;
     try {
       await this.repositorio.crearEjecucion({
         id: ejecucionReporteId,
@@ -165,7 +165,7 @@ export class EjecutarReporte {
       const resultado = await this.bloqueos.ejecutarExclusivo(
         `${entrada.tenantId}:${worker.automatizacionIdQlik}`,
         async () => {
-          etapa = "actualizar-automate";
+          etapa = "obtener-workspace";
           const automatizacion = await this.qlik.obtenerAutomatizacion(
             worker.automatizacionIdQlik,
           );
@@ -173,6 +173,7 @@ export class EjecutarReporte {
             (automatizacion.workspace ?? {}) as Record<string, unknown>,
             consultasTalend,
           );
+          etapa = "actualizar-workspace";
           await this.qlik.actualizarAutomatizacion(
             worker.automatizacionIdQlik,
             {
@@ -184,35 +185,36 @@ export class EjecutarReporte {
             },
           );
 
-          etapa = "ejecutar-automate";
+          etapa = "crear-run";
           return this.qlik.ejecutarAutomatizacion(worker.automatizacionIdQlik);
         },
       );
       if (!resultado) {
-        await this.repositorio.marcarEjecucionError(
-          ejecucionReporteId,
-          "lock",
-          "El lock del worker personal está ocupado; no se modificó el workspace ni se creó un run",
-          new Date(),
-        );
-        errorMarcado = true;
+        etapa = "lock";
         throw new ErrorConflicto(
           "Ejecución en conflicto: el lock está ocupado",
         );
       }
-      const { runId } = resultado;
+      runIdQlik = resultado.runId;
+      etapa = "persistir-run";
       await this.repositorio.marcarEjecucionIniciada(
         ejecucionReporteId,
-        runId,
+        runIdQlik,
         new Date(),
       );
-      return { runId, ejecucionReporteId };
+      return { runId: runIdQlik, ejecucionReporteId };
     } catch (error) {
-      if (auditoriaCreada && !errorMarcado) {
+      if (auditoriaCreada) {
         const mensaje =
           error instanceof Error ? error.message : "Error desconocido";
         await this.repositorio
-          .marcarEjecucionError(ejecucionReporteId, etapa, mensaje, new Date())
+          .marcarEjecucionError(
+            ejecucionReporteId,
+            etapa,
+            mensaje,
+            new Date(),
+            runIdQlik,
+          )
           .catch(() => undefined);
       }
       throw error;

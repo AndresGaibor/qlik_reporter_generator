@@ -68,7 +68,9 @@ function casoBase(overrides: Record<string, unknown> = {}) {
       orden.push("crear-auditoria");
       return entrada;
     }),
-    marcarEjecucionIniciada: vi.fn(async () => undefined),
+    marcarEjecucionIniciada: vi.fn(async () => {
+      orden.push("marcar-iniciada");
+    }),
     marcarEjecucionError: vi.fn(async () => undefined),
   };
   const bloqueos = {
@@ -134,6 +136,7 @@ describe("EjecutarReporte", () => {
       "actualizar-workspace",
       "crear-run",
       "unlock",
+      "marcar-iniciada",
     ]);
     expect(bloqueos.ejecutarExclusivo).toHaveBeenCalledWith(
       "tenant-1:worker-old",
@@ -157,9 +160,69 @@ describe("EjecutarReporte", () => {
       "lock",
       expect.stringContaining("ocupado"),
       expect.any(Date),
+      undefined,
     );
     expect(qlik.obtenerAutomatizacion).not.toHaveBeenCalled();
     expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
     expect(qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
+    expect(repositorio.marcarEjecucionError).toHaveBeenCalledTimes(1);
+  });
+
+  it("si falla el marcador del lock ocupado conserva el conflicto y marca una sola vez", async () => {
+    const { caso, repositorio, bloqueos } = casoBase();
+    bloqueos.ejecutarExclusivo.mockResolvedValue(undefined);
+    repositorio.marcarEjecucionError.mockRejectedValue(
+      new Error("falló la auditoría"),
+    );
+
+    await expect(caso.ejecutar(entrada)).rejects.toThrow(
+      "Ejecución en conflicto",
+    );
+    expect(repositorio.marcarEjecucionError).toHaveBeenCalledTimes(1);
+    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
+      expect.any(String),
+      "lock",
+      expect.stringContaining("ocupado"),
+      expect.any(Date),
+      undefined,
+    );
+  });
+
+  it.each([
+    ["obtener-workspace", "obtenerAutomatizacion"],
+    ["actualizar-workspace", "actualizarAutomatizacion"],
+    ["crear-run", "ejecutarAutomatizacion"],
+  ] as const)(
+    "registra la etapa %s cuando falla Qlik",
+    async (etapa, metodo) => {
+      const { caso, qlik, repositorio } = casoBase();
+      const metodoQlik = qlik[metodo] as unknown as ReturnType<typeof vi.fn>;
+      metodoQlik.mockRejectedValueOnce(new Error(`falló ${etapa}`));
+
+      await expect(caso.ejecutar(entrada)).rejects.toThrow(`falló ${etapa}`);
+      expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
+        expect.any(String),
+        etapa,
+        `falló ${etapa}`,
+        expect.any(Date),
+        undefined,
+      );
+    },
+  );
+
+  it("registra persist-run y conserva el runId si falla la persistencia", async () => {
+    const { caso, repositorio } = casoBase();
+    repositorio.marcarEjecucionIniciada.mockRejectedValueOnce(
+      new Error("falló persistir"),
+    );
+
+    await expect(caso.ejecutar(entrada)).rejects.toThrow("falló persistir");
+    expect(repositorio.marcarEjecucionError).toHaveBeenCalledWith(
+      expect.any(String),
+      "persistir-run",
+      "falló persistir",
+      expect.any(Date),
+      "run-1",
+    );
   });
 });

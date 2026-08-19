@@ -104,6 +104,7 @@ export interface PuertoRepositorioReportes {
     etapaError: string,
     mensajeError: string,
     finalizadoEn: Date,
+    runIdQlik?: string,
   ): Promise<void>;
   marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void>;
   listarEjecuciones(
