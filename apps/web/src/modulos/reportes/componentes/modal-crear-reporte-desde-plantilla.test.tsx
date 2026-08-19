@@ -61,7 +61,7 @@ test("Crear reporte clona la plantilla y abre la copia directamente en Qlik", as
   );
   expect(ventana.opener).toBeNull();
   expect(ventana.location.href).toBe(
-    "https://tenant.qlikcloud.com/dataflow/copia-1/overview/summary?resourceTypes=script%2Cdataset%2Cdataflow%2Ctablerecipe",
+    "https://tenant.qlikcloud.com/dataflow/copia-1/editor",
   );
   expect(onCreado).toHaveBeenCalledOnce();
   expect(onCerrar).toHaveBeenCalledOnce();

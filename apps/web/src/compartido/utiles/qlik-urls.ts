@@ -16,15 +16,10 @@ export function construirUrlCrearFlujoQlik(
 export function construirUrlVerFlujoQlik(
   host: string,
   flujoId: string,
-  espacioId?: string,
+  _espacioId?: string,
 ): string {
   const hostClean = normalizarHostQlikUrl(host);
-  const base = `https://${hostClean}/dataflow/${encodeURIComponent(
-    flujoId,
-  )}/overview/summary?resourceTypes=script%2Cdataset%2Cdataflow%2Ctablerecipe`;
-  return espacioId?.trim()
-    ? `${base}&space_filter=${encodeURIComponent(espacioId.trim())}`
-    : base;
+  return `https://${hostClean}/dataflow/${encodeURIComponent(flujoId)}/editor`;
 }
 
 export function construirUrlVerAutomatizacionQlik(
