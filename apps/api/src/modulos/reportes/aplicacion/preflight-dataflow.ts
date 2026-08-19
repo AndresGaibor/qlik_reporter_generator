@@ -162,12 +162,6 @@ function normalizarFuentesBigQuery(
       continue;
     }
     if (partes.length === 3) {
-      const [proyectoFuente, datasetFuente] = partes;
-      if (proyectoFuente !== projectId || datasetFuente !== dataset) {
-        errores.push(
-          `FuenteBigQuery: ${fuente.tabla} queda fuera de ${projectId}.${dataset}`,
-        );
-      }
       continue;
     }
     errores.push(`FuenteBigQuery: identificador inválido ${fuente.tabla}`);

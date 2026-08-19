@@ -69,11 +69,11 @@ describe("PreflightDataflow", () => {
     expect(estimador.estimarConsulta).not.toHaveBeenCalled();
   });
 
-  it("rechaza una fuente fuera del proyecto o dataset configurado", async () => {
+  it("acepta una fuente totalmente calificada fuera del proyecto y dataset de staging", async () => {
     const qlik = {
       obtenerScriptApp: vi.fn(async () => ({
         script:
-          "LIB CONNECT TO [Google BigQuery:Produccion]; [x]: LOAD [id]; SQL SELECT id FROM `otro.dataset.t`;",
+          "LIB CONNECT TO [Google BigQuery:Produccion]; [x]: LOAD [id]; SQL SELECT id FROM `otro.otro_dataset.t`;",
       })),
     };
     const estimador = {
@@ -83,15 +83,14 @@ describe("PreflightDataflow", () => {
       })),
     };
     const caso = new PreflightDataflow(qlik, estimador, {
-      projectId: "proyecto",
-      dataset: "dataset",
+      projectId: "proyecto-staging",
+      dataset: "dataset_staging",
     });
 
     const resultado = await caso.ejecutar("flujo-3");
-    expect(resultado.compatible).toBe(false);
-    expect(resultado.operacionesNoSoportadas.join(" ")).toContain(
-      "otro.dataset.t",
-    );
-    expect(estimador.estimarConsulta).not.toHaveBeenCalled();
+    expect(resultado.compatible).toBe(true);
+    expect(resultado.operacionesNoSoportadas).toEqual([]);
+    expect(resultado.sqlBigQuery).toContain("`otro.otro_dataset.t`");
+    expect(estimador.estimarConsulta).toHaveBeenCalledTimes(1);
   });
 });
