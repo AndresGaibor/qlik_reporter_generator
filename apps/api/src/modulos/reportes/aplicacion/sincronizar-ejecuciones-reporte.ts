@@ -1,5 +1,6 @@
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { EjecucionQlik } from "../../qlik/dominio/modelos-qlik.js";
+import { esNoEncontradoQlik } from "../../qlik/infraestructura/error-api-qlik.js";
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
 
 const TERMINALES = new Map<string, "error" | "detenida">([
@@ -35,21 +36,38 @@ export class SincronizarEjecucionesReporte {
     if (pendientes.length === 0) return;
 
     const porAutomate = new Map<string, Map<string, EjecucionQlik>>();
+    const automatesEliminados = new Set<string>();
     for (const automatizacionIdQlik of new Set(
       pendientes.map((item) => item.automatizacionIdQlik),
     )) {
-      const remotas = await this.qlik.listarEjecuciones(automatizacionIdQlik, {
-        limit: 100,
-        sort: "desc",
-      });
-      porAutomate.set(
-        automatizacionIdQlik,
-        new Map(remotas.map((item) => [item.id, item])),
-      );
+      try {
+        const remotas = await this.qlik.listarEjecuciones(
+          automatizacionIdQlik,
+          {
+            limit: 100,
+            sort: "desc",
+          },
+        );
+        porAutomate.set(
+          automatizacionIdQlik,
+          new Map(remotas.map((item) => [item.id, item])),
+        );
+      } catch (error) {
+        if (!esNoEncontradoQlik(error)) throw error;
+        automatesEliminados.add(automatizacionIdQlik);
+      }
     }
 
     for (const local of pendientes) {
       if (!local.runIdQlik) continue;
+      if (automatesEliminados.has(local.automatizacionIdQlik)) {
+        await this.repositorio.marcarEstadoEjecucion(
+          local.id,
+          "detenida",
+          new Date(),
+        );
+        continue;
+      }
       const remota = porAutomate
         .get(local.automatizacionIdQlik)
         ?.get(local.runIdQlik);
