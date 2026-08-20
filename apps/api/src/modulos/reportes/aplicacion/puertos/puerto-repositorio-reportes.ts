@@ -74,6 +74,10 @@ export interface PuertoRepositorioReportes {
     organizacionId: string,
     limite?: number,
   ): Promise<EjecucionReportePersistida[]>;
+  listarUltimasEjecucionesPorFlujo(
+    tenantQlikId: string,
+    organizacionId: string,
+  ): Promise<Array<{ flujoIdQlik: string; ultimaEjecucionEn: Date }>>;
   marcarEstadoEjecucion(
     id: string,
     estado: "completada" | "error" | "detenida",

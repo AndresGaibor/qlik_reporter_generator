@@ -23,6 +23,9 @@ export class ConsultaFlujosQlik implements PuertoConsultaFlujos {
       ...((flujo.ownerId ?? flujo.owner?.id)
         ? { propietarioId: flujo.ownerId ?? flujo.owner?.id }
         : {}),
+      ...((flujo.createdAt ?? flujo.createdDate)
+        ? { creadoEn: flujo.createdAt ?? flujo.createdDate }
+        : {}),
       ...((flujo.updatedAt ?? flujo.modifiedDate)
         ? { modificadoEn: flujo.updatedAt ?? flujo.modifiedDate }
         : {}),

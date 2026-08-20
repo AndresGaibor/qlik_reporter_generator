@@ -76,7 +76,32 @@ export function crearRutasReportesDataflow(
     ).ejecutar(espacioId);
     if (q)
       flujos = flujos.filter((flujo) => flujo.nombre.toLowerCase().includes(q));
-    return responderExito(c, flujos);
+
+    const sesion = await dependencias.resolverSesion(c);
+    const ultimasEjecuciones =
+      await dependencias.repositorioReportes.listarUltimasEjecucionesPorFlujo(
+        sesion.tenantId,
+        sesion.organizacionId,
+      );
+    const ultimaEjecucionPorFlujo = new Map(
+      ultimasEjecuciones.map((ejecucion) => [
+        ejecucion.flujoIdQlik,
+        ejecucion.ultimaEjecucionEn,
+      ]),
+    );
+    const reportes = flujos
+      .map((flujo) => ({
+        id: flujo.id,
+        nombre: flujo.nombre,
+        espacioId: flujo.espacioId ?? null,
+        espacioNombre: flujo.espacioNombre ?? null,
+        modificadoEn: flujo.modificadoEn ?? null,
+        creadoEn: flujo.creadoEn ?? null,
+        ultimaEjecucionEn:
+          ultimaEjecucionPorFlujo.get(flujo.id)?.toISOString() ?? null,
+      }))
+      .sort(compararActividadReporte);
+    return responderExito(c, reportes);
   });
 
   rutas.get("/:flujoId", async (c) => {
@@ -212,6 +237,32 @@ export function crearRutasReportesDataflow(
     }
   });
   return rutas;
+}
+
+function compararActividadReporte(
+  a: {
+    nombre: string;
+    creadoEn: string | null;
+    modificadoEn: string | null;
+    ultimaEjecucionEn: string | null;
+  },
+  b: {
+    nombre: string;
+    creadoEn: string | null;
+    modificadoEn: string | null;
+    ultimaEjecucionEn: string | null;
+  },
+) {
+  const actividadA = Date.parse(
+    a.ultimaEjecucionEn ?? a.creadoEn ?? a.modificadoEn ?? "",
+  );
+  const actividadB = Date.parse(
+    b.ultimaEjecucionEn ?? b.creadoEn ?? b.modificadoEn ?? "",
+  );
+  const diferencia =
+    (Number.isNaN(actividadB) ? 0 : actividadB) -
+    (Number.isNaN(actividadA) ? 0 : actividadA);
+  return diferencia || a.nombre.localeCompare(b.nombre, "es");
 }
 
 function esEjecucionActiva(ejecucion: { estado: string }) {

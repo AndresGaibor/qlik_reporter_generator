@@ -531,6 +531,7 @@ describe("API", () => {
     );
     const repositorioReportes = {
       listarEjecuciones: vi.fn(async () => []),
+      listarUltimasEjecucionesPorFlujo: vi.fn(async () => []),
     };
     const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
@@ -558,5 +559,8 @@ describe("API", () => {
     });
     expect(listarFlujos).toHaveBeenCalledTimes(2);
     expect(repositorioReportes.listarEjecuciones).not.toHaveBeenCalled();
+    expect(
+      repositorioReportes.listarUltimasEjecucionesPorFlujo,
+    ).toHaveBeenCalledWith("tenant-1", "org-1");
   });
 });

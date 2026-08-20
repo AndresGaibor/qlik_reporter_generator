@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, max } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   ejecucionesReportes,
@@ -87,6 +87,36 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       limit: Math.min(Math.max(limite, 1), 200),
     });
     return filas.map(mapearEjecucion);
+  }
+
+  async listarUltimasEjecucionesPorFlujo(
+    tenantQlikId: string,
+    organizacionId: string,
+  ): Promise<Array<{ flujoIdQlik: string; ultimaEjecucionEn: Date }>> {
+    const filas = await this.db
+      .select({
+        flujoIdQlik: ejecucionesReportes.flujoIdQlik,
+        ultimaEjecucionEn: max(ejecucionesReportes.creadoEn),
+      })
+      .from(ejecucionesReportes)
+      .where(
+        and(
+          eq(ejecucionesReportes.tenantQlikId, tenantQlikId),
+          eq(ejecucionesReportes.organizacionId, organizacionId),
+        ),
+      )
+      .groupBy(ejecucionesReportes.flujoIdQlik);
+
+    return filas.flatMap((fila) =>
+      fila.ultimaEjecucionEn
+        ? [
+            {
+              flujoIdQlik: fila.flujoIdQlik,
+              ultimaEjecucionEn: fila.ultimaEjecucionEn,
+            },
+          ]
+        : [],
+    );
   }
 
   async marcarEstadoEjecucion(
