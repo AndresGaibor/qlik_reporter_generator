@@ -20,7 +20,7 @@ test("muestra nombre y enlace del Dataflow como reporte", () => {
   ).toBeTruthy();
 });
 
-test("usa acciones sobrias y una fecha empresarial legible", () => {
+test("muestra la última ejecución como la actividad que explica el orden", () => {
   const html = renderToStaticMarkup(
     ListaReportes({
       reportes: [
@@ -29,7 +29,9 @@ test("usa acciones sobrias y una fecha empresarial legible", () => {
           nombre: "Ventas",
           espacioId: "sp-1",
           espacioNombre: "Comercial",
+          creadoEn: "2026-08-17T09:00:00Z",
           modificadoEn: "2026-08-18T15:41:58Z",
+          ultimaEjecucionEn: "2026-08-20T15:31:00Z",
         },
       ],
       idEjecutando: null,
@@ -37,8 +39,34 @@ test("usa acciones sobrias y una fecha empresarial legible", () => {
       hayFiltros: false,
     }),
   );
-  expect(html).toContain("Modificado");
+  expect(html).toContain("Última actividad");
+  expect(html).toContain("Ejecutado");
+  expect(html).toContain("20 ago 2026");
+  expect(html).not.toContain("18 ago 2026");
   expect(html).toContain("Ejecutar");
   expect(html).not.toContain("Ejecutar reporte");
-  expect(html).not.toContain(":58");
+});
+
+test("usa la fecha de creación cuando el reporte nunca se ha ejecutado", () => {
+  const html = renderToStaticMarkup(
+    ListaReportes({
+      reportes: [
+        {
+          id: "33333333-3333-4333-8333-333333333333",
+          nombre: "Nuevo reporte",
+          espacioId: "sp-1",
+          espacioNombre: "Comercial",
+          creadoEn: "2026-08-19T10:05:00Z",
+          modificadoEn: "2026-08-20T12:00:00Z",
+          ultimaEjecucionEn: null,
+        },
+      ],
+      idEjecutando: null,
+      onEjecutar: () => {},
+      hayFiltros: false,
+    }),
+  );
+  expect(html).toContain("Creado");
+  expect(html).toContain("19 ago 2026");
+  expect(html).not.toContain("20 ago 2026");
 });
