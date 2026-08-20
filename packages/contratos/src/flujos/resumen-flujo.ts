@@ -6,6 +6,7 @@ export const esquemaResumenFlujo = z.object({
   espacioId: z.string().optional(),
   espacioNombre: z.string(),
   propietarioId: z.string().optional(),
+  creadoEn: z.string().optional(),
   modificadoEn: z.string().optional(),
 });
 

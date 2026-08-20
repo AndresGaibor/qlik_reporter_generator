@@ -71,6 +71,8 @@ export const esquemaResumenReporte = z
     espacioId: z.string().nullable(),
     espacioNombre: z.string().nullable(),
     modificadoEn: z.string().datetime().nullable(),
+    creadoEn: z.string().datetime().nullable().optional(),
+    ultimaEjecucionEn: z.string().datetime().nullable().optional(),
   })
   .strict();
 export type ResumenReporte = z.infer<typeof esquemaResumenReporte>;
