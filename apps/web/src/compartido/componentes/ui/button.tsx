@@ -25,7 +25,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       default:
-        "bg-[var(--color-brand-600)] text-white hover:bg-[var(--color-brand-700)] shadow-sm",
+        "bg-[var(--color-brand-600)] text-white hover:bg-[var(--color-brand-700)]",
       outline:
         "border border-[var(--color-line-200)] bg-[var(--color-surface)] text-[var(--color-ink-900)] hover:bg-[var(--color-hover)] hover:border-[var(--color-line-300)]",
       ghost:

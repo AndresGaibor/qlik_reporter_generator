@@ -40,8 +40,8 @@ test("mantiene los filtros compactos sin un botón Buscar permanente", () => {
   const botones = Array.from(vista.querySelectorAll("button"));
 
   expect(vista.textContent).toContain("Reportes");
-  expect(vista.textContent).toContain("Filtrar por espacio");
-  expect(vista.textContent).toContain("Buscar reportes");
+  expect(vista.textContent).toContain("Espacio");
+  expect(vista.textContent).toContain("Buscar");
   expect(vista.textContent).toContain("3 reportes");
   expect(botones.some((boton) => boton.textContent?.trim() === "Buscar")).toBe(
     false,

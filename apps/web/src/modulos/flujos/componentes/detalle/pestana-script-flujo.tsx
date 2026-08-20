@@ -1,7 +1,5 @@
 import { Button } from "@/compartido/componentes/ui/button";
-import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenReporteDataflow } from "@qlik/contratos/flujos";
-import type { ReactNode } from "react";
 
 export function PestanaScriptFlujo({
   resumen,
@@ -20,13 +18,14 @@ export function PestanaScriptFlujo({
   if (error || !resumen)
     return <EstadoError error={error} onActualizar={onActualizar} />;
 
-  const estado = textosEstado[resumen.estado];
+  const necesitaAviso = resumen.estado !== "analizado";
+
   return (
     <div className="space-y-5">
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-lg border border-line-200 bg-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-ink-400">
               Resumen del reporte
             </p>
             <h2 className="mt-1 text-xl font-semibold text-ink-900">
@@ -44,79 +43,57 @@ export function PestanaScriptFlujo({
             size="sm"
             disabled={actualizando}
             onClick={onActualizar}
-            className="gap-2"
           >
-            <Icon name="sparkles" size="sm" />
-            {actualizando ? "Actualizando..." : "Actualizar resumen"}
+            {actualizando ? "Actualizando…" : "Actualizar"}
           </Button>
         </div>
 
-        <div
-          className={`mt-4 rounded-lg border px-4 py-3 text-sm ${estado.clases}`}
-        >
-          <p className="font-semibold">{estado.titulo}</p>
-          <p className="mt-0.5">{estado.descripcion}</p>
+        {necesitaAviso && <AvisoEstado resumen={resumen} />}
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Dato
+            titulo="Origen de datos"
+            valor={resumen.fuentePrincipal?.nombre}
+          >
+            {resumen.fuentePrincipal?.dataset && (
+              <span>Dataset {resumen.fuentePrincipal.dataset}</span>
+            )}
+          </Dato>
+          <Dato
+            titulo="Contenido"
+            valor={`${resumen.campos.length} ${resumen.campos.length === 1 ? "campo incluido" : "campos incluidos"} · ${resumen.filtros.length} ${resumen.filtros.length === 1 ? "filtro" : "filtros"}`}
+          />
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <Dato titulo="Fuente principal" valor={resumen.fuentePrincipal?.nombre}>
-          {resumen.fuentePrincipal?.dataset && (
-            <span>Dataset: {resumen.fuentePrincipal.dataset}</span>
-          )}
-        </Dato>
-        <Dato titulo="Tabla de resultado" valor={resumen.tablaDestino} />
-      </section>
-
       {resumen.rangoTemporal && (
-        <section className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-          <h2 className="text-sm font-semibold text-blue-950">
-            Rango temporal detectado
-          </h2>
-          <p className="mt-2 text-sm text-blue-900">
-            Campo <strong>{resumen.rangoTemporal.campo}</strong>: desde{" "}
-            <strong>
-              {resumen.rangoTemporal.fechaInicial ?? "un valor por completar"}
-            </strong>{" "}
-            hasta{" "}
-            <strong>
-              {resumen.rangoTemporal.fechaFinal ?? "un valor por completar"}
-            </strong>
-            .
+        <section className="rounded-lg border border-line-200 bg-surface px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-400">
+            Periodo
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ink-800">
+            {describirRangoTemporal(resumen.rangoTemporal)}
           </p>
         </section>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-ink-900">Campos devueltos</h2>
+      <section className="rounded-lg border border-line-200 bg-surface p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ink-900">
+            Campos incluidos
+          </h2>
+          <span className="text-xs text-ink-400">{resumen.campos.length}</span>
+        </div>
         {resumen.campos.length > 0 ? (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 text-xs uppercase text-ink-500">
-                <tr>
-                  <th className="px-3 py-2">Nombre visible</th>
-                  <th className="px-3 py-2">Alias</th>
-                  <th className="px-3 py-2">Tipo detectado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {resumen.campos.map((campo) => (
-                  <tr key={campo.alias}>
-                    <td className="px-3 py-2 font-medium text-ink-900">
-                      {campo.nombreVisible}
-                    </td>
-                    <td className="px-3 py-2 font-mono text-xs text-ink-600">
-                      {campo.alias}
-                    </td>
-                    <td className="px-3 py-2 text-ink-600">
-                      {campo.tipoInferido
-                        ? humanizarTipo(campo.tipoInferido)
-                        : "No determinado"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 grid gap-x-8 gap-y-1 sm:grid-cols-2">
+            {resumen.campos.map((campo) => (
+              <div
+                key={campo.alias}
+                className="border-b border-line-200 py-2 text-sm font-medium text-ink-800"
+              >
+                {campo.nombreVisible}
+              </div>
+            ))}
           </div>
         ) : (
           <p className="mt-2 text-sm text-ink-500">
@@ -125,32 +102,21 @@ export function PestanaScriptFlujo({
         )}
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold text-ink-900">
-          Filtros y parámetros
-        </h2>
+      <section className="rounded-lg border border-line-200 bg-surface p-5">
+        <h2 className="text-sm font-semibold text-ink-900">Filtros</h2>
         {resumen.filtros.length > 0 ? (
-          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <div className="mt-3 divide-y divide-line-200 rounded-lg border border-line-200">
             {resumen.filtros.map((filtro, indice) => (
               <div
                 key={`${filtro.campo}-${filtro.operador}-${indice}`}
-                className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-ink-900">
-                    {filtro.etiqueta}
-                  </p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${filtro.obligatorio ? "bg-amber-100 text-amber-800" : "bg-slate-200 text-slate-700"}`}
-                  >
-                    {filtro.obligatorio
-                      ? "Debes completar este valor"
-                      : "Valor definido"}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-ink-700">
-                  {describirFiltro(filtro)}
-                </p>
+                <span className="text-sm font-semibold text-ink-800">
+                  {filtro.etiqueta}
+                </span>
+                <span className="text-sm text-ink-600">
+                  {describirFiltroCompacto(filtro)}
+                </span>
               </div>
             ))}
           </div>
@@ -162,23 +128,17 @@ export function PestanaScriptFlujo({
       </section>
 
       {resumen.advertencias.length > 0 && (
-        <section className="rounded-xl border border-warning-200 bg-warning-50 p-5">
-          <h2 className="text-sm font-semibold text-warning-900">
+        <section className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+          <h2 className="text-sm font-semibold text-amber-900">
             {resumen.estado === "script_no_compatible"
               ? "Qué debes hacer"
               : "Aspectos a revisar"}
           </h2>
           <div className="mt-3 space-y-2">
-            {resumen.advertencias.map((advertencia, indice) => (
-              <div
-                key={advertencia}
-                className="flex gap-3 rounded-lg border border-warning-200 bg-white/70 px-4 py-3 text-sm text-warning-900"
-              >
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-warning-100 text-xs font-bold text-warning-800">
-                  {indice + 1}
-                </span>
-                <p className="leading-6">{advertencia}</p>
-              </div>
+            {resumen.advertencias.map((advertencia) => (
+              <p key={advertencia} className="text-sm leading-6 text-amber-900">
+                {advertencia}
+              </p>
             ))}
           </div>
         </section>
@@ -187,12 +147,41 @@ export function PestanaScriptFlujo({
   );
 }
 
+function AvisoEstado({ resumen }: { resumen: ResumenReporteDataflow }) {
+  if (resumen.estado === "sin_filtros") {
+    return (
+      <div className="mt-4 rounded-md border border-line-200 bg-surface-subtle px-4 py-3 text-sm text-ink-700">
+        <p className="font-semibold">No se detectaron filtros</p>
+        <p className="mt-0.5 text-ink-500">
+          El reporte puede ejecutarse, pero no contiene filtros reconocibles.
+        </p>
+      </div>
+    );
+  }
+  if (resumen.estado === "script_no_compatible") {
+    return (
+      <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <p className="font-semibold">El reporte requiere revisión</p>
+        <p className="mt-0.5">
+          Hay pasos del diseño que todavía no son compatibles.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-md border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
+      <p className="font-semibold">No se pudo obtener el diseño actual</p>
+      <p className="mt-0.5">Qlik Cloud no devolvió la información necesaria.</p>
+    </div>
+  );
+}
+
 function EstadoCargando() {
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center gap-2 rounded-xl border bg-white p-8">
-      <div className="h-7 w-7 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+    <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-lg border border-line-200 bg-surface p-8">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
       <p className="text-sm font-medium text-ink-500">
-        Analizando el reporte actual...
+        Analizando el reporte actual…
       </p>
     </div>
   );
@@ -201,9 +190,12 @@ function EstadoCargando() {
 function EstadoError({
   error,
   onActualizar,
-}: { error: unknown; onActualizar: () => void }) {
+}: {
+  error: unknown;
+  onActualizar: () => void;
+}) {
   return (
-    <section className="rounded-xl border border-danger-200 bg-danger-50 p-5 text-sm text-danger-800">
+    <section className="rounded-lg border border-danger-200 bg-danger-50 p-5 text-sm text-danger-800">
       <p className="font-semibold">
         No se pudo obtener el resumen del reporte.
       </p>
@@ -227,66 +219,84 @@ function Dato({
   titulo,
   valor,
   children,
-}: { titulo: string; valor?: string; children?: ReactNode }) {
+}: {
+  titulo: string;
+  valor?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">
+    <div className="rounded-md border border-line-200 bg-surface-subtle px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
         {titulo}
       </p>
       <p className="mt-1 text-base font-semibold text-ink-900">
-        {valor ?? "No determinado"}
+        {valor ?? "No disponible"}
       </p>
       {children && <p className="mt-1 text-xs text-ink-500">{children}</p>}
     </div>
   );
 }
 
-const textosEstado = {
-  analizado: {
-    titulo: "Analizado correctamente",
-    descripcion: "El script fue validado y el resumen está actualizado.",
-    clases: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  },
-  script_no_compatible: {
-    titulo: "Script no compatible",
-    descripcion:
-      "Se recuperó información útil, pero hay fragmentos que requieren revisión.",
-    clases: "border-warning-200 bg-warning-50 text-warning-900",
-  },
-  sin_filtros: {
-    titulo: "No se detectaron filtros",
-    descripcion:
-      "El reporte fue analizado correctamente, pero no contiene filtros reconocibles.",
-    clases: "border-blue-200 bg-blue-50 text-blue-900",
-  },
-  script_no_disponible: {
-    titulo: "No se pudo obtener el script",
-    descripcion: "Qlik Cloud no devolvió el script actual del Dataflow.",
-    clases: "border-danger-200 bg-danger-50 text-danger-900",
-  },
-} as const;
-
-function humanizarTipo(tipo: string) {
-  return tipo === "fecha_hora"
-    ? "Fecha y hora"
-    : tipo.charAt(0).toUpperCase() + tipo.slice(1);
+function describirRangoTemporal(
+  rango: NonNullable<ResumenReporteDataflow["rangoTemporal"]>,
+) {
+  const inicio = formatearFechaValor(rango.fechaInicial);
+  const fin = formatearFechaValor(rango.fechaFinal);
+  if (inicio && fin && inicio === fin) return `${rango.campo}: ${inicio}`;
+  if (inicio && fin) return `${rango.campo}: ${inicio} — ${fin}`;
+  if (inicio) return `${rango.campo}: desde ${inicio}`;
+  if (fin) return `${rango.campo}: hasta ${fin}`;
+  return `${rango.campo}: valor pendiente`;
 }
 
-function describirFiltro(
+function describirFiltroCompacto(
   filtro: ResumenReporteDataflow["filtros"][number],
-): string {
-  const valor = filtro.valorPredeterminado ?? "el valor que indiques";
-  const condiciones: Record<string, string> = {
-    "=": "sea igual a",
-    "!=": "sea diferente de",
-    "<>": "sea diferente de",
-    ">": "sea mayor o posterior a",
-    ">=": "sea igual o posterior a",
-    "<": "sea menor o anterior a",
-    "<=": "sea igual o anterior a",
-    LIKE: "coincida con",
+) {
+  if (!filtro.valorPredeterminado)
+    return filtro.obligatorio ? "Valor requerido" : "Sin valor definido";
+  const valor =
+    formatearFechaValor(filtro.valorPredeterminado) ??
+    filtro.valorPredeterminado;
+  const operadores: Record<string, string> = {
+    "=": "=",
+    "!=": "≠",
+    "<>": "≠",
+    ">": ">",
+    ">=": "≥",
+    "<": "<",
+    "<=": "≤",
+    LIKE: "coincide con",
   };
-  return `El reporte incluirá registros donde ${filtro.campo} ${
-    condiciones[filtro.operador] ?? "cumpla la condición con"
-  } ${valor}.`;
+  return `${operadores[filtro.operador] ?? filtro.operador} ${valor}`;
+}
+
+function formatearFechaValor(valor: string | null | undefined) {
+  if (!valor) return null;
+  let year: number;
+  let month: number;
+  let day: number;
+
+  let match = valor.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (match) {
+    year = Number(match[1]);
+    month = Number(match[2]);
+    day = Number(match[3]);
+  } else {
+    match = valor.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) return null;
+    month = Number(match[1]);
+    day = Number(match[2]);
+    year = Number(match[3]);
+  }
+
+  const fecha = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(fecha.getTime())) return null;
+  return new Intl.DateTimeFormat("es-EC", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  })
+    .format(fecha)
+    .replace(/\./g, "");
 }

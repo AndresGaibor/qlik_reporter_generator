@@ -88,9 +88,7 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
       </QueryClientProvider>,
     ),
   );
-  await vi.waitFor(() =>
-    expect(container?.textContent).toContain("Diseño del Dataflow"),
-  );
+  await vi.waitFor(() => expect(container?.textContent).toContain("Resumen"));
   expect(api.obtenerReporte).toHaveBeenCalledWith("df-1");
   expect(api.obtenerResumenReporte).toHaveBeenCalledWith("df-1");
   expect(api.preflightDataflowReporte).toHaveBeenCalledWith("df-1");
@@ -105,6 +103,9 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(
     client.getQueryData(["ejecuciones-reporte", "tenant-1", "df-1"]),
   ).toBeDefined();
+  expect(container?.textContent).toContain("Detalles técnicos");
+  expect(container?.textContent).not.toContain("Diseño y validación");
+  expect(container?.textContent).not.toContain("Dataflow de Qlik ·");
   expect(container?.textContent).not.toContain("Clonar");
   expect(container?.textContent).not.toContain("Inactivo");
 });
