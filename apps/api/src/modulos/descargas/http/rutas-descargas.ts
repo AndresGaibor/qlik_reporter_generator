@@ -40,9 +40,14 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     const sesion = await dependencias.resolverSesion(c);
     const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
     if (!carpetaUsuario) {
-      return responderError(c, "La cuenta no tiene un correo vÃƒÆ’Ã‚Â¡lido", 422, {
-        codigo: "CORREO_USUARIO_NO_DISPONIBLE",
-      });
+      return responderError(
+        c,
+        "La cuenta no tiene un correo vÃƒÆ’Ã‚Â¡lido",
+        422,
+        {
+          codigo: "CORREO_USUARIO_NO_DISPONIBLE",
+        },
+      );
     }
     if (!dependencias.resolverConfiguracionGcs) {
       return responderError(c, "GCS no estÃƒÆ’Ã‚Â¡ configurado", 422, {
@@ -139,37 +144,104 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
   });
   rutas.delete("/carpeta/archivo", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) return responderError(c, "Solo un administrador puede eliminar archivos", 403, { codigo: "SOLO_ADMIN" });
+    if (!esAdministrador(sesion))
+      return responderError(
+        c,
+        "Solo un administrador puede eliminar archivos",
+        403,
+        { codigo: "SOLO_ADMIN" },
+      );
     const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
-    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs) return responderError(c, "No se pudo resolver la carpeta del usuario", 422, { codigo: "CARPETA_USUARIO_NO_DISPONIBLE" });
+    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs)
+      return responderError(
+        c,
+        "No se pudo resolver la carpeta del usuario",
+        422,
+        { codigo: "CARPETA_USUARIO_NO_DISPONIBLE" },
+      );
     let rutaRelativa: string;
-    try { rutaRelativa = normalizarRutaArchivo(c.req.query("ruta") ?? ""); }
-    catch (error) { if (error instanceof ErrorAplicacion) return responderError(c, error.message, error.estadoHttp as 422, { codigo: error.codigo }); throw error; }
+    try {
+      rutaRelativa = normalizarRutaArchivo(c.req.query("ruta") ?? "");
+    } catch (error) {
+      if (error instanceof ErrorAplicacion)
+        return responderError(c, error.message, error.estadoHttp as 422, {
+          codigo: error.codigo,
+        });
+      throw error;
+    }
     const configuracion = await dependencias.resolverConfiguracionGcs(c);
     try {
       const almacenamiento = await dependencias.resolverAlmacenamiento(c);
-      if (!almacenamiento.eliminarArchivo) return responderError(c, "El almacenamiento no permite eliminar archivos", 501, { codigo: "GCS_BORRADO_NO_DISPONIBLE" });
-      await almacenamiento.eliminarArchivo(`${configuracion.prefijo}${carpetaUsuario}/${rutaRelativa}`);
+      if (!almacenamiento.eliminarArchivo)
+        return responderError(
+          c,
+          "El almacenamiento no permite eliminar archivos",
+          501,
+          { codigo: "GCS_BORRADO_NO_DISPONIBLE" },
+        );
+      await almacenamiento.eliminarArchivo(
+        `${configuracion.prefijo}${carpetaUsuario}/${rutaRelativa}`,
+      );
       return responderExito(c, { eliminado: rutaRelativa });
-    } catch (error) { return responderErrorGcs(c, error); }
+    } catch (error) {
+      return responderErrorGcs(c, error);
+    }
   });
 
   rutas.delete("/carpeta/directorio", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) return responderError(c, "Solo un administrador puede eliminar carpetas", 403, { codigo: "SOLO_ADMIN" });
+    if (!esAdministrador(sesion))
+      return responderError(
+        c,
+        "Solo un administrador puede eliminar carpetas",
+        403,
+        { codigo: "SOLO_ADMIN" },
+      );
     const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
-    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs) return responderError(c, "No se pudo resolver la carpeta del usuario", 422, { codigo: "CARPETA_USUARIO_NO_DISPONIBLE" });
+    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs)
+      return responderError(
+        c,
+        "No se pudo resolver la carpeta del usuario",
+        422,
+        { codigo: "CARPETA_USUARIO_NO_DISPONIBLE" },
+      );
     let subruta: string;
-    try { subruta = normalizarSubruta(c.req.query("ruta") ?? ""); }
-    catch (error) { if (error instanceof ErrorAplicacion) return responderError(c, error.message, error.estadoHttp as 422, { codigo: error.codigo }); throw error; }
-    if (!subruta) return responderError(c, "La carpeta privada principal no se puede eliminar", 422, { codigo: "CARPETA_RAIZ_PROTEGIDA" });
+    try {
+      subruta = normalizarSubruta(c.req.query("ruta") ?? "");
+    } catch (error) {
+      if (error instanceof ErrorAplicacion)
+        return responderError(c, error.message, error.estadoHttp as 422, {
+          codigo: error.codigo,
+        });
+      throw error;
+    }
+    if (!subruta)
+      return responderError(
+        c,
+        "La carpeta privada principal no se puede eliminar",
+        422,
+        { codigo: "CARPETA_RAIZ_PROTEGIDA" },
+      );
     const configuracion = await dependencias.resolverConfiguracionGcs(c);
     try {
       const almacenamiento = await dependencias.resolverAlmacenamiento(c);
-      if (!almacenamiento.eliminarPrefijo) return responderError(c, "El almacenamiento no permite eliminar carpetas", 501, { codigo: "GCS_BORRADO_NO_DISPONIBLE" });
-      const eliminados = await almacenamiento.eliminarPrefijo(`${configuracion.prefijo}${carpetaUsuario}/${subruta}`);
-      return responderExito(c, { eliminado: subruta, objetosEliminados: eliminados });
-    } catch (error) { return responderErrorGcs(c, error); }
+      if (!almacenamiento.eliminarPrefijo)
+        return responderError(
+          c,
+          "El almacenamiento no permite eliminar carpetas",
+          501,
+          { codigo: "GCS_BORRADO_NO_DISPONIBLE" },
+        );
+      const eliminados = await almacenamiento.eliminarPrefijo(
+        `${configuracion.prefijo}${carpetaUsuario}/${subruta}`,
+      );
+      return responderExito(c, {
+        eliminado: subruta,
+        objetosEliminados: eliminados,
+      });
+    } catch (error) {
+      return responderErrorGcs(c, error);
+    }
   });
 
   rutas.post("/carpeta/firma", async (c) => {

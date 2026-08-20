@@ -45,8 +45,14 @@ export function TarjetaEjecucionDescarga({
 }: TarjetaEjecucionDescargaProps) {
   const presentacion = presentarEjecucion(ejecucion);
   const archivos = ejecucion.archivos ?? [];
-  const totalTamano = archivos.reduce((total, archivo) => total + archivo.tamano, 0);
-  const duracion = formatearDuracion(ejecucion.creadoEn, ejecucion.finalizadoEn);
+  const totalTamano = archivos.reduce(
+    (total, archivo) => total + archivo.tamano,
+    0,
+  );
+  const duracion = formatearDuracion(
+    ejecucion.creadoEn,
+    ejecucion.finalizadoEn,
+  );
   const disponible = presentacion.tipo === "completada" && archivos.length > 0;
   return (
     <Card className="overflow-hidden border-line-200">
@@ -62,13 +68,16 @@ export function TarjetaEjecucionDescarga({
         <EstadoBadge estado={presentacion} />
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {presentacion.tipo === "preparando" || presentacion.tipo === "iniciada" ? (
+        {presentacion.tipo === "preparando" ||
+        presentacion.tipo === "iniciada" ? (
           <div className="rounded-lg bg-brand-50/70 px-3 py-2.5 text-sm text-ink-600">
             <div className="flex items-center gap-2 font-medium text-brand-700">
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand-100 border-t-brand-600" />
               En proceso
             </div>
-            <p className="mt-1 text-xs text-ink-500">Archivos todavía no disponibles.</p>
+            <p className="mt-1 text-xs text-ink-500">
+              Archivos todavía no disponibles.
+            </p>
           </div>
         ) : null}
 
@@ -77,13 +86,18 @@ export function TarjetaEjecucionDescarga({
             <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
               <p className="text-ink-400">Resultado</p>
               <p className="mt-1 font-semibold text-ink-800">
-                {archivos.length} {archivos.length === 1 ? "archivo" : "archivos"}
-                {archivos.length > 0 ? ` · ${formatearTamano(totalTamano)}` : ""}
+                {archivos.length}{" "}
+                {archivos.length === 1 ? "archivo" : "archivos"}
+                {archivos.length > 0
+                  ? ` · ${formatearTamano(totalTamano)}`
+                  : ""}
               </p>
             </div>
             <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
               <p className="text-ink-400">Duración</p>
-              <p className="mt-1 font-semibold text-ink-800">{duracion ?? "—"}</p>
+              <p className="mt-1 font-semibold text-ink-800">
+                {duracion ?? "—"}
+              </p>
             </div>
           </div>
         )}
@@ -124,12 +138,17 @@ export function TarjetaEjecucionDescarga({
   );
 }
 
-function EstadoBadge({ estado }: { estado: ReturnType<typeof presentarEjecucion> }) {
-  const base = "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold";
+function EstadoBadge({
+  estado,
+}: { estado: ReturnType<typeof presentarEjecucion> }) {
+  const base =
+    "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold";
   switch (estado.tipo) {
     case "preparando":
     case "iniciada":
-      return <span className={`${base} bg-brand-50 text-brand-700`}>En proceso</span>;
+      return (
+        <span className={`${base} bg-brand-50 text-brand-700`}>En proceso</span>
+      );
     case "completada":
       return (
         <span className={`${base} bg-success-50 text-success-700`}>
@@ -137,7 +156,9 @@ function EstadoBadge({ estado }: { estado: ReturnType<typeof presentarEjecucion>
         </span>
       );
     case "error":
-      return <span className={`${base} bg-danger-50 text-danger-700`}>Error</span>;
+      return (
+        <span className={`${base} bg-danger-50 text-danger-700`}>Error</span>
+      );
     case "detenida":
       return (
         <span className={`${base} bg-warning-50 text-warning-700`}>

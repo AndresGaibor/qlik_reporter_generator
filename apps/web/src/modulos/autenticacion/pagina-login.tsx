@@ -1,12 +1,12 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
-import { MarcaQlikReport } from "@/compartido/componentes/ui/marca-qlik-report";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/compartido/componentes/ui/card";
+import { MarcaQlikReport } from "@/compartido/componentes/ui/marca-qlik-report";
 import {
   iniciarSesion,
   iniciarSesionPorCorreo,

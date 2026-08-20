@@ -90,9 +90,15 @@ export function listarCarpetasUsuariosGcs(): Promise<CarpetaRegistradaGcs[]> {
 }
 
 export function eliminarArchivoCarpetaUsuarioGcs(ruta: string) {
-  return clienteApi.delete<{ eliminado: string }>("/descargas/carpeta/archivo", { parametros: { ruta } });
+  return clienteApi.delete<{ eliminado: string }>(
+    "/descargas/carpeta/archivo",
+    { parametros: { ruta } },
+  );
 }
 
 export function eliminarDirectorioCarpetaUsuarioGcs(ruta: string) {
-  return clienteApi.delete<{ eliminado: string; objetosEliminados: number }>("/descargas/carpeta/directorio", { parametros: { ruta } });
+  return clienteApi.delete<{ eliminado: string; objetosEliminados: number }>(
+    "/descargas/carpeta/directorio",
+    { parametros: { ruta } },
+  );
 }
