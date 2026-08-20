@@ -3,6 +3,7 @@ import { useNotificaciones } from "@/compartido/componentes/feedback/notificacio
 import { Button } from "@/compartido/componentes/ui/button";
 import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
 import { Icon, IconSprite } from "@/compartido/componentes/ui/icon";
+import { MarcaQlikReport } from "@/compartido/componentes/ui/marca-qlik-report";
 import {
   cambiarTenantActivo,
   cerrarSesion,
@@ -171,11 +172,8 @@ export function LayoutPrincipal() {
       <IconSprite />
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line-200 bg-surface/95 px-4 shadow-sm backdrop-blur sm:px-8">
-          <div className="flex items-center gap-3 shrink-0 pr-4 border-r border-line-200">
-            <Icon name="brand" className="text-brand-600" size="lg" />
-            <span className="font-display text-[18px] font-semibold tracking-tight text-ink-900">
-              Automatizaciones
-            </span>
+          <div className="flex shrink-0 items-center border-r border-line-200 pr-4">
+            <MarcaQlikReport tam="sm" />
           </div>
 
           <nav

@@ -71,7 +71,7 @@ export function PaginaInicio() {
               Inicio
             </p>
             <h1 className="font-display text-display font-semibold leading-tight tracking-tight text-ink-900">
-              Bienvenido a Qlik Automate Creator
+              Bienvenido a Qlik Report
             </h1>
             <p className="mt-1.5 max-w-xl text-ink-500 text-sm">
               Aquí puedes ver, conectar y automatizar tus datos en un solo

@@ -1,5 +1,6 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
+import { MarcaQlikReport } from "@/compartido/componentes/ui/marca-qlik-report";
 import {
   Card,
   CardContent,
@@ -95,13 +96,16 @@ export function PaginaLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md shadow-lg border-gray-200">
+    <div className="ambient flex min-h-screen items-center justify-center bg-app px-4">
+      <Card className="w-full max-w-md border-line-200 bg-surface shadow-panel">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">
+          <div className="mb-6 flex justify-center">
+            <MarcaQlikReport tam="lg" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-ink-900">
             Iniciar sesión
           </CardTitle>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="mt-1 text-sm text-ink-500">
             Usa tu correo corporativo y te redirigiremos automáticamente a tu
             entorno de Qlik Cloud.
           </p>
@@ -133,7 +137,7 @@ export function PaginaLogin() {
                   value={correo}
                   onChange={(evento) => setCorreo(evento.target.value)}
                   placeholder="usuario@empresa.com"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-line-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
                 />
               </div>
             ) : (
@@ -151,14 +155,14 @@ export function PaginaLogin() {
                   value={hostManual}
                   onChange={(evento) => setHostManual(evento.target.value)}
                   placeholder="empresa.eu.qlikcloud.com (ej: miempresa.us.qlikcloud.com)"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-line-300 px-3 py-2 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
                 />
               </div>
             )}
 
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition"
+              className="w-full rounded-md bg-brand-600 py-2 font-medium text-white transition hover:bg-brand-700"
               disabled={
                 cargando || (modoAvanzado ? !hostManual.trim() : !correo.trim())
               }
