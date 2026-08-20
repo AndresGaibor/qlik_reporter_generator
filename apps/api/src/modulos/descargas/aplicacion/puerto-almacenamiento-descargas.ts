@@ -22,6 +22,8 @@ export interface PuertoAlmacenamientoDescargas {
   listarDirectorio?(prefijo: string): Promise<ResultadoDirectorioGcs>;
   estaFinalizada(prefijo: string): Promise<boolean>;
   firmar(nombreObjeto: string, minutos: number): Promise<string>;
+  eliminarArchivo?(nombreObjeto: string): Promise<void>;
+  eliminarPrefijo?(prefijo: string): Promise<number>;
 }
 
 export function parsearUriGcsPermitida(uri: string): {

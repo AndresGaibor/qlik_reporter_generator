@@ -174,3 +174,64 @@ describe("carpetas GCS por usuario registrado", () => {
     );
   });
 });
+
+
+describe("eliminacion en carpeta privada", () => {
+  function appEliminar(rol: "admin" | "usuario") {
+    const eliminados: string[] = [];
+    const prefijos: string[] = [];
+    const almacenamiento = {
+      listar: async () => [], listarDirectorio: async () => ({ carpetas: [], archivos: [] }),
+      estaFinalizada: async () => false, firmar: async () => "",
+      eliminarArchivo: async (ruta: string) => { eliminados.push(ruta); },
+      eliminarPrefijo: async (ruta: string) => { prefijos.push(ruta); return 2; },
+    } as unknown as PuertoAlmacenamientoDescargas;
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => ({ tenantId: "tenant-1", organizacionId: "org-1", usuarioId: "user-1", correo: "byron.nasimba@aliwareint.com", roles: [rol] }),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {} as PuertoRepositorioReportes, resolverAlmacenamiento: async () => almacenamiento,
+      resolverConfiguracionGcs: async () => ({ bucket: "bkt_dwh", prefijo: "POCs/TalendDescargados/" }),
+    });
+    const app = new Hono(); app.route("/api/descargas", rutas); return { app, eliminados, prefijos };
+  }
+  it("admin elimina un archivo solo dentro de su carpeta", async () => {
+    const { app, eliminados } = appEliminar("admin");
+    const res = await app.request("/api/descargas/carpeta/archivo?ruta=pruebagcp.csv", { method: "DELETE" });
+    expect(res.status).toBe(200);
+    expect(eliminados).toEqual(["POCs/TalendDescargados/byronnasimba/pruebagcp.csv"]);
+  });
+  it("usuario final no puede eliminar", async () => {
+    const { app, eliminados } = appEliminar("usuario");
+    const res = await app.request("/api/descargas/carpeta/archivo?ruta=pruebagcp.csv", { method: "DELETE" });
+    expect(res.status).toBe(403); expect(eliminados).toHaveLength(0);
+  });
+  it("admin elimina una subcarpeta completa pero no la raiz personal", async () => {
+    const { app, prefijos } = appEliminar("admin");
+    const res = await app.request("/api/descargas/carpeta/directorio?ruta=test-bq-sftp%2F", { method: "DELETE" });
+    expect(res.status).toBe(200); expect(prefijos).toEqual(["POCs/TalendDescargados/byronnasimba/test-bq-sftp/"]);
+    const raiz = await app.request("/api/descargas/carpeta/directorio?ruta=", { method: "DELETE" });
+    expect(raiz.status).toBe(422);
+  });
+});
+
+
+describe("seguridad de eliminacion privada", () => {
+  it("rechaza traversal antes de eliminar un archivo", async () => {
+    const eliminados: string[] = [];
+    const almacenamiento = {
+      listar: async () => [], estaFinalizada: async () => false, firmar: async () => "",
+      eliminarArchivo: async (ruta: string) => { eliminados.push(ruta); },
+    } as unknown as PuertoAlmacenamientoDescargas;
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => ({ tenantId: "t", organizacionId: "o", usuarioId: "u", correo: "byron.nasimba@aliwareint.com", roles: ["admin"] }),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {} as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () => almacenamiento,
+      resolverConfiguracionGcs: async () => ({ bucket: "bkt_dwh", prefijo: "POCs/TalendDescargados/" }),
+    });
+    const app = new Hono(); app.route("/api/descargas", rutas);
+    const res = await app.request("/api/descargas/carpeta/archivo?ruta=..%2Fandresgaibor%2Fsecreto.csv", { method: "DELETE" });
+    expect(res.status).toBe(422);
+    expect(eliminados).toHaveLength(0);
+  });
+});

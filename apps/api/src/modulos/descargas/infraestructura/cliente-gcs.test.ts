@@ -233,3 +233,28 @@ describe("ClienteGcs con fake Storage", () => {
     });
   });
 });
+
+
+describe("eliminacion GCS", () => {
+  test("eliminarArchivo borra exactamente el objeto solicitado", async () => {
+    const borrar = vi.fn().mockResolvedValue(undefined);
+    const file = vi.fn(() => ({ delete: borrar }) as unknown as File);
+    const bucket = vi.fn(() => ({ file }) as unknown as Bucket);
+    const cliente = new ClienteGcs({ projectId: "test-project", storage: { bucket } as unknown as Storage });
+    await cliente.eliminarArchivo("POCs/TalendDescargados/byronnasimba/a.csv");
+    expect(file).toHaveBeenCalledWith("POCs/TalendDescargados/byronnasimba/a.csv");
+    expect(borrar).toHaveBeenCalledTimes(1);
+  });
+  test("eliminarPrefijo borra todos los objetos contenidos y devuelve la cantidad", async () => {
+    const borrarA = vi.fn().mockResolvedValue(undefined);
+    const borrarB = vi.fn().mockResolvedValue(undefined);
+    const getFiles = vi.fn().mockResolvedValue([[
+      { name: "POCs/TalendDescargados/byronnasimba/carpeta/a.csv", delete: borrarA },
+      { name: "POCs/TalendDescargados/byronnasimba/carpeta/b.csv.gz", delete: borrarB },
+    ]]);
+    const bucket = vi.fn(() => ({ getFiles }) as unknown as Bucket);
+    const cliente = new ClienteGcs({ projectId: "test-project", storage: { bucket } as unknown as Storage });
+    const total = await cliente.eliminarPrefijo("POCs/TalendDescargados/byronnasimba/carpeta/");
+    expect(total).toBe(2); expect(borrarA).toHaveBeenCalledTimes(1); expect(borrarB).toHaveBeenCalledTimes(1);
+  });
+});

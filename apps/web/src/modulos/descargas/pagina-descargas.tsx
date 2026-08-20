@@ -1,7 +1,6 @@
 import { useContextoVista } from "@/app/contexto-vista";
-import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
@@ -10,27 +9,20 @@ import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type CarpetaRegistradaGcs,
   type ExploradorGcs,
-  type ResumenDescargaEjecucion,
+  eliminarArchivoCarpetaUsuarioGcs,
+  eliminarDirectorioCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   firmarArchivoExploradorGcs,
   listarCarpetaUsuarioGcs,
   listarCarpetasUsuariosGcs,
-  listarDescargas,
-  listarDescargasAdministracion,
   listarExploradorGcs,
 } from "@/modulos/descargas/api";
-import { TarjetaEjecucionDescarga } from "@/modulos/descargas/componentes/tarjeta-ejecucion-descarga";
-import {
-  esEstadoActivo,
-  formatearFechaISO,
-  formatearTamano,
-} from "@/modulos/descargas/presentacion-ejecucion";
-import { useDescargaEjecucion } from "@/modulos/descargas/use-descarga-ejecucion";
+import { formatearFechaISO, formatearTamano } from "@/modulos/descargas/presentacion-ejecucion";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 export function PaginaDescargas() {
-  const { mostrarError } = useNotificaciones();
+  const { mostrarError, mostrarExito } = useNotificaciones();
   const { manejar } = useManejoError(mostrarError);
   const { esAdmin, modoUsuarioFinal } = useContextoVista();
   const puedeAdministrar = esAdmin && !modoUsuarioFinal;
@@ -62,47 +54,27 @@ export function PaginaDescargas() {
     enabled: puedeAdministrar,
   });
 
-  const {
-    data: descargas = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<ResumenDescargaEjecucion[]>({
-    queryKey: ["descargas"],
-    queryFn: listarDescargas,
-    retry: false,
-    refetchInterval: (consulta) => {
-      const descargasActivas = consulta.state.data?.filter((d) =>
-        esEstadoActivo(d.estado as "preparando" | "iniciada"),
-      );
-      return descargasActivas && descargasActivas.length > 0 ? 2000 : false;
-    },
-  });
+  const [eliminacion, setEliminacion] = useState<
+    | { tipo: "archivo" | "carpeta"; nombre: string; ruta: string }
+    | null
+  >(null);
 
-  const administracion = useQuery<ResumenDescargaEjecucion[]>({
-    queryKey: ["descargas-administracion"],
-    queryFn: listarDescargasAdministracion,
-    retry: false,
-    enabled: puedeAdministrar,
-  });
-
-  useEffect(() => {
-    if (isError) {
-      manejar(error);
+  async function confirmarEliminacion() {
+    const pendiente = eliminacion;
+    if (!pendiente) return;
+    setEliminacion(null);
+    try {
+      if (pendiente.tipo === "archivo") {
+        await eliminarArchivoCarpetaUsuarioGcs(pendiente.ruta);
+        mostrarExito(`Archivo "${pendiente.nombre}" eliminado.`);
+      } else {
+        await eliminarDirectorioCarpetaUsuarioGcs(pendiente.ruta);
+        mostrarExito(`Carpeta "${pendiente.nombre}" eliminada con su contenido.`);
+      }
+      await carpetaUsuario.refetch();
+    } catch (error) {
+      manejar(error instanceof Error ? error : new Error("No se pudo eliminar el elemento."));
     }
-  }, [isError, error, manejar]);
-
-  if (isLoading) {
-    return <EstadoCarga mensaje="Cargando descargas..." />;
-  }
-
-  if (isError) {
-    return <EstadoError mensaje={error.message} onReintentar={handleRefetch} />;
-  }
-
-  function handleRefetch() {
-    refetch();
   }
 
   return (
@@ -140,17 +112,8 @@ export function PaginaDescargas() {
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:min-w-[220px]">
-            <MetricaCarpeta
-              icono="file-text"
-              etiqueta="Ejecuciones"
-              valor={descargas.length}
-            />
-            <MetricaCarpeta
-              icono="download"
-              etiqueta="Archivos"
-              valor={carpetaUsuario.data?.archivos.length ?? 0}
-            />
+          <div className="sm:min-w-[150px]">
+            <MetricaCarpeta icono="download" etiqueta="Archivos" valor={carpetaUsuario.data?.archivos.length ?? 0} />
           </div>
         </div>
       </section>
@@ -173,6 +136,9 @@ export function PaginaDescargas() {
         onSubir={() => {
           setRutaCarpeta(rutaPadre(rutaCarpeta));
         }}
+        puedeEliminar={puedeAdministrar}
+        onEliminarArchivo={(nombre) => setEliminacion({ tipo: "archivo", nombre, ruta: `${rutaCarpeta}${nombre}` })}
+        onEliminarCarpeta={(carpeta) => setEliminacion({ tipo: "carpeta", nombre: carpeta.replace(/\/$/, ""), ruta: `${rutaCarpeta}${carpeta}` })}
         onDescargar={async (nombre) => {
           const firmado = await firmarArchivoCarpetaUsuarioGcs(
             `${rutaCarpeta}${nombre}`,
@@ -181,47 +147,12 @@ export function PaginaDescargas() {
         }}
       />
 
-      <div className="mt-7 flex items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-600">
-            Tu actividad
-          </p>
-          <h2 className="mt-1 font-display text-lg font-semibold text-ink-900">
-            Actividad reciente
-          </h2>
-        </div>
-        <span className="text-sm text-ink-500">
-          {descargas.length} {descargas.length === 1 ? "ejecución" : "ejecuciones"}
-        </span>
-      </div>
-      {descargas.length === 0 ? (
-        <div className="mt-3 rounded-xl border border-dashed border-line-300 bg-surface p-8 text-center">
-          <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-surface-subtle text-ink-400">
-            <Icon name="folder" />
-          </span>
-          <p className="mt-3 font-medium text-ink-800">
-            Aún no tienes reportes descargables
-          </p>
-          <p className="mt-1 text-sm text-ink-500">
-            Cuando ejecutes un reporte, sus archivos aparecerán automáticamente
-            aquí.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {descargas.map((descarga) => (
-            <TarjetaConDescarga key={descarga.id} descarga={descarga} />
-          ))}
-        </div>
-      )}
-
       {puedeAdministrar && (
         <>
           <SeccionCarpetasUsuariosGcs
             carpetas={carpetasUsuarios.data ?? []}
             onAbrir={(carpeta) => setRutaGcs(`${carpeta}/`)}
           />
-          <SeccionAdministracion descargas={administracion.data ?? []} />
           <SeccionExploradorGcs
             titulo="Almacenamiento de reportes"
             descripcion="Explora la estructura técnica del almacenamiento cuando necesites revisar archivos o carpetas fuera de los accesos de usuario."
@@ -251,6 +182,15 @@ export function PaginaDescargas() {
           />
         </>
       )}
+      <ConfirmDialog
+        open={Boolean(eliminacion)}
+        variant="danger"
+        titulo={eliminacion?.tipo === "carpeta" ? "Eliminar carpeta y todo su contenido" : "Eliminar archivo"}
+        mensaje={eliminacion?.tipo === "carpeta" ? `Se eliminará "${eliminacion?.nombre}" y todos los archivos y subcarpetas que contiene. Esta acción no se puede deshacer.` : `¿Eliminar "${eliminacion?.nombre ?? ""}"? Esta acción no se puede deshacer.`}
+        confirmText={eliminacion?.tipo === "carpeta" ? "Eliminar carpeta y todo su contenido" : "Eliminar archivo"}
+        onCancel={() => setEliminacion(null)}
+        onConfirm={() => void confirmarEliminacion()}
+      />
     </PageLayout>
   );
 }
@@ -290,18 +230,6 @@ function descargarDesdeEnlace(firmado: { nombre: string; url: string }) {
   document.body.appendChild(enlace);
   enlace.click();
   enlace.remove();
-}
-
-function nombreDesdeCorreo(correo: string | null | undefined): string {
-  const local = correo?.split("@")[0]?.trim();
-  if (!local) return "Mi espacio";
-  return local
-    .split(/[._-]+/)
-    .filter(Boolean)
-    .map(
-      (parte) => parte.charAt(0).toUpperCase() + parte.slice(1).toLowerCase(),
-    )
-    .join(" ");
 }
 
 function MetricaCarpeta({
@@ -363,87 +291,6 @@ function SeccionCarpetasUsuariosGcs({
   );
 }
 
-function SeccionAdministracion({
-  descargas,
-}: {
-  descargas: ResumenDescargaEjecucion[];
-}) {
-  const asignadas = descargas.filter((item) => item.creadoPorUsuarioId);
-  const historicas = descargas.filter((item) => !item.creadoPorUsuarioId);
-  const grupos = asignadas.reduce<Record<string, ResumenDescargaEjecucion[]>>(
-    (acumulado, descarga) => {
-      const clave = descarga.creadoPorUsuarioId as string;
-      const grupo = acumulado[clave] ?? [];
-      grupo.push(descarga);
-      acumulado[clave] = grupo;
-      return acumulado;
-    },
-    {},
-  );
-  return (
-    <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
-      <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Icon name="users" /></div>
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Actividad de usuarios</h2>
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">Solo administradores</span>
-          </div>
-          <p className="mt-1 text-sm text-ink-500">Revisa qué reportes ejecutó cada usuario, su estado y si ya existen resultados disponibles.</p>
-        </div>
-      </div>
-      <div className="mt-5 space-y-4">
-        {Object.entries(grupos).map(([propietario, items]) => (
-          <div key={propietario} className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4">
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-800">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-brand-700 shadow-sm"><Icon name="user" size="sm" /></span>
-              <span>{nombreDesdeCorreo(items[0]?.propietarioCorreo ?? null)}</span>
-              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-500">{items.length} {items.length === 1 ? "ejecución" : "ejecuciones"}</span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((descarga) => <TarjetaConDescarga key={descarga.id} descarga={descarga} />)}
-            </div>
-          </div>
-        ))}
-        {asignadas.length === 0 && <p className="text-sm text-ink-500">No hay actividad de otros usuarios para mostrar.</p>}
-      </div>
-      {historicas.length > 0 && (
-        <details className="mt-5 rounded-lg border border-line-200 bg-surface-subtle/50">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-800">Ejecuciones históricas no asignadas <span className="ml-2 font-normal text-ink-500">{historicas.length}</span></summary>
-          <div className="grid gap-4 border-t border-line-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
-            {historicas.map((descarga) => <TarjetaConDescarga key={descarga.id} descarga={descarga} />)}
-          </div>
-        </details>
-      )}
-    </section>
-  );
-}
-
-function TarjetaConDescarga({
-  descarga,
-}: {
-  descarga: ResumenDescargaEjecucion;
-}) {
-  const { estado, iniciarDescarga, cancelar } = useDescargaEjecucion();
-
-  return (
-    <TarjetaEjecucionDescarga
-      ejecucion={descarga}
-      estadoDescarga={estado.estado}
-      progreso={estado.progreso}
-      porcentaje={estado.porcentaje}
-      bytesDescargados={estado.bytesDescargados}
-      totalBytes={estado.totalBytes}
-      totalArchivos={estado.totalArchivos}
-      archivoActual={estado.archivoActual}
-      error={estado.error}
-      onDescargar={() => iniciarDescarga(descarga.id)}
-      onDescargarArchivo={(nombre) => iniciarDescarga(descarga.id, nombre)}
-      onCancelar={cancelar}
-    />
-  );
-}
-
 function SeccionExploradorGcs({
   titulo = "Explorador",
   descripcion,
@@ -457,6 +304,9 @@ function SeccionExploradorGcs({
   onSubir,
   onDescargar,
   onNavegarRuta,
+  puedeEliminar = false,
+  onEliminarArchivo,
+  onEliminarCarpeta,
 }: {
   titulo?: string;
   descripcion?: string;
@@ -470,6 +320,9 @@ function SeccionExploradorGcs({
   onSubir: () => void;
   onDescargar: (nombre: string) => Promise<void>;
   onNavegarRuta?: (ruta: string) => void;
+  puedeEliminar?: boolean;
+  onEliminarArchivo?: (nombre: string) => void;
+  onEliminarCarpeta?: (carpeta: string) => void;
 }) {
   if (!datos && !cargando && !error) return null;
   const segmentos = datos?.ruta.split("/").filter(Boolean) ?? [];
@@ -503,15 +356,21 @@ function SeccionExploradorGcs({
       {datos && !cargando && !error && (
         <div className="mt-5 grid gap-2">
           {datos.carpetas.map((carpeta) => (
-            <button key={carpeta} type="button" onClick={() => onAbrirCarpeta(carpeta)} className="group flex w-full items-center justify-between gap-3 rounded-lg border border-line-200 bg-surface px-4 py-3 text-left transition hover:border-brand-200 hover:bg-brand-50/40">
-              <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700"><Icon name="folder" size="sm" /></span><span className="truncate font-semibold text-ink-800">{carpeta.replace(/\/$/, "")}</span></span>
-              <Icon name="chev" size="sm" className="rotate-180 text-ink-300 transition group-hover:text-brand-600" />
-            </button>
+            <div key={carpeta} className="group flex w-full items-center gap-2 rounded-lg border border-line-200 bg-surface p-1.5 transition hover:border-brand-200 hover:bg-brand-50/30">
+              <button type="button" onClick={() => onAbrirCarpeta(carpeta)} className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left">
+                <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700"><Icon name="folder" size="sm" /></span><span className="truncate font-semibold text-ink-800">{carpeta.replace(/\/$/, "")}</span></span>
+                <Icon name="chev" size="sm" className="rotate-180 text-ink-300 transition group-hover:text-brand-600" />
+              </button>
+              {puedeEliminar && <button type="button" onClick={() => onEliminarCarpeta?.(carpeta)} className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-danger-600 hover:bg-danger-50"><Icon name="trash" size="sm" /> Eliminar</button>}
+            </div>
           ))}
           {datos.archivos.map((archivo) => (
             <div key={archivo.nombre} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-200 px-4 py-3">
               <div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-subtle text-ink-500"><Icon name="file-text" size="sm" /></span><div className="min-w-0"><p className="truncate text-sm font-semibold text-ink-800">{archivo.nombre}</p><p className="mt-0.5 text-xs text-ink-500">{archivo.formato} · {formatearTamano(archivo.tamano)}{archivo.fecha ? ` · ${formatearFechaISO(archivo.fecha)}` : ""}</p></div></div>
-              <button type="button" className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50" onClick={() => void onDescargar(archivo.nombre)}><span className="inline-flex items-center gap-1.5"><Icon name="download" size="sm" /> Descargar</span></button>
+              <div className="flex items-center gap-1">
+                <button type="button" className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50" onClick={() => void onDescargar(archivo.nombre)}><span className="inline-flex items-center gap-1.5"><Icon name="download" size="sm" /> Descargar</span></button>
+                {puedeEliminar && <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-danger-600 hover:bg-danger-50" onClick={() => onEliminarArchivo?.(archivo.nombre)}><Icon name="trash" size="sm" /> Eliminar</button>}
+              </div>
             </div>
           ))}
           {datos.carpetas.length === 0 && datos.archivos.length === 0 && <div className="rounded-lg border border-dashed border-line-300 p-6 text-center text-sm text-ink-500">Esta carpeta está vacía.</div>}
