@@ -65,12 +65,11 @@ UNNEST(GENERATE_ARRAY(0, totalparts - 1)) AS export_part
 ORDER BY export_part;`;
 
   const bqExportData = `EXPORT DATA OPTIONS(
-  uri = '${uri}/parte-__PART_PADDED__-*.csv.gz',
+  uri = '${uri}/parte-__PART_PADDED__-*.csv',
   format = 'CSV',
-  compression = 'GZIP',
   overwrite = true,
   header = true,
-  field_delimiter = '|'
+  field_delimiter = ','
 ) AS
 WITH source AS (
   ${indentar(sqlFuente, 2)}

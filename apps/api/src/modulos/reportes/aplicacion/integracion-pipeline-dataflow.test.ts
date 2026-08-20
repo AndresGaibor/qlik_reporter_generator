@@ -260,7 +260,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(valorVariable(workspace, "BqExportData")).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv'`,
     );
     expect(valorVariable(workspace, "BqNumberCsv")).toContain(
       "SELECT DISTINCT export_part",

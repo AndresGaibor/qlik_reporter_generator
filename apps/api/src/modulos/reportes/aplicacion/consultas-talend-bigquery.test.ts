@@ -24,12 +24,12 @@ describe("construirConsultasTalendBigQuery", () => {
       "GENERATE_ARRAY(0, totalparts - 1)",
     );
     expect(consultas.bqNumberCsv).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv.gz");
+    expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv'");
     expect(consultas.bqExportData).toContain(
       "BETWEEN __START_ROW__ AND __END_ROW__",
     );
     expect(consultas.bqExportData).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqExportData).toContain("compression = 'GZIP'");
+    expect(consultas.bqExportData).not.toContain("compression");
     expect(consultas.bqDrop).toContain("DROP TABLE IF EXISTS");
     expect(consultas.bqDrop).not.toContain("EXPORT DATA");
   });
