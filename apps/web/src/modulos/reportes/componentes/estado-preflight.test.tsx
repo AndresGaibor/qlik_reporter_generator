@@ -38,7 +38,7 @@ test("destaca datos, costo estimado y advertencia para una consulta costosa", ()
     );
   });
 
-  expect(container.textContent).toContain("Datos a procesar");
+  expect(container.textContent).toContain("Datos estimados");
   expect(container.textContent).toContain("399.79 GiB");
   expect(container.textContent).toContain("Costo estimado");
   expect(container.textContent).toContain("$2.44 USD");
@@ -60,6 +60,7 @@ test("permite ver y copiar el SQL generado", async () => {
     root?.render(
       <EstadoPreflight
         validando={false}
+        mostrarDetallesTecnicos
         preflight={{
           flujoIdQlik: "df-1",
           hashDataflowSha256: "b".repeat(64),
@@ -95,6 +96,7 @@ test("muestra el SQL aunque BigQuery no pueda estimar costo por permisos", () =>
     root?.render(
       <EstadoPreflight
         validando={false}
+        mostrarDetallesTecnicos
         preflight={{
           flujoIdQlik: "df-iam",
           hashDataflowSha256: "c".repeat(64),
@@ -120,4 +122,32 @@ test("muestra el SQL aunque BigQuery no pueda estimar costo por permisos", () =>
   expect(container.textContent).toContain("No disponible");
   expect(container.textContent).toContain("No se pudo validar en BigQuery");
   expect(container.textContent).toContain("Access Denied");
+});
+
+test("oculta SQL y huellas técnicas en el resumen por defecto", () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  act(() => {
+    root?.render(
+      <EstadoPreflight
+        validando={false}
+        preflight={{
+          flujoIdQlik: "df-1",
+          hashDataflowSha256: "d".repeat(64),
+          compatible: true,
+          operacionesNoSoportadas: [],
+          sqlBigQuery: "SELECT 1",
+          bytesProcesados: 1024 * 1024,
+          costoEstimadoUsd: 0.001,
+          validacionBigQuery: { exitosa: true, mensajeError: null },
+          resumen: { fuentes: 1, filtros: 1, joins: 0, camposSalida: 12 },
+        }}
+      />,
+    );
+  });
+  expect(container.textContent).toContain("Listo para ejecutar");
+  expect(container.textContent).toContain("Datos estimados");
+  expect(container.textContent).not.toContain("SQL generado");
+  expect(container.textContent).not.toContain("SHA-256");
 });

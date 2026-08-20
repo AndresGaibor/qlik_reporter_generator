@@ -68,18 +68,17 @@ describe("PestanaScriptFlujo", () => {
     );
   });
 
-  it("muestra el resumen exitoso sin SQL", () => {
+  it("prioriza un resumen entendible y oculta ruido técnico", () => {
     const vista = montar({ resumen: resumenBase });
-    expect(vista.textContent).toContain("Analizado correctamente");
-    expect(vista.textContent).toContain("Campos devueltos");
+    expect(vista.textContent).toContain("Resumen del reporte");
+    expect(vista.textContent).toContain("1 campo incluido");
     expect(vista.textContent).toContain("Fecha desde");
-    expect(vista.textContent).toContain(
-      "El reporte incluirá registros donde Fecha sea igual o posterior a 2026-08-01.",
-    );
-    expect(vista.textContent).not.toContain("Operador");
-    expect(vista.textContent?.indexOf("Rango temporal detectado")).toBeLessThan(
-      vista.textContent?.indexOf("Campos devueltos") ?? 0,
-    );
+    expect(vista.textContent).toContain("1 ago 2026");
+    expect(vista.textContent).toContain("1 jun 2026");
+    expect(vista.textContent).not.toContain("Analizado correctamente");
+    expect(vista.textContent).not.toContain("Tabla de resultado");
+    expect(vista.textContent).not.toContain("Alias");
+    expect(vista.textContent).not.toContain("Tipo detectado");
     expect(vista.textContent).not.toContain("SELECT");
   });
 

@@ -41,11 +41,11 @@ export function BarraFiltrosReportes({
     <>
       <PageHeader
         title="Reportes"
-        description="Crea y ejecuta reportes para consultar la información que necesitas, cuando la necesitas."
+        description="Selecciona un reporte para ejecutarlo o consultar su información."
         actions={<Button onClick={onCrearReporte}>Crear reporte</Button>}
       />
 
-      <div className="rounded-xl border border-line-200 bg-surface p-3 shadow-card sm:p-4">
+      <div className="rounded-lg border border-line-200 bg-surface p-3 sm:p-4">
         <div
           className={`grid grid-cols-1 items-end gap-3 ${
             mostrarFiltroAutor
@@ -54,7 +54,7 @@ export function BarraFiltrosReportes({
           }`}
         >
           <SelectBuscable
-            etiqueta="Filtrar por espacio"
+            etiqueta="Espacio"
             placeholder="Todos los espacios"
             searchPlaceholder="Escribe el nombre del espacio…"
             emptyText="No encontramos ese espacio. Intenta con otro nombre."
@@ -84,7 +84,7 @@ export function BarraFiltrosReportes({
                 htmlFor="buscar-automatizaciones"
                 className="text-sm font-semibold text-ink-700"
               >
-                Buscar reportes
+                Buscar
               </label>
               <span className="text-xs font-medium text-ink-400">
                 {totalResultados}{" "}
@@ -103,7 +103,7 @@ export function BarraFiltrosReportes({
                 type="search"
                 value={busquedaTemp}
                 onChange={(evento) => setBusquedaTemp(evento.target.value)}
-                placeholder="Busca por nombre del reporte…"
+                placeholder="Buscar por nombre…"
                 className="h-11 w-full rounded-md border border-line-200 bg-surface pl-10 pr-10 text-sm text-ink-900 shadow-card outline-none transition placeholder:text-ink-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
               />
               {busquedaTemp && (

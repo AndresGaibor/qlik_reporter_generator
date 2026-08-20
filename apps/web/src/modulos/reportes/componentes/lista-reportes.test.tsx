@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
 import { ListaReportes } from "./lista-reportes";
 
@@ -17,4 +18,27 @@ test("muestra nombre y enlace del Dataflow como reporte", () => {
       hayFiltros: false,
     }),
   ).toBeTruthy();
+});
+
+test("usa acciones sobrias y una fecha empresarial legible", () => {
+  const html = renderToStaticMarkup(
+    ListaReportes({
+      reportes: [
+        {
+          id: "22222222-2222-4222-8222-222222222222",
+          nombre: "Ventas",
+          espacioId: "sp-1",
+          espacioNombre: "Comercial",
+          modificadoEn: "2026-08-18T15:41:58Z",
+        },
+      ],
+      idEjecutando: null,
+      onEjecutar: () => {},
+      hayFiltros: false,
+    }),
+  );
+  expect(html).toContain("Modificado");
+  expect(html).toContain("Ejecutar");
+  expect(html).not.toContain("Ejecutar reporte");
+  expect(html).not.toContain(":58");
 });
