@@ -40,21 +40,19 @@ total AS (
 SELECT export_part
 FROM total,
 UNNEST(
-  IF(
-    total_rows = 0,
-    [0],
-    GENERATE_ARRAY(0, DIV(total_rows - 1, ${maximoFilasPorArchivo}))
+  GENERATE_ARRAY(
+    0,
+    GREATEST(CAST(CEIL(total_rows / ${maximoFilasPorArchivo}.0) AS INT64), 1) - 1
   )
 ) AS export_part
 ORDER BY export_part;`;
 
   const bqExportData = `EXPORT DATA OPTIONS(
-  uri = '${uri}/parte-__PART_PADDED__-*.csv.gz',
+  uri = '${uri}/parte-__PART_PADDED__-*.csv',
   format = 'CSV',
-  compression = 'GZIP',
   overwrite = true,
   header = true,
-  field_delimiter = '|'
+  field_delimiter = ','
 ) AS
 WITH ${fuente},
 numbered AS (
@@ -65,21 +63,20 @@ numbered AS (
 )
 SELECT * EXCEPT (export_row_number)
 FROM numbered
-WHERE DIV(export_row_number - 1, ${maximoFilasPorArchivo}) = __PART__
+WHERE export_row_number BETWEEN __START_ROW__ AND __END_ROW__
 ORDER BY export_row_number;
 
-IF __PART__ = (
+IF __END_ROW__ >= (
   WITH ${fuente}
-  SELECT IF(COUNT(*) = 0, 0, DIV(COUNT(*) - 1, ${maximoFilasPorArchivo}))
+  SELECT COUNT(*)
   FROM source
 ) THEN
   EXPORT DATA OPTIONS(
-  uri = '${uri}/__finalizado__-*.csv.gz',
-  format = 'CSV',
-  compression = 'GZIP',
-  overwrite = true,
-  header = false
-) AS
+    uri = '${uri}/__finalizado__-*.csv',
+    format = 'CSV',
+    overwrite = true,
+    header = false
+  ) AS
   SELECT 'ok' AS estado;
 END IF;`;
 

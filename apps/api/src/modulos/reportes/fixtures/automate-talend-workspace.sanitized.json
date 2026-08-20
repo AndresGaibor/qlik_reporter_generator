@@ -10,10 +10,8 @@
           "mode": "keyValue",
           "value": [
             { "key": "credenciales", "value": "{ $.Credenciales }" },
-            { "key": "bq_select_data", "value": "{ $.BqSelectData }" },
             { "key": "bq_number_csv", "value": "{ $.BqNumberCsv }" },
-            { "key": "bq_export_data", "value": "{ $.BqExportData }" },
-            { "key": "bq_drop", "value": "{ $.BqDrop }" }
+            { "key": "bq_export_data", "value": "{ $.BqExportData }" }
           ]
         }
       ]
@@ -21,12 +19,9 @@
     {
       "name": "Credenciales",
       "type": "VariableBlock",
-      "operations": [{ "id": "set_value", "value": "CREDENCIAL_SANITIZADA" }]
-    },
-    {
-      "name": "BqSelectData",
-      "type": "VariableBlock",
-      "operations": [{ "id": "set_value", "value": "SELECT_ANTERIOR" }]
+      "operations": [
+        { "id": "set_value", "value": "/etc/credentials/gsc.json" }
+      ]
     },
     {
       "name": "BqNumberCsv",
@@ -37,11 +32,6 @@
       "name": "BqExportData",
       "type": "VariableBlock",
       "operations": [{ "id": "set_value", "value": "EXPORT_ANTERIOR" }]
-    },
-    {
-      "name": "BqDrop",
-      "type": "VariableBlock",
-      "operations": [{ "id": "set_value", "value": "DROP_ANTERIOR" }]
     }
   ]
 }

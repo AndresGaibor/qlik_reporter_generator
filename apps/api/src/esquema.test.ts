@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import * as esquema from "./plataforma/persistencia/esquema.js";
@@ -210,7 +211,7 @@ describe("Esquema Drizzle", () => {
 
   it("mantiene la cadena de migraciones sin entradas huérfanas", async () => {
     const migraciones = readMigrationFiles({
-      migrationsFolder: new URL("../drizzle/", import.meta.url).pathname,
+      migrationsFolder: fileURLToPath(new URL("../drizzle/", import.meta.url)),
     });
     expect(migraciones).toHaveLength(7);
     const journal = JSON.parse(

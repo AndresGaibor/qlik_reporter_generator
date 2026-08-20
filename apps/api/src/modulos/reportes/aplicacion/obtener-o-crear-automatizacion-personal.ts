@@ -147,7 +147,6 @@ export class ObtenerOCrearAutomatizacionPersonal {
     const resultado = await copiarAutomatizacionPersonal(this.qlik, {
       nombre: `${contexto.plantillaNombre} - Worker personal`,
       plantillaIdQlik: contexto.plantillaIdQlik,
-      propietarioIdQlik: contexto.usuarioIdQlik,
     });
     if (resultado.error) {
       if (!resultado.incompatible) throw resultado.error;

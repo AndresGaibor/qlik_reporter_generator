@@ -8,12 +8,10 @@ const VARIABLES_TALEND = {
 export function inyectarContextoTalend(
   workspace: Record<string, unknown>,
   consultas: ConsultasTalendBigQuery,
-  credencialesJson: string,
 ): Record<string, unknown> {
   const copia = structuredClone(workspace);
   validarContratoTalend(copia);
   const blocks = Array.isArray(copia.blocks) ? copia.blocks : [];
-  actualizarVariable(blocks, "Credenciales", credencialesJson);
 
   for (const [claveTalend, definicion] of Object.entries(VARIABLES_TALEND)) {
     const bloque = buscarBloque(blocks, definicion.bloque);
@@ -35,27 +33,6 @@ export function inyectarContextoTalend(
   }
 
   return copia;
-}
-
-function actualizarVariable(
-  blocks: unknown[],
-  nombre: string,
-  valor: string,
-): void {
-  const bloque = buscarBloque(blocks, nombre);
-  const operaciones = Array.isArray(bloque.operations) ? bloque.operations : [];
-  const setValue = operaciones.find(
-    (item) =>
-      typeof item === "object" &&
-      item !== null &&
-      String((item as Record<string, unknown>).id ?? "") === "set_value",
-  ) as Record<string, unknown> | undefined;
-  if (!setValue) {
-    throw new Error(
-      `La automatización base no contiene set_value en ${nombre}`,
-    );
-  }
-  setValue.value = valor;
 }
 
 export function diagnosticarContratoTalend(

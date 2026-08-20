@@ -15,14 +15,15 @@ describe("construirConsultasTalendBigQuery", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
 
     expect(consultas.bqNumberCsv).toContain("GENERATE_ARRAY");
-    expect(consultas.bqNumberCsv).toContain("[0]");
+    expect(consultas.bqNumberCsv).toContain("CEIL(total_rows / 1000000.0)");
     expect(consultas.bqNumberCsv).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv.gz");
+    expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv'");
     expect(consultas.bqExportData).toContain(
-      "DIV(export_row_number - 1, 1000000) = __PART__",
+      "BETWEEN __START_ROW__ AND __END_ROW__",
     );
-    expect(consultas.bqExportData).toContain("compression = 'GZIP'");
-    expect(consultas.bqExportData).toContain("__finalizado__-*.csv.gz");
+    expect(consultas.bqExportData).toContain("Fecha = DATE '2026-06-01'");
+    expect(consultas.bqExportData).not.toContain("compression");
+    expect(consultas.bqExportData).toContain("__finalizado__-*.csv");
     expect(consultas.bqExportData).toContain("SELECT 'ok' AS estado");
     expect(consultas.bqExportData).not.toContain("CREATE OR REPLACE TABLE");
     expect(consultas.bqExportData).not.toContain("DROP TABLE");

@@ -90,6 +90,31 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     expect(repo.actualizar).not.toHaveBeenCalled();
   });
 
+  it("crea el worker una sola vez y lo reutiliza sin cambiar propietario", async () => {
+    let actual: AutomatizacionPersonalPersistida | null = null;
+    const { caso, qlik } = construir({
+      repo: {
+        obtener: vi.fn(async () => actual),
+        crear: vi.fn(async (entrada) => {
+          const creada: AutomatizacionPersonalPersistida = {
+            id: "row-1",
+            ...entrada,
+          };
+          actual = creada;
+          return creada;
+        }),
+      },
+    });
+
+    const primero = await caso.ejecutar(ctx);
+    const segundo = await caso.ejecutar(ctx);
+
+    expect(primero.automatizacionIdQlik).toBe("worker-new");
+    expect(segundo.automatizacionIdQlik).toBe("worker-new");
+    expect(qlik.copiarAutomatizacion).toHaveBeenCalledTimes(1);
+    expect(qlik.cambiarPropietarioAutomatizacion).not.toHaveBeenCalled();
+  });
+
   it("hace double-check bajo lock y copia una sola vez en concurrencia", async () => {
     let actual: AutomatizacionPersonalPersistida | null = null;
     const repo = {

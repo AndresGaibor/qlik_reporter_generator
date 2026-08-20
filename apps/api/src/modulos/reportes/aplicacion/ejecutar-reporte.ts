@@ -185,7 +185,6 @@ export class EjecutarReporte {
           const workspace = inyectarContextoTalend(
             (automatizacion.workspace ?? {}) as Record<string, unknown>,
             consultasTalend,
-            this.alcanceBigQuery.credencialesJson as string,
           );
           etapa = "actualizar-workspace";
           await this.qlik.actualizarAutomatizacion(

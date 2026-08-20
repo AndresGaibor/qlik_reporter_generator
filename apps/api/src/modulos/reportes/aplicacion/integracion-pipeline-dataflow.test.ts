@@ -176,7 +176,7 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       valorVariable(workspaces[1] ?? {}, "BqNumberCsv"),
     );
     expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
-      '{"type":"service_account","project_id":"p"}',
+      "/etc/credentials/gsc.json",
     );
   });
 
@@ -260,11 +260,11 @@ describe("pipeline Dataflow → Automate → Talend", () => {
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(valorVariable(workspace, "BqExportData")).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv'`,
     );
     expect(valorVariable(workspace, "BqNumberCsv")).toContain("GENERATE_ARRAY");
     expect(valorVariable(workspace, "BqExportData")).toContain(
-      "__finalizado__-*.csv.gz",
+      "__finalizado__-*.csv",
     );
     expect(String(auditoria?.scriptExportacion)).not.toContain(
       "STORE [Filtro 1_DEFAULT]",

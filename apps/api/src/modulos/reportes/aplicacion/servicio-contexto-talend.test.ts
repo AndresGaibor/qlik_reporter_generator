@@ -43,16 +43,12 @@ async function cargarFixture() {
 describe("inyectarContextoTalend", () => {
   it("actualiza únicamente los dos VariableBlocks que espera el Job", async () => {
     const workspace = await cargarFixture();
-    const nuevo = inyectarContextoTalend(
-      workspace,
-      consultas,
-      '{"type":"service_account","project_id":"configurado"}',
-    );
+    const nuevo = inyectarContextoTalend(workspace, consultas);
 
     expect(valorVariable(nuevo, "BqNumberCsv")).toBe(consultas.bqNumberCsv);
     expect(valorVariable(nuevo, "BqExportData")).toBe(consultas.bqExportData);
     expect(valorVariable(nuevo, "Credenciales")).toBe(
-      '{"type":"service_account","project_id":"configurado"}',
+      "/etc/credentials/gsc.json",
     );
   });
 
@@ -69,7 +65,7 @@ describe("inyectarContextoTalend", () => {
     const values = contexto.value as Array<Record<string, unknown>>;
     contexto.value = values.filter((item) => item.key !== "bq_export_data");
 
-    expect(() => inyectarContextoTalend(workspace, consultas, "{}")).toThrow(
+    expect(() => inyectarContextoTalend(workspace, consultas)).toThrow(
       "bq_export_data",
     );
   });
@@ -79,7 +75,7 @@ describe("inyectarContextoTalend", () => {
     const blocks = workspace.blocks as Array<Record<string, unknown>>;
     workspace.blocks = blocks.filter((block) => block.name !== "BqExportData");
 
-    expect(() => inyectarContextoTalend(workspace, consultas, "{}")).toThrow(
+    expect(() => inyectarContextoTalend(workspace, consultas)).toThrow(
       "BqExportData",
     );
   });
