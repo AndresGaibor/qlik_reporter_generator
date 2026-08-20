@@ -40,6 +40,14 @@ export function formatearFechaISO(fechaISO: string): string {
   }).format(new Date(fechaISO));
 }
 
+export function formatearDuracion(inicioIso: string, finIso: string | null): string | null {
+  if (!finIso) return null;
+  const segundos = Math.max(0, Math.round((new Date(finIso).getTime() - new Date(inicioIso).getTime()) / 1000));
+  const minutos = Math.floor(segundos / 60);
+  const resto = segundos % 60;
+  if (minutos === 0) return `${resto} s`;
+  return resto === 0 ? `${minutos} min` : `${minutos} min ${resto} s`;
+}
 export function formatearTamano(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;

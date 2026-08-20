@@ -27,15 +27,15 @@ import {
 } from "@/modulos/descargas/presentacion-ejecucion";
 import { useDescargaEjecucion } from "@/modulos/descargas/use-descarga-ejecucion";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function PaginaDescargas() {
   const { mostrarError } = useNotificaciones();
   const { manejar } = useManejoError(mostrarError);
   const { esAdmin, modoUsuarioFinal } = useContextoVista();
   const puedeAdministrar = esAdmin && !modoUsuarioFinal;
-  const [rutaGcs, setRutaGcs] = useState("");
-  const [rutaCarpeta, setRutaCarpeta] = useState("");
+  const [rutaCarpeta, setRutaCarpeta] = useRutaPersistidaEnUrl("carpeta");
+  const [rutaGcs, setRutaGcs] = useRutaPersistidaEnUrl("almacenamiento");
 
   const { data: sesion } = useQuery({
     queryKey: ["sesion"],
@@ -156,8 +156,11 @@ export function PaginaDescargas() {
       </section>
 
       <SeccionExploradorGcs
-        titulo={`Contenido de ${carpetaUsuario.data?.carpetaUsuario ?? "tu carpeta"}`}
+        titulo="Mi carpeta"
+        descripcion="Navega por tus carpetas y descarga los archivos disponibles."
+        nombreRaiz={carpetaUsuario.data?.carpetaUsuario ?? "Tu carpeta"}
         mostrarBucket={false}
+        mostrarRutaTecnica={false}
         datos={carpetaUsuario.data ?? null}
         cargando={carpetaUsuario.isLoading}
         error={
@@ -165,11 +168,10 @@ export function PaginaDescargas() {
             ? carpetaUsuario.error.message
             : null
         }
+        onNavegarRuta={setRutaCarpeta}
         onAbrirCarpeta={(carpeta) => setRutaCarpeta(`${rutaCarpeta}${carpeta}`)}
         onSubir={() => {
-          const partes = rutaCarpeta.split("/").filter(Boolean);
-          partes.pop();
-          setRutaCarpeta(partes.length ? `${partes.join("/")}/` : "");
+          setRutaCarpeta(rutaPadre(rutaCarpeta));
         }}
         onDescargar={async (nombre) => {
           const firmado = await firmarArchivoCarpetaUsuarioGcs(
@@ -182,14 +184,14 @@ export function PaginaDescargas() {
       <div className="mt-7 flex items-end justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-600">
-            Actividad de la aplicación
+            Tu actividad
           </p>
           <h2 className="mt-1 font-display text-lg font-semibold text-ink-900">
-            Historial de ejecuciones
+            Actividad reciente
           </h2>
         </div>
         <span className="text-sm text-ink-500">
-          {descargas.length} {descargas.length === 1 ? "reporte" : "reportes"}
+          {descargas.length} {descargas.length === 1 ? "ejecución" : "ejecuciones"}
         </span>
       </div>
       {descargas.length === 0 ? (
@@ -221,6 +223,10 @@ export function PaginaDescargas() {
           />
           <SeccionAdministracion descargas={administracion.data ?? []} />
           <SeccionExploradorGcs
+            titulo="Almacenamiento de reportes"
+            descripcion="Explora la estructura técnica del almacenamiento cuando necesites revisar archivos o carpetas fuera de los accesos de usuario."
+            nombreRaiz="Raíz de reportes"
+            mostrarRutaTecnica
             datos={explorador.data ?? null}
             cargando={explorador.isLoading}
             error={
@@ -228,12 +234,9 @@ export function PaginaDescargas() {
                 ? explorador.error.message
                 : null
             }
+            onNavegarRuta={setRutaGcs}
             onAbrirCarpeta={(carpeta) => setRutaGcs(`${rutaGcs}${carpeta}`)}
-            onSubir={() => {
-              const partes = rutaGcs.split("/").filter(Boolean);
-              partes.pop();
-              setRutaGcs(partes.length ? `${partes.join("/")}/` : "");
-            }}
+            onSubir={() => setRutaGcs(rutaPadre(rutaGcs))}
             onDescargar={async (nombre) => {
               const base = explorador.data?.prefijoBase ?? "";
               const firmado = await firmarArchivoExploradorGcs(
@@ -250,6 +253,33 @@ export function PaginaDescargas() {
       )}
     </PageLayout>
   );
+}
+
+function useRutaPersistidaEnUrl(clave: "carpeta" | "almacenamiento") {
+  const leer = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get(clave) ?? "";
+  }, [clave]);
+  const [ruta, setRuta] = useState(leer);
+  useEffect(() => {
+    const sincronizar = () => setRuta(leer());
+    window.addEventListener("popstate", sincronizar);
+    return () => window.removeEventListener("popstate", sincronizar);
+  }, [leer]);
+  const establecer = useCallback((valor: string) => {
+    const url = new URL(window.location.href);
+    if (valor) url.searchParams.set(clave, valor);
+    else url.searchParams.delete(clave);
+    window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    setRuta(valor);
+  }, [clave]);
+  return [ruta, establecer] as const;
+}
+
+function rutaPadre(ruta: string) {
+  const partes = ruta.split("/").filter(Boolean);
+  partes.pop();
+  return partes.length ? `${partes.join("/")}/` : "";
 }
 
 function descargarDesdeEnlace(firmado: { nombre: string; url: string }) {
@@ -305,11 +335,10 @@ function SeccionCarpetasUsuariosGcs({
   return (
     <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
       <h2 className="font-display text-lg font-semibold text-ink-900">
-        Carpetas de usuarios
+        Usuarios con almacenamiento
       </h2>
       <p className="mt-1 text-sm text-ink-500">
-        Carpetas reales de Google Cloud Storage asociadas a usuarios
-        registrados.
+        Accede a los resultados de otros usuarios registrados sin mezclar su contenido con tu espacio personal.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {carpetas.map((item) => (
@@ -317,17 +346,16 @@ function SeccionCarpetasUsuariosGcs({
             key={item.usuarioId}
             type="button"
             onClick={() => onAbrir(item.carpeta)}
-            className="flex items-center gap-3 rounded-lg border border-line-200 px-4 py-3 text-left hover:bg-surface-subtle"
+            className="group flex items-center justify-between gap-3 rounded-xl border border-line-200 bg-surface px-4 py-4 text-left transition hover:border-brand-200 hover:bg-brand-50/40 hover:shadow-sm"
           >
-            <Icon name="folder" />
-            <span className="min-w-0">
-              <span className="block font-semibold text-ink-900">
-                {item.carpeta}
-              </span>
-              <span className="block truncate text-xs text-ink-500">
-                {item.correo}
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700"><Icon name="folder" /></span>
+              <span className="min-w-0">
+                <span className="block font-semibold text-ink-900">{item.carpeta}</span>
+                <span className="mt-0.5 block truncate text-xs text-ink-500">{item.correo}</span>
               </span>
             </span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-700 opacity-80 group-hover:opacity-100">Abrir <Icon name="chev" size="sm" className="rotate-180" /></span>
           </button>
         ))}
       </div>
@@ -340,9 +368,11 @@ function SeccionAdministracion({
 }: {
   descargas: ResumenDescargaEjecucion[];
 }) {
-  const grupos = descargas.reduce<Record<string, ResumenDescargaEjecucion[]>>(
+  const asignadas = descargas.filter((item) => item.creadoPorUsuarioId);
+  const historicas = descargas.filter((item) => !item.creadoPorUsuarioId);
+  const grupos = asignadas.reduce<Record<string, ResumenDescargaEjecucion[]>>(
     (acumulado, descarga) => {
-      const clave = descarga.creadoPorUsuarioId ?? "historico";
+      const clave = descarga.creadoPorUsuarioId as string;
       const grupo = acumulado[clave] ?? [];
       grupo.push(descarga);
       acumulado[clave] = grupo;
@@ -353,56 +383,38 @@ function SeccionAdministracion({
   return (
     <section className="mt-10 rounded-xl border border-line-200 bg-surface p-5 shadow-card">
       <div className="flex items-start gap-3">
-        <div className="rounded-lg bg-surface-subtle p-2 text-brand-700">
-          <Icon name="users" />
-        </div>
+        <div className="rounded-lg bg-brand-50 p-2 text-brand-700"><Icon name="users" /></div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-display text-lg font-semibold text-ink-900">
-              Administración de descargas
-            </h2>
-            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
-              Solo administradores
-            </span>
+            <h2 className="font-display text-lg font-semibold text-ink-900">Actividad de usuarios</h2>
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">Solo administradores</span>
           </div>
-          <p className="mt-1 text-sm text-ink-500">
-            Consulta las carpetas privadas de los usuarios de esta organización
-            sin mezclar su contenido con tu espacio personal.
-          </p>
+          <p className="mt-1 text-sm text-ink-500">Revisa qué reportes ejecutó cada usuario, su estado y si ya existen resultados disponibles.</p>
         </div>
       </div>
-      <div className="mt-4 space-y-4">
+      <div className="mt-5 space-y-4">
         {Object.entries(grupos).map(([propietario, items]) => (
-          <div
-            key={propietario}
-            className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4"
-          >
+          <div key={propietario} className="rounded-lg border border-line-200 bg-surface-subtle/40 p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-ink-800">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-brand-700 shadow-sm">
-                <Icon name="folder" size="sm" />
-              </span>
-              <span>
-                {propietario === "historico"
-                  ? "Histórico sin propietario"
-                  : nombreDesdeCorreo(items[0]?.propietarioCorreo ?? null)}
-              </span>
-              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-500">
-                {items.length} {items.length === 1 ? "reporte" : "reportes"}
-              </span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-brand-700 shadow-sm"><Icon name="user" size="sm" /></span>
+              <span>{nombreDesdeCorreo(items[0]?.propietarioCorreo ?? null)}</span>
+              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-500">{items.length} {items.length === 1 ? "ejecución" : "ejecuciones"}</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((descarga) => (
-                <TarjetaConDescarga key={descarga.id} descarga={descarga} />
-              ))}
+              {items.map((descarga) => <TarjetaConDescarga key={descarga.id} descarga={descarga} />)}
             </div>
           </div>
         ))}
-        {descargas.length === 0 && (
-          <p className="text-sm text-ink-500">
-            No hay ejecuciones para administrar.
-          </p>
-        )}
+        {asignadas.length === 0 && <p className="text-sm text-ink-500">No hay actividad de otros usuarios para mostrar.</p>}
       </div>
+      {historicas.length > 0 && (
+        <details className="mt-5 rounded-lg border border-line-200 bg-surface-subtle/50">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-800">Ejecuciones históricas no asignadas <span className="ml-2 font-normal text-ink-500">{historicas.length}</span></summary>
+          <div className="grid gap-4 border-t border-line-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {historicas.map((descarga) => <TarjetaConDescarga key={descarga.id} descarga={descarga} />)}
+          </div>
+        </details>
+      )}
     </section>
   );
 }
@@ -433,102 +445,76 @@ function TarjetaConDescarga({
 }
 
 function SeccionExploradorGcs({
-  titulo = "Google Cloud Storage",
+  titulo = "Explorador",
+  descripcion,
+  nombreRaiz = "Raíz",
   mostrarBucket = true,
+  mostrarRutaTecnica = false,
   datos,
   cargando,
   error,
   onAbrirCarpeta,
   onSubir,
   onDescargar,
+  onNavegarRuta,
 }: {
   titulo?: string;
+  descripcion?: string;
+  nombreRaiz?: string;
   mostrarBucket?: boolean;
+  mostrarRutaTecnica?: boolean;
   datos: ExploradorGcs | null;
   cargando: boolean;
   error: string | null;
   onAbrirCarpeta: (carpeta: string) => void;
   onSubir: () => void;
   onDescargar: (nombre: string) => Promise<void>;
+  onNavegarRuta?: (ruta: string) => void;
 }) {
   if (!datos && !cargando && !error) return null;
+  const segmentos = datos?.ruta.split("/").filter(Boolean) ?? [];
   return (
-    <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-semibold text-ink-900">{titulo}</h2>
-          {mostrarBucket && datos && (
-            <p className="mt-1 text-xs text-ink-500">
-              Bucket activo: <span className="font-mono">{datos.bucket}</span>
-            </p>
-          )}
+    <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700"><Icon name="folder" /></span>
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold text-ink-900">{titulo}</h2>
+            {descripcion && <p className="mt-1 max-w-3xl text-sm text-ink-500">{descripcion}</p>}
+            {mostrarBucket && datos && <p className="mt-1 text-xs text-ink-400">Google Cloud Storage · <span className="font-mono">{datos.bucket}</span></p>}
+          </div>
         </div>
-        {datos?.ruta && (
-          <button
-            type="button"
-            className="text-sm font-semibold text-brand-700"
-            onClick={onSubir}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Icon name="chev" size="sm" /> Subir
-            </span>
-          </button>
-        )}
+        {datos?.ruta && <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-semibold text-brand-700 hover:bg-brand-50" onClick={onSubir}><Icon name="chev" size="sm" /> Atrás</button>}
       </div>
       {datos && (
-        <p className="mt-3 rounded-md bg-surface-subtle px-3 py-2 font-mono text-xs text-ink-600">
-          /{datos.prefijoBase}
-          {datos.ruta}
-        </p>
+        <div className="mt-4">
+          <nav aria-label="Ruta actual" className="flex flex-wrap items-center gap-1.5 text-sm">
+            <button type="button" onClick={() => onNavegarRuta?.("")} className="font-semibold text-brand-700 hover:underline">{nombreRaiz}</button>
+            {segmentos.map((segmento, indice) => {
+              const ruta = `${segmentos.slice(0, indice + 1).join("/")}/`;
+              return <span key={ruta} className="inline-flex items-center gap-1.5"><span className="text-ink-300">/</span><button type="button" onClick={() => onNavegarRuta?.(ruta)} className={indice === segmentos.length - 1 ? "font-semibold text-ink-800" : "text-brand-700 hover:underline"}>{segmento}</button></span>;
+            })}
+          </nav>
+          {mostrarRutaTecnica && <p className="mt-2 truncate font-mono text-[11px] text-ink-400">/{datos.prefijoBase}{datos.ruta}</p>}
+        </div>
       )}
-      {cargando && (
-        <p className="mt-4 text-sm text-ink-500">Consultando archivos...</p>
-      )}
-      {error && <p className="mt-4 text-sm text-danger-600">{error}</p>}
+      {cargando && <p className="mt-5 text-sm text-ink-500">Consultando archivos...</p>}
+      {error && <p className="mt-5 rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger-600">{error}</p>}
       {datos && !cargando && !error && (
-        <div className="mt-4 space-y-2">
+        <div className="mt-5 grid gap-2">
           {datos.carpetas.map((carpeta) => (
-            <button
-              key={carpeta}
-              type="button"
-              onClick={() => onAbrirCarpeta(carpeta)}
-              className="flex w-full items-center gap-2 rounded-md border border-line-200 px-3 py-2 text-left text-sm font-medium text-ink-800 hover:bg-surface-subtle"
-            >
-              <Icon name="folder" size="sm" />
-              <span className="truncate">{carpeta}</span>
+            <button key={carpeta} type="button" onClick={() => onAbrirCarpeta(carpeta)} className="group flex w-full items-center justify-between gap-3 rounded-lg border border-line-200 bg-surface px-4 py-3 text-left transition hover:border-brand-200 hover:bg-brand-50/40">
+              <span className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700"><Icon name="folder" size="sm" /></span><span className="truncate font-semibold text-ink-800">{carpeta.replace(/\/$/, "")}</span></span>
+              <Icon name="chev" size="sm" className="rotate-180 text-ink-300 transition group-hover:text-brand-600" />
             </button>
           ))}
           {datos.archivos.map((archivo) => (
-            <div
-              key={archivo.nombre}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line-200 px-3 py-2"
-            >
-              <div className="min-w-0">
-                <p className="flex items-center gap-2 truncate text-sm font-medium text-ink-800">
-                  <Icon name="file-text" size="sm" />
-                  <span className="truncate">{archivo.nombre}</span>
-                </p>
-                <p className="text-xs text-ink-500">
-                  {archivo.formato} • {formatearTamano(archivo.tamano)}
-                  {archivo.fecha
-                    ? ` • ${formatearFechaISO(archivo.fecha)}`
-                    : ""}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="text-sm font-semibold text-brand-700 hover:underline"
-                onClick={() => void onDescargar(archivo.nombre)}
-              >
-                Descargar
-              </button>
+            <div key={archivo.nombre} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-200 px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-subtle text-ink-500"><Icon name="file-text" size="sm" /></span><div className="min-w-0"><p className="truncate text-sm font-semibold text-ink-800">{archivo.nombre}</p><p className="mt-0.5 text-xs text-ink-500">{archivo.formato} · {formatearTamano(archivo.tamano)}{archivo.fecha ? ` · ${formatearFechaISO(archivo.fecha)}` : ""}</p></div></div>
+              <button type="button" className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50" onClick={() => void onDescargar(archivo.nombre)}><span className="inline-flex items-center gap-1.5"><Icon name="download" size="sm" /> Descargar</span></button>
             </div>
           ))}
-          {datos.carpetas.length === 0 && datos.archivos.length === 0 && (
-            <p className="text-sm text-ink-500">
-              Esta carpeta no contiene archivos descargables.
-            </p>
-          )}
+          {datos.carpetas.length === 0 && datos.archivos.length === 0 && <div className="rounded-lg border border-dashed border-line-300 p-6 text-center text-sm text-ink-500">Esta carpeta está vacía.</div>}
         </div>
       )}
     </section>

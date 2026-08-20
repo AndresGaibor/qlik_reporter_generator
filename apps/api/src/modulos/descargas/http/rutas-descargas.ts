@@ -40,12 +40,12 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     const sesion = await dependencias.resolverSesion(c);
     const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
     if (!carpetaUsuario) {
-      return responderError(c, "La cuenta no tiene un correo válido", 422, {
+      return responderError(c, "La cuenta no tiene un correo vÃƒÆ’Ã‚Â¡lido", 422, {
         codigo: "CORREO_USUARIO_NO_DISPONIBLE",
       });
     }
     if (!dependencias.resolverConfiguracionGcs) {
-      return responderError(c, "GCS no está configurado", 422, {
+      return responderError(c, "GCS no estÃƒÆ’Ã‚Â¡ configurado", 422, {
         codigo: "GCS_NO_CONFIGURADO",
       });
     }
@@ -95,7 +95,7 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     if (!dependencias.resolverConfiguracionGcs) {
       return responderError(
         c,
-        "GCS no está configurado para exploración",
+        "GCS no estÃƒÆ’Ã‚Â¡ configurado para exploraciÃƒÆ’Ã‚Â³n",
         422,
         { codigo: "GCS_NO_CONFIGURADO" },
       );
@@ -115,11 +115,17 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       const resultado = await almacenamiento.listarDirectorio(
         `${configuracion.prefijo}${subruta}`,
       );
+      const carpetaPropia = carpetaDesdeCorreo(sesion.correo);
+      const carpetas = subruta
+        ? resultado.carpetas
+        : resultado.carpetas.filter(
+            (carpeta) => carpeta.replace(/\/$/, "") !== carpetaPropia,
+          );
       return responderExito(c, {
         bucket: configuracion.bucket,
         prefijoBase: configuracion.prefijo,
         ruta: subruta,
-        carpetas: resultado.carpetas,
+        carpetas,
         archivos: resultado.archivos.map((a) => ({
           nombre: a.nombre,
           formato: a.formato,
@@ -178,7 +184,7 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     if (!dependencias.resolverConfiguracionGcs) {
       return responderError(
         c,
-        "GCS no está configurado para exploración",
+        "GCS no estÃƒÆ’Ã‚Â¡ configurado para exploraciÃƒÆ’Ã‚Â³n",
         422,
         { codigo: "GCS_NO_CONFIGURADO" },
       );
@@ -193,7 +199,7 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
     ) {
       return responderError(
         c,
-        "El archivo solicitado está fuera de la ruta permitida",
+        "El archivo solicitado estÃƒÆ’Ã‚Â¡ fuera de la ruta permitida",
         422,
         { codigo: "RUTA_GCS_NO_PERMITIDA" },
       );
@@ -308,6 +314,7 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       );
       const carpetas = usuarios
         .flatMap((usuario) => {
+          if (usuario.id === sesion.usuarioId) return [];
           const carpeta = carpetaDesdeCorreo(usuario.correo);
           if (!carpeta || !existentes.has(carpeta)) return [];
           return [{ usuarioId: usuario.id, correo: usuario.correo, carpeta }];
@@ -395,7 +402,7 @@ function normalizarRutaArchivo(valor: string): string {
   if (!limpio || limpio.split("/").includes("..")) {
     throw new ErrorAplicacion(
       "RUTA_GCS_NO_PERMITIDA",
-      "La ruta solicitada no es válida",
+      "La ruta solicitada no es vÃƒÆ’Ã‚Â¡lida",
       422,
     );
   }
@@ -416,7 +423,7 @@ function normalizarSubruta(valor: string): string {
   if (limpio.includes("..")) {
     throw new ErrorAplicacion(
       "RUTA_GCS_NO_PERMITIDA",
-      "La ruta solicitada no es válida",
+      "La ruta solicitada no es vÃƒÆ’Ã‚Â¡lida",
       422,
     );
   }

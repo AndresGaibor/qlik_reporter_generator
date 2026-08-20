@@ -8,7 +8,7 @@ import { crearRutasDescargas } from "./rutas-descargas.js";
 function crearApp(rol: "admin" | "usuario") {
   const almacenamiento = {
     listarDirectorio: async () => ({
-      carpetas: ["reportes/"],
+      carpetas: ["byronnasimba/", "reportes/"],
       archivos: [
         {
           nombre: "mini-test-000000000000.csv.gz",
@@ -28,6 +28,7 @@ function crearApp(rol: "admin" | "usuario") {
       tenantId: "tenant-1",
       organizacionId: "org-1",
       usuarioId: "user-1",
+      correo: "byron.nasimba@aliwareint.com",
       roles: [rol],
       esSuperadmin: false,
     }),
@@ -169,7 +170,7 @@ describe("carpetas GCS por usuario registrado", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.datos.map((item: { carpeta: string }) => item.carpeta)).toEqual(
-      ["andresgaibor", "byronnasimba"],
+      ["andresgaibor"],
     );
   });
 });

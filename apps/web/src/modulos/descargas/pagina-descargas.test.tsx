@@ -13,14 +13,15 @@ vi.mock("@/modulos/descargas/api", () => ({
       mensajeError: null,
       creadoEn: "2026-08-15T10:00:00Z",
       finalizadoEn: "2026-08-15T10:01:00Z",
+      archivos: [{ nombre: "reporte.csv", formato: "CSV", tamano: 1024, fecha: null }],
     },
   ]),
-  listarCarpetaUsuarioGcs: vi.fn().mockResolvedValue({
+  listarCarpetaUsuarioGcs: vi.fn().mockImplementation(async (ruta = "") => ({
     bucket: "bkt_dwh",
     prefijoBase: "POCs/TalendDescargados/byronnasimba/",
-    ruta: "",
+    ruta,
     carpetaUsuario: "byronnasimba",
-    carpetas: [],
+    carpetas: ruta ? [] : ["test-bq-sftp/"],
     archivos: [
       {
         nombre: "pruebagcp.csv",
@@ -29,17 +30,12 @@ vi.mock("@/modulos/descargas/api", () => ({
         fecha: "2026-08-18T22:34:00.000Z",
       },
     ],
-  }),
+  })),
   listarCarpetasUsuariosGcs: vi.fn().mockResolvedValue([
     {
       usuarioId: "u-1",
       correo: "andres.gaibor@aliwareint.com",
       carpeta: "andresgaibor",
-    },
-    {
-      usuarioId: "u-2",
-      correo: "byron.nasimba@aliwareint.com",
-      carpeta: "byronnasimba",
     },
   ]),
   firmarArchivoCarpetaUsuarioGcs: vi.fn().mockResolvedValue({
@@ -57,6 +53,18 @@ vi.mock("@/modulos/descargas/api", () => ({
       mensajeError: null,
       creadoEn: "2026-08-16T10:00:00Z",
       finalizadoEn: "2026-08-16T10:01:00Z",
+      archivos: [],
+    },
+    {
+      id: "e-historica-1",
+      creadoPorUsuarioId: null,
+      propietarioCorreo: null,
+      reporteNombre: "Legacy Report",
+      automatizacionIdQlik: "auto-legacy",
+      estado: "detenida",
+      mensajeError: null,
+      creadoEn: "2026-08-10T10:00:00Z",
+      finalizadoEn: "2026-08-10T10:02:00Z",
       archivos: [],
     },
   ]),
@@ -112,6 +120,7 @@ vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
 import { VistaContext } from "@/app/contexto-vista";
 import {
   firmarArchivoCarpetaUsuarioGcs,
+  listarCarpetaUsuarioGcs,
   listarExploradorGcs,
 } from "@/modulos/descargas/api";
 import { PaginaDescargas } from "./pagina-descargas";
@@ -125,6 +134,7 @@ afterEach(() => {
   root = undefined;
   container = undefined;
   vi.clearAllMocks();
+  window.history.replaceState({}, "", "/descargas");
 });
 
 async function montar(
@@ -154,7 +164,7 @@ async function montar(
   return container;
 }
 
-test("renderiza tÃ­tulo Descargas", async () => {
+test("renderiza tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo Descargas", async () => {
   const vista = await montar();
   expect(vista.textContent).toContain("Descargas");
 });
@@ -164,7 +174,7 @@ test("renderiza nombre del reporte", async () => {
   expect(vista.textContent).toContain("Ventas Comercial");
 });
 
-test("renderiza botÃ³n de descarga", async () => {
+test("renderiza botÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de descarga", async () => {
   const vista = await montar();
   expect(vista.textContent).toContain("Descargar archivos");
 });
@@ -174,13 +184,15 @@ test("usuario final ve su carpeta GCS normalizada y sus archivos", async () => {
   expect(vista.textContent).toContain("byronnasimba");
   expect(vista.textContent).toContain("pruebagcp.csv");
   expect(vista.textContent).toContain("Espacio privado");
-  expect(vista.textContent).not.toContain("Google Cloud Storage");
+  expect(vista.textContent).toContain("Actividad reciente");
   expect(listarExploradorGcs).not.toHaveBeenCalled();
 });
 
 test("renderiza el explorador GCS para administradores", async () => {
   const vista = await montar({ modoUsuarioFinal: false, esAdmin: true });
-  expect(vista.textContent).toContain("Google Cloud Storage");
+  expect(vista.textContent).toContain("Almacenamiento de reportes");
+  expect(vista.textContent).toContain("Actividad de usuarios");
+  expect(vista.textContent).toContain("Ejecuciones históricas no asignadas");
   expect(vista.textContent).toContain("bkt_dwh");
   expect(vista.textContent).toContain("mini-test-000000000000.csv.gz");
   expect(vista.textContent).toContain("reportes/");
@@ -190,13 +202,21 @@ test("renderiza el explorador GCS para administradores", async () => {
   expect(vista.textContent).not.toContain("Usuario 44444444");
 });
 
+
+test("recargar conserva la subcarpeta personal indicada en la URL", async () => {
+  window.history.replaceState({}, "", "/descargas?carpeta=test-bq-sftp%2F");
+  await montar();
+  expect(listarCarpetaUsuarioGcs).toHaveBeenCalledWith("test-bq-sftp/");
+  expect(container?.textContent).toContain("test-bq-sftp");
+  expect(container?.textContent).not.toContain("POCs/TalendDescargados/byronnasimba/test-bq-sftp");
+});
 test("descarga un archivo de la carpeta privada usando la URL firmada", async () => {
   const click = vi
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(() => {});
   const vista = await montar();
   const boton = [...vista.querySelectorAll("button")].find(
-    (elemento) => elemento.textContent?.trim() === "Descargar",
+    (elemento) => elemento.textContent?.includes("Descargar"),
   );
   expect(boton).toBeTruthy();
   await act(async () => {
