@@ -95,6 +95,17 @@ export class ClienteGcs implements PuertoAlmacenamientoDescargas {
     return archivos.some((archivo) => !archivo.name.endsWith("/"));
   }
 
+  async eliminarArchivo(nombreObjeto: string): Promise<void> {
+    await this.storage.bucket(this.bucket).file(nombreObjeto).delete();
+  }
+
+  async eliminarPrefijo(prefijo: string): Promise<number> {
+    const [archivos] = await this.storage.bucket(this.bucket).getFiles({ prefix: prefijo });
+    const eliminables = archivos.filter((archivo) => !archivo.name.endsWith("/"));
+    await Promise.all(eliminables.map((archivo) => archivo.delete()));
+    return eliminables.length;
+  }
+
   async firmar(nombreObjeto: string, minutos: number): Promise<string> {
     const archivo = this.storage.bucket(this.bucket).file(nombreObjeto);
 

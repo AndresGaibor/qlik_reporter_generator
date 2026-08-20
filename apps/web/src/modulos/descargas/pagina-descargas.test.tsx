@@ -38,6 +38,8 @@ vi.mock("@/modulos/descargas/api", () => ({
       carpeta: "andresgaibor",
     },
   ]),
+  eliminarArchivoCarpetaUsuarioGcs: vi.fn().mockResolvedValue({ eliminado: "pruebagcp.csv" }),
+  eliminarDirectorioCarpetaUsuarioGcs: vi.fn().mockResolvedValue({ eliminado: "test-bq-sftp/", objetosEliminados: 2 }),
   firmarArchivoCarpetaUsuarioGcs: vi.fn().mockResolvedValue({
     nombre: "pruebagcp.csv",
     url: "https://storage.example.com/user-signed",
@@ -119,6 +121,7 @@ vi.mock("@/compartido/componentes/feedback/notificaciones", () => ({
 
 import { VistaContext } from "@/app/contexto-vista";
 import {
+  eliminarArchivoCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   listarCarpetaUsuarioGcs,
   listarExploradorGcs,
@@ -160,6 +163,7 @@ async function montar(
   });
   await vi.waitFor(() => {
     expect(container?.textContent).toContain("Descargas");
+    expect(container?.textContent).toContain("byronnasimba");
   });
   return container;
 }
@@ -169,39 +173,42 @@ test("renderiza tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã�
   expect(vista.textContent).toContain("Descargas");
 });
 
-test("renderiza nombre del reporte", async () => {
-  const vista = await montar();
-  expect(vista.textContent).toContain("Ventas Comercial");
-});
-
-test("renderiza botÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n de descarga", async () => {
-  const vista = await montar();
-  expect(vista.textContent).toContain("Descargar archivos");
-});
-
-test("usuario final ve su carpeta GCS normalizada y sus archivos", async () => {
+test("usuario final ve almacenamiento sin bloques de actividad ni acciones destructivas", async () => {
   const vista = await montar();
   expect(vista.textContent).toContain("byronnasimba");
   expect(vista.textContent).toContain("pruebagcp.csv");
-  expect(vista.textContent).toContain("Espacio privado");
-  expect(vista.textContent).toContain("Actividad reciente");
+  expect(vista.textContent).not.toContain("Actividad reciente");
+  expect(vista.textContent).not.toContain("Actividad de usuarios");
+  expect(vista.textContent).not.toContain("Ejecuciones históricas no asignadas");
+  expect(vista.textContent).not.toContain("Eliminar");
   expect(listarExploradorGcs).not.toHaveBeenCalled();
 });
 
-test("renderiza el explorador GCS para administradores", async () => {
+test("admin puede solicitar eliminar un archivo de su carpeta con confirmacion", async () => {
   const vista = await montar({ modoUsuarioFinal: false, esAdmin: true });
-  expect(vista.textContent).toContain("Almacenamiento de reportes");
-  expect(vista.textContent).toContain("Actividad de usuarios");
-  expect(vista.textContent).toContain("Ejecuciones históricas no asignadas");
-  expect(vista.textContent).toContain("bkt_dwh");
-  expect(vista.textContent).toContain("mini-test-000000000000.csv.gz");
-  expect(vista.textContent).toContain("reportes/");
-  expect(vista.textContent).toContain("andresgaibor");
-  expect(vista.textContent).toContain("byronnasimba");
-  expect(vista.textContent).not.toContain("byron.nasimba/");
-  expect(vista.textContent).not.toContain("Usuario 44444444");
+  expect(vista.textContent).not.toContain("Actividad reciente");
+  expect(vista.textContent).not.toContain("Actividad de usuarios");
+  const eliminaciones = [...vista.querySelectorAll("button")].filter(
+    (boton) => boton.textContent?.includes("Eliminar"),
+  );
+  const eliminar = eliminaciones.at(-1);
+  expect(eliminar).toBeTruthy();
+  await act(async () => eliminar?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+  expect(vista.textContent).toContain("Eliminar archivo");
+  const confirmar = [...vista.querySelectorAll("button")].find((boton) => boton.textContent?.includes("Eliminar archivo"));
+  expect(confirmar).toBeTruthy();
+  await act(async () => confirmar?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+  await vi.waitFor(() => expect(eliminarArchivoCarpetaUsuarioGcs).toHaveBeenCalledWith("pruebagcp.csv"));
 });
 
+test("admin ve confirmacion reforzada al eliminar una carpeta", async () => {
+  const vista = await montar({ modoUsuarioFinal: false, esAdmin: true });
+  const fila = [...vista.querySelectorAll("div")].find((elemento) => elemento.textContent?.includes("test-bq-sftp") && elemento.querySelectorAll("button").length >= 2);
+  const eliminar = [...(fila?.querySelectorAll("button") ?? [])].find((boton) => boton.textContent?.includes("Eliminar"));
+  expect(eliminar).toBeTruthy();
+  await act(async () => eliminar?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+  expect(vista.textContent).toContain("Eliminar carpeta y todo su contenido");
+});
 
 test("recargar conserva la subcarpeta personal indicada en la URL", async () => {
   window.history.replaceState({}, "", "/descargas?carpeta=test-bq-sftp%2F");

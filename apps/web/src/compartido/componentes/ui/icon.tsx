@@ -33,7 +33,8 @@ export type IconName =
   | "folder"
   | "download"
   | "clock"
-  | "user";
+  | "user"
+  | "trash";
 
 const TAM = {
   sm: "h-[15px] w-[15px]",
@@ -206,6 +207,9 @@ export function IconSprite() {
       <symbol id="i-clock" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 10v7M14 10v7" />
       </symbol>
       <symbol id="i-user" viewBox="0 0 24 24">
         <circle cx="12" cy="8" r="4" />
