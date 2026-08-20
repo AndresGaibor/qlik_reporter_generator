@@ -27,6 +27,7 @@ npm-debug.log*
 
 # Test
 coverage/
+backups/
 
 # Bun
 .bun/

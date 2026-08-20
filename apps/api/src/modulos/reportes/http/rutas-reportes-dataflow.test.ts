@@ -251,4 +251,55 @@ describe("fachada /api/reportes para Dataflows", () => {
     );
     expect(ejecutar).toHaveBeenCalledWith({ flujoIdQlik: "df-1", ...sesion });
   });
+
+  it("marca completada una ejecución activa cuando GCS contiene el marcador final", async () => {
+    const activa = {
+      id: "exec-1",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-1/",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const completada = {
+      ...activa,
+      estado: "completada",
+      finalizadoEn: new Date("2026-08-20T10:05:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([activa])
+      .mockResolvedValueOnce([activa])
+      .mockResolvedValueOnce([activa])
+      .mockResolvedValueOnce([completada]);
+    const marcarEjecucionCompletada = vi.fn(async () => undefined);
+    const estaFinalizada = vi.fn(async () => true);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "finished" },
+        ]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          marcarEjecucionCompletada,
+        } as never,
+        resolverAlmacenamiento: async () => ({ estaFinalizada }) as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(estaFinalizada).toHaveBeenCalledWith(
+      "POCs/TalendDescargados/ventas/exec-1/",
+    );
+    expect(marcarEjecucionCompletada).toHaveBeenCalledWith(
+      "exec-1",
+      expect.any(Date),
+    );
+    expect((await respuesta.json()).datos[0].estado).toBe("completada");
+  });
 });

@@ -11,32 +11,27 @@ const entrada = {
 };
 
 describe("construirConsultasTalendBigQuery", () => {
-  it("genera las cuatro consultas que espera el Job Prueba_BigQuery", () => {
+  it("genera las dos consultas directas que espera el Job actual", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
 
-    expect(consultas.bqSelectData).toContain("CREATE OR REPLACE TABLE");
-    expect(consultas.bqSelectData).toContain(
-      "DIV(export_row_number - 1, 1000000) AS export_part",
-    );
-    expect(consultas.bqSelectData).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqNumberCsv).toContain("SELECT DISTINCT export_part");
+    expect(consultas.bqNumberCsv).toContain("GENERATE_ARRAY");
+    expect(consultas.bqNumberCsv).toContain("[0]");
+    expect(consultas.bqNumberCsv).toContain("Fecha = DATE '2026-06-01'");
     expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv.gz");
-    expect(consultas.bqExportData).toContain("WHERE export_part = __PART__");
+    expect(consultas.bqExportData).toContain(
+      "DIV(export_row_number - 1, 1000000) = __PART__",
+    );
     expect(consultas.bqExportData).toContain("compression = 'GZIP'");
-    expect(consultas.bqDrop).toContain("DROP TABLE IF EXISTS");
-    expect(consultas.bqDrop).toContain("__finalizado__-*.csv.gz");
-    expect(consultas.bqDrop).toContain("SELECT 'ok' AS estado");
+    expect(consultas.bqExportData).toContain("__finalizado__-*.csv.gz");
+    expect(consultas.bqExportData).toContain("SELECT 'ok' AS estado");
+    expect(consultas.bqExportData).not.toContain("CREATE OR REPLACE TABLE");
+    expect(consultas.bqExportData).not.toContain("DROP TABLE");
   });
 
-  it("usa una staging única por ejecución dentro del proyecto y dataset configurados", () => {
+  it("no crea ni consulta tablas temporales", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
-    const staging =
-      "`poc-bigquery-talend.demo_lafavorita.__qlik_reportes_410c97de_5802_4576_aa71_8dc8ee2d4499`";
-
-    expect(consultas.bqSelectData).toContain(staging);
-    expect(consultas.bqNumberCsv).toContain(staging);
-    expect(consultas.bqExportData).toContain(staging);
-    expect(consultas.bqDrop).toContain(staging);
+    expect(consultas.bqNumberCsv).not.toContain("__qlik_reportes_");
+    expect(consultas.bqExportData).not.toContain("__qlik_reportes_");
   });
 
   it("mantiene el máximo Excel en 1.000.000 y rechaza entradas inseguras", () => {

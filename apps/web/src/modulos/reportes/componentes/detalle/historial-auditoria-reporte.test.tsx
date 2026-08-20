@@ -14,6 +14,7 @@ const ejecucion = {
   versionCompilador: 2,
   runIdQlik: "run-1",
   iniciadoEn: "2026-08-18T12:00:00Z",
+  finalizadoEn: "2026-08-18T12:01:30Z",
   creadoEn: "2026-08-18T12:00:00Z",
 } as never;
 
@@ -50,6 +51,7 @@ test("oculta la auditoría técnica y la huella SHA al usuario final sin ocultar
   expect(vista.textContent).not.toContain("aaaaaaaaaaaaaaaa…");
   expect(vista.textContent).not.toContain("Ver auditoría técnica");
   expect(vista.textContent).not.toContain("Script Dataflow utilizado");
+  expect(vista.textContent).toContain("Tiempo transcurrido: 1 min 30 s");
 });
 
 test("muestra los scripts técnicos sobre fondo claro al administrador", () => {

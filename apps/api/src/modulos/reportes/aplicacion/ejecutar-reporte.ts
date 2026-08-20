@@ -19,7 +19,7 @@ import {
 } from "./preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
 import { inyectarContextoTalend } from "./servicio-contexto-talend.js";
-const VERSION_COMPILADOR = 2;
+const VERSION_COMPILADOR = 3;
 
 export interface EntradaEjecutarReporte {
   tenantId: string;

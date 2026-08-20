@@ -166,21 +166,21 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     );
     expect(auditorias[0]?.scriptDataflow).toBe(SCRIPT_V1);
     expect(auditorias[1]?.scriptDataflow).toBe(SCRIPT_V2);
-    expect(valorVariable(workspaces[0] ?? {}, "BqSelectData")).toContain(
+    expect(valorVariable(workspaces[0] ?? {}, "BqNumberCsv")).toContain(
       "monto > 0",
     );
-    expect(valorVariable(workspaces[1] ?? {}, "BqSelectData")).toContain(
+    expect(valorVariable(workspaces[1] ?? {}, "BqNumberCsv")).toContain(
       "monto > 100",
     );
-    expect(valorVariable(workspaces[0] ?? {}, "BqSelectData")).not.toBe(
-      valorVariable(workspaces[1] ?? {}, "BqSelectData"),
+    expect(valorVariable(workspaces[0] ?? {}, "BqNumberCsv")).not.toBe(
+      valorVariable(workspaces[1] ?? {}, "BqNumberCsv"),
     );
     expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
       '{"type":"service_account","project_id":"p"}',
     );
   });
 
-  it("inyecta las cuatro queries Talend derivadas del Dataflow real", async () => {
+  it("inyecta las dos queries directas derivadas del Dataflow real", async () => {
     const real = new URL(
       "../fixtures/dataflow-bigquery-filtro-fecha-real.qlik",
       import.meta.url,
@@ -256,17 +256,15 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     expect(auditoria?.uriBaseGcs).toBe(
       `gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/`,
     );
-    expect(valorVariable(workspace, "BqSelectData")).toContain(
+    expect(valorVariable(workspace, "BqNumberCsv")).toContain(
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
     expect(valorVariable(workspace, "BqExportData")).toContain(
       `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv.gz'`,
     );
-    expect(valorVariable(workspace, "BqNumberCsv")).toContain(
-      "SELECT DISTINCT export_part",
-    );
-    expect(valorVariable(workspace, "BqDrop")).toContain(
-      "DROP TABLE IF EXISTS",
+    expect(valorVariable(workspace, "BqNumberCsv")).toContain("GENERATE_ARRAY");
+    expect(valorVariable(workspace, "BqExportData")).toContain(
+      "__finalizado__-*.csv.gz",
     );
     expect(String(auditoria?.scriptExportacion)).not.toContain(
       "STORE [Filtro 1_DEFAULT]",

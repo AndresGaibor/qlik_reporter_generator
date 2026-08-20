@@ -1,10 +1,8 @@
 import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
 
 const VARIABLES_TALEND = {
-  bq_select_data: { bloque: "BqSelectData", campo: "bqSelectData" },
   bq_number_csv: { bloque: "BqNumberCsv", campo: "bqNumberCsv" },
   bq_export_data: { bloque: "BqExportData", campo: "bqExportData" },
-  bq_drop: { bloque: "BqDrop", campo: "bqDrop" },
 } as const;
 
 export function inyectarContextoTalend(

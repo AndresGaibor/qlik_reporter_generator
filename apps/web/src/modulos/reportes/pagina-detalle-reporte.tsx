@@ -47,6 +47,13 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
     queryFn: () => obtenerEjecucionesReporte(id),
     retry: false,
+    refetchInterval: (consulta) => {
+      const hayActivas = consulta.state.data?.some(
+        (ejecucion) =>
+          ejecucion.estado === "preparando" || ejecucion.estado === "iniciada",
+      );
+      return hayActivas ? 2_000 : false;
+    },
   });
   const ejecutar = useMutation({
     mutationFn: () => ejecutarReporte(id),
@@ -130,6 +137,17 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
           </button>
         ))}
       </div>
+      {(ejecuciones.data ?? []).some(
+        (item) => item.estado === "preparando" || item.estado === "iniciada",
+      ) ? (
+        <output className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-200 border-t-amber-700" />
+          <span>
+            El reporte sigue procesándose. La automatización puede haber
+            terminado mientras el job genera los archivos.
+          </span>
+        </output>
+      ) : null}
       {pestana === "diseno" ? (
         <div className="space-y-6">
           <PestanaScriptFlujo

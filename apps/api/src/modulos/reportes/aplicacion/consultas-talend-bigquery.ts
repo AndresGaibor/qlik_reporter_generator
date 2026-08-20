@@ -11,10 +11,8 @@ export interface EntradaConsultasTalendBigQuery {
 }
 
 export interface ConsultasTalendBigQuery {
-  bqSelectData: string;
   bqNumberCsv: string;
   bqExportData: string;
-  bqDrop: string;
 }
 
 export function construirConsultasTalendBigQuery({
@@ -33,26 +31,21 @@ export function construirConsultasTalendBigQuery({
   validarEjecucionId(ejecucionId);
   validarMaximoFilas(maximoFilasPorArchivo);
   const ventanaOrden = construirVentanaOrden(columnasOrden);
-  const tabla = `\`${projectId}.${dataset}.__qlik_reportes_${ejecucionId.replaceAll("-", "_")}\``;
-
-  const bqSelectData = `CREATE OR REPLACE TABLE ${tabla}
-CLUSTER BY export_part AS
-WITH source AS (
-  ${indentar(sqlFuente, 2)}
-),
-numbered AS (
-  SELECT
-    source.*,
-    ROW_NUMBER() OVER (${ventanaOrden}) AS export_row_number
+  const fuente = `source AS (\n  ${indentar(sqlFuente, 2)}\n)`;
+  const bqNumberCsv = `WITH ${fuente},
+total AS (
+  SELECT COUNT(*) AS total_rows
   FROM source
 )
-SELECT
-  numbered.*,
-  DIV(export_row_number - 1, ${maximoFilasPorArchivo}) AS export_part
-FROM numbered;`;
-
-  const bqNumberCsv = `SELECT DISTINCT export_part
-FROM ${tabla}
+SELECT export_part
+FROM total,
+UNNEST(
+  IF(
+    total_rows = 0,
+    [0],
+    GENERATE_ARRAY(0, DIV(total_rows - 1, ${maximoFilasPorArchivo}))
+  )
+) AS export_part
 ORDER BY export_part;`;
 
   const bqExportData = `EXPORT DATA OPTIONS(
@@ -63,40 +56,45 @@ ORDER BY export_part;`;
   header = true,
   field_delimiter = '|'
 ) AS
-SELECT * EXCEPT (export_row_number, export_part)
-FROM ${tabla}
-WHERE export_part = __PART__
-ORDER BY export_row_number;`;
+WITH ${fuente},
+numbered AS (
+  SELECT
+    source.*,
+    ROW_NUMBER() OVER (${ventanaOrden}) AS export_row_number
+  FROM source
+)
+SELECT * EXCEPT (export_row_number)
+FROM numbered
+WHERE DIV(export_row_number - 1, ${maximoFilasPorArchivo}) = __PART__
+ORDER BY export_row_number;
 
-  const bqDrop = `DROP TABLE IF EXISTS ${tabla};
-
-EXPORT DATA OPTIONS(
+IF __PART__ = (
+  WITH ${fuente}
+  SELECT IF(COUNT(*) = 0, 0, DIV(COUNT(*) - 1, ${maximoFilasPorArchivo}))
+  FROM source
+) THEN
+  EXPORT DATA OPTIONS(
   uri = '${uri}/__finalizado__-*.csv.gz',
   format = 'CSV',
   compression = 'GZIP',
   overwrite = true,
   header = false
 ) AS
-SELECT 'ok' AS estado;`;
+  SELECT 'ok' AS estado;
+END IF;`;
 
-  return { bqSelectData, bqNumberCsv, bqExportData, bqDrop };
+  return { bqNumberCsv, bqExportData };
 }
 
 export function serializarConsultasTalend(
   consultas: ConsultasTalendBigQuery,
 ): string {
   return [
-    "-- bq_select_data",
-    consultas.bqSelectData,
-    "",
     "-- bq_number_csv",
     consultas.bqNumberCsv,
     "",
     "-- bq_export_data",
     consultas.bqExportData,
-    "",
-    "-- bq_drop",
-    consultas.bqDrop,
   ].join("\n");
 }
 

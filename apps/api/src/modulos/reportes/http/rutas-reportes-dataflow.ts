@@ -1,6 +1,8 @@
 import { type Context, Hono } from "hono";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import { responderExito } from "../../../nucleo/http/respuestas.js";
+import type { PuertoAlmacenamientoDescargas } from "../../descargas/aplicacion/puerto-almacenamiento-descargas.js";
+import { parsearUriGcsPermitida } from "../../descargas/aplicacion/puerto-almacenamiento-descargas.js";
 import { ListarFlujos } from "../../flujos/aplicacion/casos-de-uso/listar-flujos.js";
 import type { PuertoConsultaFlujos } from "../../flujos/aplicacion/puertos/puerto-consulta-flujos.js";
 import {
@@ -19,6 +21,7 @@ import {
   PreflightDataflow,
 } from "../aplicacion/preflight-dataflow.js";
 import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
+import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
   estimador: EstimadorBigQueryReporte;
@@ -37,6 +40,9 @@ export interface DependenciasRutasReportesDataflow {
   resolverBigQuery(c: Context): Promise<ResolucionBigQueryReporte>;
   resolverSesion(c: Context): Promise<SesionReportes>;
   repositorioReportes: PuertoRepositorioReportes;
+  resolverAlmacenamiento?: (
+    c: Context,
+  ) => Promise<PuertoAlmacenamientoDescargas>;
   resolverEjecutarReporte?: (
     c: Context,
   ) => Promise<
@@ -130,13 +136,58 @@ export function crearRutasReportesDataflow(
     const flujo = await obtenerFlujo(c);
     if (!flujo) return noEncontradoDataflow(c);
     const sesion = await dependencias.resolverSesion(c);
-    const ejecuciones =
-      await dependencias.repositorioReportes.listarEjecuciones(
+    let ejecuciones = await dependencias.repositorioReportes.listarEjecuciones(
+      flujo.id,
+      sesion.tenantId,
+      sesion.organizacionId,
+      100,
+    );
+
+    const hayActivas = ejecuciones.some(esEjecucionActiva);
+    if (hayActivas) {
+      try {
+        const qlik = await dependencias.resolverQlik(c);
+        await new SincronizarEjecucionesReporte(
+          qlik,
+          dependencias.repositorioReportes,
+        ).ejecutar(flujo.id, sesion.tenantId, sesion.organizacionId);
+      } catch {
+        // El historial sigue disponible aunque Qlik no responda temporalmente.
+      }
+
+      ejecuciones = await dependencias.repositorioReportes.listarEjecuciones(
         flujo.id,
         sesion.tenantId,
         sesion.organizacionId,
         100,
       );
+
+      if (dependencias.resolverAlmacenamiento) {
+        try {
+          const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+          await Promise.all(
+            ejecuciones.filter(esEjecucionActiva).map(async (ejecucion) => {
+              const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
+              if (!prefijo.endsWith(`${ejecucion.id}/`)) return;
+              if (!(await almacenamiento.estaFinalizada(prefijo))) return;
+              await dependencias.repositorioReportes.marcarEjecucionCompletada(
+                ejecucion.id,
+                new Date(),
+              );
+            }),
+          );
+        } catch {
+          // Un fallo transitorio de GCS no debe ocultar el historial.
+        }
+      }
+
+      ejecuciones = await dependencias.repositorioReportes.listarEjecuciones(
+        flujo.id,
+        sesion.tenantId,
+        sesion.organizacionId,
+        100,
+      );
+    }
     return responderExito(c, ejecuciones.map(serializarEjecucion));
   });
 
@@ -161,6 +212,10 @@ export function crearRutasReportesDataflow(
     }
   });
   return rutas;
+}
+
+function esEjecucionActiva(ejecucion: { estado: string }) {
+  return ejecucion.estado === "preparando" || ejecucion.estado === "iniciada";
 }
 
 function noEncontradoDataflow(c: Context) {

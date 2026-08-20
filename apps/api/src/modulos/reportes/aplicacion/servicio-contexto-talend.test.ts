@@ -6,11 +6,9 @@ import {
 } from "./servicio-contexto-talend.js";
 
 const consultas: ConsultasTalendBigQuery = {
-  bqSelectData: "CREATE OR REPLACE TABLE `p.d.staging` AS SELECT 1",
-  bqNumberCsv: "SELECT DISTINCT export_part FROM `p.d.staging`",
+  bqNumberCsv: "SELECT 0 AS export_part",
   bqExportData:
     "EXPORT DATA OPTIONS(uri='gs://b/parte-__PART_PADDED__-*.csv.gz') AS SELECT 1",
-  bqDrop: "DROP TABLE IF EXISTS `p.d.staging`",
 };
 
 function valorVariable(
@@ -43,7 +41,7 @@ async function cargarFixture() {
 }
 
 describe("inyectarContextoTalend", () => {
-  it("actualiza únicamente los cuatro VariableBlocks que espera Prueba_BigQuery", async () => {
+  it("actualiza únicamente los dos VariableBlocks que espera el Job", async () => {
     const workspace = await cargarFixture();
     const nuevo = inyectarContextoTalend(
       workspace,
@@ -51,17 +49,14 @@ describe("inyectarContextoTalend", () => {
       '{"type":"service_account","project_id":"configurado"}',
     );
 
-    expect(valorVariable(nuevo, "BqSelectData")).toBe(consultas.bqSelectData);
     expect(valorVariable(nuevo, "BqNumberCsv")).toBe(consultas.bqNumberCsv);
     expect(valorVariable(nuevo, "BqExportData")).toBe(consultas.bqExportData);
-    expect(valorVariable(nuevo, "BqDrop")).toBe(consultas.bqDrop);
     expect(valorVariable(nuevo, "Credenciales")).toBe(
       '{"type":"service_account","project_id":"configurado"}',
     );
-    expect(valorVariable(workspace, "BqSelectData")).toBe("SELECT_ANTERIOR");
   });
 
-  it("valida que executeTask referencie exactamente los cuatro contextos del Job", async () => {
+  it("valida que executeTask referencie los dos contextos del Job", async () => {
     const workspace = await cargarFixture();
     const blocks = workspace.blocks as Array<Record<string, unknown>>;
     const executeTask = blocks.find(
@@ -72,10 +67,10 @@ describe("inyectarContextoTalend", () => {
       (input) => input.mode === "keyValue",
     ) as Record<string, unknown>;
     const values = contexto.value as Array<Record<string, unknown>>;
-    contexto.value = values.filter((item) => item.key !== "bq_drop");
+    contexto.value = values.filter((item) => item.key !== "bq_export_data");
 
     expect(() => inyectarContextoTalend(workspace, consultas, "{}")).toThrow(
-      "bq_drop",
+      "bq_export_data",
     );
   });
 
@@ -94,15 +89,10 @@ describe("diagnosticarContratoTalend", () => {
   it("enumera todos los VariableBlocks faltantes", async () => {
     const workspace = await cargarFixture();
     const blocks = workspace.blocks as Array<Record<string, unknown>>;
-    workspace.blocks = blocks.filter(
-      (block) => block.name !== "BqSelectData" && block.name !== "BqDrop",
-    );
+    workspace.blocks = blocks.filter((block) => block.name !== "BqExportData");
 
     expect(diagnosticarContratoTalend(workspace)).toEqual(
-      expect.arrayContaining([
-        'Falta el bloque "BqSelectData"',
-        'Falta el bloque "BqDrop"',
-      ]),
+      expect.arrayContaining(['Falta el bloque "BqExportData"']),
     );
   });
 });

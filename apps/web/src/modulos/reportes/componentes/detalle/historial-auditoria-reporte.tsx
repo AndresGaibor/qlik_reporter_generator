@@ -1,4 +1,6 @@
 import type { DetalleEjecucionReporte } from "@qlik/contratos";
+import { useEffect, useState } from "react";
+import { calcularDuracion } from "../../utiles-presentacion-reporte";
 
 export function HistorialAuditoriaReporte({
   ejecuciones,
@@ -7,6 +9,7 @@ export function HistorialAuditoriaReporte({
   ejecuciones: DetalleEjecucionReporte[];
   mostrarDetallesTecnicos: boolean;
 }) {
+  const ahora = useRelojEjecuciones(ejecuciones);
   return (
     <section className="rounded-xl border border-line-200 bg-surface shadow-card">
       <div className="border-b border-line-200 px-5 py-4 sm:px-6">
@@ -40,6 +43,16 @@ export function HistorialAuditoriaReporte({
                   </div>
                   <p className="mt-2 text-sm font-medium text-ink-800">
                     {formatearFecha(ejecucion.iniciadoEn ?? ejecucion.creadoEn)}
+                  </p>
+                  <p className="mt-1 text-sm text-ink-500">
+                    {textoFase(ejecucion.estado)} · Tiempo transcurrido:{" "}
+                    <span className="font-semibold text-ink-700">
+                      {calcularDuracion(
+                        ejecucion.creadoEn,
+                        ejecucion.finalizadoEn ?? undefined,
+                        ahora,
+                      )}
+                    </span>
                   </p>
                 </div>
                 {mostrarDetallesTecnicos && (
@@ -102,6 +115,39 @@ export function HistorialAuditoriaReporte({
       )}
     </section>
   );
+}
+
+function useRelojEjecuciones(ejecuciones: DetalleEjecucionReporte[]) {
+  const [ahora, setAhora] = useState(() => Date.now());
+  const hayActivas = ejecuciones.some(
+    (item) => item.estado === "preparando" || item.estado === "iniciada",
+  );
+
+  useEffect(() => {
+    if (!hayActivas) return;
+    setAhora(Date.now());
+    const intervalo = window.setInterval(() => setAhora(Date.now()), 1_000);
+    return () => window.clearInterval(intervalo);
+  }, [hayActivas]);
+
+  return ahora;
+}
+
+function textoFase(estado: string) {
+  switch (estado) {
+    case "preparando":
+      return "Preparando ejecución";
+    case "iniciada":
+      return "Automatización o job en ejecución";
+    case "completada":
+      return "Archivos generados";
+    case "error":
+      return "Ejecución fallida";
+    case "detenida":
+      return "Ejecución detenida";
+    default:
+      return "Estado desconocido";
+  }
 }
 
 function EstadoAuditoria({ estado }: { estado: string }) {

@@ -373,6 +373,19 @@ export async function crearAplicacion(
         new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
+      resolverAlmacenamiento: async (c) => {
+        const sesion = await resolverSesion(c);
+        const google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
+        const { bucket } = parsearUriGcsPermitida(google.gcsUri);
+        return new ClienteGcs({
+          projectId: google.projectId,
+          credencialesJson: google.credencialesJson,
+          bucket,
+        });
+      },
       dependenciasClonado: {
         resolverSesion,
         obtenerTenant: (tenantId) =>
