@@ -1,12 +1,36 @@
+import type { ExprQlik } from "./expresiones-qlik.js";
 import type { StatefulLoadVNext } from "./inter-record.js";
 import type { DiagnosticoVNext, SourceSpan } from "./modelo.js";
 import type { CampoLoadVNext, OrdenLoadVNext } from "./parser-carga.js";
+
+export interface ComponentesDualVNext {
+  numericField: string;
+  textField: string;
+}
+
+export interface LookupApplyMapVNext {
+  callKey: string;
+  mappingName: string;
+  relationId: string;
+  keyField: string;
+  valueField: string;
+  keyExpression: ExprQlik;
+  defaultExpression?: ExprQlik;
+  alias: string;
+  hitField: string;
+  lookupValueField: string;
+  lookupNumericField: string;
+  lookupTextField: string;
+  valueIsDual: boolean;
+}
 
 interface RelationBase {
   id: string;
   fields: string[];
   schemaKnown: boolean;
   dualFields?: string[];
+  dualComponents?: Record<string, ComponentesDualVNext>;
+  internalFields?: string[];
   span: SourceSpan;
   orderBy?: OrdenLoadVNext[];
 }
@@ -34,6 +58,8 @@ export type RelacionVNext =
       input: string;
       projections: CampoLoadVNext[];
       distinct?: boolean;
+      dualExpressions?: Record<string, string>;
+      mappingLookups?: LookupApplyMapVNext[];
     })
   | (RelationBase & {
       op: "aggregate";
@@ -87,6 +113,10 @@ export interface MappingTableVNext {
   relationId: string;
   keyField: string;
   valueField: string;
+  valueExpression: string;
+  valueIsDual: boolean;
+  keyDual?: ComponentesDualVNext;
+  valueDual?: ComponentesDualVNext;
 }
 
 export interface PlanCompilacionVNext {

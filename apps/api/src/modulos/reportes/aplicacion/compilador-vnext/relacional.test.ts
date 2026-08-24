@@ -20,7 +20,8 @@ describe("relacional vNext", () => {
     const result = await compile("qlik-filter-project.qlik");
     expect(result.sql).toContain("UPPER(`categoria`) AS `Categoria`");
     expect(result.sql).toContain("`monto` > 0");
-    expect(result.sql).toContain(
+    expect(result.sql).toContain("FROM `p.d.ventas`");
+    expect(result.sql).not.toContain(
       "FROM (\n  SELECT id, categoria, monto FROM `p.d.ventas`\n) AS src",
     );
   });

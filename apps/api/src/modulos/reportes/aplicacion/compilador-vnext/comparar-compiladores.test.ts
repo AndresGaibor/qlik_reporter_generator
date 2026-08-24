@@ -34,7 +34,7 @@ describe("compararCompiladores", () => {
     expect(comparison.vnext.status).toBe("rejected");
     expect(comparison).not.toHaveProperty("selectedSql");
     if (comparison.vnext.status === "rejected") {
-      expect(comparison.vnext.code).toBe("FUNCTION_NOT_RUNTIME_IMPLEMENTED");
+      expect(comparison.vnext.code).toBe("APPLYMAP_MAPPING_NOT_FOUND");
     }
   });
 });

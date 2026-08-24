@@ -63,30 +63,26 @@ describe("analizarProgramaQlik fase 1", () => {
 
   it("registra MAPPING LOAD separado de las tablas normales", async () => {
     const script = await Bun.file(corpus("qlik-mapping-applymap.qlik")).text();
-    try {
-      const plan = analizarProgramaQlik(parsearProgramaQlik(script));
-      expect(plan.mappings.Mapa).toMatchObject({
-        keyField: "codigo",
-        valueField: "descripcion",
-      });
-      expect(plan.tables.Mapa).toBeUndefined();
-      expect(plan.mappings.Mapa?.relationId).toBeTruthy();
-    } catch (error) {
-      if (error instanceof ErrorCompilacionVNext) {
-        expect(error.diagnostic.code).toBe("APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING");
-        return;
-      }
-      throw error;
-    }
+    const plan = analizarProgramaQlik(parsearProgramaQlik(script));
+    expect(plan.mappings.Mapa).toMatchObject({
+      keyField: "codigo",
+      valueField: "descripcion",
+      valueIsDual: true,
+    });
+    expect(plan.tables.Mapa).toBeUndefined();
+    expect(plan.mappings.Mapa?.relationId).toBeTruthy();
   });
 
   it("rechaza MAPPING LOAD sin exactamente dos columnas", () => {
     expectCode(
-      () => analizarProgramaQlik(parsearProgramaQlik(`
+      () =>
+        analizarProgramaQlik(
+          parsearProgramaQlik(`
         LIB CONNECT TO [Google BigQuery:Prod];
         [Mapa]: MAPPING LOAD a, b, c;
         SQL SELECT a, b, c FROM \`p.d.map\`;
-      `)),
+      `),
+        ),
       "MAPPING_REQUIRES_TWO_FIELDS",
     );
   });

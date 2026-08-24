@@ -69,11 +69,11 @@ describe("fixtures de funciones Qlik vNext", () => {
     expect(result.sql).toContain("JSON_TYPE(");
   });
 
-  it("parsea MAPPING LOAD y bloquea ApplyMap solo por dual tipado pendiente", async () => {
-    await expectCode(
-      () => compile("qlik-mapping-applymap.qlik"),
-      "APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING",
-    );
+  it("compila MAPPING LOAD + ApplyMap con lookup relacional typed-dual", async () => {
+    const result = await compile("qlik-mapping-applymap.qlik");
+    expect(result.sql).toContain("LEFT JOIN");
+    expect(result.sql).toMatch(/__qlik_map_[A-Za-z0-9_]+_hit/);
+    expect(result.sql).toContain("ELSE 'DESCONOCIDO'");
   });
 
   it("compila SubField escalar con field_no", async () => {

@@ -5,13 +5,28 @@ import {
   evaluarCondicionControl,
   evaluarControlConstante,
 } from "./control-flujo.js";
-import { esExpresionDualQlik } from "./expresiones-qlik.js";
+import {
+  type ExprQlik,
+  contieneApplyMapQlik,
+  esApplyMapDirectoQlik,
+  esExpresionDualQlik,
+  parsearExpresionQlik,
+  serializarExpresionQlik,
+} from "./expresiones-qlik.js";
 import {
   analizarUsoInterRegistro,
   extraerOrdenSql,
   interpretarWhileIterNo,
 } from "./inter-record.js";
-import type { EfectoVNext, PlanCompilacionVNext, RelacionVNext } from "./ir.js";
+import type {
+  ComponentesDualVNext,
+  EfectoVNext,
+  LookupApplyMapVNext,
+  MappingTableVNext,
+  PlanCompilacionVNext,
+  RelacionVNext,
+} from "./ir.js";
+import { nombreCampoDual, nombreCampoHit } from "./mapping-applymap.js";
 import { ErrorCompilacionVNext, type SourceSpan } from "./modelo.js";
 import {
   type EspecificacionLoadVNext,
@@ -35,6 +50,12 @@ interface CargaPendiente {
   prefix: LoadPrefix;
   spec: EspecificacionLoadVNext;
   span: SourceSpan;
+}
+
+interface AnalisisProyecciones {
+  dualFields: string[];
+  dualComponents: Record<string, ComponentesDualVNext>;
+  dualExpressions: Record<string, string>;
 }
 
 type ControlSignal = "script" | "for" | "do" | "sub";
@@ -108,11 +129,14 @@ export function analizarProgramaQlik(
     operation: string,
     span: SourceSpan,
   ) => {
-    if ((relation.dualFields?.length ?? 0) === 0) return;
+    const untyped = (relation.dualFields ?? []).filter(
+      (field) => !relation.dualComponents?.[field],
+    );
+    if (untyped.length === 0) return;
     fail(
       "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
       "TYPE_SEMANTICS",
-      `${operation} reutiliza valores duales (${relation.dualFields?.join(", ")}) antes de preservar su componente numérico`,
+      `${operation} reutiliza valores duales (${untyped.join(", ")}) antes de preservar su componente numérico`,
       span,
     );
   };
@@ -123,12 +147,49 @@ export function analizarProgramaQlik(
     sourceTableName?: string,
   ): string => {
     let current = byId(sourceId);
+    const mappingLookups = resolverLookups(
+      load.spec.fields,
+      mappings,
+      load.span,
+    );
+    if (
+      load.spec.where &&
+      contieneApplyMapQlik(parsearExpresionQlik(load.spec.where))
+    )
+      fail(
+        "APPLYMAP_RELATIONAL_CONTEXT_UNSUPPORTED",
+        "UNSUPPORTED_SEMANTICS",
+        "ApplyMap en WHERE requiere un lowering relacional explícito y no puede aproximarse como escalar",
+        load.span,
+      );
+    if (
+      load.spec.groupBy.some((expression) =>
+        contieneApplyMapQlik(parsearExpresionQlik(expression)),
+      ) ||
+      load.spec.orderBy.some((item) =>
+        contieneApplyMapQlik(parsearExpresionQlik(item.expression)),
+      )
+    )
+      fail(
+        "APPLYMAP_RELATIONAL_CONTEXT_UNSUPPORTED",
+        "UNSUPPORTED_SEMANTICS",
+        "ApplyMap en GROUP BY/ORDER BY requiere un lowering relacional explícito y no puede aproximarse como escalar",
+        load.span,
+      );
     const interRecord = analizarUsoInterRegistro(
       load.spec.fields,
       load.spec.where,
     );
     const hasStatefulSemantics =
       interRecord.operations.length > 0 || load.spec.while !== undefined;
+
+    if (hasStatefulSemantics && mappingLookups.length > 0)
+      fail(
+        "APPLYMAP_STATEFUL_CONTEXT_UNSUPPORTED",
+        "UNSUPPORTED_SEMANTICS",
+        "ApplyMap dentro de una carga inter-record requiere un lowering relacional explícito",
+        load.span,
+      );
 
     if (hasStatefulSemantics) {
       if (!["none", "noconcatenate"].includes(load.prefix.type))
@@ -235,7 +296,9 @@ export function analizarProgramaQlik(
       else outputRelationId = stateful.id;
       return stateful.id;
     }
-    const dualFields = current.dualFields ?? [];
+    const dualFields = (current.dualFields ?? []).filter(
+      (field) => !current.dualComponents?.[field],
+    );
     const preservesDualWithoutReadingIt =
       load.spec.wildcard &&
       !load.spec.where &&
@@ -258,6 +321,8 @@ export function analizarProgramaQlik(
         fields: current.fields,
         schemaKnown: current.schemaKnown,
         dualFields: current.dualFields,
+        dualComponents: current.dualComponents,
+        internalFields: current.internalFields,
         span: load.span,
       });
     }
@@ -269,19 +334,28 @@ export function analizarProgramaQlik(
         condition: load.spec.where,
         fields: current.fields,
         schemaKnown: current.schemaKnown,
+        dualFields: current.dualFields,
+        dualComponents: current.dualComponents,
+        internalFields: current.internalFields,
         orderBy: current.orderBy,
         span: load.span,
       });
     }
 
-    const projectedDualFields = load.spec.fields
-      .filter(
-        (field) =>
-          field.expression !== "*" && esExpresionDualQlik(field.expression),
-      )
-      .map((field) => field.alias);
+    const projectionAnalysis = analizarProyecciones(
+      load.spec.fields,
+      current,
+      load.prefix.type === "mapping",
+    );
 
     if (load.spec.groupBy.length > 0) {
+      if (mappingLookups.length > 0)
+        fail(
+          "APPLYMAP_RELATIONAL_CONTEXT_UNSUPPORTED",
+          "UNSUPPORTED_SEMANTICS",
+          "ApplyMap dentro de una agregación requiere un lowering relacional explícito",
+          load.span,
+        );
       current = add({
         op: "aggregate",
         input: current.id,
@@ -289,7 +363,7 @@ export function analizarProgramaQlik(
         groupBy: load.spec.groupBy,
         fields: load.spec.fields.map((field) => field.alias),
         schemaKnown: true,
-        dualFields: projectedDualFields,
+        dualFields: projectionAnalysis.dualFields,
         span: load.span,
       });
     } else if (!load.spec.wildcard) {
@@ -300,13 +374,22 @@ export function analizarProgramaQlik(
         distinct: load.spec.distinct,
         fields: load.spec.fields.map((field) => field.alias),
         schemaKnown: true,
-        dualFields: projectedDualFields,
+        dualFields: projectionAnalysis.dualFields,
+        dualComponents: projectionAnalysis.dualComponents,
+        internalFields: Object.keys(projectionAnalysis.dualComponents),
+        dualExpressions: projectionAnalysis.dualExpressions,
+        mappingLookups,
         orderBy: current.orderBy,
         span: load.span,
       });
     }
 
-    if ((current.dualFields?.length ?? 0) > 0 && load.spec.orderBy.length > 0)
+    if (
+      (current.dualFields ?? []).some(
+        (field) => !current.dualComponents?.[field],
+      ) &&
+      load.spec.orderBy.length > 0
+    )
       fail(
         "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
         "TYPE_SEMANTICS",
@@ -321,21 +404,21 @@ export function analizarProgramaQlik(
         orderBy: load.spec.orderBy,
         fields: current.fields,
         schemaKnown: current.schemaKnown,
+        dualFields: current.dualFields,
+        dualComponents: current.dualComponents,
+        internalFields: current.internalFields,
         span: load.span,
       });
     }
 
     const prefix = load.prefix;
     if (
-      (current.dualFields?.length ?? 0) > 0 &&
-      [
-        "join",
-        "concatenate",
-        "keep",
-        "crosstable",
-        "generic",
-        "mapping",
-      ].includes(prefix.type)
+      (current.dualFields ?? []).some(
+        (field) => !current.dualComponents?.[field],
+      ) &&
+      ["join", "concatenate", "keep", "crosstable", "generic"].includes(
+        prefix.type,
+      )
     )
       fail(
         "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
@@ -368,10 +451,16 @@ export function analizarProgramaQlik(
           "MAPPING LOAD debe producir exactamente dos campos: clave y valor",
           load.span,
         );
+      const keyDual = current.dualComponents?.[keyField];
+      const valueDual = current.dualComponents?.[valueField];
       mappings[load.label] = {
         relationId: current.id,
         keyField,
         valueField,
+        valueExpression: load.spec.fields[1]?.expression ?? valueField,
+        valueIsDual: Boolean(valueDual),
+        ...(keyDual ? { keyDual } : {}),
+        ...(valueDual ? { valueDual } : {}),
       };
       return current.id;
     }
@@ -1149,6 +1238,160 @@ function expandir(
       );
     throw error;
   }
+}
+
+function resolverLookups(
+  fields: EspecificacionLoadVNext["fields"],
+  mappings: Record<string, MappingTableVNext>,
+  span: SourceSpan,
+): LookupApplyMapVNext[] {
+  const result: LookupApplyMapVNext[] = [];
+  const byCallKey = new Map<string, LookupApplyMapVNext>();
+  for (const field of fields) {
+    if (field.expression === "*") continue;
+    const expression = parsearExpresionQlik(field.expression);
+    for (const call of encontrarApplyMaps(expression)) {
+      if (call.args.length < 2 || call.args.length > 3)
+        fail(
+          "APPLYMAP_ARITY",
+          "TYPE_SEMANTICS",
+          "ApplyMap requiere dos o tres argumentos",
+          span,
+        );
+      const mappingArgument = call.args[0];
+      if (mappingArgument?.kind !== "string")
+        fail(
+          "APPLYMAP_MAPPING_NAME_LITERAL_REQUIRED",
+          "NAME_RESOLUTION",
+          "APPLYMAP_MAPPING_NAME_LITERAL_REQUIRED: ApplyMap requiere el nombre literal de una tabla MAPPING",
+          span,
+        );
+      const mappingName = mappingArgument.value;
+      const mapping = mappings[mappingName];
+      if (!mapping)
+        fail(
+          "APPLYMAP_MAPPING_NOT_FOUND",
+          "NAME_RESOLUTION",
+          `ApplyMap referencia una tabla MAPPING no cargada: ${mappingName}`,
+          span,
+        );
+      const keyExpression = call.args[1];
+      if (!keyExpression)
+        fail(
+          "APPLYMAP_ARITY",
+          "TYPE_SEMANTICS",
+          "ApplyMap requiere una expresión de clave",
+          span,
+        );
+      const callKey = serializarExpresionQlik(call);
+      if (byCallKey.has(callKey)) continue;
+      const lookup: LookupApplyMapVNext = {
+        callKey,
+        mappingName,
+        relationId: mapping.relationId,
+        keyField: mapping.keyField,
+        valueField: mapping.valueField,
+        keyExpression,
+        ...(call.args[2] ? { defaultExpression: call.args[2] } : {}),
+        alias: result.length === 0 ? "map" : `map_${result.length + 1}`,
+        hitField: nombreCampoHit(mappingName, mapping.valueField),
+        lookupValueField: mapping.valueField,
+        lookupNumericField:
+          mapping.valueDual?.numericField ??
+          nombreCampoDual(mapping.valueField, "numeric"),
+        lookupTextField:
+          mapping.valueDual?.textField ??
+          nombreCampoDual(mapping.valueField, "text"),
+        valueIsDual: mapping.valueIsDual,
+      };
+      result.push(lookup);
+      byCallKey.set(callKey, lookup);
+    }
+  }
+  return result;
+}
+
+function encontrarApplyMaps(
+  expression: ExprQlik,
+): Extract<ExprQlik, { kind: "call" }>[] {
+  const result: Extract<ExprQlik, { kind: "call" }>[] = [];
+  const visit = (node: ExprQlik) => {
+    if (node.kind === "call") {
+      if (node.name.toLowerCase() === "applymap") result.push(node);
+      for (const argument of node.args) visit(argument);
+      return;
+    }
+    if (node.kind === "unary") {
+      visit(node.operand);
+      return;
+    }
+    if (node.kind === "binary") {
+      visit(node.left);
+      visit(node.right);
+    }
+  };
+  visit(expression);
+  return result;
+}
+
+function analizarProyecciones(
+  fields: EspecificacionLoadVNext["fields"],
+  source: RelacionVNext,
+  materializeAllDuals: boolean,
+): AnalisisProyecciones {
+  const dualFields: string[] = [];
+  const dualComponents: Record<string, ComponentesDualVNext> = {};
+  const dualExpressions: Record<string, string> = {};
+  const usedInternalNames = new Set<string>();
+  const mappingValueAlias = materializeAllDuals ? fields[1]?.alias : undefined;
+  for (const field of fields) {
+    if (field.expression === "*") continue;
+    const parsed = parsearExpresionQlik(field.expression);
+    const isDual = esExpresionDualQlik(field.expression);
+    const directApplyMap = esApplyMapDirectoQlik(parsed);
+    const sourceDual = referenciaDualSimple(parsed, source.dualComponents);
+    const materialize =
+      field.alias === mappingValueAlias || directApplyMap || sourceDual;
+    if (!materialize) {
+      if (isDual) dualFields.push(field.alias);
+      continue;
+    }
+    const components = crearComponentesDual(field.alias, usedInternalNames);
+    dualFields.push(field.alias);
+    dualComponents[field.alias] = components;
+    dualExpressions[field.alias] = field.expression;
+  }
+  return { dualFields, dualComponents, dualExpressions };
+}
+
+function referenciaDualSimple(
+  expression: ExprQlik,
+  dualComponents: Record<string, ComponentesDualVNext> | undefined,
+): boolean {
+  return (
+    expression.kind === "identifier" &&
+    Boolean(dualComponents?.[expression.name])
+  );
+}
+
+function crearComponentesDual(
+  field: string,
+  used: Set<string>,
+): ComponentesDualVNext {
+  const numericField = nombreInternoDual(
+    nombreCampoDual(field, "numeric"),
+    used,
+  );
+  const textField = nombreInternoDual(nombreCampoDual(field, "text"), used);
+  return { numericField, textField };
+}
+
+function nombreInternoDual(base: string, used: Set<string>): string {
+  let candidate = base;
+  let suffix = 2;
+  while (used.has(candidate)) candidate = `${base}_${suffix++}`;
+  used.add(candidate);
+  return candidate;
 }
 
 function commonFields(

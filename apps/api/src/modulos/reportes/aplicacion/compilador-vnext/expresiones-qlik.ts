@@ -231,7 +231,38 @@ function quoteIdentifier(name: string): string {
   return `\`${name}\``;
 }
 
-export type ContextoExpresion = "value" | "condition";
+function qualifiedIdentifier(
+  name: string,
+  environment: EntornoExpresionQlik,
+): string {
+  const identifier = quoteIdentifier(name);
+  return environment.identifierQualifier
+    ? `${environment.identifierQualifier}.${identifier}`
+    : identifier;
+}
+
+export type ContextoExpresion =
+  | "value"
+  | "numeric"
+  | "numeric_component"
+  | "text"
+  | "condition";
+
+export interface ComponentesDualQlik {
+  numericField: string;
+  textField: string;
+}
+
+export interface BindingApplyMapQlik {
+  callKey: string;
+  alias: string;
+  hitField: string;
+  lookupValueField: string;
+  lookupNumericField: string;
+  lookupTextField: string;
+  defaultExpression?: ExprQlik;
+  keyExpression: ExprQlik;
+}
 
 export interface EntornoExpresionQlik {
   dateFormat?: string;
@@ -245,6 +276,9 @@ export interface EntornoExpresionQlik {
   brokenWeeks?: number;
   referenceDay?: number;
   firstMonthOfYear?: number;
+  identifierQualifier?: string;
+  dualComponents?: Readonly<Record<string, ComponentesDualQlik>>;
+  applyMapBindings?: ReadonlyMap<string, BindingApplyMapQlik>;
 }
 
 const DUAL_FUNCTIONS = new Set([
@@ -254,6 +288,37 @@ const DUAL_FUNCTIONS = new Set([
 
 export function esExpresionDualQlik(expression: string): boolean {
   return contieneFuncionDual(parsearExpresionQlik(expression));
+}
+
+export function contieneApplyMapQlik(expression: ExprQlik): boolean {
+  switch (expression.kind) {
+    case "call":
+      return (
+        expression.name.toLowerCase() === "applymap" ||
+        expression.args.some(contieneApplyMapQlik)
+      );
+    case "unary":
+      return contieneApplyMapQlik(expression.operand);
+    case "binary":
+      return (
+        contieneApplyMapQlik(expression.left) ||
+        contieneApplyMapQlik(expression.right)
+      );
+    case "number":
+    case "string":
+    case "identifier":
+    case "variable":
+    case "wildcard":
+      return false;
+  }
+}
+
+export function esApplyMapDirectoQlik(expression: ExprQlik): boolean {
+  return expression.kind === "call" && expression.name.toLowerCase() === "applymap";
+}
+
+export function serializarExpresionQlik(expression: ExprQlik): string {
+  return JSON.stringify(expression);
 }
 
 function contieneFuncionDual(expression: ExprQlik): boolean {
@@ -284,9 +349,44 @@ export function emitirExpresionBigQuery(
   context: ContextoExpresion = "value",
   environment: EntornoExpresionQlik = {},
 ): string {
-  return context === "condition"
-    ? emitCondition(expression, environment)
-    : emitValue(expression, environment);
+  if (context === "condition") return emitCondition(expression, environment);
+  if (context === "numeric") return emitNumericValue(expression, environment);
+  if (context === "numeric_component")
+    return emitNumericComponent(expression, environment);
+  if (context === "text") return emitTextValue(expression, environment);
+  return emitValue(expression, environment);
+}
+
+function emitNumericComponent(
+  expression: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  if (expression.kind === "identifier") {
+    const dual = environment.dualComponents?.[expression.name];
+    if (dual) return qualifiedIdentifier(dual.numericField, environment);
+    return qlikNumeric(qualifiedIdentifier(expression.name, environment));
+  }
+  if (expression.kind === "call" && expression.name.toLowerCase() === "null")
+    return "NULL";
+  if (expression.kind === "call" && expression.name.toLowerCase() === "applymap")
+    return emitApplyMap(expression, environment, "numeric_component");
+  return emitNumericValue(expression, environment);
+}
+
+function emitTextValue(
+  expression: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  if (expression.kind === "identifier") {
+    const dual = environment.dualComponents?.[expression.name];
+    if (dual) return qualifiedIdentifier(dual.textField, environment);
+  }
+  if (expression.kind === "call" && expression.name.toLowerCase() === "applymap")
+    return emitApplyMap(expression, environment, "text");
+  if (expression.kind === "string") return quoteString(expression.value);
+  if (expression.kind === "call" && expression.name.toLowerCase() === "null")
+    return emitValue(expression, environment);
+  return `CAST(${emitValue(expression, environment)} AS STRING)`;
 }
 
 function emitValue(
@@ -296,7 +396,7 @@ function emitValue(
   switch (expression.kind) {
     case "number": return expression.raw;
     case "string": return quoteString(expression.value);
-    case "identifier": return quoteIdentifier(expression.name);
+    case "identifier": return qualifiedIdentifier(expression.name, environment);
     case "variable":
       fail("VARIABLE_UNRESOLVED", `Variable $(${expression.name}) no resuelta`, expression.name, 0);
     case "wildcard":
@@ -312,6 +412,14 @@ function emitNumericValue(
   environment: EntornoExpresionQlik,
 ): string {
   if (expression.kind === "number") return expression.raw;
+  if (expression.kind === "identifier") {
+    const dual = environment.dualComponents?.[expression.name];
+    if (dual) return qualifiedIdentifier(dual.numericField, environment);
+    const identifier = qualifiedIdentifier(expression.name, environment);
+    return environment.identifierQualifier
+      ? identifier
+      : qlikNumericOrTemporal(identifier);
+  }
   if (expression.kind === "unary" && ["+", "-"].includes(expression.operator)) {
     const operand = emitNumericValue(expression.operand, environment);
     return `${expression.operator}${parenthesize(operand)}`;
@@ -323,6 +431,7 @@ function emitNumericValue(
   }
   if (expression.kind === "call") {
     const name = expression.name.toLowerCase();
+    if (name === "applymap") return emitApplyMap(expression, environment, "numeric");
     if (name === "date" || name === "num") {
       if (expression.args.length < 1)
         fail("FUNCTION_ARITY", `${expression.name} requiere al menos un argumento`, expression.name, 0);
@@ -440,6 +549,47 @@ function qlikInt32(sql: string): string {
   return `CASE WHEN ${numeric} IS NULL THEN NULL WHEN ${unsigned} >= 2147483648 THEN CAST(${unsigned} - 4294967296 AS INT64) ELSE CAST(${unsigned} AS INT64) END`;
 }
 
+function emitApplyMap(
+  expression: Extract<ExprQlik, { kind: "call" }>,
+  environment: EntornoExpresionQlik,
+  context: "value" | "numeric" | "numeric_component" | "text",
+): string {
+  arityRange(expression.name, expression.args, 2, 3);
+  const keyExpression = expression.args[1];
+  if (!keyExpression)
+    fail(
+      "FUNCTION_ARITY",
+      `${expression.name} requiere una expresión de clave`,
+      expression.name,
+      0,
+    );
+  const binding = environment.applyMapBindings?.get(
+    serializarExpresionQlik(expression),
+  );
+  if (!binding)
+    fail(
+      "APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING",
+      "ApplyMap requiere MAPPING y representación dual tipada para preservar hit NULL, default y componente numérico",
+      expression.name,
+      0,
+    );
+
+  const hit = `${binding.alias}.${quoteIdentifier(binding.hitField)}`;
+  const valueField =
+    context === "numeric" || context === "numeric_component"
+      ? binding.lookupNumericField
+      : binding.lookupTextField;
+  const mapped = `${binding.alias}.${quoteIdentifier(valueField)}`;
+  const fallbackExpression = binding.defaultExpression ?? binding.keyExpression;
+  const fallback =
+    context === "numeric_component"
+      ? emitNumericComponent(fallbackExpression, environment)
+      : context === "numeric"
+        ? emitNumericValue(fallbackExpression, environment)
+        : emitTextValue(fallbackExpression, environment);
+  return `CASE WHEN ${hit} THEN ${mapped} ELSE ${fallback} END`;
+}
+
 function emitBitwiseBinary(
   expression: Extract<ExprQlik, { kind: "binary" }>,
   environment: EntornoExpresionQlik,
@@ -482,7 +632,7 @@ function emitCondition(
   }
   if (expression.kind === "unary" && expression.operator === "not")
     return `NOT (${emitCondition(expression.operand, environment)})`;
-  return `COALESCE(${emitNumericValue(expression, environment)} != 0, FALSE)`;
+  return `COALESCE(${emitNumericComponent(expression, environment)} != 0, FALSE)`;
 }
 
 function emitComparisonCondition(
@@ -581,6 +731,11 @@ function emitCall(
       expression.name,
       0,
     );
+  if (
+    name === "applymap" &&
+    environment.applyMapBindings?.has(serializarExpresionQlik(expression))
+  )
+    return emitApplyMap(expression, environment, "value");
   if (name === "applymap")
     fail(
       "APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING",

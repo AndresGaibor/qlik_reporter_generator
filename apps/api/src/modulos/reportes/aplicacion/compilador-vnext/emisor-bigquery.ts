@@ -1,4 +1,5 @@
 import {
+  type BindingApplyMapQlik,
   type ContextoExpresion,
   type EntornoExpresionQlik,
   type ExprQlik,
@@ -6,7 +7,12 @@ import {
   parsearExpresionQlik,
 } from "./expresiones-qlik.js";
 import type { StatefulLoadVNext } from "./inter-record.js";
-import type { PlanCompilacionVNext, RelacionVNext } from "./ir.js";
+import type {
+  LookupApplyMapVNext,
+  PlanCompilacionVNext,
+  RelacionVNext,
+} from "./ir.js";
+import { nombreCampoDual } from "./mapping-applymap.js";
 import { ErrorCompilacionVNext } from "./modelo.js";
 import type { CampoLoadVNext } from "./parser-carga.js";
 
@@ -32,19 +38,26 @@ export function emitirBigQueryVNext(
     );
 
   const cache = new Map<string, string>();
-  const emit = (id: string): string => {
-    const cached = cache.get(id);
+  const emit = (id: string, includeInternal = false): string => {
+    const cacheKey = `${id}:${includeInternal ? "internal" : "visible"}`;
+    const cached = cache.get(cacheKey);
     if (cached) return cached;
     const relation = byId.get(id);
     if (!relation)
       fail("BIGQUERY_RELATION_NOT_FOUND", `No existe la relación ${id}`);
-    const sql = emitirRelacion(relation, byId, emit, environment);
-    cache.set(id, sql);
+    const sql = emitirRelacion(
+      relation,
+      byId,
+      emit,
+      environment,
+      includeInternal,
+    );
+    cache.set(cacheKey, sql);
     return sql;
   };
 
   return {
-    sql: emit(output.id).trim().replace(/;\s*$/, ""),
+    sql: emit(output.id, false).trim().replace(/;\s*$/, ""),
     strategy:
       output.op === "native_sql" ? "source_sql_passthrough" : "single_query",
   };
@@ -53,8 +66,9 @@ export function emitirBigQueryVNext(
 function emitirRelacion(
   relation: RelacionVNext,
   byId: Map<string, RelacionVNext>,
-  emit: (id: string) => string,
+  emit: (id: string, includeInternal?: boolean) => string,
   environment: EntornoExpresionQlik,
+  includeInternal: boolean,
 ): string {
   switch (relation.op) {
     case "inline":
@@ -64,21 +78,32 @@ function emitirRelacion(
     case "native_sql":
       return relation.sql.trim().replace(/;\s*$/, "");
     case "filter":
-      return `SELECT *\nFROM ${wrap(emit(relation.input), "src")}\nWHERE ${qlik(relation.condition, "condition", environment)}`;
+      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nWHERE ${qlik(relation.condition, "condition", environment)}`;
     case "project": {
       const input = byId.get(relation.input);
       const absorbed = input?.op === "filter" ? input : undefined;
       const sourceId = absorbed?.input ?? relation.input;
+      const projectEnvironment = entornoProyeccion(
+        relation,
+        input,
+        environment,
+      );
       const where = absorbed
-        ? `\nWHERE ${qlik(absorbed.condition, "condition", environment)}`
+        ? `\nWHERE ${qlik(absorbed.condition, "condition", projectEnvironment)}`
         : "";
       const from = emitirFuenteParaProyeccion(
         sourceId,
-        relation.projections,
+        relation,
         byId,
         emit,
+        environment,
       );
-      return `SELECT${relation.distinct ? " DISTINCT" : ""}\n  ${emitFields(relation.projections, environment)}\nFROM ${from}${where}`;
+      return `SELECT${relation.distinct ? " DISTINCT" : ""}\n  ${emitFields(
+        relation.projections,
+        projectEnvironment,
+        relation,
+        includeInternal,
+      )}\nFROM ${from}${where}`;
     }
     case "aggregate": {
       const input = byId.get(relation.input);
@@ -92,14 +117,20 @@ function emitirRelacion(
         .join(", ");
       const from = emitirFuenteParaProyeccion(
         sourceId,
-        relation.projections,
+        relation,
         byId,
         emit,
+        environment,
       );
-      return `SELECT\n  ${emitFields(relation.projections, environment)}\nFROM ${from}${where}\nGROUP BY ${group}`;
+      return `SELECT\n  ${emitFields(
+        relation.projections,
+        environment,
+        relation,
+        includeInternal,
+      )}\nFROM ${from}${where}\nGROUP BY ${group}`;
     }
     case "sort":
-      return `SELECT *\nFROM ${wrap(emit(relation.input), "src")}\nORDER BY ${relation.orderBy
+      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nORDER BY ${relation.orderBy
         .map(
           (item) =>
             `${qlik(item.expression, "value", environment)} ${item.direction.toUpperCase()}`,
@@ -113,7 +144,7 @@ function emitirRelacion(
           `FIRST requiere un entero compile-time en esta fase: ${limit}`,
         );
       }
-      return `SELECT *\nFROM ${wrap(emit(relation.input), "src")}\nLIMIT ${limit}`;
+      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nLIMIT ${limit}`;
     }
     case "join":
       return emitirJoin(relation, byId, emit);
@@ -122,7 +153,7 @@ function emitirRelacion(
     case "semi_filter":
       return emitirSemiFilter(relation, emit);
     case "unpivot":
-      return `SELECT *\nFROM ${wrap(emit(relation.input), "src")}\nUNPIVOT${
+      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nUNPIVOT${
         relation.includeNulls ? " INCLUDE NULLS" : ""
       } (${quote(relation.dataField)} FOR ${quote(relation.attributeField)} IN (${relation.valueFields
         .map(quote)
@@ -488,7 +519,7 @@ function emitirAutogenerate(
   relation: Extract<RelacionVNext, { op: "autogenerate" }>,
   environment: EntornoExpresionQlik,
 ): string {
-  const fields = emitFields(relation.projections, environment);
+  const fields = emitFields(relation.projections, environment, {}, false);
   if (relation.countExpression === "0")
     return `SELECT\n  ${fields}\nWHERE FALSE`;
   if (relation.countExpression === "1") return `SELECT\n  ${fields}`;
@@ -510,19 +541,84 @@ function emitirValorInline(raw: string): string {
 
 function emitirFuenteParaProyeccion(
   sourceId: string,
-  projections: CampoLoadVNext[],
+  relation: {
+    projections: CampoLoadVNext[];
+    mappingLookups?: LookupApplyMapVNext[];
+  },
   byId: Map<string, RelacionVNext>,
-  emit: (id: string) => string,
+  emit: (id: string, includeInternal?: boolean) => string,
+  environment: EntornoExpresionQlik,
 ): string {
   const source = byId.get(sourceId);
+  const lookups = relation.mappingLookups ?? [];
   if (
     source?.op === "native_sql" &&
-    projections.every((field) => field.expression !== "*")
+    relation.projections.every((field) => field.expression !== "*") &&
+    lookups.length === 0
   ) {
     const direct = extraerFromNativoSimple(source.sql);
     if (direct) return direct;
   }
-  return wrap(emit(sourceId), "src");
+  const directSource =
+    source?.op === "native_sql"
+      ? extraerFromNativoSimple(source.sql)
+      : undefined;
+  let from = directSource
+    ? `${directSource} AS src`
+    : wrap(emit(sourceId, true), "src");
+  const bindings = new Map(
+    lookups.map((lookup) => [lookup.callKey, toBinding(lookup)]),
+  );
+  for (const lookup of lookups) {
+    if (!byId.has(lookup.relationId))
+      fail(
+        "BIGQUERY_MAPPING_RELATION_MISSING",
+        `No existe la relación del mapping ${lookup.mappingName}`,
+      );
+    const mappingSql = wrap(
+      emit(lookup.relationId, true),
+      `${lookup.alias}_source`,
+      2,
+    );
+    const mapping = `(
+  SELECT
+    ${lookup.alias}_source.${quote(lookup.keyField)} AS ${quote(
+      lookup.keyField,
+    )},
+    ${lookup.alias}_source.${quote(lookup.lookupNumericField)} AS ${quote(
+      lookup.lookupNumericField,
+    )},
+    ${lookup.alias}_source.${quote(lookup.lookupTextField)} AS ${quote(
+      lookup.lookupTextField,
+    )},
+    TRUE AS ${quote(lookup.hitField)}
+  FROM ${mappingSql}
+) AS ${lookup.alias}`;
+    const key = qlik(
+      lookup.keyExpression,
+      "value",
+      entornoFuente(environment, bindings),
+    );
+    from += `\nLEFT JOIN ${mapping}\n  ON ${key} = ${lookup.alias}.${quote(
+      lookup.keyField,
+    )}`;
+  }
+  return from;
+}
+
+function toBinding(lookup: LookupApplyMapVNext): BindingApplyMapQlik {
+  return {
+    callKey: lookup.callKey,
+    alias: lookup.alias,
+    hitField: lookup.hitField,
+    lookupValueField: lookup.lookupValueField,
+    lookupNumericField: lookup.lookupNumericField,
+    lookupTextField: lookup.lookupTextField,
+    ...(lookup.defaultExpression
+      ? { defaultExpression: lookup.defaultExpression }
+      : {}),
+    keyExpression: lookup.keyExpression,
+  };
 }
 
 function extraerFromNativoSimple(sql: string): string | undefined {
@@ -656,8 +752,13 @@ function emitirSemiFilter(
 function emitFields(
   fields: CampoLoadVNext[],
   environment: EntornoExpresionQlik,
+  relation: {
+    dualExpressions?: Record<string, string>;
+    dualComponents?: RelacionVNext["dualComponents"];
+  },
+  includeInternal: boolean,
 ): string {
-  return fields
+  const visible = fields
     .map((field) => {
       if (field.expression === "*") return "*";
       const expression = qlik(field.expression, "value", environment);
@@ -665,6 +766,28 @@ function emitFields(
       return `${expression} AS ${quote(field.alias)}`;
     })
     .join(",\n  ");
+  if (!includeInternal || !relation.dualExpressions) return visible;
+  const internals = Object.entries(relation.dualExpressions).flatMap(
+    ([alias, expression]) => {
+      const components = relation.dualComponents?.[alias] ?? {
+        numericField: nombreCampoDual(alias, "numeric"),
+        textField: nombreCampoDual(alias, "text"),
+      };
+      return [
+        `${qlik(expression, "numeric_component", environment)} AS ${quote(
+          components.numericField,
+        )}`,
+        ...(components.textField === alias
+          ? []
+          : [
+              `${qlik(expression, "text", environment)} AS ${quote(
+                components.textField,
+              )}`,
+            ]),
+      ];
+    },
+  );
+  return [...(visible ? [visible] : []), ...internals].join(",\n  ");
 }
 
 function sameIdentifier(expression: string, alias: string): boolean {
@@ -675,6 +798,36 @@ function sameIdentifier(expression: string, alias: string): boolean {
     .split(".")
     .at(-1);
   return normalized === alias;
+}
+
+function entornoFuente(
+  base: EntornoExpresionQlik,
+  bindings: ReadonlyMap<string, BindingApplyMapQlik> = new Map(),
+): EntornoExpresionQlik {
+  return {
+    ...base,
+    identifierQualifier: "src",
+    applyMapBindings: bindings,
+  };
+}
+
+function entornoProyeccion(
+  relation: Extract<RelacionVNext, { op: "project" }>,
+  input: RelacionVNext | undefined,
+  base: EntornoExpresionQlik,
+): EntornoExpresionQlik {
+  const lookups = relation.mappingLookups ?? [];
+  const bindings = new Map(
+    lookups.map((lookup) => [lookup.callKey, toBinding(lookup)]),
+  );
+  const needsQualifier =
+    lookups.length > 0 || Object.keys(input?.dualComponents ?? {}).length > 0;
+  return {
+    ...base,
+    ...(needsQualifier ? { identifierQualifier: "src" } : {}),
+    ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
+    applyMapBindings: bindings,
+  };
 }
 
 function extraerEntornoExpresion(
@@ -744,12 +897,14 @@ function numberSetting(value: string): number | undefined {
 }
 
 function qlik(
-  expression: string,
+  expression: string | ExprQlik,
   context: ContextoExpresion = "value",
   environment: EntornoExpresionQlik = {},
 ): string {
   return emitirExpresionBigQuery(
-    parsearExpresionQlik(expression),
+    typeof expression === "string"
+      ? parsearExpresionQlik(expression)
+      : expression,
     context,
     environment,
   );
