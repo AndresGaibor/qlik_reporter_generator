@@ -284,6 +284,17 @@ export interface EntornoExpresionQlik {
 const DUAL_FUNCTIONS = new Set([
   "date", "month", "monthstart", "monthend", "quarterstart", "quarterend", "yearstart", "yearend", "daystart", "dayend", "weekday", "makedate", "maketime",
   "addyears", "addmonths", "num", "jsonget", "jsonset", "applymap",
+  "monthname", "quartername", "weekname", "weekstart", "weekend", "yearname",
+  "makeweekdate", "monthsstart", "monthsend", "firstworkdate", "lastworkdate",
+  "setdateyearmonth", "now", "today", "gmt", "utc", "timezone", "localtime", "converttolocaltime",
+]);
+
+const ADVANCED_TEMPORAL_FUNCTIONS = new Set([
+  "age", "daynumberofyear", "daynumberofquarter", "monthname", "quartername",
+  "weekname", "weekstart", "weekend", "yearname", "makeweekdate", "monthsstart", "monthsend",
+  "inday", "inmonths", "inyeartodate", "networkdays", "firstworkdate", "lastworkdate",
+  "setdateyearmonth", "now", "today", "gmt", "utc", "timezone", "localtime",
+  "converttolocaltime",
 ]);
 
 export function esExpresionDualQlik(expression: string): boolean {
@@ -432,6 +443,8 @@ function emitNumericValue(
   if (expression.kind === "call") {
     const name = expression.name.toLowerCase();
     if (name === "applymap") return emitApplyMap(expression, environment, "numeric");
+    if (ADVANCED_TEMPORAL_FUNCTIONS.has(name))
+      return emitAdvancedTemporalNumeric(expression, environment);
     if (name === "date" || name === "num") {
       if (expression.args.length < 1)
         fail("FUNCTION_ARITY", `${expression.name} requiere al menos un argumento`, expression.name, 0);
@@ -764,6 +777,8 @@ function emitCall(
       expression.name,
       0,
     );
+  if (ADVANCED_TEMPORAL_FUNCTIONS.has(name))
+    return emitAdvancedTemporal(expression, environment);
   if (["mode", "firstsortedvalue"].includes(name))
     fail(
       "AGGREGATION_REQUIRES_RELATIONAL_LOWERING",
@@ -2110,6 +2125,733 @@ function emitPeriodBoundaryTimestamp(
 
   if (kind.endsWith("start")) return `TIMESTAMP(${start})`;
   return `TIMESTAMP_SUB(TIMESTAMP(DATE_ADD(${start}, ${nextInterval})), INTERVAL 1 MILLISECOND)`;
+}
+
+function emitAdvancedTemporal(
+  expression: Extract<ExprQlik, { kind: "call" }>,
+  environment: EntornoExpresionQlik,
+): string {
+  const name = expression.name.toLowerCase();
+  const args = expression.args;
+  if (name === "age") return emitAge(expression.name, args, environment);
+  if (name === "daynumberofyear" || name === "daynumberofquarter")
+    return emitDayNumber(name, expression.name, args, environment);
+  if (name === "monthname") return emitMonthName(expression.name, args, environment);
+  if (name === "quartername") return emitQuarterName(expression.name, args, environment);
+  if (name === "weekname") return emitWeekName(expression.name, args, environment);
+  if (name === "yearname") return emitYearName(expression.name, args, environment);
+  if (name === "weekstart" || name === "weekend")
+    return emitWeekBoundary(name, expression.name, args, environment);
+  if (name === "makeweekdate") return emitMakeWeekDate(expression.name, args, environment);
+  if (name === "monthsstart" || name === "monthsend")
+    return emitMonthsBoundary(name, expression.name, args, environment);
+  if (name === "inday") return emitInDay(expression.name, args, environment);
+  if (name === "inmonths") return emitInMonths(expression.name, args, environment);
+  if (name === "inyeartodate") return emitInYearToDate(expression.name, args, environment);
+  if (name === "networkdays") return emitNetworkDays(expression.name, args, environment);
+  if (name === "firstworkdate" || name === "lastworkdate")
+    return emitWorkDate(name, expression.name, args, environment);
+  if (name === "setdateyearmonth")
+    return emitSetDateYearMonth(expression.name, args, environment);
+  if (name === "now" || name === "gmt" || name === "utc")
+    return emitClockTimestamp(name, expression.name, args, environment);
+  if (name === "today") return emitToday(expression.name, args, environment);
+  if (name === "timezone") {
+    arity(expression.name, args, 0);
+    return quoteString("UTC");
+  }
+  if (name === "localtime" || name === "converttolocaltime")
+    return emitUnsupportedTemporalRuntimeContext(expression.name, args, name);
+  fail(
+    "FUNCTION_IMPLEMENTATION_MISSING",
+    `${expression.name} figura como temporal avanzada pero no tiene lowering`,
+    expression.name,
+    0,
+  );
+}
+
+function emitAdvancedTemporalNumeric(
+  expression: Extract<ExprQlik, { kind: "call" }>,
+  environment: EntornoExpresionQlik,
+): string {
+  const name = expression.name.toLowerCase();
+  const args = expression.args;
+  if (name === "age") return emitAge(expression.name, args, environment);
+  if (name === "daynumberofyear" || name === "daynumberofquarter")
+    return emitDayNumber(name, expression.name, args, environment);
+  if (name === "inday") return emitInDay(expression.name, args, environment);
+  if (name === "inmonths") return emitInMonths(expression.name, args, environment);
+  if (name === "inyeartodate") return emitInYearToDate(expression.name, args, environment);
+  if (name === "networkdays") return emitNetworkDays(expression.name, args, environment);
+  if (name === "timezone") {
+    arity(expression.name, args, 0);
+    return "0";
+  }
+  if (["monthname", "quartername", "weekname", "yearname"].includes(name))
+    return qlikSerialFromTimestamp(
+      `TIMESTAMP(${name === "monthname"
+        ? emitMonthNameStart(expression.name, args, environment)
+        : name === "quartername"
+          ? emitQuarterNameStart(expression.name, args, environment)
+          : name === "weekname"
+            ? emitWeekNameStart(expression.name, args, environment)
+            : emitYearNameStart(expression.name, args, environment)})`,
+    );
+  if (name === "weekstart")
+    return qlikSerialFromTimestamp(
+      `TIMESTAMP(${emitWeekStart(expression.name, args, environment)})`,
+    );
+  if (name === "weekend")
+    return qlikSerialFromTimestamp(
+      emitWeekEndTimestamp(expression.name, args, environment),
+    );
+  if (name === "makeweekdate")
+    return qlikSerialFromTimestamp(
+      `TIMESTAMP(${emitMakeWeekDateRaw(expression.name, args, environment)})`,
+    );
+  if (name === "monthsstart" || name === "monthsend")
+    return qlikSerialFromTimestamp(
+      name === "monthsstart"
+        ? `TIMESTAMP(${emitMonthsStart(expression.name, args, environment)})`
+        : emitMonthsEndTimestamp(expression.name, args, environment),
+    );
+  if (name === "firstworkdate" || name === "lastworkdate")
+    return qlikSerialFromTimestamp(
+      `TIMESTAMP(${emitWorkDateRaw(name, expression.name, args, environment)})`,
+    );
+  if (name === "setdateyearmonth")
+    return qlikSerialFromTimestamp(
+      emitSetDateYearMonthRaw(expression.name, args, environment),
+    );
+  if (name === "now" || name === "gmt" || name === "utc") {
+    arityRange(expression.name, args, 0, 1);
+    if (args[0]) requireCurrentClockMode(args[0], expression.name);
+    return qlikSerialFromTimestamp("CURRENT_TIMESTAMP()");
+  }
+  if (name === "today") {
+    arityRange(expression.name, args, 0, 1);
+    if (args[0]) requireCurrentClockMode(args[0], expression.name);
+    return qlikSerialFromTimestamp("TIMESTAMP(CURRENT_DATE('UTC'))");
+  }
+  if (name === "localtime" || name === "converttolocaltime")
+    return emitUnsupportedTemporalRuntimeContext(expression.name, args, name);
+  fail(
+    "FUNCTION_IMPLEMENTATION_MISSING",
+    `${expression.name} figura como temporal avanzada pero no tiene componente numérico`,
+    expression.name,
+    0,
+  );
+}
+
+function emitAge(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arity(originalName, args, 2);
+  const timestamp = qlikDateFromAny(emitValue(args[0]!, environment));
+  const birth = qlikDateFromAny(emitValue(args[1]!, environment));
+  const years = `DATE_DIFF(${timestamp}, ${birth}, YEAR)`;
+  const anniversary = `DATE_ADD(${birth}, INTERVAL ${years} YEAR)`;
+  return `CASE WHEN ${timestamp} IS NULL OR ${birth} IS NULL THEN NULL ELSE ${years} - IF(${anniversary} > ${timestamp}, 1, 0) END`;
+}
+
+function emitDayNumber(
+  name: "daynumberofyear" | "daynumberofquarter",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 2);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const firstMonth = firstFiscalMonth(args[1], environment, originalName);
+  const start = name === "daynumberofyear"
+    ? emitFiscalYearStart(date, firstMonth)
+    : emitFiscalQuarterStart(date, firstMonth);
+  return `DATE_DIFF(${date}, ${start}, DAY) + 1`;
+}
+
+function emitMonthName(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  requireMonthNames(originalName, environment);
+  const start = emitMonthNameStart(originalName, args, environment);
+  return `CONCAT(${emitMonthNameCase(start, environment)}, ' ', FORMAT_DATE('%Y', ${start}))`;
+}
+
+function emitMonthNameStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 2);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const period = args[1]
+    ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
+    : "0";
+  return `DATE_ADD(DATE_TRUNC(${date}, MONTH), INTERVAL ${period} MONTH)`;
+}
+
+function emitQuarterName(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  requireMonthNames(originalName, environment);
+  const start = emitQuarterNameStart(originalName, args, environment);
+  const end = `DATE_SUB(DATE_ADD(${start}, INTERVAL 3 MONTH), INTERVAL 1 DAY)`;
+  return `CONCAT(${emitMonthNameCase(start, environment)}, '-', ${emitMonthNameCase(end, environment)}, ' ', FORMAT_DATE('%Y', ${start}))`;
+}
+
+function emitQuarterNameStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 3);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const period = args[1]
+    ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
+    : "0";
+  const firstMonth = firstFiscalMonth(args[2], environment, originalName);
+  return emitFiscalQuarterStart(date, firstMonth, period);
+}
+
+function emitWeekName(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const start = emitWeekNameStart(originalName, args, environment);
+  return `FORMAT('%04d/%02d', EXTRACT(ISOYEAR FROM ${start}), EXTRACT(ISOWEEK FROM ${start}))`;
+}
+
+function emitWeekNameStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 5);
+  requireIsoWeekCalendar(originalName, args, environment, 2);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const period = args[1]
+    ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
+    : "0";
+  const monday = `DATE_SUB(${date}, INTERVAL MOD(EXTRACT(DAYOFWEEK FROM ${date}) + 5, 7) DAY)`;
+  return `DATE_ADD(${monday}, INTERVAL ${period} WEEK)`;
+}
+
+function emitYearName(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const start = emitYearNameStart(originalName, args, environment);
+  const firstMonth = firstFiscalMonth(args[2], environment, originalName);
+  const nextYear = `DATE_SUB(DATE_ADD(${start}, INTERVAL 1 YEAR), INTERVAL 1 DAY)`;
+  const year = `FORMAT_DATE('%Y', ${start})`;
+  const nextYearLabel = `FORMAT_DATE('%Y', ${nextYear})`;
+  return `CASE WHEN ${firstMonth} = 1 THEN ${year} ELSE CONCAT(${year}, '-', ${nextYearLabel}) END`;
+}
+
+function emitYearNameStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 3);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const period = args[1]
+    ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
+    : "0";
+  const firstMonth = firstFiscalMonth(args[2], environment, originalName);
+  const start = emitFiscalYearStart(date, firstMonth);
+  return `DATE_ADD(${start}, INTERVAL ${period} YEAR)`;
+}
+
+function emitWeekBoundary(
+  name: "weekstart" | "weekend",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  if (name === "weekstart") {
+    const start = emitWeekStart(originalName, args, environment);
+    return formatDualDate(start, environment, originalName);
+  }
+  const end = emitWeekEndTimestamp(originalName, args, environment);
+  return formatDualDate(`DATE(${end})`, environment, originalName);
+}
+
+function emitWeekStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 3);
+  requireIsoWeekStart(originalName, args[2], environment);
+  const date = qlikDateFromAny(emitValue(args[0]!, environment));
+  const period = args[1]
+    ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
+    : "0";
+  const monday = `DATE_SUB(${date}, INTERVAL MOD(EXTRACT(DAYOFWEEK FROM ${date}) + 5, 7) DAY)`;
+  return `DATE_ADD(${monday}, INTERVAL ${period} WEEK)`;
+}
+
+function emitWeekEndTimestamp(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const start = emitWeekStart(originalName, args, environment);
+  return `TIMESTAMP_SUB(TIMESTAMP(DATE_ADD(${start}, INTERVAL 1 WEEK)), INTERVAL 1 MILLISECOND)`;
+}
+
+function emitMakeWeekDate(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const date = emitMakeWeekDateRaw(originalName, args, environment);
+  return formatDualDate(date, environment, originalName);
+}
+
+function emitMakeWeekDateRaw(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 1, 6);
+  requireIsoWeekCalendar(originalName, args, environment);
+  const year = `CAST(TRUNC(${emitNumericValue(args[0]!, environment)}) AS INT64)`;
+  const week = args[1] ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)` : "1";
+  const day = args[2] ? `CAST(TRUNC(${emitNumericValue(args[2], environment)}) AS INT64)` : "0";
+  const firstWeek = `DATE_TRUNC(SAFE.PARSE_DATE('%Y-%m-%d', FORMAT('%04d-01-04', ${year})), ISOWEEK)`;
+  const offset = `(${week} - 1) * 7 + ${day}`;
+  return `DATE_ADD(${firstWeek}, INTERVAL CAST(${offset} AS INT64) DAY)`;
+}
+
+function emitMonthsBoundary(
+  name: "monthsstart" | "monthsend",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const start = emitMonthsStart(originalName, args, environment);
+  if (name === "monthsstart") return formatDualDateWithQlikSerial(start, environment, originalName);
+  const end = emitMonthsEndTimestamp(originalName, args, environment);
+  return formatDualDate(`DATE(${end})`, environment, originalName);
+}
+
+function emitMonthsStart(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 2, 4);
+  const date = qlikDateFromAny(emitValue(args[1]!, environment));
+  const months = `CAST(TRUNC(${emitNumericValue(args[0]!, environment)}) AS INT64)`;
+  const period = args[2]
+    ? `CAST(TRUNC(${emitNumericValue(args[2], environment)}) AS INT64)`
+    : "0";
+  const firstMonth = firstFiscalMonth(args[3], environment, originalName);
+  const start = emitMonthsSegmentStart(date, months, period, firstMonth);
+  return `CASE WHEN ${months} IN (1, 2, 3, 4, 6) THEN ${start} ELSE NULL END`;
+}
+
+function emitMonthsEndTimestamp(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 2, 4);
+  const start = emitMonthsStart(originalName, args, environment);
+  const months = `CAST(TRUNC(${emitNumericValue(args[0]!, environment)}) AS INT64)`;
+  return `TIMESTAMP_SUB(TIMESTAMP(DATE_ADD(${start}, INTERVAL ${months} MONTH)), INTERVAL 1 MILLISECOND)`;
+}
+
+function emitInDay(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 3, 4);
+  const timestamp = qlikTimestampFromAny(emitValue(args[0]!, environment));
+  const base = qlikTimestampFromAny(emitValue(args[1]!, environment));
+  const shift = `CAST(TRUNC(${emitNumericValue(args[2]!, environment)}) AS INT64)`;
+  const dayStart = args[3] ? emitNumericValue(args[3], environment) : "0";
+  const offset = `CAST(ROUND((${dayStart}) * 86400000000) AS INT64)`;
+  const baseShifted = `TIMESTAMP_SUB(${base}, INTERVAL ${offset} MICROSECOND)`;
+  const start = `TIMESTAMP_ADD(TIMESTAMP_TRUNC(${baseShifted}, DAY, 'UTC'), INTERVAL ${offset} MICROSECOND)`;
+  const shifted = `TIMESTAMP_ADD(${start}, INTERVAL ${shift} DAY)`;
+  const end = `TIMESTAMP_ADD(${shifted}, INTERVAL 1 DAY)`;
+  return `CASE WHEN ${timestamp} IS NULL OR ${base} IS NULL THEN NULL WHEN ${timestamp} >= ${shifted} AND ${timestamp} < ${end} THEN -1 ELSE 0 END`;
+}
+
+function emitInMonths(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 4, 5);
+  const months = `CAST(TRUNC(${emitNumericValue(args[0]!, environment)}) AS INT64)`;
+  const timestamp = qlikTimestampFromAny(emitValue(args[1]!, environment));
+  const base = qlikDateFromAny(emitValue(args[2]!, environment));
+  const period = `CAST(TRUNC(${emitNumericValue(args[3]!, environment)}) AS INT64)`;
+  const firstMonth = firstFiscalMonth(args[4], environment, originalName);
+  const start = emitMonthsSegmentStart(base, months, period, firstMonth);
+  const end = `DATE_ADD(${start}, INTERVAL ${months} MONTH)`;
+  return `CASE WHEN ${timestamp} IS NULL OR ${base} IS NULL OR ${months} NOT IN (1, 2, 3, 4, 6) THEN NULL WHEN ${timestamp} >= TIMESTAMP(${start}) AND ${timestamp} < TIMESTAMP(${end}) THEN -1 ELSE 0 END`;
+}
+
+function emitInYearToDate(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 3, 4);
+  const timestamp = qlikTimestampFromAny(emitValue(args[0]!, environment));
+  const base = qlikTimestampFromAny(emitValue(args[1]!, environment));
+  const period = `CAST(TRUNC(${emitNumericValue(args[2]!, environment)}) AS INT64)`;
+  const firstMonth = firstFiscalMonth(args[3], environment, originalName);
+  const baseDate = `DATE(${base})`;
+  const startDate = emitFiscalYearStart(baseDate, firstMonth);
+  const start = `TIMESTAMP(DATE_ADD(${startDate}, INTERVAL ${period} YEAR))`;
+  return `CASE WHEN ${timestamp} IS NULL OR ${base} IS NULL THEN NULL WHEN ${timestamp} >= ${start} AND ${timestamp} <= ${base} THEN -1 ELSE 0 END`;
+}
+
+function emitNetworkDays(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 2, 10);
+  const start = qlikDateFromAny(emitValue(args[0]!, environment));
+  const end = qlikDateFromAny(emitValue(args[1]!, environment));
+  const holidays = emitHolidayDates(args.slice(2), originalName, environment);
+  const low = `LEAST(${start}, ${end})`;
+  const high = `GREATEST(${start}, ${end})`;
+  const holidayPredicate = holidays.length === 0
+    ? "TRUE"
+    : `NOT EXISTS (SELECT 1 FROM UNNEST([${holidays.join(", ")}]) AS holiday WHERE holiday = day)`;
+  const count = `(SELECT COUNTIF(EXTRACT(DAYOFWEEK FROM day) BETWEEN 2 AND 6 AND ${holidayPredicate}) FROM UNNEST(GENERATE_DATE_ARRAY(${low}, ${high})) AS day)`;
+  return `CASE WHEN ${start} IS NULL OR ${end} IS NULL THEN NULL ELSE IF(${end} >= ${start}, 1, -1) * ${count} END`;
+}
+
+function emitWorkDate(
+  name: "firstworkdate" | "lastworkdate",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const date = emitWorkDateRaw(name, originalName, args, environment);
+  return formatDualDate(date, environment, originalName);
+}
+
+function emitWorkDateRaw(
+  name: "firstworkdate" | "lastworkdate",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 2, 10);
+  const reference = qlikDateFromAny(emitValue(args[0]!, environment));
+  const workdays = `CAST(TRUNC(${emitNumericValue(args[1]!, environment)}) AS INT64)`;
+  const holidays = emitHolidayDates(args.slice(2), originalName, environment);
+  const range = name === "firstworkdate"
+    ? `GENERATE_DATE_ARRAY(DATE_SUB(${reference}, INTERVAL CAST((${workdays} * 7 + 7) AS INT64) DAY), ${reference})`
+    : `GENERATE_DATE_ARRAY(${reference}, DATE_ADD(${reference}, INTERVAL CAST((${workdays} * 7 + 7) AS INT64) DAY))`;
+  const order = name === "firstworkdate" ? "DESC" : "ASC";
+  const holidayPredicate = holidays.length === 0
+    ? "TRUE"
+    : `NOT EXISTS (SELECT 1 FROM UNNEST([${holidays.join(", ")}]) AS holiday WHERE holiday = candidate)`;
+  return `(SELECT ARRAY_AGG(candidate ORDER BY candidate ${order})[SAFE_OFFSET(${workdays} - 1)] FROM UNNEST(${range}) AS candidate WHERE EXTRACT(DAYOFWEEK FROM candidate) BETWEEN 2 AND 6 AND ${holidayPredicate})`;
+}
+
+function emitSetDateYearMonth(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const timestamp = emitSetDateYearMonthRaw(originalName, args, environment);
+  if (environment.timestampFormat)
+    return formatQlikTimestamp(timestamp, environment.timestampFormat, originalName);
+  return formatDualDate(`DATE(${timestamp})`, environment, originalName);
+}
+
+function emitSetDateYearMonthRaw(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arity(originalName, args, 3);
+  const timestamp = qlikTimestampFromAny(emitValue(args[0]!, environment));
+  const year = `CAST(TRUNC(${emitNumericValue(args[1]!, environment)}) AS INT64)`;
+  const month = `CAST(TRUNC(${emitNumericValue(args[2]!, environment)}) AS INT64)`;
+  const day = `EXTRACT(DAY FROM ${timestamp})`;
+  const date = `SAFE.PARSE_DATE('%Y-%m-%d', FORMAT('%04d-%02d-%02d', ${year}, ${month}, ${day}))`;
+  return `TIMESTAMP(DATETIME(${date}, TIME(${timestamp})), 'UTC')`;
+}
+
+function emitClockTimestamp(
+  name: "now" | "gmt" | "utc",
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  if (name === "now") arityRange(originalName, args, 0, 1);
+  else arity(originalName, args, 0);
+  if (args[0]) requireCurrentClockMode(args[0], originalName);
+  const timestamp = "CURRENT_TIMESTAMP()";
+  return formatQlikTimestamp(
+    timestamp,
+    environment.timestampFormat ?? fail(
+      "TIMESTAMP_FORMAT_ENV_REQUIRED",
+      `${originalName} requiere TimestampFormat para conservar el texto dual`,
+      originalName,
+      0,
+    ),
+    originalName,
+  );
+}
+
+function emitToday(
+  originalName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  arityRange(originalName, args, 0, 1);
+  if (args[0]) requireCurrentClockMode(args[0], originalName);
+  return formatDualDate(
+    "CURRENT_DATE('UTC')",
+    environment,
+    originalName,
+  );
+}
+
+function emitUnsupportedTemporalRuntimeContext(
+  originalName: string,
+  args: ExprQlik[],
+  name: string,
+): never {
+  if (name === "localtime") arityRange(originalName, args, 0, 2);
+  else arityRange(originalName, args, 1, 3);
+  fail(
+    "TEMPORAL_RUNTIME_CONTEXT_REQUIRED",
+    `${originalName} requiere el contexto de zona horaria de Qlik; BigQuery solo puede representarlo con una política/IANA explícita del runtime`,
+    originalName,
+    0,
+  );
+}
+
+function requireMonthNames(
+  originalName: string,
+  environment: EntornoExpresionQlik,
+): readonly string[] {
+  if (!environment.monthNames || environment.monthNames.length !== 12)
+    fail(
+      "MONTH_NAMES_ENV_REQUIRED",
+      `${originalName} requiere MonthNames con 12 valores para conservar el texto dual`,
+      originalName,
+      0,
+    );
+  return environment.monthNames;
+}
+
+function formatDualDateWithQlikSerial(
+  date: string,
+  environment: EntornoExpresionQlik,
+  functionName: string,
+): string {
+  const serial = `DATE_DIFF(${date}, DATE '1899-12-30', DAY)`;
+  return `CASE WHEN ${serial} IS NULL THEN NULL ELSE ${formatDualDate(date, environment, functionName)} END`;
+}
+
+function emitMonthNameCase(
+  date: string,
+  environment: EntornoExpresionQlik,
+): string {
+  const months = requireMonthNames("MonthName", environment);
+  const cases = months
+    .map((value, index) => `WHEN ${index + 1} THEN ${quoteString(value)}`)
+    .join(" ");
+  return `CASE EXTRACT(MONTH FROM ${date}) ${cases} END`;
+}
+
+function firstFiscalMonth(
+  expression: ExprQlik | undefined,
+  environment: EntornoExpresionQlik,
+  functionName: string,
+): string {
+  if (!expression) {
+    const value = environment.firstMonthOfYear ?? 1;
+    if (value < 1 || value > 12)
+      fail(
+        "TEMPORAL_FIRST_MONTH_INVALID",
+        `${functionName} requiere first_month_of_year entre 1 y 12`,
+        functionName,
+        0,
+      );
+    return String(value);
+  }
+  if (expression.kind === "number" && /^[+-]?\d+$/.test(expression.raw)) {
+    const value = Number(expression.raw);
+    if (value < 1 || value > 12)
+      fail(
+        "TEMPORAL_FIRST_MONTH_INVALID",
+        `${functionName} requiere first_month_of_year entre 1 y 12`,
+        functionName,
+        0,
+      );
+  }
+  return `CAST(TRUNC(${emitNumericValue(expression, environment)}) AS INT64)`;
+}
+
+function emitFiscalYearStart(date: string, firstMonth: string): string {
+  const year = `CAST(EXTRACT(YEAR FROM ${date}) - IF(EXTRACT(MONTH FROM ${date}) < ${firstMonth}, 1, 0) AS INT64)`;
+  return `SAFE.PARSE_DATE('%Y-%m-%d', FORMAT('%04d-%02d-01', ${year}, ${firstMonth}))`;
+}
+
+function emitFiscalQuarterStart(
+  date: string,
+  firstMonth: string,
+  period = "0",
+): string {
+  const yearStart = emitFiscalYearStart(date, firstMonth);
+  const monthOffset = `MOD(EXTRACT(MONTH FROM ${date}) - ${firstMonth} + 12, 12)`;
+  const quarterOffset = `FLOOR(${monthOffset} / 3) * 3 + (${period}) * 3`;
+  return `DATE_ADD(${yearStart}, INTERVAL CAST(${quarterOffset} AS INT64) MONTH)`;
+}
+
+function emitMonthsSegmentStart(
+  date: string,
+  months: string,
+  period: string,
+  firstMonth: string,
+): string {
+  const yearStart = emitFiscalYearStart(date, firstMonth);
+  const monthOffset = `MOD(EXTRACT(MONTH FROM ${date}) - ${firstMonth} + 12, 12)`;
+  const segmentOffset = `FLOOR(${monthOffset} / ${months}) * ${months} + (${period}) * ${months}`;
+  return `DATE_ADD(${yearStart}, INTERVAL CAST(${segmentOffset} AS INT64) MONTH)`;
+}
+
+function requireIsoWeekStart(
+  functionName: string,
+  firstWeekDayExpression: ExprQlik | undefined,
+  environment: EntornoExpresionQlik,
+): void {
+  const firstWeekDay = firstWeekDayExpression
+    ? literalInteger(firstWeekDayExpression, functionName)
+    : environment.firstWeekDay;
+  if (firstWeekDay === undefined)
+    fail(
+      "WEEK_ENV_REQUIRED",
+      `${functionName} requiere FirstWeekDay para preservar el calendario Qlik`,
+      functionName,
+      0,
+    );
+  if (firstWeekDay < 0 || firstWeekDay > 6)
+    fail(
+      "WEEK_CONFIGURATION_INVALID",
+      `${functionName} recibió FirstWeekDay inválido (${firstWeekDay})`,
+      functionName,
+      0,
+    );
+  if (firstWeekDay !== 0)
+    fail(
+      "WEEK_CONFIGURATION_REQUIRES_CALENDAR_LOWERING",
+      `${functionName} usa un primer día no-ISO (${firstWeekDay})`,
+      functionName,
+      0,
+    );
+}
+
+function requireIsoWeekCalendar(
+  functionName: string,
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+  firstWeekDayIndex: number,
+): void {
+  const brokenWeeksIndex = firstWeekDayIndex + 1;
+  const referenceDayIndex = firstWeekDayIndex + 2;
+  const firstWeekDay = args[firstWeekDayIndex]
+    ? literalInteger(args[firstWeekDayIndex]!, functionName)
+    : environment.firstWeekDay;
+  const brokenWeeks = args[brokenWeeksIndex]
+    ? literalInteger(args[brokenWeeksIndex]!, functionName)
+    : environment.brokenWeeks;
+  const referenceDay = args[referenceDayIndex]
+    ? literalInteger(args[referenceDayIndex]!, functionName)
+    : environment.referenceDay;
+  if (firstWeekDay === undefined || brokenWeeks === undefined || referenceDay === undefined)
+    fail(
+      "WEEK_ENV_REQUIRED",
+      `${functionName} requiere FirstWeekDay, BrokenWeeks y ReferenceDay para preservar el calendario Qlik`,
+      functionName,
+      0,
+    );
+  if (firstWeekDay < 0 || firstWeekDay > 6 || ![0, 1].includes(brokenWeeks) || referenceDay < 1 || referenceDay > 7)
+    fail(
+      "WEEK_CONFIGURATION_INVALID",
+      `${functionName} recibió una configuración semanal inválida`,
+      functionName,
+      0,
+    );
+  if (firstWeekDay !== 0 || brokenWeeks !== 0 || referenceDay !== 4)
+    fail(
+      "WEEK_CONFIGURATION_REQUIRES_CALENDAR_LOWERING",
+      `${functionName} usa calendario Qlik no-ISO (${firstWeekDay},${brokenWeeks},${referenceDay})`,
+      functionName,
+      0,
+    );
+}
+
+function emitHolidayDates(
+  expressions: ExprQlik[],
+  functionName: string,
+  environment: EntornoExpresionQlik,
+): string[] {
+  return expressions.map((expression) => {
+    if (expression.kind !== "string")
+      fail(
+        "WORKDAY_HOLIDAY_LITERAL_REQUIRED",
+        `${functionName} requiere que cada holiday sea un string literal`,
+        functionName,
+        0,
+      );
+    return qlikDateFromAny(quoteString(expression.value));
+  });
+}
+
+function formatQlikTimestamp(
+  timestamp: string,
+  format: string,
+  functionName: string,
+): string {
+  if (format === "YYYY-MM-DD hh:mm:ss")
+    return `FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%S', ${timestamp}, 'UTC')`;
+  if (format === "M/D/YYYY h:mm:ss[.fff] TT") {
+    const millis = `EXTRACT(MILLISECOND FROM ${timestamp} AT TIME ZONE 'UTC')`;
+    return `FORMAT('%d/%d/%04d %d:%02d:%02d%s %s', EXTRACT(MONTH FROM ${timestamp} AT TIME ZONE 'UTC'), EXTRACT(DAY FROM ${timestamp} AT TIME ZONE 'UTC'), EXTRACT(YEAR FROM ${timestamp} AT TIME ZONE 'UTC'), IF(MOD(EXTRACT(HOUR FROM ${timestamp} AT TIME ZONE 'UTC'), 12) = 0, 12, MOD(EXTRACT(HOUR FROM ${timestamp} AT TIME ZONE 'UTC'), 12)), EXTRACT(MINUTE FROM ${timestamp} AT TIME ZONE 'UTC'), EXTRACT(SECOND FROM ${timestamp} AT TIME ZONE 'UTC'), IF(${millis} = 0, '', FORMAT('.%03d', ${millis})), IF(EXTRACT(HOUR FROM ${timestamp} AT TIME ZONE 'UTC') < 12, 'AM', 'PM'))`;
+  }
+  fail(
+    "QLIK_TIMESTAMP_FORMAT_NOT_IMPLEMENTED",
+    `${functionName} usa un TimestampFormat Qlik aún no certificado: ${format}`,
+    functionName,
+    0,
+  );
+}
+
+function requireCurrentClockMode(expression: ExprQlik, functionName: string): void {
+  if (expression.kind !== "number" || !/^[+-]?\d+$/.test(expression.raw) || Number(expression.raw) !== 1)
+    fail(
+      "TEMPORAL_RUNTIME_CONTEXT_REQUIRED",
+      `${functionName} solo puede representar timer_mode=1 con el contexto de ejecución disponible`,
+      functionName,
+      0,
+    );
 }
 
 function emitMonthStart(
