@@ -2424,7 +2424,7 @@ function emitMakeWeekDateRaw(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 1, 6);
-  requireIsoWeekCalendar(originalName, args, environment);
+  requireIsoWeekCalendar(originalName, args, environment, 3);
   const year = `CAST(TRUNC(${emitNumericValue(args[0]!, environment)}) AS INT64)`;
   const week = args[1] ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)` : "1";
   const day = args[2] ? `CAST(TRUNC(${emitNumericValue(args[2], environment)}) AS INT64)` : "0";
