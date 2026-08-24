@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "certified_requires_reference": true,
+    "certified_requires_golden": true,
+    "no_silent_drop": true,
+    "simple_sql_must_remain_flat": true
+  },
+  "certificates": [],
+  "intentionally_non_equivalent": [
+    {
+      "scenario_id": "qlik-store-side-effect",
+      "reason": "STORE es un efecto de destino, no una relación exportable.",
+      "reference": "qlik/qlik-store-side-effect.qlik"
+    },
+    {
+      "scenario_id": "qlik-filelist-external",
+      "reason": "filelist depende del inventario de archivos del entorno Qlik.",
+      "reference": "qlik/qlik-filelist-external.qlik"
+    },
+    {
+      "scenario_id": "qlik-partial-reload",
+      "reason": "partial reload requiere estado previo de recarga.",
+      "reference": "qlik/qlik-partial-reload.qlik"
+    }
+  ],
+  "sql_quality": [
+    {
+      "scenario_id": "regression-ventas-mensuales-join",
+      "required": [
+        "INNER JOIN `EDWH.DIM_FECHA`",
+        "WHERE DATE_TRUNC(Fecha, MONTH)",
+        "GROUP BY ALL"
+      ],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "INNER JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_cases": 0,
+      "max_casts": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "qlik-filter-project",
+      "required": ["FROM `p.d.ventas`", "WHERE `monto` > 0"],
+      "forbidden": ["WITH fuente_", "FROM ( SELECT", "CASE", "CAST("],
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_cases": 0,
+      "max_casts": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-inner-join",
+      "required": ["INNER JOIN"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "INNER JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-left-join",
+      "required": ["LEFT JOIN"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "LEFT JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-right-join",
+      "required": ["RIGHT JOIN"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "RIGHT JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-full-join",
+      "required": ["FULL JOIN"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "FULL JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-multi-join",
+      "required": ["LEFT JOIN", "INNER JOIN"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "exact_occurrences": {
+        "LEFT JOIN": 1,
+        "INNER JOIN": 1
+      },
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-where-group-all",
+      "required": ["WHERE", "GROUP BY ALL"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "max_selects": 1,
+      "max_ctes": 0,
+      "max_subqueries": 0,
+      "max_synthetic_layers": 0
+    },
+    {
+      "scenario_id": "sql-native-cte-subquery",
+      "required": ["WITH base AS"],
+      "forbidden": ["fuente_", "filtro_", "proyeccion_"],
+      "min_selects": 2
+    }
+  ]
+}

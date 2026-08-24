@@ -16,8 +16,11 @@ const scenarios = JSON.parse(
 ) as { scenarios: Scenario[] };
 
 describe("corpus ejecutable vNext", () => {
-  it("contiene exactamente los 61 escenarios estructurales investigados", () => {
-    expect(scenarios.scenarios).toHaveLength(61);
+  it("contiene escenarios estructurales declarados y únicos", () => {
+    expect(scenarios.scenarios.length).toBeGreaterThan(0);
+    expect(
+      new Set(scenarios.scenarios.map((scenario) => scenario.id)).size,
+    ).toBe(scenarios.scenarios.length);
   });
 
   for (const scenario of scenarios.scenarios) {

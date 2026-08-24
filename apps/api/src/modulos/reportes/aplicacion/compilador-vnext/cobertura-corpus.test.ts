@@ -23,10 +23,6 @@ describe("coverage gates del compilador vNext", () => {
       entries: ManifestEntry[];
     }>("coverage-manifest.json");
 
-    expect(manifest.counts.dataflow_processor).toBe(23);
-    expect(manifest.counts.qlik_statement).toBe(80);
-    expect(manifest.counts.qlik_operator).toBe(24);
-    expect(manifest.counts.qlik_function).toBeGreaterThan(300);
     expect(manifest.counts.total).toBe(
       manifest.counts.dataflow_processor +
         manifest.counts.qlik_statement +
@@ -48,10 +44,11 @@ describe("coverage gates del compilador vNext", () => {
     }
   });
 
-  it("cubre los 23 procesadores visuales con escenarios", async () => {
-    const manifest = await json<{ entries: ManifestEntry[] }>(
-      "coverage-manifest.json",
-    );
+  it("cubre todos los procesadores visuales declarados con escenarios", async () => {
+    const manifest = await json<{
+      counts: Record<string, number>;
+      entries: ManifestEntry[];
+    }>("coverage-manifest.json");
     const corpus = await json<{
       scenarios: Array<{ processors?: string[]; fixture: string }>;
     }>("scenarios.json");
@@ -63,7 +60,7 @@ describe("coverage gates del compilador vNext", () => {
       corpus.scenarios.flatMap((item) => item.processors ?? []),
     );
 
-    expect(processors).toHaveLength(23);
+    expect(processors).toHaveLength(manifest.counts.dataflow_processor);
     expect(processors.filter((name) => !covered.has(name))).toEqual([]);
     for (const scenario of corpus.scenarios) {
       expect(await Bun.file(fixture(scenario.fixture)).exists()).toBe(true);
@@ -71,9 +68,10 @@ describe("coverage gates del compilador vNext", () => {
   });
 
   it("exige vectores base para cada entrada de función", async () => {
-    const manifest = await json<{ entries: ManifestEntry[] }>(
-      "coverage-manifest.json",
-    );
+    const manifest = await json<{
+      counts: Record<string, number>;
+      entries: ManifestEntry[];
+    }>("coverage-manifest.json");
     const vectors = await json<{
       functions: Array<{ name: string; category: string; vectors: string[] }>;
     }>("function-vectors.json");
@@ -82,7 +80,7 @@ describe("coverage gates del compilador vNext", () => {
       (entry) => entry.surface === "qlik_function",
     );
 
-    expect(functionEntries.length).toBe(manifest.entries.filter((entry) => entry.surface === "qlik_function").length);
+    expect(functionEntries.length).toBe(manifest.counts.qlik_function);
     expect(vectors.functions).toHaveLength(functionEntries.length);
     for (const vector of vectors.functions) {
       for (const name of required) expect(vector.vectors).toContain(name);

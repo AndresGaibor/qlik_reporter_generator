@@ -16,13 +16,15 @@ async function compile(name: string) {
 }
 
 describe("relacional vNext", () => {
-  it("fusiona WHERE + proyección Qlik alrededor de SQL nativo lossless", async () => {
+  it("mantiene plana la proyección y el WHERE Qlik sobre SQL nativo simple", async () => {
     const result = await compile("qlik-filter-project.qlik");
-    expect(result.sql).toContain("UPPER(`categoria`) AS `Categoria`");
-    expect(result.sql).toContain("`monto` > 0");
-    expect(result.sql).toContain("FROM `p.d.ventas`");
-    expect(result.sql).not.toContain(
-      "FROM (\n  SELECT id, categoria, monto FROM `p.d.ventas`\n) AS src",
+    expect(result.sql).toBe(
+      "SELECT\n" +
+        "  `id`,\n" +
+        "  UPPER(`categoria`) AS `Categoria`,\n" +
+        "  `monto`\n" +
+        "FROM `p.d.ventas`\n" +
+        "WHERE `monto` > 0",
     );
   });
 
