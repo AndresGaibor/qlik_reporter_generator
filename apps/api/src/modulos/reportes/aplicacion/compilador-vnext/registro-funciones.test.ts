@@ -44,7 +44,7 @@ describe("registro declarativo de funciones Qlik", () => {
   it("distingue implementación runtime de certificación semántica", () => {
     expect(obtenerFuncionQlik("Upper")?.runtimeStatus).toBe("implemented");
     expect(obtenerFuncionQlik("Upper")?.certificationStatus).toBe("unverified");
-    expect(obtenerFuncionQlik("ApplyMap")?.runtimeStatus).toBe("tracked");
+    expect(obtenerFuncionQlik("ApplyMap")?.runtimeStatus).toBe("implemented");
   });
 
   it("clasifica familias que no admiten un mapping ingenuo", () => {

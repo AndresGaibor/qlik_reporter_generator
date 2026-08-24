@@ -39,6 +39,7 @@ const IMPLEMENTED = new Set([
   "acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh",
   "cos", "cosh", "sin", "sinh", "tan", "tanh",
   "e", "pi", "rand",
+  "applymap", "exists", "peek", "previous", "autonumber", "iterno", "recno", "rowno",
 ]);
 
 const NON_DETERMINISTIC = new Set([
