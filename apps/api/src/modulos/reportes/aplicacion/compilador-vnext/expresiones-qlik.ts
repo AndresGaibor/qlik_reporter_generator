@@ -316,6 +316,11 @@ function emitNumericValue(
     const operand = emitNumericValue(expression.operand, environment);
     return `${expression.operator}${parenthesize(operand)}`;
   }
+  if (expression.kind === "binary" && ["+", "-", "*", "/"].includes(expression.operator)) {
+    const left = emitNumericValue(expression.left, environment);
+    const right = emitNumericValue(expression.right, environment);
+    return `${emitNumericOperand(expression.left, left, expression.operator, "left")} ${expression.operator} ${emitNumericOperand(expression.right, right, expression.operator, "right")}`;
+  }
   if (expression.kind === "call") {
     const name = expression.name.toLowerCase();
     if (name === "date" || name === "num") {
@@ -364,6 +369,33 @@ function emitNumericValue(
   return qlikNumericOrTemporal(emitValue(expression, environment));
 }
 
+function emitNumericOperand(
+  expression: ExprQlik,
+  sql: string,
+  parentOperator: string,
+  side: "left" | "right",
+): string {
+  if (expression.kind !== "binary" || !["+", "-", "*", "/"].includes(expression.operator))
+    return sql;
+  const childPrecedence = expression.operator === "*" || expression.operator === "/" ? 2 : 1;
+  const parentPrecedence = parentOperator === "*" || parentOperator === "/" ? 2 : 1;
+  if (childPrecedence < parentPrecedence || (side === "right" && childPrecedence === parentPrecedence))
+    return `(${sql})`;
+  return sql;
+}
+
+function emitNumericArgument(
+  expression: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  if (
+    (expression.kind === "binary" && ["+", "-", "*", "/"].includes(expression.operator)) ||
+    (expression.kind === "unary" && ["+", "-"].includes(expression.operator))
+  )
+    return emitNumericValue(expression, environment);
+  return qlikNumeric(emitValue(expression, environment));
+}
+
 function emitUnary(
   expression: Extract<ExprQlik, { kind: "unary" }>,
   environment: EntornoExpresionQlik,
@@ -386,7 +418,7 @@ function emitBinary(
 ): string {
   const op = expression.operator;
   if (["+", "-", "*", "/"].includes(op)) {
-    return `${parenthesize(emitNumericValue(expression.left, environment))} ${op} ${parenthesize(emitNumericValue(expression.right, environment))}`;
+    return emitNumericValue(expression, environment);
   }
   if (op === "&") return emitConcat(expression, environment);
   if (["bitand", "bitor", "bitxor", "<<", ">>"].includes(op))
@@ -672,25 +704,25 @@ function emitCall(
   }
   if (["exp", "log", "log10", "sqr", "sqrt"].includes(name)) {
     arity(expression.name, args, 1);
-    const value = qlikNumeric(emitValue(args[0]!, environment));
+    const value = emitNumericArgument(args[0]!, environment);
     if (name === "log") return `LN(${value})`;
     if (name === "sqr") return `POW(${value}, 2)`;
     return `${name.toUpperCase()}(${value})`;
   }
   if (name === "pow") {
     arity(expression.name, args, 2);
-    return `POW(${qlikNumeric(emitValue(args[0]!, environment))}, ${qlikNumeric(emitValue(args[1]!, environment))})`;
+    return `POW(${emitNumericArgument(args[0]!, environment)}, ${emitNumericArgument(args[1]!, environment)})`;
   }
   if ([
     "acos", "acosh", "asin", "asinh", "atan", "atanh",
     "cos", "cosh", "sin", "sinh", "tan", "tanh",
   ].includes(name)) {
     arity(expression.name, args, 1);
-    return `${name.toUpperCase()}(${qlikNumeric(emitValue(args[0]!, environment))})`;
+    return `${name.toUpperCase()}(${emitNumericArgument(args[0]!, environment)})`;
   }
   if (name === "atan2") {
     arity(expression.name, args, 2);
-    return `ATAN2(${qlikNumeric(emitValue(args[0]!, environment))}, ${qlikNumeric(emitValue(args[1]!, environment))})`;
+    return `ATAN2(${emitNumericArgument(args[0]!, environment)}, ${emitNumericArgument(args[1]!, environment)})`;
   }
   if (name === "fabs") {
     arity(expression.name, args, 1);
@@ -706,7 +738,7 @@ function emitCall(
     return emitBitCount(expression.name, args, environment);
   if (name === "sign") {
     arity(expression.name, args, 1);
-    return `SIGN(${qlikNumeric(emitValue(args[0]!, environment))})`;
+    return `SIGN(${emitNumericArgument(args[0]!, environment)})`;
   }
   if (["year", "day"].includes(name)) {
     arity(expression.name, args, 1);
@@ -854,8 +886,9 @@ function emitCounterAggregation(
       expression.name,
       0,
     );
-  const value = emitValue(expression.args[0]!, environment);
-  const numeric = qlikNumeric(value);
+  const argument = expression.args[0]!;
+  const value = emitValue(argument, environment);
+  const numeric = emitNumericArgument(argument, environment);
   if (name === "nullcount") return `COUNTIF(${value} IS NULL)`;
   if (name === "numericcount") return `COUNTIF(${numeric} IS NOT NULL)`;
   if (name === "textcount")
@@ -871,7 +904,7 @@ function emitBasicRange(
 ): string {
   if (args.length < 1)
     fail("FUNCTION_ARITY", `${originalName} requiere al menos un argumento`, originalName, 0);
-  const numeric = args.map((arg) => qlikNumeric(emitValue(arg, environment)));
+  const numeric = args.map((arg) => emitNumericArgument(arg, environment));
   if (name === "rangesum")
     return numeric.map((value) => `COALESCE(${value}, 0)`).join(" + ");
   const fn = name === "rangeavg" ? "AVG" : name === "rangemin" ? "MIN" : "MAX";
@@ -888,7 +921,7 @@ function emitRangeCounter(
     fail("FUNCTION_ARITY", `${originalName} requiere al menos un argumento`, originalName, 0);
   const parts = args.map((arg) => {
     const value = emitValue(arg, environment);
-    const numeric = qlikNumeric(value);
+    const numeric = emitNumericArgument(arg, environment);
     if (name === "rangecount") return `CASE WHEN ${value} IS NULL THEN 0 ELSE 1 END`;
     if (name === "rangenullcount") return `CASE WHEN ${value} IS NULL THEN 1 ELSE 0 END`;
     if (name === "rangenumericcount") return `CASE WHEN ${numeric} IS NOT NULL THEN 1 ELSE 0 END`;
@@ -1513,8 +1546,8 @@ function emitDiv(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 2);
-  const left = qlikNumeric(emitValue(args[0]!, environment));
-  const right = qlikNumeric(emitValue(args[1]!, environment));
+  const left = emitNumericArgument(args[0]!, environment);
+  const right = emitNumericArgument(args[1]!, environment);
   return `CAST(TRUNC(SAFE_DIVIDE(${left}, ${right})) AS INT64)`;
 }
 
@@ -1524,8 +1557,8 @@ function emitMod(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 2);
-  const left = qlikNumeric(emitValue(args[0]!, environment));
-  const right = qlikNumeric(emitValue(args[1]!, environment));
+  const left = emitNumericArgument(args[0]!, environment);
+  const right = emitNumericArgument(args[1]!, environment);
   return `CASE WHEN ${left} IS NULL OR ${right} IS NULL OR ${left} != TRUNC(${left}) OR ${right} != TRUNC(${right}) OR ${right} <= 0 THEN NULL ELSE CAST(${left} - ${right} * FLOOR(${left} / ${right}) AS INT64) END`;
 }
 
@@ -1535,8 +1568,8 @@ function emitFmod(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 2);
-  const left = qlikNumeric(emitValue(args[0]!, environment));
-  const right = qlikNumeric(emitValue(args[1]!, environment));
+  const left = emitNumericArgument(args[0]!, environment);
+  const right = emitNumericArgument(args[1]!, environment);
   const quotient = `SAFE_DIVIDE(${left}, ${right})`;
   return `CASE WHEN ${left} IS NULL OR ${right} IS NULL OR ${right} = 0 THEN NULL ELSE ${left} - ${right} * TRUNC(${quotient}) END`;
 }
@@ -1547,7 +1580,7 @@ function emitFrac(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 1);
-  const value = qlikNumeric(emitValue(args[0]!, environment));
+  const value = emitNumericArgument(args[0]!, environment);
   return `CASE WHEN ${value} IS NULL THEN NULL ELSE ${value} - FLOOR(${value}) END`;
 }
 
@@ -1558,7 +1591,7 @@ function emitParity(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 1);
-  const value = qlikNumeric(emitValue(args[0]!, environment));
+  const value = emitNumericArgument(args[0]!, environment);
   const parity = kind === "even" ? "0" : "1";
   return `CASE WHEN ${value} IS NULL OR ${value} != TRUNC(${value}) THEN NULL WHEN ${value} = 0 THEN -1 WHEN MOD(ABS(CAST(${value} AS INT64)), 2) = ${parity} THEN -1 ELSE 0 END`;
 }
@@ -1569,7 +1602,7 @@ function emitBitCount(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 1);
-  const numeric = qlikNumeric(emitValue(args[0]!, environment));
+  const numeric = emitNumericArgument(args[0]!, environment);
   const integer = `SAFE_CAST(${numeric} AS INT64)`;
   return `CASE WHEN ${numeric} IS NULL OR ${numeric} != TRUNC(${numeric}) OR ${integer} IS NULL THEN NULL ELSE BIT_COUNT(${integer} & 4294967295) END`;
 }
@@ -1953,7 +1986,7 @@ function emitNum(
     fail("NUM_FORMAT_REQUIRED", `${originalName} sin formato explícito aún requiere el modelo completo de variables numéricas Qlik`, originalName, 0);
   const format = literalString(args[1], originalName);
   const bigQueryFormat = translateQlikNumberFormat(format, originalName);
-  const number = `SAFE_CAST(CAST(${emitValue(args[0]!, environment)} AS STRING) AS BIGNUMERIC)`;
+  const number = emitNumericArgument(args[0]!, environment);
   let result = `CAST(${number} AS STRING FORMAT ${quoteString(bigQueryFormat)})`;
   const decimalSep = args[2] ? literalString(args[2], originalName) : environment.decimalSep ?? ".";
   const thousandSep = args[3] ? literalString(args[3], originalName) : environment.thousandSep ?? ",";

@@ -67,7 +67,9 @@ describe("emisión BigQuery vNext fase 1", () => {
       [Salida]: LOAD id WHERE estado <> Null();
       SQL SELECT id, estado FROM \`p.d.t\`;
     `);
-    expect(result.sql).toContain("(`estado` IS NULL) != (NULL IS NULL) OR `estado` != NULL");
+    expect(result.sql).toContain(
+      "(`estado` IS NULL) != (NULL IS NULL) OR `estado` != NULL",
+    );
     expect(result.sql).not.toContain("WHERE CASE WHEN");
   });
 
@@ -97,8 +99,40 @@ describe("emisión BigQuery vNext fase 1", () => {
       [Salida]: LOAD id, monto * $(vFactor) * $(vMultiplicador) AS total;
       SQL SELECT id, monto FROM \`p.d.t\`;
     `);
-    expect(result.sql).toContain("`monto` * 1.2 * 21 AS `total`");
+    expect(result.sql).toContain(" * 1.2 * 21 AS `total`");
+    expect(
+      result.sql.split(
+        "COALESCE(SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)",
+      ),
+    ).toHaveLength(2);
     expect(result.sql).not.toContain("$(");
+  });
+
+  it("expande $(#var) al decimal canónico y conserva variables case-sensitive", () => {
+    const result = compilarDataflowVNext(`
+      SET DecimalSep=',';
+      SET vTasa=3,5;
+      SET vCaso='ok';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      SQL SELECT $(#vTasa) AS decimal, '$(vCaso)' AS encontrado, '$(VCASO)' AS ausente;
+    `);
+
+    expect(result.sql).toContain(
+      "SELECT 3.5 AS decimal, 'ok' AS encontrado, '' AS ausente",
+    );
+    expect(result.sql).not.toMatch(/\b(?:DECLARE|WITH)\b/i);
+  });
+
+  it("rechaza LET dependiente de runtime cuando se expande", () => {
+    expect(() =>
+      compilarDataflowVNext(`
+        LET vAhora=Now();
+        LIB CONNECT TO [Google BigQuery:Prod];
+        SQL SELECT '$(vAhora)' AS ahora;
+      `),
+    ).toThrowError(
+      /VARIABLE_LET_RUNTIME_REQUIRED|requiere evaluación en runtime/,
+    );
   });
 
   it("expande una variable inexistente como texto vacío según Qlik", () => {
@@ -108,5 +142,4 @@ describe("emisión BigQuery vNext fase 1", () => {
     `);
     expect(result.sql).toContain("SELECT 'ab' AS texto");
   });
-
 });

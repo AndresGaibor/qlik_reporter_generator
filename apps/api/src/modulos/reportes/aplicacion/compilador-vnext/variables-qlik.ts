@@ -1,4 +1,4 @@
-import { parsearExpresionQlik, type ExprQlik } from "./expresiones-qlik.js";
+import { type ExprQlik, parsearExpresionQlik } from "./expresiones-qlik.js";
 
 export type ValorVariableQlik =
   | { estado: "resuelta"; texto: string; numero?: number }
@@ -11,7 +11,9 @@ export class VariableQlikRuntimeError extends Error {
     readonly nombre: string,
     readonly expresion: string,
   ) {
-    super(`La variable Qlik ${nombre} requiere evaluación en runtime: ${expresion}`);
+    super(
+      `La variable Qlik ${nombre} requiere evaluación en runtime: ${expresion}`,
+    );
   }
 }
 
@@ -24,12 +26,13 @@ export function expandirVariablesQlik(
     let changed = false;
     const next = current.replace(
       /\$\(\s*(#?)([A-Za-z_][A-Za-z0-9_]*)\s*\)/g,
-      (_match, numeric: string, name: string) => {        changed = true;
+      (_match, numeric: string, name: string) => {
+        changed = true;
         const value = variables.get(name);
         if (!value) return "";
         if (value.estado === "runtime")
           throw new VariableQlikRuntimeError(name, value.expresion);
-        if (numeric === "#") return value.numero === undefined ? "0" : numeroCanonico(value.numero);
+        if (numeric === "#") return expansionNumerica(value, variables);
         if (value.numero === undefined) return value.texto;
         return numeroConSeparador(value.numero, variables);
       },
@@ -44,7 +47,9 @@ export function definirVariableQlik(
   mode: "set" | "let",
   body: string,
   variables: VariablesQlik,
-): { nombre: string; valor: ValorVariableQlik; bodyExpandido: string } | undefined {
+):
+  | { nombre: string; valor: ValorVariableQlik; bodyExpandido: string }
+  | undefined {
   const match = body.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([\s\S]*?)\s*$/);
   if (!match?.[1] || match[2] === undefined) return undefined;
   const nombre = match[1];
@@ -66,7 +71,11 @@ function valorLet(rhs: string): ValorVariableQlik {
   try {
     const value = evaluarConstante(parsearExpresionQlik(rhs));
     if (typeof value === "number")
-      return { estado: "resuelta", texto: numeroCanonico(value), numero: value };
+      return {
+        estado: "resuelta",
+        texto: numeroCanonico(value),
+        numero: value,
+      };
     return { estado: "resuelta", texto: value };
   } catch {
     return { estado: "runtime", expresion: rhs };
@@ -78,10 +87,14 @@ function evaluarConstante(expression: ExprQlik): number | string {
   if (expression.kind === "string") return expression.value;
   if (expression.kind === "unary") {
     const operand = evaluarConstante(expression.operand);
-    if (typeof operand !== "number" || !["+", "-"].includes(expression.operator))
+    if (
+      typeof operand !== "number" ||
+      !["+", "-"].includes(expression.operator)
+    )
       throw new Error("unary no constante");
     return expression.operator === "-" ? -operand : operand;
-  }  if (expression.kind === "binary") {
+  }
+  if (expression.kind === "binary") {
     const left = evaluarConstante(expression.left);
     const right = evaluarConstante(expression.right);
     if (expression.operator === "&") return `${left}${right}`;
@@ -101,6 +114,38 @@ function numeroConSeparador(value: number, variables: VariablesQlik): string {
   if (decimalSep?.estado === "resuelta" && decimalSep.texto !== ".")
     return canonical.replace(".", decimalSep.texto);
   return canonical;
+}
+
+function expansionNumerica(
+  value: Extract<ValorVariableQlik, { estado: "resuelta" }>,
+  variables: VariablesQlik,
+): string {
+  const number = value.numero ?? parsearNumero(value.texto, variables);
+  return number === undefined ? "0" : numeroCanonico(number);
+}
+
+function parsearNumero(
+  text: string,
+  variables: VariablesQlik,
+): number | undefined {
+  let normalized = text.trim();
+  const decimalSep = textoVariable(variables, "DecimalSep") ?? ".";
+  const thousandSep = textoVariable(variables, "ThousandSep");
+  if (thousandSep && thousandSep !== decimalSep)
+    normalized = normalized.split(thousandSep).join("");
+  if (decimalSep !== ".") normalized = normalized.split(decimalSep).join(".");
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(normalized))
+    return undefined;
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function textoVariable(
+  variables: VariablesQlik,
+  name: string,
+): string | undefined {
+  const value = variables.get(name);
+  return value?.estado === "resuelta" ? value.texto : undefined;
 }
 
 function numeroCanonico(value: number): string {

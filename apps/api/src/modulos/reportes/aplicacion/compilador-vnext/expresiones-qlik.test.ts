@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { ErrorCompilacionVNext } from "./modelo.js";
 import {
-  emitirExpresionBigQuery,
   type EntornoExpresionQlik,
+  emitirExpresionBigQuery,
   esExpresionDualQlik,
   parsearExpresionQlik,
 } from "./expresiones-qlik.js";
+import { ErrorCompilacionVNext } from "./modelo.js";
 
 function compile(expression: string): string {
   return emitirExpresionBigQuery(parsearExpresionQlik(expression));
@@ -60,6 +60,43 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(flag).toContain("SAFE_CAST(CAST(`flag` AS STRING) AS BIGNUMERIC)");
     expect(flag).toContain("!= 0");
     expect(flag).toEndWith("THEN -1 ELSE 0 END");
+  });
+
+  it("coerce solo las hojas desconocidas de una aritmética", () => {
+    const sql = compile("[monto] * 1.2 * 21");
+    const numericLeaf =
+      "COALESCE(SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)";
+
+    expect(sql).toStartWith(numericLeaf);
+    expect(sql).not.toStartWith(`(${numericLeaf}`);
+    expect(sql).toContain(" * 1.2 * 21");
+    expect(sql.split(numericLeaf)).toHaveLength(2);
+    expect(sql.match(/TIMESTAMP_DIFF\(/g)).toHaveLength(1);
+    expect(sql).not.toContain("1.2 AS STRING");
+    expect(sql).not.toContain("21 AS STRING");
+    expect(compile("1.2 * 21")).toBe("1.2 * 21");
+  });
+
+  it("no re-coerce una aritmética al pasarla a una función numérica", () => {
+    const sql = compile("Exp([monto] * 1.2)");
+    const numericLeaf =
+      "COALESCE(SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)";
+
+    expect(sql).toStartWith(`EXP(${numericLeaf}`);
+    expect(sql).toContain(" * 1.2)");
+    expect(sql.split(numericLeaf)).toHaveLength(2);
+    expect(sql).not.toContain("CAST(COALESCE(");
+  });
+
+  it("mantiene la coerción en las hojas de los operadores numéricos", () => {
+    const sql = compile("Div([monto] * 1.2, 2)");
+    const numericLeaf =
+      "COALESCE(SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)";
+
+    expect(sql).toContain("TRUNC(SAFE_DIVIDE(");
+    expect(sql).toContain(" * 1.2");
+    expect(sql.split(numericLeaf)).toHaveLength(2);
+    expect(sql).not.toContain("SAFE_CAST(CAST(COALESCE(");
   });
 
   it("representa dollar expansion como referencia explícita", () => {
