@@ -1,0 +1,5 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Base]: LOAD *; SQL SELECT id, categoria, monto FROM `p.d.ventas`;
+[Filtrada]: NoConcatenate LOAD id, categoria, monto RESIDENT [Base] WHERE monto > 0;
+[Salida]: NoConcatenate LOAD categoria, Sum(monto) AS Total RESIDENT [Filtrada] GROUP BY categoria;
+DROP TABLE [Base]; DROP TABLE [Filtrada];

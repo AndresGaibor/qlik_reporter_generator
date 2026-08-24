@@ -1,0 +1,5 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id,
+  If(IsNull(monto), 0, Round(monto * 1.12, 2)) AS total,
+  Upper(Trim(categoria)) & '-' & Year(fecha) AS clave;
+SQL SELECT id, monto, categoria, fecha FROM `p.d.ventas`;

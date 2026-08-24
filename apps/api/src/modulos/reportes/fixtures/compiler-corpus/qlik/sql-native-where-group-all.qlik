@@ -1,0 +1,6 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT categoria, EXTRACT(YEAR FROM fecha) AS anio, SUM(monto) AS total
+FROM `p.d.ventas`
+WHERE fecha >= DATE '2026-01-01'
+GROUP BY ALL;

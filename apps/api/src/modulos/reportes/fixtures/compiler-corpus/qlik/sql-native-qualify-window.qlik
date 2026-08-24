@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT cliente, fecha, monto, ROW_NUMBER() OVER(PARTITION BY cliente ORDER BY fecha DESC) AS rn
+FROM `p.d.ventas` QUALIFY rn = 1;

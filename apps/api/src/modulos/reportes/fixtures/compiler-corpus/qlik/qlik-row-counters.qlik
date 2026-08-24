@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, RowNo() AS row_no, RecNo() AS rec_no, IterNo() AS iter_no WHILE IterNo() <= 2;
+SQL SELECT id FROM `p.d.a` ORDER BY id;

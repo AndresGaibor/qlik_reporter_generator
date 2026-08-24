@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+HierarchyBelongsTo(id, parent_id, nombre, AncestorId, AncestorName, Depth, AncestorName)
+[Salida]: LOAD id, parent_id, nombre;
+SQL SELECT id, parent_id, nombre FROM `p.d.organizacion`;

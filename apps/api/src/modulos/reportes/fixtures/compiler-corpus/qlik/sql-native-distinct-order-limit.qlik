@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT DISTINCT cliente FROM `p.d.ventas` ORDER BY cliente LIMIT 100;

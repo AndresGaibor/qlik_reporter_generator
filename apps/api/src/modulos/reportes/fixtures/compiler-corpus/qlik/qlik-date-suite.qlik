@@ -1,0 +1,27 @@
+SET DateFormat='YYYY-MM-DD';
+SET TimeFormat='hh:mm:ss';
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET FirstWeekDay=0;
+SET BrokenWeeks=0;
+SET ReferenceDay=4;
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD
+  id,
+  Date(fecha) AS fecha_fmt,
+  Year(fecha) AS anio,
+  Month(fecha) AS mes,
+  MonthStart(fecha) AS mes_inicio,
+  MonthEnd(fecha) AS mes_fin,
+  QuarterStart(fecha, 0, 3) AS trimestre_fiscal_inicio,
+  QuarterEnd(fecha, 0, 3) AS trimestre_fiscal_fin,
+  YearStart(fecha, 0, 4) AS anio_fiscal_inicio,
+  YearEnd(fecha, 0, 4) AS anio_fiscal_fin,
+  Week(fecha) AS semana,
+  WeekYear(fecha) AS anio_semana,
+  WeekDay(fecha) AS dia_semana,
+  MakeDate(2024, 2, 29) AS bisiesto,
+  MakeTime(12, 30, 15) AS hora,
+  AddYears(fecha, 1) AS proximo_anio,
+  AddMonths(fecha, 1) AS proximo_mes;
+SQL SELECT id, fecha FROM `p.d.a`;

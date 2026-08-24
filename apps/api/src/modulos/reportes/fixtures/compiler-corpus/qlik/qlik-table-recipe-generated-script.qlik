@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, Upper(Trim(texto)) AS texto_limpio, Round(monto, 2) AS monto_fmt;
+SQL SELECT id, texto, monto FROM `p.d.a`;

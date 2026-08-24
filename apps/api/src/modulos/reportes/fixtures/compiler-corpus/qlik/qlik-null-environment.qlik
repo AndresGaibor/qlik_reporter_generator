@@ -1,0 +1,4 @@
+NullAsValue *; SET NullValue='<NULL>';
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, texto, If(IsNull(texto), 'N', texto) AS normalizado;
+SQL SELECT id, texto FROM `p.d.a`;

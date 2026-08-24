@@ -1,0 +1,5 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT 'a;b' AS texto, id /* JOIN must not be parsed from this comment */
+FROM `p.d.a` -- semicolon inside SQL string must survive
+WHERE id > 0;

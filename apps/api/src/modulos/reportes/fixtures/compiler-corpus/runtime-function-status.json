@@ -1,0 +1,2563 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-22",
+  "counts": {
+    "tracked": 290,
+    "implemented_unverified": 49,
+    "blocked_exact_dependency": 11
+  },
+  "total": 350,
+  "by_category": {
+    "Basic aggregation functions": {
+      "tracked": 3,
+      "implemented_unverified": 3
+    },
+    "Chi2-test functions": {
+      "tracked": 2
+    },
+    "Color functions": {
+      "tracked": 3
+    },
+    "Conditional functions": {
+      "tracked": 1,
+      "blocked_exact_dependency": 5,
+      "implemented_unverified": 2
+    },
+    "Counter aggregation functions": {
+      "tracked": 5
+    },
+    "Counter functions": {
+      "tracked": 6
+    },
+    "Date and time functions": {
+      "tracked": 64,
+      "implemented_unverified": 3
+    },
+    "Examples of how to use linest functions": {
+      "implemented_unverified": 1,
+      "tracked": 19
+    },
+    "Exponential and logarithmic functions": {
+      "tracked": 1
+    },
+    "File functions": {
+      "tracked": 14
+    },
+    "Financial aggregation functions": {
+      "tracked": 4
+    },
+    "Financial functions": {
+      "tracked": 6
+    },
+    "Formatting functions": {
+      "tracked": 6,
+      "implemented_unverified": 2
+    },
+    "General numeric functions": {
+      "implemented_unverified": 12,
+      "blocked_exact_dependency": 3
+    },
+    "Geospatial functions": {
+      "tracked": 14
+    },
+    "Inter-record functions": {
+      "tracked": 8
+    },
+    "Interpretation functions": {
+      "tracked": 7
+    },
+    "Logical functions": {
+      "tracked": 1
+    },
+    "Mapping functions": {
+      "tracked": 2
+    },
+    "Mathematical functions": {
+      "tracked": 1
+    },
+    "NULL functions": {
+      "implemented_unverified": 3
+    },
+    "Range functions": {
+      "tracked": 22
+    },
+    "Statistical distribution functions": {
+      "tracked": 23
+    },
+    "String aggregation functions": {
+      "tracked": 5
+    },
+    "String functions": {
+      "implemented_unverified": 23,
+      "tracked": 16,
+      "blocked_exact_dependency": 3
+    },
+    "System functions": {
+      "tracked": 5
+    },
+    "T-test functions": {
+      "tracked": 32
+    },
+    "Table functions": {
+      "tracked": 4
+    },
+    "Window functions": {
+      "tracked": 2
+    },
+    "Z-test functions": {
+      "tracked": 14
+    }
+  },
+  "functions": [
+    {
+      "name": "FirstSortedValue",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/firstsorted.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Max",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/max.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Min",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/min.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Mode",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/mode.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Only",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/only.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Sum",
+      "category": "Basic aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/sum.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Chi2Test_chi2",
+      "category": "Chi2-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_chi2.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Chi2Test_df",
+      "category": "Chi2-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ARGB",
+      "category": "Color functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/ARGB.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "HSL",
+      "category": "Color functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/HSL.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RGB",
+      "category": "Color functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/RGB.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "alt",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/alt.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "class",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/class.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "typed_lowering"
+    },
+    {
+      "name": "coalesce",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/coalesce.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "typed_lowering"
+    },
+    {
+      "name": "if",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/if.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "match",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/match.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "mixmatch",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/mixmatch.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "qlik_collation"
+    },
+    {
+      "name": "pick",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/pick.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "typed_lowering"
+    },
+    {
+      "name": "wildmatch",
+      "category": "Conditional functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/wildmatch.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "qlik_collation"
+    },
+    {
+      "name": "Count",
+      "category": "Counter aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/count.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MissingCount",
+      "category": "Counter aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/MissingCount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NullCount",
+      "category": "Counter aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NullCount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NumericCount",
+      "category": "Counter aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NumericCount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TextCount",
+      "category": "Counter aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/TextCount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "autonumber",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumber.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "autonumberhash128",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash128.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "autonumberhash256",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash256.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IterNo",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/IterNo.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RecNo",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/RecNo.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RowNo",
+      "category": "Counter functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/RowNo.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "addmonths",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/addmonths.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "addyears",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/addyears.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "age",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/age.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "converttolocaltime",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/converttolocaltime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "day",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/day.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "dayend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/dayend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "daylightsaving",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daylightsaving.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "dayname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/dayname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "daynumberofquarter",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daynumberofquarter.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "daynumberofyear",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daynumberofyear.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "daystart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daystart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "firstworkdate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/firstworkdate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GMT",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/GMT.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "hour",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/hour.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inday",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inday.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "indaytotime",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/indaytotime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inlunarweek",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inlunarweek.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inlunarweektodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inlunarweektodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inmonth",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonth.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inmonths",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonths.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inmonthstodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonthstodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inmonthtodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonthtodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inquarter",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inquarter.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inquartertodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inquartertodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inweek",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inweek.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inweektodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inweektodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inyear",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inyear.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "inyeartodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inyeartodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "lastworkdate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lastworkdate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "localtime",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/localtime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "lunarweekend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "lunarweekname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "lunarweekstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekstart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "makedate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/makedate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "maketime",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/maketime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "makeweekdate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/makeweekdate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "minute",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/minute.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "month",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/month.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "monthend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "monthname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "monthsend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "monthsname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "monthsstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsstart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "monthstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthstart.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "networkdays",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/networkdays.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "now",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/now.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "quarter",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarter.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "quarterend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarterend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "quartername",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quartername.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "quarterstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarterstart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "second",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/second.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "setdateyear",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/setdateyear.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "setdateyearmonth",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/setdateyearmonth.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "timezone",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/timezone.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "today",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/today.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "UTC",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/UTC.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "week",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/week.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "weekday",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekday.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "weekend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "weekname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "weekstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekstart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "weekyear",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekyear.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "year",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/year.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "yearend",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearend.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "yearname",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearname.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "yearstart",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearstart.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "yeartodate",
+      "category": "Date and time functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yeartodate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Avg",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/avg.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Correl",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/correl.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Fractile",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractile.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FractileExc",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractileexc.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Kurtosis",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/kurtosis.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_B",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_b.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_DF",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_F",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_f.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_M",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_m.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_R2",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_r2.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_SEB",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_seb.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_SEM",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sem.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_SEY",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sey.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_SSREG",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssreg.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LINEST_SSRESID",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssresid.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Median",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/median.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Skew",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/skew.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Stdev",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/stdev.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Sterr",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "STEYX",
+      "category": "Examples of how to use linest functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/steyx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "exp",
+      "category": "Exponential and logarithmic functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#exp?id=1309",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Attribute",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/Attribute.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ConnectString",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/ConnectString.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileBaseName",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileBaseName.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileDir",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileDir.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileExtension",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileExtension.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileName",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileName.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FilePath",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FilePath.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileSize",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileSize.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FileTime",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileTime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "QvdCreateTime",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdCreateTime.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "QvdFieldName",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdFieldName.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "QvdNoOfFields",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfFields.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "QvdNoOfRecords",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfRecords.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "QvdTableName",
+      "category": "File functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdTableName.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IRR",
+      "category": "Financial aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/IRR.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NPV",
+      "category": "Financial aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/NPV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "XIRR",
+      "category": "Financial aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/XIRR.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "XNPV",
+      "category": "Financial aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/XNPV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BlackAndSchole",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Black-and-Scholes.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FV",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/FV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "nPer",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/nPer.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Pmt",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/Pmt.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "PV",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/PV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Rate",
+      "category": "Financial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/Rate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ApplyCodepage",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/ApplyCodePage.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Date",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Date.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Dual",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Dual.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Interval",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Interval.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Money",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Money.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Num",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Num.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Time",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Time.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Timestamp",
+      "category": "Formatting functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Timestamp.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BitCount",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/bitcount.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Ceil",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/ceil.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Combin",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/combin.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "combinatorics_udf"
+    },
+    {
+      "name": "Div",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/div.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Even",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/even.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Fabs",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fabs.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Fact",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fact.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "combinatorics_udf"
+    },
+    {
+      "name": "Floor",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/floor.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Fmod",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fmod.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Frac",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/frac.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Mod",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/mod.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Odd",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/odd.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Permut",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/permut.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "combinatorics_udf"
+    },
+    {
+      "name": "Round",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/round.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Sign",
+      "category": "General numeric functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/sign.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "GeoAggrGeometry",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoAggrGeometry.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoBoundingBox",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoBoundingBox.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoCountVertex",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoCountVertex.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoGetBoundingBox",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetBoundingBox.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoGetPolygonCenter",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetPolygonCenter.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoInvProjectGeometry",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoInvProjectGeometry.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoMakePoint",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoMakePoint.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoProject",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProject.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoProjectGeometry",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProjectGeometry.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GeoReduceGeometry",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoReduceGeometry.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MakeGeoLine",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoLine.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MakeGeoPoint",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPoint.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MakeGeoPolygon",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPolygon.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MakeGeoRegion",
+      "category": "Geospatial functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoRegion.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Exists",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Exists.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FieldIndex",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldindex.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FieldValue",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvalue.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FieldValueCount",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvaluecount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LookUp",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/LookUp.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NoOfRows",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/noofrows.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Peek",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Peek.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Previous",
+      "category": "Inter-record functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Previous.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Date#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/date_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Interval#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/interval_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Money#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/money_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Num#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/num_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Text",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/Text.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Time#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/time_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Timestamp#",
+      "category": "Interpretation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/timestamp_hash.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IsNum",
+      "category": "Logical functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm#IsNum?id=1414",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ApplyMap",
+      "category": "Mapping functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/ApplyMap.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MapSubstring",
+      "category": "Mapping functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/MapSubstring.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "e",
+      "category": "Mathematical functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#e?id=1419",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "EmptyIsNull",
+      "category": "NULL functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/EmptyIsNull.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "IsNull",
+      "category": "NULL functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/IsNull.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "NULL",
+      "category": "NULL functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/Null.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "RangeAvg",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeavg.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeCorrel",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecorrel.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeCount",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeFractile",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangefractile.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeIRR",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeIRR.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeKurtosis",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangekurtosis.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMax",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemax.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMaxString",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemaxstring.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMin",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemin.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMinString",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeminstring.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMissingCount",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemissingcount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeMode",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemode.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeNPV",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeNPV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeNullCount",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenullcount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeNumericCount",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenumericcount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeOnly",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeonly.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeSkew",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeskew.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeStdev",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangestdev.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeSum",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangesum.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeTextCount",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangetextcount.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeXIRR",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXIRR.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "RangeXNPV",
+      "category": "Range functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXNPV.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BetaDensity",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaDensity.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BetaDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BetaInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BinomDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BinomFrequency",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomFrequency.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "BinomInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ChiDensity",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiDensity.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ChiDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ChiInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FDensity",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FDensity.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GammaDensity",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaDensity.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GammaDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GammaInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NormDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/NormDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NormInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/NormInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "PoissonDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "PoissonFrequency",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonFrequency.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "PoissonInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TDensity",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TDensity.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TDist",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TDist.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TInv",
+      "category": "Statistical distribution functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TInv.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Concat",
+      "category": "String aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/concat.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FirstValue",
+      "category": "String aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/FirstValue.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "LastValue",
+      "category": "String aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/LastValue.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MaxString",
+      "category": "String aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MaxString.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "MinString",
+      "category": "String aggregation functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MinString.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Capitalize",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Capitalize.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Chr",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Chr.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "CountRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/CountRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Evaluate",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Evaluate.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ExtractRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ExtractRegExGroup",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegExGroup.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FindOneOf",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/FindOneOf.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Hash128",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash128.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "qlik_hash_udf"
+    },
+    {
+      "name": "Hash160",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash160.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "qlik_hash_udf"
+    },
+    {
+      "name": "Hash256",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash256.htm",
+      "status": "blocked_exact_dependency",
+      "blocker": "qlik_hash_udf"
+    },
+    {
+      "name": "Index",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Index.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "IndexRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IndexRegExGroup",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegExGroup.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IsJson",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsJson.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "IsRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "JsonArray",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonArray.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "JsonGet",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonGet.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "JsonObject",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonObject.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "JsonSet",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSet.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "JsonSetEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSetEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "KeepChar",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/KeepChar.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Left",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Left.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Len",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Len.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "LevenshteinDist",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LevenshteinDist.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Lower",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Lower.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "LTrim",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LTrim.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "MatchRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/MatchRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Mid",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Mid.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Ord",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Ord.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "PurgeChar",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/PurgeChar.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Repeat",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Repeat.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Replace",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Replace.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "ReplaceRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ReplaceRegExGroup",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegExGroup.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Right",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Right.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "RTrim",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/RTrim.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "SubField",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubField.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "SubFieldRegEx",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubFieldRegEx.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "SubStringCount",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubStringCount.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "TextBetween",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/TextBetween.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Trim",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Trim.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "Upper",
+      "category": "String functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Upper.htm",
+      "status": "implemented_unverified",
+      "blocker": null
+    },
+    {
+      "name": "EngineVersion",
+      "category": "System functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/EngineVersion.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GetSysAttr",
+      "category": "System functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetSysAttr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "GetUserAttr",
+      "category": "System functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetUserAttr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "IsPartialReload",
+      "category": "System functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/IsPartialReload.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ProductVersion",
+      "category": "System functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/ProductVersion.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_conf",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_df",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_dif",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_lower",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_sig",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_sterr",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_t",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_t.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1_upper",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_conf",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_df",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_dif",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_lower",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_sig",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_sterr",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_t",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_t.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest1w_upper",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_conf",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_df",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_dif",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_lower",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_sig",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_sterr",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_t",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_t.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTest_upper",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_conf",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_df",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_df.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_dif",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_lower",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_sig",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_sterr",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_t",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_t.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "TTestw_upper",
+      "category": "T-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FieldName",
+      "category": "Table functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldName.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "FieldNumber",
+      "category": "Table functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldNumber.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NoOfFields",
+      "category": "Table functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfFields.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "NoOfRows",
+      "category": "Table functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfRows.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "Window",
+      "category": "Window functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/Window.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "WRank",
+      "category": "Window functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/WRank.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_conf",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_dif",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_lower",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_sig",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_sterr",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_upper",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTest_z",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_z.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_conf",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_conf.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_dif",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_dif.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_lower",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_lower.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_sig",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sig.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_sterr",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sterr.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_upper",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_upper.htm",
+      "status": "tracked",
+      "blocker": null
+    },
+    {
+      "name": "ZTestw_z",
+      "category": "Z-test functions",
+      "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_z.htm",
+      "status": "tracked",
+      "blocker": null
+    }
+  ]
+}

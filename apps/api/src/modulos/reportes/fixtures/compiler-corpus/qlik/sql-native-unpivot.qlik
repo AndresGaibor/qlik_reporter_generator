@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT * FROM `p.d.ventas_wide`
+UNPIVOT INCLUDE NULLS (venta FOR trimestre IN (q1, q2, q3, q4));

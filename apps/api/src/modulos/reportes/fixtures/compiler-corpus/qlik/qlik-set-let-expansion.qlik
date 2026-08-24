@@ -1,0 +1,4 @@
+SET vInicio='2026-01-01'; LET vAnio=Year(Today());
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT * FROM `p.d.ventas` WHERE fecha >= DATE '$(vInicio)';

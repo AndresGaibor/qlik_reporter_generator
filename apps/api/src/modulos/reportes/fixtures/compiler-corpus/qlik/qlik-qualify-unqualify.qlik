@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+QUALIFY *; UNQUALIFY id;
+[A]: LOAD id, nombre; SQL SELECT id, nombre FROM `p.d.a`;
+[B]: LOAD id, nombre; SQL SELECT id, nombre FROM `p.d.b`;

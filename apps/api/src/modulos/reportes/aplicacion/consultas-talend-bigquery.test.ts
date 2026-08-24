@@ -11,6 +11,20 @@ const entrada = {
 };
 
 describe("construirConsultasTalendBigQuery", () => {
+  it("genera el SQL principal como un único EXPORT DATA gzip delimitado por pipe", () => {
+    const consultas = construirConsultasTalendBigQuery(entrada);
+
+    expect(consultas.sql.match(/EXPORT DATA/gi)?.length).toBe(1);
+    expect(consultas.sql).toContain("parte-*.csv.gz");
+    expect(consultas.sql).toContain("compression = 'GZIP'");
+    expect(consultas.sql).toContain("field_delimiter = '|'");
+    expect(consultas.sql).toContain("Fecha = DATE '2026-06-01'");
+    expect(consultas.sql).not.toContain("GENERATE_ARRAY");
+    expect(consultas.sql).not.toContain("ROW_NUMBER");
+    expect(consultas.sql).not.toContain("__PART_PADDED__");
+    expect(consultas.sql).not.toContain("__finalizado__");
+  });
+
   it("genera las dos consultas directas que espera el Job actual", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
 

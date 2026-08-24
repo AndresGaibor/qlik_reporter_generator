@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD AutoNumber(cliente & '|' & producto) AS surrogate_key, cliente, producto;
+SQL SELECT cliente, producto FROM `p.d.ventas`;

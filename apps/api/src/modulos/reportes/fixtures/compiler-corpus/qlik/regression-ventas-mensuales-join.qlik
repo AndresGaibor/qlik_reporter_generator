@@ -1,0 +1,27 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT
+  'Ventas' AS Tipo,
+  '14.Ventas' AS `Transacción`,
+  EXTRACT(YEAR FROM Fecha) AS `Año`,
+  F.NOM_MES AS Mes,
+  Bodega,
+  `Sub bodega` AS `Sub_bodega`,
+  `División`,
+  `Código de departamento` AS `Código_de_departamento`,
+  Departamento,
+  `Sub Clasificación` AS `Sub_Clasificación`,
+  `Origen Compra` AS `Origen_Compra`,
+  Proveedor,
+  `Gerencia Comercial` AS `Gerencia_Comercial`,
+  Comprador,
+  `Zona Smx Unidad Operativa` AS Zona,
+  Formato,
+  `Cod Ref` AS `Cod_Ref`,
+  SUM(Cantidad) AS Cantidad,
+  SUM(`Costo Neto`) AS `Costo de Venta`,
+  SUM(`Venta Neta USD`) AS `Neto Venta`
+FROM `EDWH_REP.VENTAS_MENSUALES_A`
+INNER JOIN `EDWH.DIM_FECHA` AS F ON Fecha = NOM_FEC
+WHERE DATE_TRUNC(Fecha, MONTH) = DATE '2026-07-01'
+GROUP BY ALL;

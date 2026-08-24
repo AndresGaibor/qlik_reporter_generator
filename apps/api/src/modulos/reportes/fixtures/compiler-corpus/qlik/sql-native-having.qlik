@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT categoria, SUM(monto) AS total FROM `p.d.ventas`
+GROUP BY categoria HAVING SUM(monto) > 100;

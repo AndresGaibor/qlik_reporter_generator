@@ -1,0 +1,7 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD
+  id,
+  JsonGet(json_text, '/customer/email') AS email,
+  JsonGet(json_text, '/items/0') AS primer_item,
+  JsonSet(json_text, '/items/price', '123') AS actualizado;
+SQL SELECT id, json_text FROM `p.d.json_data`;

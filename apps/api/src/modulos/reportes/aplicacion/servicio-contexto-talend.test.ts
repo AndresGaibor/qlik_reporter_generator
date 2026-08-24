@@ -6,6 +6,7 @@ import {
 } from "./servicio-contexto-talend.js";
 
 const consultas: ConsultasTalendBigQuery = {
+  sql: 'EXPORT DATA OPTIONS(uri="gs://b/parte-*.csv.gz", compression="GZIP") AS SELECT 1',
   bqNumberCsv: "SELECT 0 AS export_part",
   bqExportData:
     "EXPORT DATA OPTIONS(uri='gs://b/parte-__PART_PADDED__-*.csv.gz') AS SELECT 1",
@@ -32,6 +33,42 @@ function valorVariable(
   return setValue?.value;
 }
 
+function workspacePlantillaSqlActual(): Record<string, unknown> {
+  return {
+    blocks: [
+      {
+        name: "executeTask",
+        type: "EndpointBlock",
+        inputs: [
+          {
+            id: "context",
+            mode: "keyValue",
+            value: [
+              { key: "jobid", value: "{ $.jobid }" },
+              { key: "projectid", value: "{ $.projectid }" },
+              { key: "credenciales", value: "{ $.Credenciales }" },
+              { key: "sql", value: "{ $.sql }" },
+            ],
+          },
+        ],
+      },
+      ...["jobid", "projectid", "Credenciales", "sql"].map((name) => ({
+        name,
+        type: "VariableBlock",
+        operations: [
+          {
+            id: "set_value",
+            value:
+              name === "Credenciales"
+                ? "/etc/credentials/gsc.json"
+                : `ANTERIOR_${name}`,
+          },
+        ],
+      })),
+    ],
+  };
+}
+
 async function cargarFixture() {
   const fixture = new URL(
     "../fixtures/automate-talend-workspace.sanitized.json",
@@ -41,6 +78,20 @@ async function cargarFixture() {
 }
 
 describe("inyectarContextoTalend", () => {
+  it("acepta la plantilla actual con una sola variable sql y solo reemplaza su SQL", () => {
+    const workspace = workspacePlantillaSqlActual();
+
+    expect(diagnosticarContratoTalend(workspace)).toEqual([]);
+
+    const nuevo = inyectarContextoTalend(workspace, consultas);
+    expect(valorVariable(nuevo, "sql")).toBe(consultas.sql);
+    expect(valorVariable(nuevo, "jobid")).toBe("ANTERIOR_jobid");
+    expect(valorVariable(nuevo, "projectid")).toBe("ANTERIOR_projectid");
+    expect(valorVariable(nuevo, "Credenciales")).toBe(
+      "/etc/credentials/gsc.json",
+    );
+  });
+
   it("actualiza únicamente los dos VariableBlocks que espera el Job", async () => {
     const workspace = await cargarFixture();
     const nuevo = inyectarContextoTalend(workspace, consultas);

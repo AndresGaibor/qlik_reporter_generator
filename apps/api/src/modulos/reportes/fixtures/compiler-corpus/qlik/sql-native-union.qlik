@@ -1,0 +1,5 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT id, 'A' AS origen FROM `p.d.a`
+UNION ALL
+SELECT id, 'B' AS origen FROM `p.d.b`;

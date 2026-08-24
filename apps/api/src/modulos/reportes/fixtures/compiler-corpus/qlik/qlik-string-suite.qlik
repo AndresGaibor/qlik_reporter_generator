@@ -1,0 +1,15 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD
+  id,
+  Upper(Trim(texto)) AS upper_texto,
+  Left(texto, 3) AS prefijo,
+  Mid(texto, 2, 4) AS medio,
+  Len(texto) AS longitud,
+  Index(texto, 'ab', 2) AS segunda_pos,
+  FindOneOf(texto, 'xyz', 1) AS primer_char,
+  Capitalize(texto) AS capitalizado,
+  LevenshteinDist(texto, texto2) AS distancia,
+  IsJson(json_text) AS es_json,
+  TextBetween(texto, '<', '>', 1) AS entre,
+  SubStringCount(texto, 'ab') AS repeticiones;
+SQL SELECT id, texto, texto2, json_text FROM `p.d.a`;

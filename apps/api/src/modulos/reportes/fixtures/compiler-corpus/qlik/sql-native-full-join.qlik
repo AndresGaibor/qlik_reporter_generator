@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT a.id, a.valor, b.nombre FROM `p.d.a` AS a FULL JOIN `p.d.b` AS b ON a.id = b.id;
