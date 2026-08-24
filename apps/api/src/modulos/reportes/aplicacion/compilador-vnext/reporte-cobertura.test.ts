@@ -6,8 +6,14 @@ describe("reporte de cobertura de funciones vNext", () => {
   it("cuadra exactamente con el inventario contractual", () => {
     const report = generarReporteCoberturaFunciones();
     expect(report.total).toBe(manifest.counts.qlik_function);
-    expect(report.runtime.implemented + report.runtime.tracked).toBe(report.total);
-    expect(report.certification.unverified + report.certification.certified + report.certification.non_equivalent).toBe(report.total);
+    expect(report.runtime.implemented + report.runtime.tracked).toBe(
+      report.total,
+    );
+    expect(
+      report.certification.unverified +
+        report.certification.certified +
+        report.certification.non_equivalent,
+    ).toBe(report.total);
     expect(report.functions).toHaveLength(report.total);
   });
 
@@ -16,10 +22,18 @@ describe("reporte de cobertura de funciones vNext", () => {
       generarReporteCoberturaFunciones().functions.map((entry) => entry.name),
     );
     for (const name of [
-      "CountRegExI", "ExtractRegExI", "ExtractRegExGroupI",
-      "IndexRegExI", "IndexRegExGroupI", "IsRegExI", "MatchRegExI",
-      "ReplaceRegExI", "ReplaceRegExGroupI", "SubFieldRegExI",
-    ]) expect(names.has(name)).toBe(true);
+      "CountRegExI",
+      "ExtractRegExI",
+      "ExtractRegExGroupI",
+      "IndexRegExI",
+      "IndexRegExGroupI",
+      "IsRegExI",
+      "MatchRegExI",
+      "ReplaceRegExI",
+      "ReplaceRegExGroupI",
+      "SubFieldRegExI",
+    ])
+      expect(names.has(name)).toBe(true);
   });
 
   it("no confunde implementación con certificación", () => {

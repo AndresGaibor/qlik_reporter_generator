@@ -2,8 +2,8 @@ import { describe, expect, it } from "bun:test";
 import manifest from "../../fixtures/compiler-corpus/coverage-manifest.json";
 import vectors from "../../fixtures/compiler-corpus/function-vectors.json";
 import {
-  obtenerFuncionQlik,
   REGISTRO_FUNCIONES_QLIK,
+  obtenerFuncionQlik,
 } from "./registro-funciones.js";
 
 const official = manifest.entries.filter(
@@ -35,7 +35,9 @@ describe("registro declarativo de funciones Qlik", () => {
       ]),
     );
     for (const entry of REGISTRO_FUNCIONES_QLIK) {
-      const expected = byKey.get(`${entry.name.toLowerCase()}::${entry.category}`);
+      const expected = byKey.get(
+        `${entry.name.toLowerCase()}::${entry.category}`,
+      );
       expect(expected).toBeDefined();
       expect(entry.requiredVectors).toEqual(expected ?? []);
     }

@@ -1,6 +1,6 @@
 import {
-  REGISTRO_FUNCIONES_QLIK,
   type CertificationStatus,
+  REGISTRO_FUNCIONES_QLIK,
   type RuntimeStatus,
 } from "./registro-funciones.js";
 

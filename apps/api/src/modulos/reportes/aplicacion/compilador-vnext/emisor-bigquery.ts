@@ -9,10 +9,13 @@ import {
 import type { StatefulLoadVNext } from "./inter-record.js";
 import type {
   LookupApplyMapVNext,
+  LookupMapSubstringVNext,
   PlanCompilacionVNext,
   RelacionVNext,
 } from "./ir.js";
 import { nombreCampoDual } from "./mapping-applymap.js";
+import type { BindingMapSubstringQlik } from "./mapping-mapsubstring.js";
+import { construirCatalogoMetadata } from "./metadata.js";
 import { ErrorCompilacionVNext } from "./modelo.js";
 import type { CampoLoadVNext } from "./parser-carga.js";
 
@@ -87,6 +90,7 @@ function emitirRelacion(
         relation,
         input,
         environment,
+        construirMapSubstringBindings(relation, byId, emit),
       );
       const where = absorbed
         ? `\nWHERE ${qlik(absorbed.condition, "condition", projectEnvironment)}`
@@ -109,11 +113,16 @@ function emitirRelacion(
       const input = byId.get(relation.input);
       const absorbed = input?.op === "filter" ? input : undefined;
       const sourceId = absorbed?.input ?? relation.input;
+      const aggregateEnvironment = entornoAgregacion(
+        relation,
+        input,
+        environment,
+      );
       const where = absorbed
-        ? `\nWHERE ${qlik(absorbed.condition, "condition", environment)}`
+        ? `\nWHERE ${qlik(absorbed.condition, "condition", aggregateEnvironment)}`
         : "";
       const group = relation.groupBy
-        .map((expression) => qlik(expression, "value", environment))
+        .map((expression) => qlik(expression, "value", aggregateEnvironment))
         .join(", ");
       const from = emitirFuenteParaProyeccion(
         sourceId,
@@ -124,7 +133,7 @@ function emitirRelacion(
       );
       return `SELECT\n  ${emitFields(
         relation.projections,
-        environment,
+        aggregateEnvironment,
         relation,
         includeInternal,
       )}\nFROM ${from}${where}\nGROUP BY ${group}`;
@@ -544,6 +553,7 @@ function emitirFuenteParaProyeccion(
   relation: {
     projections: CampoLoadVNext[];
     mappingLookups?: LookupApplyMapVNext[];
+    mapSubstringLookups?: LookupMapSubstringVNext[];
   },
   byId: Map<string, RelacionVNext>,
   emit: (id: string, includeInternal?: boolean) => string,
@@ -815,25 +825,73 @@ function entornoProyeccion(
   relation: Extract<RelacionVNext, { op: "project" }>,
   input: RelacionVNext | undefined,
   base: EntornoExpresionQlik,
+  mapSubstringBindings: ReadonlyMap<
+    string,
+    BindingMapSubstringQlik
+  > = new Map(),
 ): EntornoExpresionQlik {
   const lookups = relation.mappingLookups ?? [];
   const bindings = new Map(
     lookups.map((lookup) => [lookup.callKey, toBinding(lookup)]),
   );
   const needsQualifier =
-    lookups.length > 0 || Object.keys(input?.dualComponents ?? {}).length > 0;
+    lookups.length > 0 ||
+    (relation.mapSubstringLookups?.length ?? 0) > 0 ||
+    Object.keys(input?.dualComponents ?? {}).length > 0;
   return {
     ...base,
     ...(needsQualifier ? { identifierQualifier: "src" } : {}),
     ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
     applyMapBindings: bindings,
+    mapSubstringBindings,
+  };
+}
+
+function construirMapSubstringBindings(
+  relation: Extract<RelacionVNext, { op: "project" }>,
+  byId: Map<string, RelacionVNext>,
+  emit: (id: string, includeInternal?: boolean) => string,
+): ReadonlyMap<string, BindingMapSubstringQlik> {
+  const bindings = new Map<string, BindingMapSubstringQlik>();
+  for (const lookup of relation.mapSubstringLookups ?? []) {
+    if (!byId.has(lookup.relationId))
+      fail(
+        "BIGQUERY_MAPPING_RELATION_MISSING",
+        `No existe la relación del mapping ${lookup.mappingName}`,
+      );
+    bindings.set(lookup.callKey, {
+      callKey: lookup.callKey,
+      alias: lookup.alias,
+      keyField: lookup.keyField,
+      valueField: lookup.valueField,
+      sourceSql: emit(lookup.relationId, true),
+    });
+  }
+  return bindings;
+}
+
+function entornoAgregacion(
+  relation: Extract<RelacionVNext, { op: "aggregate" }>,
+  input: RelacionVNext | undefined,
+  base: EntornoExpresionQlik,
+): EntornoExpresionQlik {
+  const order = (relation.orderBy ?? relation.aggregationOrderBy)?.map(
+    (item) =>
+      `${qlik(item.expression, "value", base)} ${item.direction.toUpperCase()}`,
+  );
+  return {
+    ...base,
+    ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
+    ...(order && order.length > 0 ? { aggregationOrderBy: order } : {}),
   };
 }
 
 function extraerEntornoExpresion(
   plan: PlanCompilacionVNext,
 ): EntornoExpresionQlik {
-  const environment: EntornoExpresionQlik = {};
+  const environment: EntornoExpresionQlik = {
+    tableMetadata: construirCatalogoMetadata(plan),
+  };
   for (const effect of plan.effects) {
     if (effect.kind !== "define_variable") continue;
     const match = effect.body.match(

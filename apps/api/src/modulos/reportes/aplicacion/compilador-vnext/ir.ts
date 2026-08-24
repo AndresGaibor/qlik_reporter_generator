@@ -24,6 +24,16 @@ export interface LookupApplyMapVNext {
   valueIsDual: boolean;
 }
 
+export interface LookupMapSubstringVNext {
+  callKey: string;
+  mappingName: string;
+  relationId: string;
+  keyField: string;
+  valueField: string;
+  sourceExpression: ExprQlik;
+  alias: string;
+}
+
 interface RelationBase {
   id: string;
   fields: string[];
@@ -60,12 +70,14 @@ export type RelacionVNext =
       distinct?: boolean;
       dualExpressions?: Record<string, string>;
       mappingLookups?: LookupApplyMapVNext[];
+      mapSubstringLookups?: LookupMapSubstringVNext[];
     })
   | (RelationBase & {
       op: "aggregate";
       input: string;
       projections: CampoLoadVNext[];
       groupBy: string[];
+      aggregationOrderBy?: OrdenLoadVNext[];
     })
   | (RelationBase & { op: "sort"; input: string; orderBy: OrdenLoadVNext[] })
   | (RelationBase & { op: "limit"; input: string; limitExpression: string })

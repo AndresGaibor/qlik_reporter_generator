@@ -41,6 +41,19 @@ describe("fixtures de funciones Qlik vNext", () => {
     expect(result.sql).toContain("SELECT AVG(value) FROM UNNEST([");
   });
 
+  it("compila el lowering exacto de agregados avanzados y finanzas", async () => {
+    const result = await compile(
+      "qlik-advanced-aggregate-financial-suite.qlik",
+    );
+    expect(result.sql).toContain("CORR(");
+    expect(result.sql).toContain("STDDEV_SAMP(");
+    expect(result.sql).toContain("ROW_NUMBER() OVER (ORDER BY");
+    expect(result.sql).toContain("COUNT(*) = 1");
+    expect(result.sql).toContain("WITH RECURSIVE");
+    expect(result.sql).toContain("DATE_DIFF(");
+    expect(result.sql).not.toContain("APPROX_");
+  });
+
   it("compila matemáticas y trigonometría como GoogleSQL nativo", async () => {
     const result = await compile("qlik-math-trig-suite.qlik");
     expect(result.sql).toContain("EXP(");

@@ -11,8 +11,15 @@ function compile(expression: string): string {
   return emitirExpresionBigQuery(parsearExpresionQlik(expression));
 }
 
-function compileWithEnv(expression: string, environment: EntornoExpresionQlik): string {
-  return emitirExpresionBigQuery(parsearExpresionQlik(expression), "value", environment);
+function compileWithEnv(
+  expression: string,
+  environment: EntornoExpresionQlik,
+): string {
+  return emitirExpresionBigQuery(
+    parsearExpresionQlik(expression),
+    "value",
+    environment,
+  );
 }
 
 function compileCondition(expression: string): string {
@@ -33,7 +40,11 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(ast).toMatchObject({
       kind: "binary",
       operator: "or",
-      left: { kind: "unary", operator: "not", operand: { kind: "binary", operator: "=" } },
+      left: {
+        kind: "unary",
+        operator: "not",
+        operand: { kind: "binary", operator: "=" },
+      },
       right: { kind: "binary", operator: "and" },
     });
     const sql = compileCondition("not [a] = 1 or [b] <> 2 and [c] >= 3");
@@ -129,16 +140,24 @@ describe("parser de expresiones Qlik vNext", () => {
       "SUBSTR(CAST(`texto` AS STRING), CAST(3 AS INT64), CAST(2 AS INT64))",
     );
     expect(compile("Chr(65)")).toBe("CHR(CAST(65 AS INT64))");
-    expect(compile("Ord([texto])")).toContain("TO_CODE_POINTS(CAST(`texto` AS STRING))");
+    expect(compile("Ord([texto])")).toContain(
+      "TO_CODE_POINTS(CAST(`texto` AS STRING))",
+    );
     expect(compile("Repeat([texto], 3)")).toBe(
       "REPEAT(CAST(`texto` AS STRING), CAST(3 AS INT64))",
     );
   });
 
   it("implementa KeepChar y PurgeChar por code point Unicode", () => {
-    expect(compile("KeepChar([texto], 'ABC')")).toContain("CODE_POINTS_TO_STRING");
-    expect(compile("KeepChar([texto], 'ABC')")).toContain("IN UNNEST(TO_CODE_POINTS");
-    expect(compile("PurgeChar([texto], 'ABC')")).toContain("NOT IN UNNEST(TO_CODE_POINTS");
+    expect(compile("KeepChar([texto], 'ABC')")).toContain(
+      "CODE_POINTS_TO_STRING",
+    );
+    expect(compile("KeepChar([texto], 'ABC')")).toContain(
+      "IN UNNEST(TO_CODE_POINTS",
+    );
+    expect(compile("PurgeChar([texto], 'ABC')")).toContain(
+      "NOT IN UNNEST(TO_CODE_POINTS",
+    );
   });
 
   it("implementa Index con INSTR, N-ésima ocurrencia y búsqueda inversa", () => {
@@ -161,16 +180,18 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("implementa Capitalize y LevenshteinDist con funciones nativas", () => {
-    expect(compile("Capitalize([texto])")).toBe("INITCAP(CAST(`texto` AS STRING))");
+    expect(compile("Capitalize([texto])")).toBe(
+      "INITCAP(CAST(`texto` AS STRING))",
+    );
     expect(compile("LevenshteinDist([a], [b])")).toBe(
       "EDIT_DISTANCE(CAST(`a` AS STRING), CAST(`b` AS STRING))",
     );
   });
 
   it("implementa IsJson con validación de tipo y booleano Qlik -1/0", () => {
-    const any = compile("IsJson([texto])");
-    expect(any).toContain("SAFE.PARSE_JSON");
-    expect(any).toContain("THEN 0 ELSE -1 END");
+    const result = compile("IsJson([texto])");
+    expect(result).toContain("SAFE.PARSE_JSON");
+    expect(result).toContain("THEN 0 ELSE -1 END");
     const object = compile("IsJson([texto], 'object')");
     expect(object).toContain("JSON_TYPE(");
     expect(object).toContain("= 'object'");
@@ -178,7 +199,9 @@ describe("parser de expresiones Qlik vNext", () => {
 
   it("JsonGet usa JSON Pointer literal con SQL limpio para propiedades", () => {
     const sql = compile("JsonGet([json], '/customer/email')");
-    expect(sql).toContain("JSON_QUERY(SAFE.PARSE_JSON(CAST(`json` AS STRING)), '$.\"customer\".\"email\"')");
+    expect(sql).toContain(
+      'JSON_QUERY(SAFE.PARSE_JSON(CAST(`json` AS STRING)), \'$."customer"."email"\')',
+    );
     expect(sql).toContain("LAX_STRING(");
     expect(sql).not.toContain("JSON_TYPE(SAFE.PARSE_JSON");
   });
@@ -192,15 +215,12 @@ describe("parser de expresiones Qlik vNext", () => {
 
   it("JsonGet decodifica RFC 6901 ~0/~1 y rechaza punteros dinámicos", () => {
     const sql = compile("JsonGet([json], '/a~1b/~0x')");
-    expect(sql).toContain('$.\"a/b\".\"~x\"');
+    expect(sql).toContain('$."a/b"."~x"');
     expectCode(
       () => compile("JsonGet([json], [ruta])"),
       "JSON_POINTER_DYNAMIC_REQUIRES_UDF",
     );
-    expectCode(
-      () => compile("JsonGet([json], 'a/b')"),
-      "JSON_POINTER_INVALID",
-    );
+    expectCode(() => compile("JsonGet([json], 'a/b')"), "JSON_POINTER_INVALID");
   });
 
   it("JsonGet usa el componente numérico dual en aritmética", () => {
@@ -219,7 +239,7 @@ describe("parser de expresiones Qlik vNext", () => {
 
   it("JsonSet soporta rutas object-only y valida padres incompatibles", () => {
     const sql = compile("JsonSet([json], '/items/price', '123')");
-    expect(sql).toContain("'$.\"items\".\"price\"'");
+    expect(sql).toContain('\'$."items"."price"\'');
     expect(sql).toContain("JSON_QUERY(");
     expect(sql).toContain("JSON_TYPE(");
   });
@@ -338,18 +358,22 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("extrae un grupo regex compatible sin UDF", () => {
-    const first = compile("ExtractRegExGroup([texto], '([a-z]+)([0-9]+)', 1, 2)");
+    const first = compile(
+      "ExtractRegExGroup([texto], '([a-z]+)([0-9]+)', 1, 2)",
+    );
     expect(first).toContain("REGEXP_EXTRACT(");
     expect(first).toContain("([a-z]+)(?:[0-9]+)");
     expect(first).toContain(", 1, CAST(TRUNC(2) AS INT64))");
-    const second = compile("ExtractRegExGroupI([texto], '([a-z]+)([0-9]+)', 2, 1)");
+    const second = compile(
+      "ExtractRegExGroupI([texto], '([a-z]+)([0-9]+)', 2, 1)",
+    );
     expect(second).toContain("(?i:(?:[a-z]+)([0-9]+))");
   });
 
   it("usa IndexRegExGroup nativo solo para group 0 y reserva grupos internos a UDF exacta", () => {
-    expect(compile("IndexRegExGroup([texto], '([a-z]+)([0-9]+)', 0, 2)")).toContain(
-      "REGEXP_INSTR(",
-    );
+    expect(
+      compile("IndexRegExGroup([texto], '([a-z]+)([0-9]+)', 0, 2)"),
+    ).toContain("REGEXP_INSTR(");
     expectCode(
       () => compile("IndexRegExGroup([texto], '([a-z]+)([0-9]+)', 2, 1)"),
       "REGEX_GROUP_POSITION_REQUIRES_UDF",
@@ -364,9 +388,9 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("ReplaceRegExGroup usa nativo para group 0 y UDF exacta para grupos internos", () => {
-    expect(compile("ReplaceRegExGroup([texto], '([a-z]+)([0-9]+)', 'x', 0)")).toContain(
-      "REGEXP_REPLACE(",
-    );
+    expect(
+      compile("ReplaceRegExGroup([texto], '([a-z]+)([0-9]+)', 'x', 0)"),
+    ).toContain("REGEXP_REPLACE(");
     expectCode(
       () => compile("ReplaceRegExGroup([texto], '([a-z]+)([0-9]+)', 'x', 2)"),
       "REGEX_GROUP_REPLACEMENT_REQUIRES_UDF",
@@ -374,8 +398,14 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("IsRegEx se clasifica como validación Perl/Qlik y no como validación RE2", () => {
-    expectCode(() => compile("IsRegEx([patron])"), "REGEX_VALIDATION_REQUIRES_UDF");
-    expectCode(() => compile("IsRegExI([patron])"), "REGEX_VALIDATION_REQUIRES_UDF");
+    expectCode(
+      () => compile("IsRegEx([patron])"),
+      "REGEX_VALIDATION_REQUIRES_UDF",
+    );
+    expectCode(
+      () => compile("IsRegExI([patron])"),
+      "REGEX_VALIDATION_REQUIRES_UDF",
+    );
   });
 
   it("clasifica SubFieldRegEx como UDF/relacional porque BigQuery no tiene regex split exacto", () => {
@@ -390,9 +420,13 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("implementa SubField positivo, negativo y NULL según Qlik", () => {
-    expect(compile("SubField([texto], '|', 2)")).toContain("SAFE_ORDINAL(CAST(2 AS INT64))");
+    expect(compile("SubField([texto], '|', 2)")).toContain(
+      "SAFE_ORDINAL(CAST(2 AS INT64))",
+    );
     expect(compile("SubField([texto], '|', -1)")).toContain("ARRAY_LENGTH(");
-    expect(compile("SubField([texto], '|', 1)")).toContain("COALESCE(CAST(`texto` AS STRING), '')");
+    expect(compile("SubField([texto], '|', 1)")).toContain(
+      "COALESCE(CAST(`texto` AS STRING), '')",
+    );
     expectCode(
       () => compile("SubField([texto], '|')"),
       "SUBFIELD_EXPANDING_REQUIRES_RELATIONAL_LOWERING",
@@ -412,18 +446,35 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("usa el componente numérico de Date y Num en aritmética", () => {
-    const dateMath = compileWithEnv("Date([fecha]) + 1", { dateFormat: "YYYY-MM-DD" });
+    const dateMath = compileWithEnv("Date([fecha]) + 1", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(dateMath).not.toContain("FORMAT_DATE");
     expect(dateMath).toContain("TIMESTAMP_DIFF(");
     const numMath = compileWithEnv("Num([monto], '#,##0.00') * 2", {});
     expect(numMath).not.toContain("STRING FORMAT");
-    expect(numMath).toContain("SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)");
+    expect(numMath).toContain(
+      "SAFE_CAST(CAST(`monto` AS STRING) AS BIGNUMERIC)",
+    );
   });
 
   it("usa el componente numérico de Month pero el texto dual al concatenar", () => {
     const environment = {
       dateFormat: "YYYY-MM-DD",
-      monthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      monthNames: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
     } satisfies EntornoExpresionQlik;
     const monthMath = compileWithEnv("Month([fecha]) * 1", environment);
     expect(monthMath).toContain("EXTRACT(MONTH FROM");
@@ -439,14 +490,23 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(compile("Minute([fecha])")).toContain("EXTRACT(MINUTE FROM");
     expect(compile("Second([fecha])")).toContain("EXTRACT(SECOND FROM");
     const iso = { firstWeekDay: 0, brokenWeeks: 0, referenceDay: 4 };
-    expect(compileWithEnv("Week([fecha])", iso)).toContain("EXTRACT(ISOWEEK FROM");
-    expect(compileWithEnv("WeekYear([fecha])", iso)).toContain("EXTRACT(ISOYEAR FROM");
+    expect(compileWithEnv("Week([fecha])", iso)).toContain(
+      "EXTRACT(ISOWEEK FROM",
+    );
+    expect(compileWithEnv("WeekYear([fecha])", iso)).toContain(
+      "EXTRACT(ISOYEAR FROM",
+    );
   });
 
   it("no confunde calendarios Week no-ISO con ISO", () => {
     expectCode(() => compile("Week([fecha])"), "WEEK_ENV_REQUIRED");
     expectCode(
-      () => compileWithEnv("Week([fecha])", { firstWeekDay: 6, brokenWeeks: 1, referenceDay: 1 }),
+      () =>
+        compileWithEnv("Week([fecha])", {
+          firstWeekDay: 6,
+          brokenWeeks: 1,
+          referenceDay: 1,
+        }),
       "WEEK_CONFIGURATION_REQUIRES_CALENDAR_LOWERING",
     );
   });
@@ -459,7 +519,9 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("implementa MakeDate, AddYears y AddMonths como duales", () => {
-    const environment = { dateFormat: "YYYY-MM-DD" } satisfies EntornoExpresionQlik;
+    const environment = {
+      dateFormat: "YYYY-MM-DD",
+    } satisfies EntornoExpresionQlik;
     expect(compileWithEnv("MakeDate(2024, 2, 29)", environment)).toContain(
       "FORMAT_DATE('%Y-%m-%d'",
     );
@@ -475,14 +537,18 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("usa el componente serial de duales de fecha nuevos en aritmética", () => {
-    const environment = { dateFormat: "YYYY-MM-DD" } satisfies EntornoExpresionQlik;
+    const environment = {
+      dateFormat: "YYYY-MM-DD",
+    } satisfies EntornoExpresionQlik;
     const sql = compileWithEnv("AddYears([fecha], 1) + 1", environment);
     expect(sql).toContain("DATE_DIFF(");
     expect(sql).not.toContain("FORMAT_DATE");
   });
 
   it("implementa MakeTime como dual con defaults mm/ss y TimeFormat", () => {
-    const environment = { timeFormat: "h:mm:ss" } satisfies EntornoExpresionQlik;
+    const environment = {
+      timeFormat: "h:mm:ss",
+    } satisfies EntornoExpresionQlik;
     expect(compileWithEnv("MakeTime(9)", environment)).toContain(
       "FORMAT('%d:%02d:%02d'",
     );
@@ -522,10 +588,27 @@ describe("parser de expresiones Qlik vNext", () => {
   it("preserva el valor visible de Month y MonthStart con entorno explícito", () => {
     const environment = {
       dateFormat: "YYYY-MM-DD",
-      monthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      monthNames: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
     } satisfies EntornoExpresionQlik;
-    expect(compileWithEnv("Month([fecha])", environment)).toContain("CASE EXTRACT(MONTH FROM");
-    expect(compileWithEnv("MonthStart([fecha])", environment)).toContain("DATE_TRUNC(");
+    expect(compileWithEnv("Month([fecha])", environment)).toContain(
+      "CASE EXTRACT(MONTH FROM",
+    );
+    expect(compileWithEnv("MonthStart([fecha])", environment)).toContain(
+      "DATE_TRUNC(",
+    );
   });
 
   it("implementa Num para los patrones de formato certificados inicialmente", () => {
@@ -557,51 +640,59 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("implementa límites de mes/trimestre/año como duales sin CTEs artificiales", () => {
-    const monthEnd = compileWithEnv("MonthEnd([fecha], -1)", { dateFormat: "YYYY-MM-DD" });
+    const monthEnd = compileWithEnv("MonthEnd([fecha], -1)", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(monthEnd).toContain("TIMESTAMP_SUB(");
     expect(monthEnd).toContain("INTERVAL 1 MILLISECOND");
     expect(monthEnd).not.toContain("WITH ");
 
-    const quarterStart = compileWithEnv("QuarterStart([fecha], 0, 3)", { dateFormat: "YYYY-MM-DD" });
+    const quarterStart = compileWithEnv("QuarterStart([fecha], 0, 3)", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(quarterStart).toContain("DATE_TRUNC(");
     expect(quarterStart).toContain("QUARTER");
     expect(quarterStart).toContain("INTERVAL 2 MONTH");
 
-    const quarterEnd = compileWithEnv("QuarterEnd([fecha], 1, 3)", { dateFormat: "YYYY-MM-DD" });
+    const quarterEnd = compileWithEnv("QuarterEnd([fecha], 1, 3)", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(quarterEnd).toContain("TIMESTAMP_SUB(");
     expect(quarterEnd).toContain("INTERVAL 1 MILLISECOND");
 
-    const yearStart = compileWithEnv("YearStart([fecha], -1, 4)", { dateFormat: "YYYY-MM-DD" });
+    const yearStart = compileWithEnv("YearStart([fecha], -1, 4)", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(yearStart).toContain("DATE_TRUNC(");
     expect(yearStart).toContain("YEAR");
     expect(yearStart).toContain("INTERVAL 3 MONTH");
 
-    const yearEnd = compileWithEnv("YearEnd([fecha], 0, 4)", { dateFormat: "YYYY-MM-DD" });
+    const yearEnd = compileWithEnv("YearEnd([fecha], 0, 4)", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(yearEnd).toContain("TIMESTAMP_SUB(");
     expect(yearEnd).toContain("INTERVAL 1 MILLISECOND");
   });
 
   it("usa el serial temporal de los límites duales cuando entran en aritmética", () => {
-    const sql = compileWithEnv("QuarterEnd([fecha]) + 1", { dateFormat: "YYYY-MM-DD" });
+    const sql = compileWithEnv("QuarterEnd([fecha]) + 1", {
+      dateFormat: "YYYY-MM-DD",
+    });
     expect(sql).toContain("TIMESTAMP_DIFF(");
     expect(sql).toContain("86400000000");
     expect(sql).toContain(" + ");
   });
 
-  it("implementa Only de forma exacta sin CTE artificial", () => {
+  it("implementa Only con la clave dual y NULL para múltiples valores", () => {
     const sql = compile("Only([id])");
-    expect(sql).toContain("COUNT(*) = COUNT(`id`)");
-    expect(sql).toContain("COUNT(DISTINCT `id`) = 1");
-    expect(sql).toContain("ANY_VALUE(`id`)");
+    expect(sql).toContain("COUNT(DISTINCT key) = 1");
+    expect(sql).toContain("ANY_VALUE(visible)");
     expect(sql).not.toContain("WITH ");
   });
 
-  it("reserva Mode y FirstSortedValue al lowering relacional exacto", () => {
-    expectCode(() => compile("Mode([id])"), "AGGREGATION_REQUIRES_RELATIONAL_LOWERING");
-    expectCode(
-      () => compile("FirstSortedValue([id], [peso])"),
-      "AGGREGATION_REQUIRES_RELATIONAL_LOWERING",
-    );
+  it("baja Mode y FirstSortedValue con empate explícito", () => {
+    expect(compile("Mode([id])")).toContain("COUNT(DISTINCT key)");
+    expect(compile("FirstSortedValue([id], [peso])")).toContain("COUNT(*) = 1");
   });
 
   it("mantiene agregaciones básicas como SQL nativo", () => {
@@ -617,7 +708,9 @@ describe("parser de expresiones Qlik vNext", () => {
   it("implementa contadores Qlik distinguiendo NULL texto y número", () => {
     expect(compile("NullCount([x])")).toContain("COUNTIF(`x` IS NULL)");
     expect(compile("NumericCount([x])")).toContain("COUNTIF(SAFE_CAST(");
-    expect(compile("TextCount([x])")).toContain("`x` IS NOT NULL AND SAFE_CAST(");
+    expect(compile("TextCount([x])")).toContain(
+      "`x` IS NOT NULL AND SAFE_CAST(",
+    );
     expect(compile("MissingCount([x])")).toContain("COUNTIF(SAFE_CAST(");
     expect(compile("MissingCount([x])")).toContain(" IS NULL)");
     expectCode(
@@ -643,11 +736,17 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("implementa contadores Range sin confundir texto y NULL", () => {
-    expect(compile("RangeCount([a], [b])")).toContain("CASE WHEN `a` IS NULL THEN 0 ELSE 1 END");
-    expect(compile("RangeNullCount([a], [b])")).toContain("CASE WHEN `a` IS NULL THEN 1 ELSE 0 END");
+    expect(compile("RangeCount([a], [b])")).toContain(
+      "CASE WHEN `a` IS NULL THEN 0 ELSE 1 END",
+    );
+    expect(compile("RangeNullCount([a], [b])")).toContain(
+      "CASE WHEN `a` IS NULL THEN 1 ELSE 0 END",
+    );
     expect(compile("RangeNumericCount([a], [b])")).toContain("SAFE_CAST(");
     expect(compile("RangeTextCount([a], [b])")).toContain("`a` IS NOT NULL");
-    expect(compile("RangeMissingCount([a], [b])")).toContain(" IS NULL THEN 1 ELSE 0 END");
+    expect(compile("RangeMissingCount([a], [b])")).toContain(
+      " IS NULL THEN 1 ELSE 0 END",
+    );
   });
 
   it("usa funciones BigQuery nativas para exponenciales y logaritmos", () => {
@@ -662,22 +761,33 @@ describe("parser de expresiones Qlik vNext", () => {
 
   it("usa funciones BigQuery nativas para trigonometría e hiperbólicas", () => {
     for (const name of [
-      "Acos", "Acosh", "Asin", "Asinh", "Atan", "Atanh",
-      "Cos", "Cosh", "Sin", "Sinh", "Tan", "Tanh",
-    ]) expect(compile(`${name}([x])`)).toContain(`${name.toUpperCase()}(`);
+      "Acos",
+      "Acosh",
+      "Asin",
+      "Asinh",
+      "Atan",
+      "Atanh",
+      "Cos",
+      "Cosh",
+      "Sin",
+      "Sinh",
+      "Tan",
+      "Tanh",
+    ])
+      expect(compile(`${name}([x])`)).toContain(`${name.toUpperCase()}(`);
     expect(compile("Atan2([y], [x])")).toContain("ATAN2(");
   });
 
   it("emite constantes matemáticas y Rand sin construcciones artificiales", () => {
-    expect(compile("e()")) .toBe("EXP(1)");
-    expect(compile("pi()")) .toBe("ACOS(-1)");
-    expect(compile("rand()")) .toBe("RAND()");
+    expect(compile("e()")).toBe("EXP(1)");
+    expect(compile("pi()")).toBe("ACOS(-1)");
+    expect(compile("rand()")).toBe("RAND()");
   });
 
-  it("no confunde los duales true false e IsText con BOOL de BigQuery", () => {
-    expectCode(() => compile("true()"), "FUNCTION_NOT_RUNTIME_IMPLEMENTED");
-    expectCode(() => compile("false()"), "FUNCTION_NOT_RUNTIME_IMPLEMENTED");
-    expectCode(() => compile("IsText([x])"), "FUNCTION_NOT_RUNTIME_IMPLEMENTED");
+  it("conserva los duales true false e IsText con booleanos Qlik", () => {
+    expect(compile("true()")).toBe("-1");
+    expect(compile("false()")).toBe("0");
+    expect(compile("IsText([x])")).toContain("THEN -1 ELSE 0 END");
   });
 
   it("implementa Div truncando hacia cero como Qlik", () => {
@@ -724,8 +834,12 @@ describe("parser de expresiones Qlik vNext", () => {
 
   it("implementa Match case-sensitive y devuelve posición 1-based", () => {
     const sql = compile("Match([valor], 'A', 'B', 'C')");
-    expect(sql).toContain("WHEN CAST(`valor` AS STRING) = CAST('A' AS STRING) THEN 1");
-    expect(sql).toContain("WHEN CAST(`valor` AS STRING) = CAST('C' AS STRING) THEN 3");
+    expect(sql).toContain(
+      "WHEN CAST(`valor` AS STRING) = CAST('A' AS STRING) THEN 1",
+    );
+    expect(sql).toContain(
+      "WHEN CAST(`valor` AS STRING) = CAST('C' AS STRING) THEN 3",
+    );
     expect(sql).toContain("ELSE 0 END");
   });
 
@@ -746,34 +860,128 @@ describe("parser de expresiones Qlik vNext", () => {
   });
 
   it("no aproxima right-shift Qlik de signed-32 con el shift lógico de BigQuery", () => {
-    expectCode(() => compile("[valor] >> 2"), "OPERATOR_RIGHT_SHIFT_REQUIRES_REFERENCE_VECTOR");
+    expectCode(
+      () => compile("[valor] >> 2"),
+      "OPERATOR_RIGHT_SHIFT_REQUIRES_REFERENCE_VECTOR",
+    );
   });
 
-  it("rechaza condicionales que requieren tipos/collation Qlik exactos", () => {
-    expectCode(() => compile("Coalesce([a], [b])"), "FUNCTION_REQUIRES_TYPED_LOWERING");
-    expectCode(() => compile("Pick(2, [a], [b])"), "FUNCTION_REQUIRES_TYPED_LOWERING");
-    expectCode(() => compile("MixMatch([x], 'a', 'b')"), "FUNCTION_REQUIRES_QLIK_COLLATION");
-    expectCode(() => compile("WildMatch([x], 'a*')"), "FUNCTION_REQUIRES_QLIK_COLLATION");
+  it("baja condicionales tipados y rechaza solo la collation no equivalente", () => {
+    expect(compile("Coalesce([a], [b])")).toContain(
+      "CASE WHEN `a` IS NOT NULL",
+    );
+    expect(compile("Pick(2, [a], [b])")).toContain("CASE WHEN");
+    expectCode(
+      () => compile("MixMatch([x], 'a', 'b')"),
+      "FUNCTION_REQUIRES_QLIK_COLLATION",
+    );
+    expectCode(
+      () => compile("WildMatch([x], 'a*')"),
+      "FUNCTION_REQUIRES_QLIK_COLLATION",
+    );
   });
 
   it("no sustituye hashes Qlik por hashes BigQuery incompatibles", () => {
-    expectCode(() => compile("Hash128([id], [texto])"), "FUNCTION_REQUIRES_QLIK_HASH_UDF");
-    expectCode(() => compile("Hash256([id], [texto])"), "FUNCTION_REQUIRES_QLIK_HASH_UDF");
+    expectCode(
+      () => compile("Hash128([id], [texto])"),
+      "FUNCTION_REQUIRES_QLIK_HASH_UDF",
+    );
+    expectCode(
+      () => compile("Hash256([id], [texto])"),
+      "FUNCTION_REQUIRES_QLIK_HASH_UDF",
+    );
   });
 
   it("rechaza funciones no implementadas y formatos dependientes de entorno ausente", () => {
-    expectCode(() => compile("ApplyMap('m', [id])"), "APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING");
+    expectCode(
+      () => compile("ApplyMap('m', [id])"),
+      "APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING",
+    );
     expectCode(() => compile("Date([fecha])"), "DATE_FORMAT_ENV_REQUIRED");
   });
 
   it("rechaza nombres que ni siquiera existen en el inventario oficial", () => {
-    expectCode(() => compile("FuncionInventada([id])"), "FUNCTION_NOT_IN_OFFICIAL_INVENTORY");
+    expectCode(
+      () => compile("FuncionInventada([id])"),
+      "FUNCTION_NOT_IN_OFFICIAL_INVENTORY",
+    );
+  });
+
+  it("no inventa el archivo actualmente leído ni efectos de filesystem/QVD", () => {
+    expectCode(
+      () => compile("FileBaseName()"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FileDir()"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FileExtension()"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FileName()"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FilePath()"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FileSize('dir/ventas.csv')"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("FileTime('dir/ventas.csv')"),
+      "EXTERNAL_FILE_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("QvdNoOfRecords('dir/ventas.qvd')"),
+      "EXTERNAL_QVD_METADATA_UNAVAILABLE",
+    );
+  });
+
+  it("rechaza valores dependientes del entorno Qlik y usa GEOGRAPHY solo en casos nativos", () => {
+    expectCode(
+      () => compile("ComputerName()"),
+      "ENVIRONMENT_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("DocumentName()"),
+      "ENVIRONMENT_METADATA_UNAVAILABLE",
+    );
+    expectCode(
+      () => compile("ReloadTime()"),
+      "ENVIRONMENT_METADATA_UNAVAILABLE",
+    );
+    expect(compile("GeoMakePoint(1, 2)")).toContain("ST_GEOGPOINT(2, 1)");
+    expect(compile("GeoGetPolygonCenter([geometry])")).toContain(
+      "ST_CENTROID(`geometry`)",
+    );
+    expectCode(
+      () => compile("GeoProject([geometry])"),
+      "GEOSPATIAL_SEMANTICS_UNSUPPORTED",
+    );
   });
 
   it("baja edad, numeración de días y nombres temporales como SQL dual", () => {
     const environment = {
       dateFormat: "YYYY-MM-DD",
-      monthNames: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      monthNames: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
       firstWeekDay: 0,
       brokenWeeks: 0,
       referenceDay: 4,
@@ -782,10 +990,18 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(compile("Age('2024-02-28', '2000-02-29')")).toContain("DATE_DIFF(");
     expect(compile("DayNumberOfYear('2024-02-29')")).toContain("DATE_DIFF(");
     expect(compile("DayNumberOfQuarter('2024-02-29')")).toContain("DATE_DIFF(");
-    expect(compileWithEnv("MonthName('2024-02-29') * 1", environment)).toContain("TIMESTAMP_DIFF(");
-    expect(compileWithEnv("QuarterName('2024-02-29')", environment)).toContain("WHEN 1 THEN 'Jan'");
-    expect(compileWithEnv("WeekName('2024-02-29')", environment)).toContain("EXTRACT(ISOWEEK FROM");
-    expect(compileWithEnv("YearName('2024-02-29')", environment)).toContain("FORMAT_DATE('%Y'");
+    expect(
+      compileWithEnv("MonthName('2024-02-29') * 1", environment),
+    ).toContain("TIMESTAMP_DIFF(");
+    expect(compileWithEnv("QuarterName('2024-02-29')", environment)).toContain(
+      "WHEN 1 THEN 'Jan'",
+    );
+    expect(compileWithEnv("WeekName('2024-02-29')", environment)).toContain(
+      "EXTRACT(ISOWEEK FROM",
+    );
+    expect(compileWithEnv("YearName('2024-02-29')", environment)).toContain(
+      "FORMAT_DATE('%Y'",
+    );
   });
 
   it("baja límites de semana, fechas ISO, segmentos e inclusiones temporales", () => {
@@ -796,22 +1012,60 @@ describe("parser de expresiones Qlik vNext", () => {
       referenceDay: 4,
     } satisfies EntornoExpresionQlik;
 
-    expect(compileWithEnv("WeekStart('2024-02-29')", environment)).toContain("DATE_SUB(");
-    expect(compileWithEnv("WeekEnd('2024-02-29')", environment)).toContain("INTERVAL 1 MILLISECOND");
-    expect(compileWithEnv("MakeWeekDate(2024, 9, 4)", environment)).toContain("ISOWEEK");
-    expect(compileWithEnv("MonthsStart(3, '2024-02-29')", environment)).toContain("DATE_DIFF(");
-    expect(compileWithEnv("MonthsEnd(3, '2024-02-29')", environment)).toContain("INTERVAL 1 MILLISECOND");
-    expect(compile("InDay('2024-02-29', '2024-02-29', 0)")).toContain("THEN -1 ELSE 0 END");
-    expect(compile("InMonths(3, '2024-02-29', '2024-02-01', 0)")).toContain("TIMESTAMP(");
-    expect(compile("InYearToDate('2024-02-28', '2024-02-29', 0)")).toContain("<=");
+    expect(compileWithEnv("WeekStart('2024-02-29')", environment)).toContain(
+      "DATE_SUB(",
+    );
+    expect(compileWithEnv("WeekEnd('2024-02-29')", environment)).toContain(
+      "INTERVAL 1 MILLISECOND",
+    );
+    expect(compileWithEnv("MakeWeekDate(2024, 9, 4)", environment)).toContain(
+      "ISOWEEK",
+    );
+    expect(
+      compileWithEnv("MonthsStart(3, '2024-02-29')", environment),
+    ).toContain("DATE_DIFF(");
+    expect(compileWithEnv("MonthsEnd(3, '2024-02-29')", environment)).toContain(
+      "INTERVAL 1 MILLISECOND",
+    );
+    expect(compile("InDay('2024-02-29', '2024-02-29', 0)")).toContain(
+      "THEN -1 ELSE 0 END",
+    );
+    expect(compile("InMonths(3, '2024-02-29', '2024-02-01', 0)")).toContain(
+      "TIMESTAMP(",
+    );
+    expect(compile("InYearToDate('2024-02-28', '2024-02-29', 0)")).toContain(
+      "<=",
+    );
   });
 
   it("baja jornadas laborales nativas y conserva fechas de retorno", () => {
-    const environment = { dateFormat: "YYYY-MM-DD" } satisfies EntornoExpresionQlik;
-    expect(compileWithEnv("NetworkDays('2024-02-01', '2024-02-09', '2024-02-05')", environment)).toContain("GENERATE_DATE_ARRAY");
-    expect(compileWithEnv("FirstWorkDate('2024-02-09', 5, '2024-02-05')", environment)).toContain("ARRAY_AGG");
-    expect(compileWithEnv("LastWorkDate('2024-02-01', 5, '2024-02-05')", environment)).toContain("ARRAY_AGG");
-    expect(compileWithEnv("SetDateYearMonth('2024-02-29 10:15:00', 2025, 3)", environment)).toContain("SAFE.PARSE_DATE");
+    const environment = {
+      dateFormat: "YYYY-MM-DD",
+    } satisfies EntornoExpresionQlik;
+    expect(
+      compileWithEnv(
+        "NetworkDays('2024-02-01', '2024-02-09', '2024-02-05')",
+        environment,
+      ),
+    ).toContain("GENERATE_DATE_ARRAY");
+    expect(
+      compileWithEnv(
+        "FirstWorkDate('2024-02-09', 5, '2024-02-05')",
+        environment,
+      ),
+    ).toContain("ARRAY_AGG");
+    expect(
+      compileWithEnv(
+        "LastWorkDate('2024-02-01', 5, '2024-02-05')",
+        environment,
+      ),
+    ).toContain("ARRAY_AGG");
+    expect(
+      compileWithEnv(
+        "SetDateYearMonth('2024-02-29 10:15:00', 2025, 3)",
+        environment,
+      ),
+    ).toContain("SAFE.PARSE_DATE");
   });
 
   it("solo acepta funciones de reloj con semántica UTC de ejecución representable", () => {
@@ -819,13 +1073,27 @@ describe("parser de expresiones Qlik vNext", () => {
       dateFormat: "YYYY-MM-DD",
       timestampFormat: "YYYY-MM-DD hh:mm:ss",
     } satisfies EntornoExpresionQlik;
-    expect(compileWithEnv("Now()", environment)).toContain("CURRENT_TIMESTAMP()");
-    expect(compileWithEnv("Today()", environment)).toContain("CURRENT_DATE('UTC')");
-    expect(compileWithEnv("GMT()", environment)).toContain("CURRENT_TIMESTAMP()");
-    expect(compileWithEnv("UTC()", environment)).toContain("CURRENT_TIMESTAMP()");
+    expect(compileWithEnv("Now()", environment)).toContain(
+      "CURRENT_TIMESTAMP()",
+    );
+    expect(compileWithEnv("Today()", environment)).toContain(
+      "CURRENT_DATE('UTC')",
+    );
+    expect(compileWithEnv("GMT()", environment)).toContain(
+      "CURRENT_TIMESTAMP()",
+    );
+    expect(compileWithEnv("UTC()", environment)).toContain(
+      "CURRENT_TIMESTAMP()",
+    );
     expect(compile("TimeZone()")).toContain("'UTC'");
-    expectCode(() => compile("LocalTime('Quito')"), "TEMPORAL_RUNTIME_CONTEXT_REQUIRED");
-    expectCode(() => compile("ConvertToLocalTime([ts], 'Quito')"), "TEMPORAL_RUNTIME_CONTEXT_REQUIRED");
+    expectCode(
+      () => compile("LocalTime('Quito')"),
+      "TEMPORAL_RUNTIME_CONTEXT_REQUIRED",
+    );
+    expectCode(
+      () => compile("ConvertToLocalTime([ts], 'Quito')"),
+      "TEMPORAL_RUNTIME_CONTEXT_REQUIRED",
+    );
   });
 });
 
