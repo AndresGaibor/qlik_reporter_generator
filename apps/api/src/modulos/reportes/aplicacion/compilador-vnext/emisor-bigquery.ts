@@ -57,6 +57,10 @@ function emitirRelacion(
   environment: EntornoExpresionQlik,
 ): string {
   switch (relation.op) {
+    case "inline":
+      return emitirInline(relation);
+    case "autogenerate":
+      return emitirAutogenerate(relation, environment);
     case "native_sql":
       return relation.sql.trim().replace(/;\s*$/, "");
     case "filter":
@@ -462,6 +466,48 @@ function qualifiedValue(
   );
 }
 
+function emitirInline(
+  relation: Extract<RelacionVNext, { op: "inline" }>,
+): string {
+  if (relation.rows.length === 0)
+    return `SELECT\n  ${relation.columns.map((column) => `NULL AS ${quote(column)}`).join(",\n  ")}\nWHERE FALSE`;
+  return relation.rows
+    .map(
+      (row) =>
+        `SELECT\n  ${relation.columns
+          .map(
+            (column, index) =>
+              `${emitirValorInline(row[index] ?? "")} AS ${quote(column)}`,
+          )
+          .join(",\n  ")}`,
+    )
+    .join("\nUNION ALL\n");
+}
+
+function emitirAutogenerate(
+  relation: Extract<RelacionVNext, { op: "autogenerate" }>,
+  environment: EntornoExpresionQlik,
+): string {
+  const fields = emitFields(relation.projections, environment);
+  if (relation.countExpression === "0")
+    return `SELECT\n  ${fields}\nWHERE FALSE`;
+  if (relation.countExpression === "1") return `SELECT\n  ${fields}`;
+  return `SELECT\n  ${fields}\nFROM UNNEST(GENERATE_ARRAY(1, ${relation.countExpression})) AS _row`;
+}
+
+function emitirValorInline(raw: string): string {
+  const value = raw.trim();
+  if (!value || /^null\(\)$/i.test(value) || /^null$/i.test(value))
+    return "NULL";
+  if (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value))
+    return value;
+  if (/^(?:true|false)$/i.test(value)) return value.toUpperCase();
+  if (value.startsWith("'") && value.endsWith("'")) return value;
+  if (value.startsWith('"') && value.endsWith('"'))
+    return `'${value.slice(1, -1).replace(/""/g, '"').replace(/'/g, "''")}'`;
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
 function emitirFuenteParaProyeccion(
   sourceId: string,
   projections: CampoLoadVNext[],
@@ -545,6 +591,16 @@ function emitirUnion(
   byId: Map<string, RelacionVNext>,
   emit: (id: string) => string,
 ): string {
+  const flattened = aplanarUnionSimple(relation.inputs, byId);
+  if (
+    flattened?.every(
+      (input) =>
+        input.fields.length === relation.fields.length &&
+        input.fields.every((field, index) => field === relation.fields[index]),
+    )
+  )
+    return flattened.map((input) => emit(input.id)).join("\nUNION ALL\n");
+
   return relation.inputs
     .map((id, index) => {
       const input = byId.get(id);
@@ -561,6 +617,26 @@ function emitirUnion(
       return `SELECT\n  ${fields}\nFROM ${wrap(emit(id), alias)}`;
     })
     .join("\nUNION ALL\n");
+}
+
+function aplanarUnionSimple(
+  inputs: string[],
+  byId: Map<string, RelacionVNext>,
+): RelacionVNext[] | undefined {
+  const flattened: RelacionVNext[] = [];
+  for (const id of inputs) {
+    const input = byId.get(id);
+    if (!input) return undefined;
+    if (input.op === "union_all") {
+      const nested = aplanarUnionSimple(input.inputs, byId);
+      if (!nested) return undefined;
+      flattened.push(...nested);
+      continue;
+    }
+    if (input.op !== "inline" && input.op !== "autogenerate") return undefined;
+    flattened.push(input);
+  }
+  return flattened;
 }
 
 function emitirSemiFilter(

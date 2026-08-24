@@ -17,9 +17,19 @@ export interface EspecificacionLoadVNext {
   while?: string;
   groupBy: string[];
   orderBy: OrdenLoadVNext[];
+  source?:
+    | { type: "inline"; fields: string[]; rows: string[][] }
+    | { type: "autogenerate"; countExpression: string };
 }
 
-const CLAUSES = ["RESIDENT", "WHERE", "WHILE", "GROUP BY", "ORDER BY"] as const;
+const CLAUSES = [
+  "RESIDENT",
+  "WHERE",
+  "WHILE",
+  "GROUP BY",
+  "ORDER BY",
+  "AUTOGENERATE",
+] as const;
 
 export function parsearCuerpoLoad(body: string): EspecificacionLoadVNext {
   const clauses = encontrarClausulas(body);
@@ -40,12 +50,15 @@ export function parsearCuerpoLoad(body: string): EspecificacionLoadVNext {
     );
   }
 
-  const fields = dividirTopLevel(fieldsText).map(parsearCampo);
   const residentRaw = values.get("RESIDENT");
   const where = values.get("WHERE");
   const whileCondition = values.get("WHILE");
   const groupByRaw = values.get("GROUP BY");
   const orderByRaw = values.get("ORDER BY");
+  const autogenerateRaw = values.get("AUTOGENERATE");
+  const inline = extraerInline(fieldsText);
+  const loadFieldsText = inline?.fieldsText ?? fieldsText;
+  const fields = dividirTopLevel(loadFieldsText).map(parsearCampo);
 
   return {
     fields,
@@ -56,7 +69,32 @@ export function parsearCuerpoLoad(body: string): EspecificacionLoadVNext {
     ...(whileCondition ? { while: whileCondition } : {}),
     groupBy: groupByRaw ? dividirTopLevel(groupByRaw) : [],
     orderBy: orderByRaw ? dividirTopLevel(orderByRaw).map(parsearOrden) : [],
+    ...(inline
+      ? { source: { type: "inline", fields: inline.fields, rows: inline.rows } }
+      : autogenerateRaw
+        ? { source: { type: "autogenerate", countExpression: autogenerateRaw } }
+        : {}),
   };
+}
+
+function extraerInline(
+  text: string,
+): { fieldsText: string; fields: string[]; rows: string[][] } | undefined {
+  const match = text.match(/\bINLINE\s*\[([\s\S]*)\]\s*$/i);
+  if (match?.index === undefined || match[1] === undefined) return undefined;
+  const fieldsText = text.slice(0, match.index).trim();
+  const lines = match[1]
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const fields = lines[0]
+    ? dividirTopLevel(lines[0]).map(normalizarNombre)
+    : [];
+  const rows = lines.slice(1).map((line) => {
+    const values = dividirTopLevel(line);
+    return fields.map((_field, index) => values[index] ?? "");
+  });
+  return { fieldsText, fields, rows };
 }
 
 function encontrarClausulas(

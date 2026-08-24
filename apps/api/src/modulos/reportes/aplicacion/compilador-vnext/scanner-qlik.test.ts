@@ -35,6 +35,18 @@ FROM \`p.d.t\` WHERE id = 1;
     expect(statements[2]?.span.line).toBe(3);
   });
 
+  it("no interpreta CASE de GoogleSQL como CASE de SWITCH Qlik", () => {
+    const statements = escanearSentenciasQlik(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      SQL SELECT
+        CASE WHEN activo THEN 'A' ELSE 'B' END AS estado
+      FROM \`p.d.t\`;
+    `);
+
+    expect(statements).toHaveLength(2);
+    expect(statements[1]?.text).toContain("CASE WHEN activo");
+  });
+
   it.each([
     ["LEXER_UNTERMINATED_STRING", "SET v='sin cierre;"],
     ["LEXER_UNTERMINATED_BLOCK_COMMENT", "LOAD a /* sin cierre;"],

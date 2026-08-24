@@ -13,6 +13,16 @@ interface RelationBase {
 
 export type RelacionVNext =
   | (RelationBase & {
+      op: "inline";
+      columns: string[];
+      rows: string[][];
+    })
+  | (RelationBase & {
+      op: "autogenerate";
+      projections: CampoLoadVNext[];
+      countExpression: string;
+    })
+  | (RelationBase & {
       op: "native_sql";
       sql: string;
       connection: string;

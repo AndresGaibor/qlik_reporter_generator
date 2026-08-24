@@ -19,16 +19,40 @@ export function escanearSentenciasQlik(script: string): SentenciaCruda[] {
   let mode: Mode = "normal";
   let modeStart = 0;
   let statementStart = 0;
+  let lineStart = 0;
 
   for (let i = 0; i < script.length; i += 1) {
     const c = script[i] ?? "";
     const next = script[i + 1] ?? "";
 
+    if (
+      mode === "normal" &&
+      i === lineStart &&
+      !sentenciaNativaEnCurso(script, statementStart, i) &&
+      lineaControl(script, i)
+    ) {
+      if (i > statementStart) {
+        agregarSentencia(
+          statements,
+          script,
+          statementStart,
+          i,
+          false,
+          lineStarts,
+        );
+        statementStart = i;
+      }
+    }
+
     if (mode === "line_comment") {
-      if (c === "\n") mode = "normal";
+      if (c === "\n") {
+        mode = "normal";
+        lineStart = i + 1;
+      }
       continue;
     }
     if (mode === "block_comment") {
+      if (c === "\n") lineStart = i + 1;
       if (c === "*" && next === "/") {
         mode = "normal";
         i += 1;
@@ -77,6 +101,25 @@ export function escanearSentenciasQlik(script: string): SentenciaCruda[] {
       agregarSentencia(statements, script, statementStart, i, true, lineStarts);
       statementStart = i + 1;
     }
+
+    if (c === "\n") {
+      const line = script.slice(lineStart, i);
+      if (
+        !sentenciaNativaEnCurso(script, statementStart, i) &&
+        modoControlCompleto(line)
+      ) {
+        agregarSentencia(
+          statements,
+          script,
+          statementStart,
+          i,
+          false,
+          lineStarts,
+        );
+        statementStart = i + 1;
+      }
+      lineStart = i + 1;
+    }
   }
 
   if (mode !== "normal" && mode !== "line_comment") {
@@ -91,6 +134,36 @@ export function escanearSentenciasQlik(script: string): SentenciaCruda[] {
     lineStarts,
   );
   return statements;
+}
+
+function sentenciaNativaEnCurso(
+  script: string,
+  start: number,
+  end: number,
+): boolean {
+  return /^\s*SQL\b/i.test(script.slice(start, end));
+}
+
+function lineaControl(script: string, start: number): boolean {
+  return /^(?:\s*)(?:IF\b|ELSEIF\b|ELSE\b|END\s+IF\b|SWITCH\b|CASE\b|DEFAULT\b|END\s+SWITCH\b|FOR\b|NEXT\b|DO\b|LOOP\b|SUB\b|END\s+SUB\b|CALL\b|EXIT\b)/i.test(
+    script.slice(
+      start,
+      script.indexOf("\n", start) < 0
+        ? script.length
+        : script.indexOf("\n", start),
+    ),
+  );
+}
+
+function modoControlCompleto(line: string): boolean {
+  const code = line
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/, "")
+    .replace(/--.*$/, "")
+    .trim();
+  return /^(?:IF\b[\s\S]*\bTHEN|ELSEIF\b[\s\S]*\bTHEN|ELSE|END\s+IF|SWITCH\b[\s\S]*|CASE\b[\s\S]*|DEFAULT|END\s+SWITCH|FOR\b[\s\S]*|NEXT\b[\s\S]*|DO\b[\s\S]*|LOOP\b[\s\S]*|SUB\b[\s\S]*|END\s+SUB|CALL\b[\s\S]*|EXIT\b[\s\S]*)$/i.test(
+    code,
+  );
 }
 
 function agregarSentencia(
