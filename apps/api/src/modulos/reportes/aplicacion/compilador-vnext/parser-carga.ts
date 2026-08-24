@@ -11,18 +11,24 @@ export interface OrdenLoadVNext {
 export interface EspecificacionLoadVNext {
   fields: CampoLoadVNext[];
   wildcard: boolean;
+  distinct: boolean;
   resident?: string;
   where?: string;
+  while?: string;
   groupBy: string[];
   orderBy: OrdenLoadVNext[];
 }
 
-const CLAUSES = ["RESIDENT", "WHERE", "GROUP BY", "ORDER BY"] as const;
+const CLAUSES = ["RESIDENT", "WHERE", "WHILE", "GROUP BY", "ORDER BY"] as const;
 
 export function parsearCuerpoLoad(body: string): EspecificacionLoadVNext {
   const clauses = encontrarClausulas(body);
   const fieldsEnd = clauses[0]?.index ?? body.length;
-  const fieldsText = body.slice(0, fieldsEnd).trim();
+  const rawFieldsText = body.slice(0, fieldsEnd).trim();
+  const distinct = /^DISTINCT\b/i.test(rawFieldsText);
+  const fieldsText = distinct
+    ? rawFieldsText.replace(/^DISTINCT\b\s*/i, "")
+    : rawFieldsText;
   const values = new Map<string, string>();
   for (let i = 0; i < clauses.length; i += 1) {
     const current = clauses[i];
@@ -37,14 +43,17 @@ export function parsearCuerpoLoad(body: string): EspecificacionLoadVNext {
   const fields = dividirTopLevel(fieldsText).map(parsearCampo);
   const residentRaw = values.get("RESIDENT");
   const where = values.get("WHERE");
+  const whileCondition = values.get("WHILE");
   const groupByRaw = values.get("GROUP BY");
   const orderByRaw = values.get("ORDER BY");
 
   return {
     fields,
     wildcard: fields.length === 1 && fields[0]?.expression === "*",
+    distinct,
     ...(residentRaw ? { resident: normalizarNombre(residentRaw) } : {}),
     ...(where ? { where } : {}),
+    ...(whileCondition ? { while: whileCondition } : {}),
     groupBy: groupByRaw ? dividirTopLevel(groupByRaw) : [],
     orderBy: orderByRaw ? dividirTopLevel(orderByRaw).map(parsearOrden) : [],
   };

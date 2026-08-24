@@ -59,7 +59,7 @@ function parsearSentencia(statement: SentenciaCruda): QlikStatement {
       type: "load",
       ...(label ? { label } : {}),
       body: loadBody,
-      wildcard: loadBody === "*",
+      wildcard: /^DISTINCT\s+\*/i.test(loadBody) || loadBody === "*",
       prefix,
       span,
       raw: statement.text,

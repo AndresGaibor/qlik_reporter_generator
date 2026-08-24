@@ -16,8 +16,8 @@ const scenarios = JSON.parse(
 ) as { scenarios: Scenario[] };
 
 describe("corpus ejecutable vNext", () => {
-  it("contiene exactamente los 58 escenarios estructurales investigados", () => {
-    expect(scenarios.scenarios).toHaveLength(58);
+  it("contiene exactamente los 61 escenarios estructurales investigados", () => {
+    expect(scenarios.scenarios).toHaveLength(61);
   });
 
   for (const scenario of scenarios.scenarios) {
@@ -26,7 +26,9 @@ describe("corpus ejecutable vNext", () => {
       try {
         const result = compilarDataflowVNext(script);
         expect(result.sql.trim()).not.toBe("");
-        expect(result.strategy).toMatch(/^(source_sql_passthrough|single_query)$/);
+        expect(result.strategy).toMatch(
+          /^(source_sql_passthrough|single_query)$/,
+        );
       } catch (error) {
         expect(error).toBeInstanceOf(ErrorCompilacionVNext);
         const diagnostic = (error as ErrorCompilacionVNext).diagnostic;

@@ -1,3 +1,4 @@
+import type { StatefulLoadVNext } from "./inter-record.js";
 import type { DiagnosticoVNext, SourceSpan } from "./modelo.js";
 import type { CampoLoadVNext, OrdenLoadVNext } from "./parser-carga.js";
 
@@ -7,6 +8,7 @@ interface RelationBase {
   schemaKnown: boolean;
   dualFields?: string[];
   span: SourceSpan;
+  orderBy?: OrdenLoadVNext[];
 }
 
 export type RelacionVNext =
@@ -21,6 +23,7 @@ export type RelacionVNext =
       op: "project";
       input: string;
       projections: CampoLoadVNext[];
+      distinct?: boolean;
     })
   | (RelationBase & {
       op: "aggregate";
@@ -53,7 +56,12 @@ export type RelacionVNext =
       valueFields: string[];
       includeNulls: boolean;
     })
-  | (RelationBase & { op: "generic"; input: string });
+  | (RelationBase & { op: "generic"; input: string })
+  | (RelationBase & {
+      op: "stateful";
+      input: string;
+      stateful: StatefulLoadVNext;
+    });
 
 export type EfectoVNext =
   | {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { compilarDataflowVNext } from "./index.js";
+import { ErrorCompilacionVNext } from "./modelo.js";
 
 const corpus = (name: string) =>
   new URL(`../../fixtures/compiler-corpus/qlik/${name}`, import.meta.url);
@@ -143,3 +144,113 @@ describe("emisión BigQuery vNext fase 1", () => {
     expect(result.sql).toContain("SELECT 'ab' AS texto");
   });
 });
+
+describe("emisión BigQuery de estado inter-record", () => {
+  it("baja Exists contra una relación cargada previamente", async () => {
+    const result = await compile("qlik-exists.qlik");
+
+    expect(result.sql).toContain("WHERE EXISTS (");
+    expect(result.sql).toContain("SELECT DISTINCT");
+    expect(result.sql).toContain("prior.`id` = src.`id`");
+    expect(result.sql).not.toContain("Exists(");
+  });
+
+  it("baja RowNo, RecNo e IterNo con expansión y orden de carga", async () => {
+    const result = await compile("qlik-row-counters.qlik");
+
+    expect(result.sql).toContain("ROW_NUMBER() OVER (ORDER BY `id` ASC)");
+    expect(result.sql).toContain("GENERATE_ARRAY(1, 2)");
+    expect(result.sql).toContain("AS `row_no`");
+    expect(result.sql).toContain("AS `rec_no`");
+    expect(result.sql).toContain("AS `iter_no`");
+    expect(result.sql).toContain(
+      "ORDER BY src.__qlik_rec_no, src.__qlik_iter_no",
+    );
+  });
+
+  it("baja Peek y Previous como LAG solo con el ORDER BY probado", async () => {
+    const result = await compile("qlik-peek-previous.qlik");
+
+    expect(result.sql).toContain(
+      "LAG(`monto`, 1) OVER (ORDER BY `id` ASC, `fecha` ASC)",
+    );
+    expect(result.sql).toContain(
+      "LAG(src.`monto`, 1) OVER (ORDER BY src.__qlik_rec_no, src.__qlik_iter_no)",
+    );
+    expect(result.sql).toContain("AS `monto_previo`");
+    expect(result.sql).toContain("AS `peek_previo`");
+  });
+
+  it("baja Peek sin offset y con offsets absolutos sobre filas ya cargadas", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Salida]: LOAD
+        id,
+        Peek('monto') AS ultimo,
+        Peek('monto', 0) AS primero,
+        Peek('monto', 2) AS tercero;
+      SQL SELECT id, monto FROM \`p.d.ventas\` ORDER BY id;
+    `);
+
+    expect(result.sql).toContain(
+      "LAG(src.`monto`, 1) OVER (ORDER BY src.__qlik_rec_no, src.__qlik_iter_no)",
+    );
+    expect(result.sql).toContain(
+      "NTH_VALUE(src.`monto`, 1) OVER (ORDER BY src.__qlik_rec_no, src.__qlik_iter_no ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)",
+    );
+    expect(result.sql).toContain(
+      "NTH_VALUE(src.`monto`, 3) OVER (ORDER BY src.__qlik_rec_no, src.__qlik_iter_no ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)",
+    );
+  });
+
+  it("rechaza Peek/Previous cuando la fuente no demuestra orden", () => {
+    expectCode(
+      () =>
+        compilarDataflowVNext(`
+          LIB CONNECT TO [Google BigQuery:Prod];
+          [Salida]: LOAD id, Previous(monto) AS anterior;
+          SQL SELECT id, monto FROM \`p.d.ventas\`;
+        `),
+      "INTER_RECORD_ORDER_REQUIRED",
+    );
+  });
+
+  it("rechaza AutoNumber sin orden y AutoNumberHash sin hash Qlik verificado", async () => {
+    await expectCodeAsync(
+      () => compile("qlik-autonumber.qlik"),
+      "INTER_RECORD_ORDER_REQUIRED",
+    );
+    expectCode(
+      () =>
+        compilarDataflowVNext(`
+          LIB CONNECT TO [Google BigQuery:Prod];
+          [Salida]: LOAD AutoNumberHash128(cliente) AS surrogate_key;
+          SQL SELECT cliente FROM \`p.d.ventas\` ORDER BY cliente;
+        `),
+      "AUTONUMBER_HASH_REQUIRES_QLIK_HASH",
+    );
+  });
+});
+
+function expectCode(fn: () => unknown, code: string): void {
+  try {
+    fn();
+    throw new Error("debió fallar");
+  } catch (error) {
+    expect(error).toBeInstanceOf(ErrorCompilacionVNext);
+    expect((error as ErrorCompilacionVNext).diagnostic.code).toBe(code);
+  }
+}
+
+async function expectCodeAsync(
+  fn: () => Promise<unknown>,
+  code: string,
+): Promise<void> {
+  try {
+    await fn();
+    throw new Error("debió fallar");
+  } catch (error) {
+    expect(error).toBeInstanceOf(ErrorCompilacionVNext);
+    expect((error as ErrorCompilacionVNext).diagnostic.code).toBe(code);
+  }
+}

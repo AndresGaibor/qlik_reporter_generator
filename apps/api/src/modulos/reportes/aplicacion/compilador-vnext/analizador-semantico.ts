@@ -1,12 +1,22 @@
 import type { LoadPrefix, QlikProgram } from "./ast.js";
 import { esExpresionDualQlik } from "./expresiones-qlik.js";
+import {
+  analizarUsoInterRegistro,
+  extraerOrdenSql,
+  interpretarWhileIterNo,
+} from "./inter-record.js";
 import type { EfectoVNext, PlanCompilacionVNext, RelacionVNext } from "./ir.js";
 import { ErrorCompilacionVNext, type SourceSpan } from "./modelo.js";
-import { definirVariableQlik, expandirVariablesQlik, VariableQlikRuntimeError, type VariablesQlik } from "./variables-qlik.js";
 import {
   type EspecificacionLoadVNext,
   parsearCuerpoLoad,
 } from "./parser-carga.js";
+import {
+  VariableQlikRuntimeError,
+  type VariablesQlik,
+  definirVariableQlik,
+  expandirVariablesQlik,
+} from "./variables-qlik.js";
 
 type RelacionSinId = RelacionVNext extends infer R
   ? R extends { id: string }
@@ -65,6 +75,14 @@ export function analizarProgramaQlik(
       );
     return byId(id);
   };
+  const encontrarRelacionesAnteriores = (
+    field: string,
+    currentId: string,
+  ): RelacionVNext[] =>
+    [...new Set(Object.values(tables))]
+      .filter((id) => id !== currentId)
+      .map((id) => byId(id))
+      .filter((relation) => relation.fields.includes(field));
   const assignTable = (name: string, id: string) => {
     tables[name] = id;
     lastTableName = name;
@@ -90,6 +108,118 @@ export function analizarProgramaQlik(
     sourceTableName?: string,
   ): string => {
     let current = byId(sourceId);
+    const interRecord = analizarUsoInterRegistro(
+      load.spec.fields,
+      load.spec.where,
+    );
+    const hasStatefulSemantics =
+      interRecord.operations.length > 0 || load.spec.while !== undefined;
+
+    if (hasStatefulSemantics) {
+      if (!["none", "noconcatenate"].includes(load.prefix.type))
+        fail(
+          "STATEFUL_PREFIX_UNSUPPORTED",
+          "UNSUPPORTED_SEMANTICS",
+          "Las cargas inter-record no pueden combinarse con este prefijo LOAD sin una barrera semántica explícita",
+          load.span,
+        );
+      const iterationCount = interpretarWhileIterNo(load.spec.while);
+      if (iterationCount === undefined)
+        fail(
+          "ITERNO_WHILE_UNSUPPORTED",
+          "UNSUPPORTED_SEMANTICS",
+          "WHILE solo admite la forma determinista IterNo() <= N o IterNo() < N",
+          load.span,
+        );
+      const orderBy =
+        load.spec.orderBy.length > 0
+          ? load.spec.orderBy
+          : (current.orderBy ?? []);
+      if (
+        (interRecord.requiresOrder || load.spec.while !== undefined) &&
+        orderBy.length === 0
+      )
+        fail(
+          "INTER_RECORD_ORDER_REQUIRED",
+          "NON_DETERMINISTIC_ORDER",
+          "Las funciones inter-record requieren ORDER BY determinista en la fuente o en LOAD",
+          load.span,
+        );
+      if (
+        interRecord.operations.some(
+          (operation) => operation.kind === "autonumber_hash",
+        )
+      )
+        fail(
+          "AUTONUMBER_HASH_REQUIRES_QLIK_HASH",
+          "UNSUPPORTED_SEMANTICS",
+          "AutoNumberHash128/256 requiere una implementación verificada del hash propietario de Qlik",
+          load.span,
+        );
+      const previous = interRecord.exists
+        ? encontrarRelacionesAnteriores(interRecord.exists.field, current.id)
+        : [];
+      const existsField = interRecord.exists?.field;
+      const againstInputs = existsField
+        ? previous.map((relation) => {
+            if (
+              relation.fields.length === 1 &&
+              relation.fields[0] === existsField
+            )
+              return relation.id;
+            return add({
+              op: "project",
+              input: relation.id,
+              projections: [{ expression: existsField, alias: existsField }],
+              fields: [existsField],
+              schemaKnown: true,
+              orderBy: relation.orderBy,
+              span: load.span,
+            }).id;
+          })
+        : [];
+      const against =
+        againstInputs.length > 1
+          ? add({
+              op: "union_all",
+              inputs: againstInputs,
+              fields: existsField ? [existsField] : [],
+              schemaKnown: true,
+              span: load.span,
+            })
+          : previous[0];
+      if (interRecord.exists && !against)
+        fail(
+          "EXISTS_PREVIOUS_FIELD_NOT_FOUND",
+          "NAME_RESOLUTION",
+          `Exists no encuentra un campo previamente cargado: ${interRecord.exists.field}`,
+          load.span,
+        );
+      const stateful = add({
+        op: "stateful",
+        input: current.id,
+        fields: load.spec.fields.map((field) => field.alias),
+        schemaKnown: true,
+        orderBy,
+        stateful: {
+          projections: load.spec.fields,
+          distinct: load.spec.distinct,
+          ...(load.spec.where && !interRecord.exists
+            ? { where: load.spec.where }
+            : {}),
+          ...(interRecord.exists && against
+            ? { exists: { ...interRecord.exists, against: against.id } }
+            : {}),
+          orderBy,
+          iterationCount,
+          operations: interRecord.operations,
+        },
+        span: load.span,
+      });
+      if (load.label) assignTable(load.label, stateful.id);
+      else outputRelationId = stateful.id;
+      return stateful.id;
+    }
     const dualFields = current.dualFields ?? [];
     const preservesDualWithoutReadingIt =
       load.spec.wildcard &&
@@ -124,6 +254,7 @@ export function analizarProgramaQlik(
         condition: load.spec.where,
         fields: current.fields,
         schemaKnown: current.schemaKnown,
+        orderBy: current.orderBy,
         span: load.span,
       });
     }
@@ -151,9 +282,11 @@ export function analizarProgramaQlik(
         op: "project",
         input: current.id,
         projections: load.spec.fields,
+        distinct: load.spec.distinct,
         fields: load.spec.fields.map((field) => field.alias),
         schemaKnown: true,
         dualFields: projectedDualFields,
+        orderBy: current.orderBy,
         span: load.span,
       });
     }
@@ -180,7 +313,14 @@ export function analizarProgramaQlik(
     const prefix = load.prefix;
     if (
       (current.dualFields?.length ?? 0) > 0 &&
-      ["join", "concatenate", "keep", "crosstable", "generic", "mapping"].includes(prefix.type)
+      [
+        "join",
+        "concatenate",
+        "keep",
+        "crosstable",
+        "generic",
+        "mapping",
+      ].includes(prefix.type)
     )
       fail(
         "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
@@ -379,7 +519,11 @@ export function analizarProgramaQlik(
   for (const statement of program.statements) {
     switch (statement.type) {
       case "connect":
-        activeConnection = expandir(statement.connection, variables, statement.span);
+        activeConnection = expandir(
+          statement.connection,
+          variables,
+          statement.span,
+        );
         break;
       case "load": {
         if (pendingLoad)
@@ -389,7 +533,11 @@ export function analizarProgramaQlik(
             "Existe un LOAD pendiente sin fuente asociada",
             pendingLoad.span,
           );
-        const bodyExpandido = expandir(statement.body, variables, statement.span);
+        const bodyExpandido = expandir(
+          statement.body,
+          variables,
+          statement.span,
+        );
         const spec = parsearCuerpoLoad(bodyExpandido);
         const load: CargaPendiente = {
           ...(statement.label ? { label: statement.label } : {}),
@@ -414,12 +562,14 @@ export function analizarProgramaQlik(
             statement.span,
           );
         }
+        const sql = expandir(statement.sql.text, variables, statement.span);
         const native = add({
           op: "native_sql",
-          sql: expandir(statement.sql.text, variables, statement.span),
+          sql,
           connection: activeConnection,
           fields: [],
           schemaKnown: false,
+          orderBy: extraerOrdenSql(sql),
           span: statement.span,
         });
         if (pendingLoad) {
@@ -431,7 +581,11 @@ export function analizarProgramaQlik(
         break;
       }
       case "set": {
-        const defined = definirVariableQlik(statement.mode, statement.body, variables);
+        const defined = definirVariableQlik(
+          statement.mode,
+          statement.body,
+          variables,
+        );
         effects.push({
           kind: "define_variable",
           mode: statement.mode,
@@ -489,12 +643,21 @@ export function analizarProgramaQlik(
   };
 }
 
-function expandir(text: string, variables: VariablesQlik, span: SourceSpan): string {
+function expandir(
+  text: string,
+  variables: VariablesQlik,
+  span: SourceSpan,
+): string {
   try {
     return expandirVariablesQlik(text, variables);
   } catch (error) {
     if (error instanceof VariableQlikRuntimeError)
-      fail("VARIABLE_LET_RUNTIME_REQUIRED", "UNSUPPORTED_SEMANTICS", error.message, span);
+      fail(
+        "VARIABLE_LET_RUNTIME_REQUIRED",
+        "UNSUPPORTED_SEMANTICS",
+        error.message,
+        span,
+      );
     throw error;
   }
 }
