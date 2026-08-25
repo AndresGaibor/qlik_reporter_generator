@@ -1,6 +1,7 @@
 import type { CatalogoMetadataBigQuery } from "../../../google-cloud/dominio/metadata-bigquery.js";
 import { analizarProgramaQlik } from "./analizador-semantico.js";
 import { emitirBigQueryVNext } from "./emisor-bigquery.js";
+import { enriquecerPlanConMetadataBigQuery } from "./metadata-ir.js";
 import type { DiagnosticoVNext } from "./modelo.js";
 import { optimizarPlanRelacionalVNext } from "./optimizador-ir.js";
 import { parsearProgramaQlik } from "./parser-programa.js";
@@ -22,7 +23,15 @@ export function compilarDataflowVNext(
 ): ResultadoCompilacionVNext {
   const program = parsearProgramaQlik(script);
   const plan = analizarProgramaQlik(program);
-  const planOptimizado = optimizarPlanRelacionalVNext(plan);
-  const emission = emitirBigQueryVNext(planOptimizado, options);
-  return { ...emission, diagnostics: plan.diagnostics };
+  const planTipado = enriquecerPlanConMetadataBigQuery(
+    plan,
+    options.sourceMetadata,
+  );
+  const planOptimizado = optimizarPlanRelacionalVNext(planTipado);
+  const planFinal = enriquecerPlanConMetadataBigQuery(
+    planOptimizado,
+    options.sourceMetadata,
+  );
+  const emission = emitirBigQueryVNext(planFinal, options);
+  return { ...emission, diagnostics: planFinal.diagnostics };
 }

@@ -1,3 +1,4 @@
+import type { MetadataCampoBigQuery } from "../../../google-cloud/dominio/metadata-bigquery.js";
 import type { ExprQlik } from "./expresiones-qlik.js";
 import type { StatefulLoadVNext } from "./inter-record.js";
 import type { DiagnosticoVNext, SourceSpan } from "./modelo.js";
@@ -34,10 +35,17 @@ export interface LookupMapSubstringVNext {
   alias: string;
 }
 
+export interface MetadataCampoIRVNext extends MetadataCampoBigQuery {
+  sourceTable?: string;
+  sourceField?: string;
+}
+
 interface RelationBase {
   id: string;
   fields: string[];
   schemaKnown: boolean;
+  fieldMetadata?: Readonly<Record<string, MetadataCampoIRVNext>>;
+  sourceRefs?: readonly string[];
   dualFields?: string[];
   dualComponents?: Record<string, ComponentesDualVNext>;
   internalFields?: string[];

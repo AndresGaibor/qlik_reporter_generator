@@ -8,6 +8,24 @@ import { construirCatalogoMetadata } from "../metadata.js";
 import { toBinding } from "./fuentes.js";
 import { fail, numberSetting, qlik, qlikLiteral } from "./utilidades.js";
 
+function metadataDeEntrada(
+  input: RelacionVNext | undefined,
+  base: EntornoExpresionQlik,
+): Pick<EntornoExpresionQlik, "fieldMetadata" | "fieldTypes"> {
+  if (!input?.fieldMetadata)
+    return base.fieldTypes ? { fieldTypes: base.fieldTypes } : {};
+  const relationTypes = Object.fromEntries(
+    Object.entries(input.fieldMetadata).map(([field, metadata]) => [
+      field,
+      metadata.type,
+    ]),
+  );
+  return {
+    fieldMetadata: input.fieldMetadata,
+    fieldTypes: { ...(base.fieldTypes ?? {}), ...relationTypes },
+  };
+}
+
 export function entornoFuente(
   base: EntornoExpresionQlik,
   bindings: ReadonlyMap<string, BindingApplyMapQlik> = new Map(),
@@ -38,6 +56,7 @@ export function entornoProyeccion(
     Object.keys(input?.dualComponents ?? {}).length > 0;
   return {
     ...base,
+    ...metadataDeEntrada(input, base),
     ...(needsQualifier ? { identifierQualifier: "src" } : {}),
     ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
     applyMapBindings: bindings,
@@ -79,6 +98,7 @@ export function entornoAgregacion(
   );
   return {
     ...base,
+    ...metadataDeEntrada(input, base),
     ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
     ...(order && order.length > 0 ? { aggregationOrderBy: order } : {}),
   };

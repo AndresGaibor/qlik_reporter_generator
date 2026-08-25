@@ -1,3 +1,4 @@
+import type { MetadataCampoBigQuery } from "../../../../google-cloud/dominio/metadata-bigquery.js";
 import type { BindingMapSubstringQlik } from "../mapping-mapsubstring.js";
 import type { CatalogoMetadataCompileTime } from "../metadata.js";
 
@@ -52,6 +53,7 @@ export interface EntornoExpresionQlik {
   applyMapBindings?: ReadonlyMap<string, BindingApplyMapQlik>;
   mapSubstringBindings?: ReadonlyMap<string, BindingMapSubstringQlik>;
   tableMetadata?: CatalogoMetadataCompileTime;
+  fieldMetadata?: Readonly<Record<string, MetadataCampoBigQuery>>;
   fieldTypes?: Readonly<Record<string, string>>;
   filePath?: string;
 }
