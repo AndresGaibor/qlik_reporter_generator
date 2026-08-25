@@ -1,4 +1,9 @@
 import { emitNumericArgument, emitValue } from "./core-valores.js";
+import {
+  esRepeated,
+  metadataCampoBigQuery,
+  tipoCampoBigQuery,
+} from "./tipado-campos.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import { arity, fail, requiredArgument } from "./utilidades.js";
 
@@ -28,7 +33,26 @@ export function emitBasicAggregation(
       );
     return "COUNT(*)";
   }
-  return `${name.toUpperCase()}(${distinct}${emitValue(argument, environment)})`;
+  if (argument.kind === "identifier") {
+    const meta = metadataCampoBigQuery(argument.name, environment);
+    if (esRepeated(meta)) {
+      fail(
+        "AGGREGATION_REPEATED_FIELD_INCOMPATIBLE",
+        `${expression.name}(${argument.name}) es un campo REPEATED/ARRAY y no puede usarse como argumento escalar de agregación`,
+        expression.name,
+        0,
+      );
+    }
+  }
+  const knownType =
+    argument.kind === "identifier"
+      ? tipoCampoBigQuery(argument.name, environment)
+      : undefined;
+  const value =
+    knownType && ["sum", "min", "max", "avg"].includes(name)
+      ? emitNumericArgument(argument, environment)
+      : emitValue(argument, environment);
+  return `${name.toUpperCase()}(${distinct}${value})`;
 }
 
 export function emitOnly(

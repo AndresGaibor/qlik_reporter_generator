@@ -48,6 +48,35 @@ export function esTipoTextoBigQuery(type?: string): boolean {
   return type?.toUpperCase() === "STRING";
 }
 
+export function esTipoTemporalBigQuery(type?: string): boolean {
+  return !!type && TIPOS_TEMPORALES_BIGQUERY.has(type.toUpperCase());
+}
+
+export function esRepeated(metadata?: MetadataCampoBigQuery): boolean {
+  return metadata?.mode === "REPEATED";
+}
+
+export function esTipoEscalar(metadata?: MetadataCampoBigQuery): boolean {
+  if (!metadata) return true;
+  if (metadata.mode === "REPEATED") return false;
+  const t = metadata.type.toUpperCase();
+  return !["RECORD", "STRUCT", "JSON", "GEOGRAPHY", "BYTES"].includes(t);
+}
+
+export function esTipoComplejo(metadata?: MetadataCampoBigQuery): boolean {
+  if (!metadata) return false;
+  if (metadata.mode === "REPEATED") return true;
+  const t = metadata.type.toUpperCase();
+  return ["RECORD", "STRUCT", "JSON", "GEOGRAPHY", "BYTES"].includes(t);
+}
+
+export function nombreTipoLegible(metadata?: MetadataCampoBigQuery): string {
+  if (!metadata) return "desconocido";
+  const t = metadata.type.toUpperCase();
+  if (metadata.mode === "REPEATED") return `${t} (ARRAY)`;
+  return t;
+}
+
 function tipoCampoBigQueryLegacy(
   name: string,
   environment: EntornoExpresionQlik,
