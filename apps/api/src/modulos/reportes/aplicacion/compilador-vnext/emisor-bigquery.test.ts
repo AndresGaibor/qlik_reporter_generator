@@ -159,12 +159,20 @@ describe("emisión BigQuery vNext fase 1", () => {
     expect(result.sql).not.toMatch(/GROUP BY \`categoria\`/);
   });
 
-  it("emite GROUP BY ALL con estilo de script generado por Qlik Dataflow UI", async () => {
+  it("fusiona de forma segura el flujo real de Ventas sin subconsultas redundantes", async () => {
     const result = await compile("regression-ventas-mensuales-dataflow-style.qlik");
-    // El compilador vNext debe usar GROUP BY ALL independientemente de si el
-    // script Qlik usa GROUP BY explícito con 26 columnas (patrón legacy Talend).
+
+    expect(result.strategy).toBe("single_query");
+    expect(result.sql).toContain("INNER JOIN");
+    expect(result.sql).toContain("WHERE");
     expect(result.sql).toContain("GROUP BY ALL");
-    expect(result.sql).not.toMatch(/GROUP BY `Año_year`/);
+    expect(result.sql).toContain("SUM(`Cantidad`) AS `Cantidad`");
+    expect(result.sql).toContain("SUM(`Costo Neto`) AS `Costo de Venta`");
+    expect(result.sql).toContain("SUM(`Venta Neta USD`) AS `Neto Venta`");
+    expect(result.sql).toContain("EXTRACT(YEAR FROM");
+    expect(result.sql).toContain("AS `Año`");
+    expect(result.sql).not.toContain("`Año_year`");
+    expect(result.sql).not.toMatch(/FROM \(\s*SELECT[\s\S]*FROM \(/);
   });
 });
 

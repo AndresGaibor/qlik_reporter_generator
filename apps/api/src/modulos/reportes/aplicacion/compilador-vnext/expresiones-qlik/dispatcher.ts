@@ -435,9 +435,16 @@ export function emitCall(
   }
   if (["year", "day"].includes(name)) {
     arity(expression.name, args, 1);
-    const date = qlikDateFromAny(
-      emitValue(requiredArgument(args[0]), environment),
-    );
+    const argument = requiredArgument(args[0]);
+    const value = emitValue(argument, environment);
+    const knownType =
+      argument.kind === "identifier"
+        ? environment.fieldTypes?.[argument.name]?.toUpperCase()
+        : undefined;
+    const date =
+      knownType && ["DATE", "DATETIME", "TIMESTAMP"].includes(knownType)
+        ? value
+        : qlikDateFromAny(value);
     return `EXTRACT(${name.toUpperCase()} FROM ${date})`;
   }
   if (name === "week" || name === "weekyear")

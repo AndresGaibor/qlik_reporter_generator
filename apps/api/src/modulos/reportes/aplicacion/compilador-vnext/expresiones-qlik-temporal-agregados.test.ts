@@ -4,7 +4,10 @@ import {
   compileWithEnv,
   expectCode,
 } from "./expresiones-qlik-test-helpers.js";
-import { esExpresionDualQlik } from "./expresiones-qlik.js";
+import {
+  type EntornoExpresionQlik,
+  esExpresionDualQlik,
+} from "./expresiones-qlik.js";
 
 describe("parser de expresiones Qlik vNext / temporal y agregados", () => {
   it("formatea Date con el DateFormat explícito del script", () => {

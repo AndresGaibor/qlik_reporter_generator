@@ -4,6 +4,10 @@ import type { DiagnosticoVNext } from "./modelo.js";
 import { optimizarPlanRelacionalVNext } from "./optimizador-ir.js";
 import { parsearProgramaQlik } from "./parser-programa.js";
 
+export interface OpcionesCompilacionVNext {
+  fieldTypes?: Readonly<Record<string, string>>;
+}
+
 export interface ResultadoCompilacionVNext {
   sql: string;
   strategy: "source_sql_passthrough" | "single_query";
@@ -12,10 +16,11 @@ export interface ResultadoCompilacionVNext {
 
 export function compilarDataflowVNext(
   script: string,
+  options: OpcionesCompilacionVNext = {},
 ): ResultadoCompilacionVNext {
   const program = parsearProgramaQlik(script);
   const plan = analizarProgramaQlik(program);
   const planOptimizado = optimizarPlanRelacionalVNext(plan);
-  const emission = emitirBigQueryVNext(planOptimizado);
+  const emission = emitirBigQueryVNext(planOptimizado, options);
   return { ...emission, diagnostics: plan.diagnostics };
 }

@@ -52,5 +52,6 @@ export interface EntornoExpresionQlik {
   applyMapBindings?: ReadonlyMap<string, BindingApplyMapQlik>;
   mapSubstringBindings?: ReadonlyMap<string, BindingMapSubstringQlik>;
   tableMetadata?: CatalogoMetadataCompileTime;
+  fieldTypes?: Readonly<Record<string, string>>;
   filePath?: string;
 }

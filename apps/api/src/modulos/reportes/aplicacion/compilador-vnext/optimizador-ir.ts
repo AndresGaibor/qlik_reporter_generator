@@ -8,6 +8,38 @@ function descorchetar(nombre: string): string {
   return nombre;
 }
 
+function esProjectFusionable(
+  rel: Extract<RelacionVNext, { op: "project" }>,
+): boolean {
+  return (
+    !rel.distinct &&
+    (!rel.mappingLookups || rel.mappingLookups.length === 0) &&
+    (!rel.mapSubstringLookups || rel.mapSubstringLookups.length === 0) &&
+    (!rel.dualExpressions || Object.keys(rel.dualExpressions).length === 0) &&
+    (!rel.orderBy || rel.orderBy.length === 0)
+  );
+}
+
+function sustituirReferenciasDirectas(
+  expression: string,
+  projections: readonly CampoLoadVNext[],
+): string {
+  let result = expression;
+  for (const projection of [...projections].sort(
+    (a, b) => b.alias.length - a.alias.length,
+  )) {
+    if (descorchetar(projection.expression) === projection.alias) continue;
+    const escaped = projection.alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const replacement = `(${projection.expression})`;
+    result = result.replace(new RegExp(`\\[${escaped}\\]`, "g"), replacement);
+    result = result.replace(
+      new RegExp(`(?<![A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, "g"),
+      replacement,
+    );
+  }
+  return result;
+}
+
 /**
  * Optimiza y colapsa el grafo de relaciones IR de compilador-vnext:
  * 1. Proyecciones identidad: Si un `project` no transforma expresiones ni aplica distinct/mapping,
@@ -15,7 +47,9 @@ function descorchetar(nombre: string): string {
  * 2. Colapso de project sobre aggregate: Si un `project` final solo renombra o agrega constantes
  *    sobre un `aggregate`, se pueden fusionar las proyecciones en el `aggregate` final.
  */
-export function optimizarPlanRelacionalVNext(plan: PlanCompilacionVNext): PlanCompilacionVNext {
+export function optimizarPlanRelacionalVNext(
+  plan: PlanCompilacionVNext,
+): PlanCompilacionVNext {
   let relations = [...plan.relations];
   let outputId = plan.outputRelationId;
 
@@ -38,17 +72,21 @@ export function optimizarPlanRelacionalVNext(plan: PlanCompilacionVNext): PlanCo
           !rel.distinct &&
           (!rel.mappingLookups || rel.mappingLookups.length === 0) &&
           (!rel.mapSubstringLookups || rel.mapSubstringLookups.length === 0) &&
-          (!rel.dualExpressions || Object.keys(rel.dualExpressions).length === 0) &&
+          (!rel.dualExpressions ||
+            Object.keys(rel.dualExpressions).length === 0) &&
           rel.projections.every(
             (p) =>
-              descorchetar(p.expression) === (p.alias || p.name) &&
-              inputRel.fields.includes(p.alias)
+              descorchetar(p.expression) === p.alias &&
+              inputRel.fields.includes(p.alias),
           ) &&
           rel.fields.length === inputRel.fields.length &&
           rel.fields.every((f, idx) => f === inputRel.fields[idx]);
 
         // Si es identidad y su entrada ya es un project o filter sobre project
-        if (isIdentity && (inputRel.op === "project" || inputRel.op === "filter")) {
+        if (
+          isIdentity &&
+          (inputRel.op === "project" || inputRel.op === "filter")
+        ) {
           const targetId = rel.input;
           relations = relations
             .filter((r) => r.id !== rel.id)
@@ -63,6 +101,42 @@ export function optimizarPlanRelacionalVNext(plan: PlanCompilacionVNext): PlanCo
           break;
         }
 
+        // Colapsa un project escalar consumido por un aggregate. Sustituye los
+        // aliases calculados (p. ej. Año_year) por su expresión original y
+        // conecta el aggregate directamente a la entrada del project.
+        if (esProjectFusionable(rel)) {
+          const consumer = relations.find(
+            (candidate) =>
+              candidate.op === "aggregate" && candidate.input === rel.id,
+          );
+          if (consumer?.op === "aggregate") {
+            const updatedAggregate: RelacionVNext = {
+              ...consumer,
+              input: rel.input,
+              projections: consumer.projections.map((projection) => ({
+                ...projection,
+                expression: sustituirReferenciasDirectas(
+                  projection.expression,
+                  rel.projections,
+                ),
+              })),
+              groupBy: consumer.groupBy.map((expression) =>
+                sustituirReferenciasDirectas(expression, rel.projections),
+              ),
+            };
+            relations = relations
+              .filter((candidate) => candidate.id !== rel.id)
+              .map((candidate) =>
+                candidate.id === consumer.id ? updatedAggregate : candidate,
+              );
+            byId = new Map(
+              relations.map((candidate) => [candidate.id, candidate]),
+            );
+            changed = true;
+            break;
+          }
+        }
+
         // Colapso de project de salida sobre aggregate:
         // Si `rel` es la salida final, no tiene distinct, ni mappingLookups,
         // y su entrada `inputRel` es un `aggregate`.
@@ -75,7 +149,7 @@ export function optimizarPlanRelacionalVNext(plan: PlanCompilacionVNext): PlanCo
         ) {
           const inputProjectionsMap = new Map<string, CampoLoadVNext>();
           for (const p of inputRel.projections) {
-            inputProjectionsMap.set(p.alias || p.name, p);
+            inputProjectionsMap.set(p.alias, p);
           }
 
           // Verificar si todas las proyecciones del project son constantes o referencias directas a campos del aggregate
@@ -86,10 +160,14 @@ export function optimizarPlanRelacionalVNext(plan: PlanCompilacionVNext): PlanCo
             const rawExpr = descorchetar(p.expression);
             if (inputProjectionsMap.has(rawExpr)) {
               // Referencia a un campo agregado existente
-              const orig = inputProjectionsMap.get(rawExpr)!;
+              const orig = inputProjectionsMap.get(rawExpr);
+              if (!orig) {
+                canInline = false;
+                break;
+              }
               inlinedProjections.push({
                 ...orig,
-                alias: p.alias || p.name,
+                alias: p.alias,
               });
             } else if (
               p.expression.startsWith("'") ||

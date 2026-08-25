@@ -62,6 +62,34 @@ export class EstimadorBigQuery {
     }
   }
 
+  async obtenerEsquemaTabla(tabla: string): Promise<Record<string, string>> {
+    const partes = tabla
+      .split(".")
+      .map((parte) => parte.trim().replace(/^`|`$/g, ""));
+    const [projectId, datasetId, tableId] =
+      partes.length === 3
+        ? partes
+        : partes.length === 2
+          ? [undefined, partes[0], partes[1]]
+          : [undefined, this.dataset, partes[0]];
+    if (!datasetId || !tableId)
+      throw new Error(`Identificador BigQuery inválido: ${tabla}`);
+
+    const [metadata] = await this.cliente
+      .dataset(datasetId, projectId ? { projectId } : undefined)
+      .table(tableId)
+      .getMetadata();
+    const fields = (metadata.schema?.fields ?? []) as Array<{
+      name?: string;
+      type?: string;
+    }>;
+    return Object.fromEntries(
+      fields
+        .filter((field) => field.name && field.type)
+        .map((field) => [String(field.name), String(field.type).toUpperCase()]),
+    );
+  }
+
   private resultado(bytesProcesados: number) {
     return {
       bytesProcesados,

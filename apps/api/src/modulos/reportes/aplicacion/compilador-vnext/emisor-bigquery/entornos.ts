@@ -86,9 +86,11 @@ export function entornoAgregacion(
 
 export function extraerEntornoExpresion(
   plan: PlanCompilacionVNext,
+  fieldTypes?: Readonly<Record<string, string>>,
 ): EntornoExpresionQlik {
   const environment: EntornoExpresionQlik = {
     tableMetadata: construirCatalogoMetadata(plan),
+    ...(fieldTypes ? { fieldTypes } : {}),
   };
   for (const effect of plan.effects) {
     if (effect.kind !== "define_variable") continue;

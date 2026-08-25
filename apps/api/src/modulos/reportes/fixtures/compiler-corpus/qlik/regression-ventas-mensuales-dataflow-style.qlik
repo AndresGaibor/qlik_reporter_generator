@@ -135,6 +135,7 @@ LOAD
 	'Ventas' AS [Tipo],
 	'14.Ventas' AS [Transacción],
 	[Año_year] AS [Año],
+	[NOM_MES] AS [Mes],
 	[Bodega],
 	[Sub bodega] AS [Sub_bodega],
 	[División],
@@ -160,9 +161,6 @@ LOAD
 	'0' AS [Código Tipo Transacción],
 	0 AS [Código Motivo Transacción],
 	[Cantidad],
-	[Cantidad_COUNT],
-	[Costo Neto],
-	[Venta Neta USD],
 	[Costo de Venta],
 	[Neto Venta],
 	'0' AS [Causal de Ajuste],
@@ -195,16 +193,12 @@ LOAD
 	[Unidad de compra],
 	[Clase de mercadería],
 	[Gerencia comercial],
-	[Venta Neta USD],
-	[Cantidad],
-	[Costo Neto],
-	[Fecha],
 	[NOM_MES],
-	Count([Cantidad]) AS [Cantidad_COUNT],
-	Count([Costo Neto]) AS [Costo de Venta],
-	Count([Venta Neta USD]) AS [Neto Venta]
+	Sum([Cantidad]) AS [Cantidad],
+	Sum([Costo Neto]) AS [Costo de Venta],
+	Sum([Venta Neta USD]) AS [Neto Venta]
 RESIDENT [Fechas 1]
-GROUP BY [Año_year], [Formato], [Zona Smx Unidad Operativa], [Cod Ref], [Unidad Operativa], [División], [Departamento], [Clasificación], [Sub Clasificación], [Origen Compra], [Proveedor], [Código de Barras Padre], [Comprador], [Código de departamento], [Bodega], [Sub bodega], [Item padre], [Unidad de compra], [Clase de mercadería], [Gerencia comercial], [Venta Neta USD], [Cantidad], [Costo Neto], [Fecha], [NOM_MES];
+GROUP BY [Año_year], [Formato], [Zona Smx Unidad Operativa], [Cod Ref], [Unidad Operativa], [División], [Departamento], [Clasificación], [Sub Clasificación], [Origen Compra], [Proveedor], [Código de Barras Padre], [Comprador], [Código de departamento], [Bodega], [Sub bodega], [Item padre], [Unidad de compra], [Clase de mercadería], [Gerencia comercial], [NOM_MES];
 DROP TABLE [Fechas 1];
 
 STORE [Seleccionar campos 1] INTO [lib://Bancolombia prueba:SFTP//upload/VentasM1.csv] (txt);

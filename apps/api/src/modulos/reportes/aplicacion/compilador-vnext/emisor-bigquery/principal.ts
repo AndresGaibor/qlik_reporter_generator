@@ -1,4 +1,5 @@
 import type { EntornoExpresionQlik } from "../expresiones-qlik.js";
+import type { OpcionesCompilacionVNext } from "../index.js";
 import type { PlanCompilacionVNext, RelacionVNext } from "../ir.js";
 import {
   construirMapSubstringBindings,
@@ -24,8 +25,9 @@ import { fail, qlik, quote, wrap } from "./utilidades.js";
 
 export function emitirBigQueryVNext(
   plan: PlanCompilacionVNext,
+  options: OpcionesCompilacionVNext = {},
 ): EmisionBigQueryVNext {
-  const environment = extraerEntornoExpresion(plan);
+  const environment = extraerEntornoExpresion(plan, options.fieldTypes);
   const byId = new Map(
     plan.relations.map((relation) => [relation.id, relation]),
   );

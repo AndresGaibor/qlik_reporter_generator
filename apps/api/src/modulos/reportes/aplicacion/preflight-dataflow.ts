@@ -12,6 +12,7 @@ export interface LectorScriptDataflow {
 }
 
 export interface EstimadorBigQueryReporte {
+  obtenerEsquemaTabla?(tabla: string): Promise<Record<string, string>>;
   estimarConsulta(
     sql: string,
   ): Promise<{ bytesProcesados: number; costoEstimadoUsd: number }>;
@@ -50,7 +51,7 @@ export class PreflightDataflow {
     const preparacion = await prepararDataflowActual(
       this.qlik,
       flujoIdQlik,
-      this.alcance,
+      { ...this.alcance, estimador: this.estimador },
       appIdQlik,
     );
     if (!preparacion.compatible) {
@@ -144,7 +145,11 @@ export async function prepararDataflowActual(
   }
 
   try {
-    const compilacion = compilarDataflowVNext(script);
+    const fieldTypes = await obtenerTiposCamposBigQuery(
+      plan,
+      alcance.estimador,
+    );
+    const compilacion = compilarDataflowVNext(script, { fieldTypes });
     return {
       flujoIdQlik,
       scriptDataflow: script,
@@ -173,6 +178,37 @@ export async function prepararDataflowActual(
       resumen,
     };
   }
+}
+
+async function obtenerTiposCamposBigQuery(
+  plan: PlanDataflow,
+  estimador?: EstimadorBigQueryReporte,
+): Promise<Record<string, string> | undefined> {
+  const obtenerEsquemaTabla = estimador?.obtenerEsquemaTabla;
+  if (!obtenerEsquemaTabla) return undefined;
+  const schemas = await Promise.all(
+    plan.fuentes.map(async (fuente) => {
+      try {
+        return await obtenerEsquemaTabla(fuente.tabla);
+      } catch {
+        return {};
+      }
+    }),
+  );
+  const tipos: Record<string, string> = {};
+  const conflictivos = new Set<string>();
+  for (const schema of schemas) {
+    for (const [field, type] of Object.entries(schema)) {
+      const normalized = type.toUpperCase();
+      if (tipos[field] && tipos[field] !== normalized) {
+        delete tipos[field];
+        conflictivos.add(field);
+      } else if (!conflictivos.has(field)) {
+        tipos[field] = normalized;
+      }
+    }
+  }
+  return Object.keys(tipos).length > 0 ? tipos : undefined;
 }
 
 export async function sha256Texto(texto: string): Promise<string> {

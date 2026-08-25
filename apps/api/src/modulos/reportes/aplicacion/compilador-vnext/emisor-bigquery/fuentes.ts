@@ -66,6 +66,14 @@ export function emitirFuenteParaProyeccion(
   environment: EntornoExpresionQlik,
 ): string {
   const source = byId.get(sourceId);
+  if (
+    source?.op === "join" &&
+    (!relation.mappingLookups || relation.mappingLookups.length === 0) &&
+    (!relation.mapSubstringLookups || relation.mapSubstringLookups.length === 0)
+  ) {
+    const flattenedJoin = emitirJoinDirectoSeguro(source, byId, environment);
+    if (flattenedJoin) return flattenedJoin;
+  }
   const lookups = relation.mappingLookups ?? [];
   if (
     source?.op === "native_sql" &&
@@ -120,6 +128,145 @@ export function emitirFuenteParaProyeccion(
     )}`;
   }
   return from;
+}
+
+interface FuenteJoinDirecta {
+  from: string;
+  fields: Map<string, string>;
+  conditions: string[];
+}
+
+function emitirJoinDirectoSeguro(
+  join: Extract<RelacionVNext, { op: "join" }>,
+  byId: Map<string, RelacionVNext>,
+  environment: EntornoExpresionQlik,
+): string | undefined {
+  if (join.join !== "inner") return undefined;
+  const left = resolverFuenteJoinDirecta(join.left, byId);
+  const right = resolverFuenteJoinDirecta(join.right, byId);
+  if (!left || !right) return undefined;
+
+  const leftPhysical = new Set(left.fields.values());
+  const rightPhysical = new Set(right.fields.values());
+  const collisions = [...leftPhysical].filter((field) =>
+    rightPhysical.has(field),
+  );
+  const sharedKeyPhysical = new Set(
+    join.keys
+      .filter((key) => left.fields.get(key) === right.fields.get(key))
+      .map((key) => left.fields.get(key) as string),
+  );
+  if (collisions.some((field) => !sharedKeyPhysical.has(field)))
+    return undefined;
+
+  for (const [alias, physical] of right.fields) {
+    if (!join.keys.includes(alias) && alias !== physical) return undefined;
+  }
+  for (const [alias, physical] of left.fields) {
+    if (alias !== physical) return undefined;
+  }
+
+  const on = join.keys
+    .map((key) => {
+      const leftField = left.fields.get(key);
+      const rightField = right.fields.get(key);
+      if (!leftField || !rightField) return undefined;
+      return `l.${quote(leftField)} = r.${quote(rightField)}`;
+    })
+    .filter((value): value is string => value !== undefined);
+  if (on.length !== join.keys.length) return undefined;
+
+  const conditions = [
+    ...left.conditions.map((condition) =>
+      emitirCondicionFuenteDirecta(condition, left.fields, "l", environment),
+    ),
+    ...right.conditions.map((condition) =>
+      emitirCondicionFuenteDirecta(condition, right.fields, "r", environment),
+    ),
+  ];
+  const where =
+    conditions.length > 0 ? `\nWHERE ${conditions.join(" AND ")}` : "";
+  return `${left.from} AS l\nINNER JOIN ${right.from} AS r\n  ON ${on.join(" AND ")}${where}`;
+}
+
+function resolverFuenteJoinDirecta(
+  id: string,
+  byId: Map<string, RelacionVNext>,
+): FuenteJoinDirecta | undefined {
+  const relation = byId.get(id);
+  if (!relation) return undefined;
+  if (relation.op === "native_sql") {
+    const from = extraerFromNativoSimple(relation.sql);
+    if (!from) return undefined;
+    return {
+      from,
+      fields: new Map(relation.fields.map((field) => [field, field])),
+      conditions: [],
+    };
+  }
+  if (relation.op === "filter") {
+    const source = resolverFuenteJoinDirecta(relation.input, byId);
+    if (!source || relation.orderBy?.length) return undefined;
+    return {
+      ...source,
+      conditions: [...source.conditions, relation.condition],
+    };
+  }
+  if (relation.op !== "project") return undefined;
+  if (
+    relation.distinct ||
+    relation.orderBy?.length ||
+    relation.mappingLookups?.length ||
+    relation.mapSubstringLookups?.length ||
+    (relation.dualExpressions &&
+      Object.keys(relation.dualExpressions).length > 0)
+  )
+    return undefined;
+  const directNative = byId.get(relation.input);
+  if (directNative?.op === "native_sql") {
+    const from = extraerFromNativoSimple(directNative.sql);
+    if (!from) return undefined;
+    const fields = new Map<string, string>();
+    for (const projection of relation.projections) {
+      const identifier = projection.expression
+        .trim()
+        .match(/^\[([^\]]+)\]$|^([A-Za-z_][A-Za-z0-9_ ]*)$/);
+      const physical = identifier?.[1] ?? identifier?.[2];
+      if (!physical) return undefined;
+      fields.set(projection.alias, physical);
+    }
+    return { from, fields, conditions: [] };
+  }
+
+  const source = resolverFuenteJoinDirecta(relation.input, byId);
+  if (!source) return undefined;
+  const fields = new Map<string, string>();
+  for (const projection of relation.projections) {
+    const identifier = projection.expression
+      .trim()
+      .match(/^\[([^\]]+)\]$|^([A-Za-z_][A-Za-z0-9_ ]*)$/);
+    const inputField = identifier?.[1] ?? identifier?.[2];
+    if (!inputField) return undefined;
+    const physical = source.fields.get(inputField);
+    if (!physical) return undefined;
+    fields.set(projection.alias, physical);
+  }
+  return { ...source, fields };
+}
+
+function emitirCondicionFuenteDirecta(
+  condition: string,
+  fields: ReadonlyMap<string, string>,
+  alias: string,
+  environment: EntornoExpresionQlik,
+): string {
+  let sql = qlik(condition, "condition", environment);
+  for (const [logical, physical] of [...fields].sort(
+    (a, b) => b[0].length - a[0].length,
+  )) {
+    sql = sql.replaceAll(quote(logical), `${alias}.${quote(physical)}`);
+  }
+  return sql;
 }
 
 export function toBinding(lookup: LookupApplyMapVNext): BindingApplyMapQlik {

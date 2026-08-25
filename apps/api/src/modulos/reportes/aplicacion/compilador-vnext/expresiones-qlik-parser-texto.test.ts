@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   compile,
   compileCondition,
+  compileWithEnv,
   expectCode,
 } from "./expresiones-qlik-test-helpers.js";
 import {
@@ -129,6 +130,14 @@ describe("parser de expresiones Qlik vNext / parser, texto, JSON y regex", () =>
     expect(compile("Floor([monto])")).toBe("FLOOR(`monto`)");
     expect(compile("Ceil([monto])")).toBe("CEIL(`monto`)");
     expect(compile("Year([fecha])")).toContain("EXTRACT(YEAR FROM COALESCE(");
+  });
+
+  it("usa el tipo BigQuery conocido para Year sin casts defensivos", () => {
+    expect(
+      compileWithEnv("Year([fecha])", {
+        fieldTypes: { fecha: "DATE" },
+      }),
+    ).toBe("EXTRACT(YEAR FROM `fecha`)");
   });
 
   it("implementa Mid, Chr, Ord y Repeat con semántica Qlik", () => {

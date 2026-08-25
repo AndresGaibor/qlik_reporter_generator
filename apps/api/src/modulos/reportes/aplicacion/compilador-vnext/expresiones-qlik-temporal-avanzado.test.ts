@@ -4,6 +4,7 @@ import {
   compileWithEnv,
   expectCode,
 } from "./expresiones-qlik-test-helpers.js";
+import type { EntornoExpresionQlik } from "./expresiones-qlik.js";
 
 describe("parser de expresiones Qlik vNext / temporal avanzado", () => {
   it("baja edad, numeración de días y nombres temporales como SQL dual", () => {
