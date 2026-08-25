@@ -57,6 +57,24 @@ describe("ClienteApi", () => {
     expect(error.message).toBe("Solicitud inválida");
   });
 
+  it("lanza ErrorClienteApi con RESPUESTA_INVALIDA ante cuerpo HTML", async () => {
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response("<html>caído</html>", {
+          status: 503,
+          headers: { "content-type": "text/html" },
+        }),
+    ) as unknown as typeof fetch;
+
+    const cliente = new ClienteApi("/api");
+    const error = await cliente.get("/estado").catch((causa) => causa);
+
+    expect(error).toBeInstanceOf(ErrorClienteApi);
+    if (!(error instanceof ErrorClienteApi)) throw new Error();
+    expect(error.codigo).toBe("RESPUESTA_INVALIDA");
+    expect(error.estado).toBe(503);
+  });
+
   it("envía JSON e Idempotency-Key", async () => {
     globalThis.fetch = vi.fn(
       async () =>
