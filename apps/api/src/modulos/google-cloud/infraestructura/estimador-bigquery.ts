@@ -1,5 +1,10 @@
 import { BigQuery } from "@google-cloud/bigquery";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
+import type {
+  MetadataCampoBigQuery,
+  MetadataTablaBigQuery,
+  ModoCampoBigQuery,
+} from "../dominio/metadata-bigquery.js";
 
 export interface OpcionesEstimadorBigQuery {
   projectId: string;
@@ -62,7 +67,99 @@ export class EstimadorBigQuery {
     }
   }
 
+  async obtenerMetadataTabla(tabla: string): Promise<MetadataTablaBigQuery> {
+    const { projectId, datasetId, tableId, qualifiedTableId } =
+      this.resolverTabla(tabla);
+    const [metadata] = await this.cliente
+      .dataset(datasetId, projectId ? { projectId } : undefined)
+      .table(tableId)
+      .getMetadata();
+
+    return {
+      tableId: qualifiedTableId,
+      fields: this.normalizarCamposMetadata(metadata.schema?.fields ?? []),
+      ...(metadata.numBytes !== undefined
+        ? { numBytes: Number(metadata.numBytes) }
+        : {}),
+      ...(metadata.timePartitioning
+        ? {
+            timePartitioning: {
+              ...(metadata.timePartitioning.type
+                ? { type: String(metadata.timePartitioning.type).toUpperCase() }
+                : {}),
+              ...(metadata.timePartitioning.field
+                ? { field: String(metadata.timePartitioning.field) }
+                : {}),
+              ...(metadata.timePartitioning.expirationMs !== undefined
+                ? {
+                    expirationMs: Number(
+                      metadata.timePartitioning.expirationMs,
+                    ),
+                  }
+                : {}),
+              ...(metadata.timePartitioning.requirePartitionFilter !== undefined
+                ? {
+                    requirePartitionFilter: Boolean(
+                      metadata.timePartitioning.requirePartitionFilter,
+                    ),
+                  }
+                : {}),
+            },
+          }
+        : {}),
+      ...(metadata.rangePartitioning?.field
+        ? {
+            rangePartitioning: {
+              field: String(metadata.rangePartitioning.field),
+              ...(metadata.rangePartitioning.range
+                ? {
+                    range: {
+                      ...(metadata.rangePartitioning.range.start !== undefined
+                        ? {
+                            start: Number(
+                              metadata.rangePartitioning.range.start,
+                            ),
+                          }
+                        : {}),
+                      ...(metadata.rangePartitioning.range.end !== undefined
+                        ? { end: Number(metadata.rangePartitioning.range.end) }
+                        : {}),
+                      ...(metadata.rangePartitioning.range.interval !==
+                      undefined
+                        ? {
+                            interval: Number(
+                              metadata.rangePartitioning.range.interval,
+                            ),
+                          }
+                        : {}),
+                    },
+                  }
+                : {}),
+            },
+          }
+        : {}),
+      ...(metadata.clustering?.fields?.length
+        ? { clusteringFields: metadata.clustering.fields.map(String) }
+        : {}),
+    };
+  }
+
   async obtenerEsquemaTabla(tabla: string): Promise<Record<string, string>> {
+    const metadata = await this.obtenerMetadataTabla(tabla);
+    return Object.fromEntries(
+      Object.entries(metadata.fields).map(([name, field]) => [
+        name,
+        field.type,
+      ]),
+    );
+  }
+
+  private resolverTabla(tabla: string): {
+    projectId?: string;
+    datasetId: string;
+    tableId: string;
+    qualifiedTableId: string;
+  } {
     const partes = tabla
       .split(".")
       .map((parte) => parte.trim().replace(/^`|`$/g, ""));
@@ -74,20 +171,47 @@ export class EstimadorBigQuery {
           : [undefined, this.dataset, partes[0]];
     if (!datasetId || !tableId)
       throw new Error(`Identificador BigQuery inválido: ${tabla}`);
+    return {
+      ...(projectId ? { projectId } : {}),
+      datasetId,
+      tableId,
+      qualifiedTableId: projectId
+        ? `${projectId}.${datasetId}.${tableId}`
+        : `${datasetId}.${tableId}`,
+    };
+  }
 
-    const [metadata] = await this.cliente
-      .dataset(datasetId, projectId ? { projectId } : undefined)
-      .table(tableId)
-      .getMetadata();
-    const fields = (metadata.schema?.fields ?? []) as Array<{
-      name?: string;
-      type?: string;
-    }>;
-    return Object.fromEntries(
-      fields
-        .filter((field) => field.name && field.type)
-        .map((field) => [String(field.name), String(field.type).toUpperCase()]),
-    );
+  private normalizarCamposMetadata(
+    fields: unknown,
+  ): Record<string, MetadataCampoBigQuery> {
+    if (!Array.isArray(fields)) return {};
+    const resultado: Record<string, MetadataCampoBigQuery> = {};
+    for (const raw of fields) {
+      if (!raw || typeof raw !== "object") continue;
+      const field = raw as Record<string, unknown>;
+      if (!field.name || !field.type) continue;
+      const nested = this.normalizarCamposMetadata(field.fields);
+      resultado[String(field.name)] = {
+        type: String(field.type).toUpperCase(),
+        mode: this.normalizarModoCampo(field.mode),
+        ...(field.precision !== undefined
+          ? { precision: Number(field.precision) }
+          : {}),
+        ...(field.scale !== undefined ? { scale: Number(field.scale) } : {}),
+        ...(field.maxLength !== undefined
+          ? { maxLength: Number(field.maxLength) }
+          : {}),
+        ...(Object.keys(nested).length > 0 ? { fields: nested } : {}),
+      };
+    }
+    return resultado;
+  }
+
+  private normalizarModoCampo(mode: unknown): ModoCampoBigQuery {
+    const normalized = String(mode ?? "NULLABLE").toUpperCase();
+    return normalized === "REQUIRED" || normalized === "REPEATED"
+      ? normalized
+      : "NULLABLE";
   }
 
   private resultado(bytesProcesados: number) {

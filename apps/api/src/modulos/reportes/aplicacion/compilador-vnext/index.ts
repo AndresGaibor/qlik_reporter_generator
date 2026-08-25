@@ -1,3 +1,4 @@
+import type { CatalogoMetadataBigQuery } from "../../../google-cloud/dominio/metadata-bigquery.js";
 import { analizarProgramaQlik } from "./analizador-semantico.js";
 import { emitirBigQueryVNext } from "./emisor-bigquery.js";
 import type { DiagnosticoVNext } from "./modelo.js";
@@ -6,6 +7,7 @@ import { parsearProgramaQlik } from "./parser-programa.js";
 
 export interface OpcionesCompilacionVNext {
   fieldTypes?: Readonly<Record<string, string>>;
+  sourceMetadata?: CatalogoMetadataBigQuery;
 }
 
 export interface ResultadoCompilacionVNext {

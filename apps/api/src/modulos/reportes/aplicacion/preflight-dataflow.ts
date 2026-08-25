@@ -1,4 +1,8 @@
 import type { PreflightDataflowReporte } from "@qlik/contratos";
+import type {
+  CatalogoMetadataBigQuery,
+  MetadataTablaBigQuery,
+} from "../../google-cloud/dominio/metadata-bigquery.js";
 import type { PlanDataflow } from "../dominio/plan-dataflow.js";
 import { compilarDataflowVNext } from "./compilador-vnext/index.js";
 import { ErrorCompilacionVNext } from "./compilador-vnext/modelo.js";
@@ -12,6 +16,7 @@ export interface LectorScriptDataflow {
 }
 
 export interface EstimadorBigQueryReporte {
+  obtenerMetadataTabla?(tabla: string): Promise<MetadataTablaBigQuery>;
   obtenerEsquemaTabla?(tabla: string): Promise<Record<string, string>>;
   estimarConsulta(
     sql: string,
@@ -145,11 +150,11 @@ export async function prepararDataflowActual(
   }
 
   try {
-    const fieldTypes = await obtenerTiposCamposBigQuery(
+    const metadata = await obtenerMetadataCamposBigQuery(
       plan,
       alcance.estimador,
     );
-    const compilacion = compilarDataflowVNext(script, { fieldTypes });
+    const compilacion = compilarDataflowVNext(script, metadata);
     return {
       flujoIdQlik,
       scriptDataflow: script,
@@ -180,21 +185,40 @@ export async function prepararDataflowActual(
   }
 }
 
-async function obtenerTiposCamposBigQuery(
+async function obtenerMetadataCamposBigQuery(
   plan: PlanDataflow,
   estimador?: EstimadorBigQueryReporte,
-): Promise<Record<string, string> | undefined> {
+): Promise<{
+  fieldTypes?: Readonly<Record<string, string>>;
+  sourceMetadata?: CatalogoMetadataBigQuery;
+}> {
+  const obtenerMetadataTabla = estimador?.obtenerMetadataTabla;
   const obtenerEsquemaTabla = estimador?.obtenerEsquemaTabla;
-  if (!obtenerEsquemaTabla) return undefined;
-  const schemas = await Promise.all(
-    plan.fuentes.map(async (fuente) => {
-      try {
-        return await obtenerEsquemaTabla(fuente.tabla);
-      } catch {
-        return {};
+  if (!obtenerMetadataTabla && !obtenerEsquemaTabla) return {};
+
+  const catalogo: Record<string, MetadataTablaBigQuery> = {};
+  const schemas: Array<Record<string, string>> = [];
+  for (const fuente of plan.fuentes) {
+    try {
+      if (obtenerMetadataTabla) {
+        const metadata = await obtenerMetadataTabla(fuente.tabla);
+        catalogo[fuente.tabla] = metadata;
+        schemas.push(
+          Object.fromEntries(
+            Object.entries(metadata.fields).map(([name, field]) => [
+              name,
+              field.type,
+            ]),
+          ),
+        );
+      } else if (obtenerEsquemaTabla) {
+        schemas.push(await obtenerEsquemaTabla(fuente.tabla));
       }
-    }),
-  );
+    } catch {
+      schemas.push({});
+    }
+  }
+
   const tipos: Record<string, string> = {};
   const conflictivos = new Set<string>();
   for (const schema of schemas) {
@@ -208,7 +232,11 @@ async function obtenerTiposCamposBigQuery(
       }
     }
   }
-  return Object.keys(tipos).length > 0 ? tipos : undefined;
+
+  return {
+    ...(Object.keys(tipos).length > 0 ? { fieldTypes: tipos } : {}),
+    ...(Object.keys(catalogo).length > 0 ? { sourceMetadata: catalogo } : {}),
+  };
 }
 
 export async function sha256Texto(texto: string): Promise<string> {

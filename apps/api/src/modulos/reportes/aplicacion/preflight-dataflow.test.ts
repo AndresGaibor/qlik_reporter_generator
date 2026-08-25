@@ -113,7 +113,16 @@ describe("PreflightDataflow", () => {
     `;
     const qlik = { obtenerScriptApp: vi.fn(async () => ({ script })) };
     const estimador = {
-      obtenerEsquemaTabla: vi.fn(async () => ({ Fecha: "DATE" })),
+      obtenerMetadataTabla: vi.fn(async () => ({
+        tableId: "proyecto.dataset.ventas",
+        fields: { Fecha: { type: "DATE", mode: "REQUIRED" as const } },
+        timePartitioning: {
+          type: "DAY",
+          field: "Fecha",
+          requirePartitionFilter: true,
+        },
+        clusteringFields: ["Fecha"],
+      })),
       estimarConsulta: vi.fn(async () => ({
         bytesProcesados: 1,
         costoEstimadoUsd: 0,
@@ -126,7 +135,7 @@ describe("PreflightDataflow", () => {
     }).ejecutar("tipos-bq");
 
     expect(resultado.compatible).toBe(true);
-    expect(estimador.obtenerEsquemaTabla).toHaveBeenCalledWith(
+    expect(estimador.obtenerMetadataTabla).toHaveBeenCalledWith(
       "proyecto.dataset.ventas",
     );
     expect(resultado.sqlBigQuery).toContain(
