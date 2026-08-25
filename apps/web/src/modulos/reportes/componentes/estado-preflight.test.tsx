@@ -77,12 +77,81 @@ test("permite ver y copiar el SQL generado", async () => {
   });
 
   expect(container.textContent).toContain("SQL generado");
+  const expansor = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent?.includes("SQL generado"),
+  );
+  act(() => expansor?.click());
   const copiar = Array.from(container.querySelectorAll("button")).find(
     (button) => button.textContent?.includes("Copiar SQL"),
   );
   expect(copiar).toBeDefined();
   await act(async () => copiar?.click());
   expect(writeText).toHaveBeenCalledWith(sql);
+});
+
+test("muestra el SQL en un panel con desplazamiento vertical", () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      <EstadoPreflight
+        validando={false}
+        mostrarDetallesTecnicos
+        preflight={{
+          flujoIdQlik: "df-1",
+          hashDataflowSha256: "a".repeat(64),
+          compatible: true,
+          operacionesNoSoportadas: [],
+          sqlBigQuery: "SELECT campo FROM `p.d.t`",
+          bytesProcesados: 0,
+          costoEstimadoUsd: 0,
+          validacionBigQuery: { exitosa: true, mensajeError: null },
+          resumen: { fuentes: 1, filtros: 0, joins: 0, camposSalida: 1 },
+        }}
+      />,
+    );
+  });
+
+  const expansor = Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent?.includes("SQL generado"),
+  );
+  act(() => expansor?.click());
+  expect(container.querySelector("pre")?.style.overflow).toBe("auto");
+});
+
+test("usa un boton de expansion en lugar del marcador nativo", () => {
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+
+  act(() => {
+    root?.render(
+      <EstadoPreflight
+        validando={false}
+        mostrarDetallesTecnicos
+        preflight={{
+          flujoIdQlik: "df-1",
+          hashDataflowSha256: "a".repeat(64),
+          compatible: true,
+          operacionesNoSoportadas: [],
+          sqlBigQuery: "SELECT campo FROM `p.d.t`",
+          bytesProcesados: 0,
+          costoEstimadoUsd: 0,
+          validacionBigQuery: { exitosa: true, mensajeError: null },
+          resumen: { fuentes: 1, filtros: 0, joins: 0, camposSalida: 1 },
+        }}
+      />,
+    );
+  });
+
+  expect(container.querySelector("summary")).toBeNull();
+  expect(
+    Array.from(container.querySelectorAll("button")).some(
+      (button) => button.textContent?.includes("SQL generado"),
+    ),
+  ).toBe(true);
 });
 
 test("muestra el SQL aunque BigQuery no pueda estimar costo por permisos", () => {

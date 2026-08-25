@@ -1,4 +1,44 @@
+import { Icon } from "@/compartido/componentes/ui/icon";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { useState } from "react";
 import type { preflightDataflowReporte } from "../api";
+
+const bigqueryStyle = {
+  'pre[class*="language-"]': {
+    background: "#ffffff",
+    color: "#000000",
+    fontFamily: "inherit",
+  },
+  'code[class*="language-"]': {
+    background: "#ffffff",
+    color: "#000000",
+    fontFamily: "inherit",
+  },
+  comment: { color: "#6a9955" },
+  prolog: { color: "#6a9955" },
+  doctype: { color: "#6a9955" },
+  cdata: { color: "#6a9955" },
+  punctuation: { color: "#000000" },
+  keyword: { color: "#569cd6" },
+  "function.variable": { color: "#569cd6" },
+  "template-string": { color: "#ce9178" },
+  string: { color: "#ce9178" },
+  boolean: { color: "#569cd6" },
+  number: { color: "#b5cea8" },
+  null: { color: "#569cd6" },
+  "attr-name": { color: "#9cdcfe" },
+  "class-name": { color: "#4ec9b0" },
+  "maybe-unknown": { color: "#4ec9b0" },
+  constant: { color: "#569cd6" },
+  builtin: { color: "#dcdcaa" },
+  variable: { color: "#9cdcfe" },
+  function: { color: "#dcdcaa" },
+  operator: { color: "#d4d4d4" },
+  parameter: { color: "#9cdcfe" },
+  "property-access": { color: "#9cdcfe" },
+  indexer: { color: "#9cdcfe" },
+  namespace: { color: "#9cdcfe" },
+};
 
 type Preflight = Awaited<ReturnType<typeof preflightDataflowReporte>>;
 
@@ -127,6 +167,8 @@ export function EstadoPreflight({
 }
 
 function DetalleTecnico({ preflight }: { preflight: Preflight }) {
+  const [sqlAbierto, setSqlAbierto] = useState(false);
+
   return (
     <div className="space-y-4 border-t border-line-200 pt-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -151,27 +193,58 @@ function DetalleTecnico({ preflight }: { preflight: Preflight }) {
           plural="campos"
         />
       </div>
-      <details className="overflow-hidden rounded-lg border border-line-200 bg-surface">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink-800">
+      <section className="overflow-hidden rounded-lg border border-line-200 bg-surface">
+        <button
+          type="button"
+          aria-expanded={sqlAbierto}
+          aria-controls="sql-generado"
+          onClick={() => setSqlAbierto((abierto) => !abierto)}
+          className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-ink-800 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
+        >
+          <Icon
+            name="chev"
+            size="sm"
+            className={`text-ink-500 transition-transform ${sqlAbierto ? "rotate-90" : "-rotate-180"}`}
+          />
           SQL generado
-        </summary>
-        <div className="border-t border-line-200 bg-surface-subtle p-3">
-          <div className="mb-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() =>
-                void navigator.clipboard.writeText(preflight.sqlBigQuery)
-              }
-              className="rounded-md border border-line-200 bg-surface px-2.5 py-1 text-xs font-semibold text-ink-700 hover:bg-hover"
+        </button>
+        {sqlAbierto && (
+          <div id="sql-generado" className="border-t border-line-200 bg-app/40 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-500">
+                <Icon name="file-text" size="sm" />
+                GoogleSQL
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  void navigator.clipboard.writeText(preflight.sqlBigQuery)
+                }
+                className="inline-flex items-center gap-1.5 rounded-md border border-line-200 bg-surface px-2.5 py-1.5 text-xs font-semibold text-ink-700 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              >
+                <Icon name="copy" size="sm" />
+                Copiar SQL
+              </button>
+            </div>
+            <SyntaxHighlighter
+              language="sql"
+              style={bigqueryStyle}
+              customStyle={{
+                margin: 0,
+                border: "1px solid #e2e8f0",
+                borderRadius: "0.5rem",
+                fontSize: "12px",
+                lineHeight: "1.65",
+                maxHeight: "24rem",
+                overflow: "auto",
+                padding: "1rem",
+              }}
             >
-              Copiar SQL
-            </button>
+              {preflight.sqlBigQuery}
+            </SyntaxHighlighter>
           </div>
-          <pre className="max-h-72 overflow-auto rounded-md bg-slate-950 p-3 text-[11px] leading-relaxed text-slate-100">
-            {preflight.sqlBigQuery}
-          </pre>
-        </div>
-      </details>
+        )}
+      </section>
     </div>
   );
 }
