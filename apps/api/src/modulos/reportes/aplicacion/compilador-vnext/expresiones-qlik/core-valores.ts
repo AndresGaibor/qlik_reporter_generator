@@ -26,6 +26,11 @@ import {
 } from "./temporal-calendario.js";
 import { emitAdvancedTemporalNumeric } from "./temporal-dispatch.js";
 import { emitDualDateRaw, emitMakeTimeRaw } from "./temporal-formato.js";
+import {
+  esTipoNumericoBigQuery,
+  esTipoTextoBigQuery,
+  tipoCampoBigQuery,
+} from "./tipado-campos.js";
 import type {
   ContextoExpresion,
   EntornoExpresionQlik,
@@ -61,7 +66,10 @@ export function emitNumericComponent(
   if (expression.kind === "identifier") {
     const dual = environment.dualComponents?.[expression.name];
     if (dual) return qualifiedIdentifier(dual.numericField, environment);
-    return qlikNumeric(qualifiedIdentifier(expression.name, environment));
+    const identifier = qualifiedIdentifier(expression.name, environment);
+    if (esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment)))
+      return identifier;
+    return qlikNumeric(identifier);
   }
   if (expression.kind === "call" && expression.name.toLowerCase() === "null")
     return "NULL";
@@ -80,6 +88,8 @@ export function emitTextValue(
   if (expression.kind === "identifier") {
     const dual = environment.dualComponents?.[expression.name];
     if (dual) return qualifiedIdentifier(dual.textField, environment);
+    if (esTipoTextoBigQuery(tipoCampoBigQuery(expression.name, environment)))
+      return qualifiedIdentifier(expression.name, environment);
   }
   if (
     expression.kind === "call" &&
@@ -135,6 +145,8 @@ export function emitNumericValue(
     const dual = environment.dualComponents?.[expression.name];
     if (dual) return qualifiedIdentifier(dual.numericField, environment);
     const identifier = qualifiedIdentifier(expression.name, environment);
+    if (esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment)))
+      return identifier;
     return environment.identifierQualifier
       ? identifier
       : qlikNumericOrTemporal(identifier);
@@ -310,6 +322,11 @@ export function emitNumericArgument(
   expression: ExprQlik,
   environment: EntornoExpresionQlik,
 ): string {
+  if (
+    expression.kind === "identifier" &&
+    esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment))
+  )
+    return qualifiedIdentifier(expression.name, environment);
   if (
     (expression.kind === "binary" &&
       ["+", "-", "*", "/"].includes(expression.operator)) ||
