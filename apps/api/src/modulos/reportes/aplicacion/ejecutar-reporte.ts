@@ -55,9 +55,11 @@ export class EjecutarReporte {
     >,
   ) {}
 
-  async ejecutar(
-    entrada: EntradaEjecutarReporte,
-  ): Promise<{ runId: string; ejecucionReporteId: string }> {
+  async ejecutar(entrada: EntradaEjecutarReporte): Promise<{
+    runId: string;
+    ejecucionReporteId: string;
+    carpetaDescargas: string;
+  }> {
     const flujo = (await this.qlik.listarFlujos()).find(
       (item) => item.id === entrada.flujoIdQlik,
     );
@@ -72,6 +74,7 @@ export class EjecutarReporte {
       this.qlik,
       flujo.id,
       this.alcanceBigQuery,
+      flujo.appId ?? flujo.id,
     );
     if (!preparacion.compatible) {
       throw new ErrorAplicacion(
@@ -133,7 +136,11 @@ export class EjecutarReporte {
       >
     >,
     preparacion: Awaited<ReturnType<typeof prepararDataflowActual>>,
-  ): Promise<{ runId: string; ejecucionReporteId: string }> {
+  ): Promise<{
+    runId: string;
+    ejecucionReporteId: string;
+    carpetaDescargas: string;
+  }> {
     const ejecucionReporteId = this.generarId();
     const uriBaseGcs = construirUriEjecucion(
       this.alcanceBigQuery.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/",
@@ -215,7 +222,11 @@ export class EjecutarReporte {
         runIdQlik,
         new Date(),
       );
-      return { runId: runIdQlik, ejecucionReporteId };
+      return {
+        runId: runIdQlik,
+        ejecucionReporteId,
+        carpetaDescargas: construirCarpetaDescargasReporte(flujo.name),
+      };
     } catch (error) {
       if (auditoriaCreada) {
         const mensaje =
@@ -235,12 +246,8 @@ export class EjecutarReporte {
   }
 }
 
-function construirUriEjecucion(
-  uriBase: string,
+export function construirCarpetaDescargasReporte(
   nombreReporte: string,
-  ejecucionId: string,
-  correo?: string | null,
-  usuarioId?: string,
 ): string {
   const segmento =
     nombreReporte
@@ -250,6 +257,20 @@ function construirUriEjecucion(
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 80) || "reporte";
+  return `${segmento}/`;
+}
+
+function construirUriEjecucion(
+  uriBase: string,
+  nombreReporte: string,
+  ejecucionId: string,
+  correo?: string | null,
+  usuarioId?: string,
+): string {
+  const segmento = construirCarpetaDescargasReporte(nombreReporte).replace(
+    /\/$/,
+    "",
+  );
   const base = uriBase.trim().replace(/\/+$/, "");
   if (!base.startsWith("gs://")) {
     throw new Error("La ruta GCS debe iniciar con gs://");

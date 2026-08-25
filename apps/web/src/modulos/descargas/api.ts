@@ -60,8 +60,22 @@ export function firmarArchivoExploradorGcs(ruta: string) {
   );
 }
 
+export interface CarpetaEjecucionGcs {
+  carpeta: string;
+  ejecucionId: string;
+  ejecutadoEn: string;
+  esMasReciente: boolean;
+}
+
+export interface EjecucionActualCarpetaGcs {
+  ejecucionId: string;
+  ejecutadoEn: string;
+}
+
 export interface CarpetaUsuarioGcs extends ExploradorGcs {
   carpetaUsuario: string;
+  carpetasEjecucion?: CarpetaEjecucionGcs[];
+  ejecucionActual?: EjecucionActualCarpetaGcs | null;
 }
 
 export interface CarpetaRegistradaGcs {

@@ -62,6 +62,23 @@ describe("resumirDataflowParaUsuario", () => {
     });
   });
 
+  it("separa un WHERE compuesto en filtros desde/hasta", () => {
+    const resumen = resumir(`${encabezado}
+      [base]: LOAD [Fecha], [Total]; SELECT Fecha, Total FROM ` + "`p.d.ventas`" + `;
+      [salida]: LOAD [Fecha], [Total] RESIDENT [base]
+      WHERE [Fecha] >= '2026-07-01' AND [Fecha] < '2026-08-01';`);
+
+    expect(resumen.filtros).toEqual([
+      expect.objectContaining({ campo: "Fecha", operador: ">=", valorPredeterminado: "2026-07-01" }),
+      expect.objectContaining({ campo: "Fecha", operador: "<", valorPredeterminado: "2026-08-01" }),
+    ]);
+    expect(resumen.rangoTemporal).toEqual({
+      campo: "Fecha",
+      fechaInicial: "2026-07-01",
+      fechaFinal: "2026-08-01",
+    });
+  });
+
   it("conserva el alias visible de los campos", () => {
     const resumen = resumir(`${encabezado}
       [salida]: LOAD Upper([categoria]) AS [Categoría visible];

@@ -121,9 +121,19 @@ function emitirRelacion(
       const where = absorbed
         ? `\nWHERE ${qlik(absorbed.condition, "condition", aggregateEnvironment)}`
         : "";
-      const group = relation.groupBy
-        .map((expression) => qlik(expression, "value", aggregateEnvironment))
-        .join(", ");
+      const groupExpressions = relation.groupBy.map((expression) =>
+        qlik(expression, "value", aggregateEnvironment),
+      );
+      if (includeInternal && relation.dualExpressions) {
+        for (const expression of Object.values(relation.dualExpressions)) {
+          if (!relation.groupBy.some((groupBy) => mismaExpresionQlik(groupBy, expression)))
+            continue;
+          groupExpressions.push(
+            qlik(expression, "numeric_component", aggregateEnvironment),
+            qlik(expression, "text", aggregateEnvironment),
+          );
+        }
+      }
       const from = emitirFuenteParaProyeccion(
         sourceId,
         relation,
@@ -131,6 +141,19 @@ function emitirRelacion(
         emit,
         environment,
       );
+      // BigQuery GROUP BY ALL automatically groups by every non-aggregate
+      // expression in the SELECT list — semantically equivalent to Qlik's
+      // explicit GROUP BY, and far cleaner than enumerating all dimensions.
+      // We keep the explicit list only when emitting intermediate CTEs that
+      // carry dual numeric/text components, because those synthetic columns
+      // must be referenced by name from downstream consumers.
+      const needsExplicitGroupBy =
+        includeInternal &&
+        !!relation.dualExpressions &&
+        Object.keys(relation.dualExpressions).length > 0;
+      const group = needsExplicitGroupBy
+        ? [...new Set(groupExpressions)].join(", ")
+        : "ALL";
       return `SELECT\n  ${emitFields(
         relation.projections,
         aggregateEnvironment,
@@ -798,6 +821,12 @@ function emitFields(
     },
   );
   return [...(visible ? [visible] : []), ...internals].join(",\n  ");
+}
+
+function mismaExpresionQlik(left: string, right: string): boolean {
+  const normalize = (value: string) =>
+    value.trim().replace(/\s+/g, " ").replace(/\[([^\]]+)\]/g, "$1").toLowerCase();
+  return normalize(left) === normalize(right);
 }
 
 function sameIdentifier(expression: string, alias: string): boolean {

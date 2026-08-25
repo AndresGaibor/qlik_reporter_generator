@@ -175,6 +175,128 @@ describe("carpetas GCS por usuario registrado", () => {
   });
 });
 
+describe("carpetas de ejecuciones para usuario final", () => {
+  const ejecucionNueva = "2880a223-3ee1-4d25-95eb-9e5974b0cc53";
+  const ejecucionAnterior = "460bcff9-427e-43e7-9974-32435e832639";
+  const ejecucionHistorica = "998e6a63-394e-4646-af3e-75f43ddec547";
+
+  function crearAppEjecuciones() {
+    const consultas: Array<Record<string, unknown>> = [];
+    const almacenamiento = {
+      listarDirectorio: async (prefijo: string) => {
+        if (prefijo.endsWith(`test-bq-sftp/${ejecucionNueva}/`)) {
+          return { carpetas: [], archivos: [] };
+        }
+        return {
+          carpetas: [`${ejecucionAnterior}/`, `${ejecucionHistorica}/`],
+          archivos: [],
+        };
+      },
+      listar: async () => [],
+      estaFinalizada: async () => false,
+      firmar: async () => "",
+    } as unknown as PuertoAlmacenamientoDescargas;
+    const repositorioReportes = {
+      listarEjecucionesDescargas: async (contexto: Record<string, unknown>) => {
+        consultas.push(contexto);
+        return [
+          {
+            id: ejecucionNueva,
+            flujoIdQlik: "flujo-1",
+            flujoNombreSnapshot: "Test BQ SFTP",
+            creadoPorUsuarioId: "user-1",
+            automatizacionIdQlik: "auto-1",
+            estado: "completada",
+            mensajeError: null,
+            uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/byronnasimba/test-bq-sftp/${ejecucionNueva}/`,
+            creadoEn: new Date("2026-08-20T20:31:00.000Z"),
+            finalizadoEn: new Date("2026-08-20T20:32:00.000Z"),
+          },
+          {
+            id: ejecucionAnterior,
+            flujoIdQlik: "flujo-1",
+            flujoNombreSnapshot: "Test BQ SFTP",
+            creadoPorUsuarioId: "user-1",
+            automatizacionIdQlik: "auto-1",
+            estado: "completada",
+            mensajeError: null,
+            uriBaseGcs: `gs://bkt_dwh/POCs/TalendDescargados/byronnasimba/test-bq-sftp/${ejecucionAnterior}/`,
+            creadoEn: new Date("2026-08-19T21:11:00.000Z"),
+            finalizadoEn: new Date("2026-08-19T21:12:00.000Z"),
+          },
+        ];
+      },
+    } as unknown as PuertoRepositorioReportes;
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId: "user-1",
+        correo: "byron.nasimba@aliwareint.com",
+        roles: ["usuario"],
+      }),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes,
+      resolverAlmacenamiento: async () => almacenamiento,
+      resolverConfiguracionGcs: async () => ({
+        bucket: "bkt_dwh",
+        prefijo: "POCs/TalendDescargados/",
+      }),
+    });
+    const app = new Hono();
+    app.route("/api/descargas", rutas);
+    return { app, consultas };
+  }
+
+  it("ordena las carpetas por fecha real y marca la ejecución más reciente", async () => {
+    const { app, consultas } = crearAppEjecuciones();
+    const res = await app.request(
+      "/api/descargas/carpeta?ruta=test-bq-sftp%2F",
+    );
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.datos.carpetas).toEqual([
+      `${ejecucionNueva}/`,
+      `${ejecucionAnterior}/`,
+      `${ejecucionHistorica}/`,
+    ]);
+    expect(json.datos.carpetasEjecucion).toEqual([
+      {
+        carpeta: `${ejecucionNueva}/`,
+        ejecucionId: ejecucionNueva,
+        ejecutadoEn: "2026-08-20T20:31:00.000Z",
+        esMasReciente: true,
+      },
+      {
+        carpeta: `${ejecucionAnterior}/`,
+        ejecucionId: ejecucionAnterior,
+        ejecutadoEn: "2026-08-19T21:11:00.000Z",
+        esMasReciente: false,
+      },
+    ]);
+    expect(consultas).toEqual([
+      expect.objectContaining({
+        tenantQlikId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId: "user-1",
+        esAdministrador: false,
+      }),
+    ]);
+  });
+
+  it("identifica la ejecución actual al recargar dentro de su carpeta", async () => {
+    const { app } = crearAppEjecuciones();
+    const ruta = encodeURIComponent(`test-bq-sftp/${ejecucionNueva}/`);
+    const res = await app.request(`/api/descargas/carpeta?ruta=${ruta}`);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.datos.ejecucionActual).toEqual({
+      ejecucionId: ejecucionNueva,
+      ejecutadoEn: "2026-08-20T20:31:00.000Z",
+    });
+  });
+});
+
 describe("eliminacion en carpeta privada", () => {
   function appEliminar(rol: "admin" | "usuario") {
     const eliminados: string[] = [];

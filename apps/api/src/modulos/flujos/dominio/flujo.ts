@@ -1,5 +1,6 @@
 export interface Flujo {
   id: string;
+  appId?: string;
   nombre: string;
   espacioId?: string;
   espacioNombre: string;

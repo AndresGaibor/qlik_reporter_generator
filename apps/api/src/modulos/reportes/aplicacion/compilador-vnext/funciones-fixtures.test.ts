@@ -102,20 +102,18 @@ describe("fixtures de funciones Qlik vNext", () => {
     );
   });
 
-  it("bloquea reutilización downstream de un dual no materializado", async () => {
-    await expectCode(
-      () =>
-        Promise.resolve(
-          compilarDataflowVNext(`
-            SET DateFormat='YYYY-MM-DD';
-            LIB CONNECT TO [Google BigQuery:Prod];
-            [A]: LOAD Date(fecha) AS fecha_fmt;
-            SQL SELECT fecha FROM \`p.d.a\`;
-            [B]: LOAD Year(fecha_fmt) AS anio RESIDENT [A];
-          `),
-        ),
-      "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
-    );
+  it("reutiliza downstream un dual materializado sin perder sus componentes", () => {
+    const result = compilarDataflowVNext(`
+      SET DateFormat='YYYY-MM-DD';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [A]: LOAD Date(fecha) AS fecha_fmt;
+      SQL SELECT fecha FROM \`p.d.a\`;
+      [B]: LOAD Year(fecha_fmt) AS anio RESIDENT [A];
+    `);
+
+    expect(result.sql).toContain("`__qlik_dual_fecha_fmt__numeric`");
+    expect(result.sql).toContain("EXTRACT(YEAR");
+    expect(result.diagnostics).toEqual([]);
   });
 });
 async function expectCode(

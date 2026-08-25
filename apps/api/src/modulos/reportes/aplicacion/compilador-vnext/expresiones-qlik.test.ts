@@ -53,6 +53,22 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(sql).toContain("`c` >= 3");
   });
 
+  it("normaliza literales DateFormat en comparaciones de fecha", () => {
+    const sql = emitirExpresionBigQuery(
+      parsearExpresionQlik("[Fecha] = '6/1/2026'"),
+      "condition",
+      { dateFormat: "M/D/YYYY" },
+    );
+    expect(sql).toBe("`Fecha` = DATE '2026-06-01'");
+
+    const texto = emitirExpresionBigQuery(
+      parsearExpresionQlik("[Codigo] = 'abc'"),
+      "condition",
+      { dateFormat: "M/D/YYYY" },
+    );
+    expect(texto).toBe("`Codigo` = 'abc'");
+  });
+
   it("parsea llamadas anidadas y preserva la excepción NULL de &", () => {
     const sql = compile("Upper(Trim([Nombre completo])) & '-' & Year([Fecha])");
     expect(sql).toContain("UPPER(TRIM(`Nombre completo`))");
@@ -609,6 +625,20 @@ describe("parser de expresiones Qlik vNext", () => {
     expect(compileWithEnv("MonthStart([fecha])", environment)).toContain(
       "DATE_TRUNC(",
     );
+  });
+
+  it("implementa Num sin format_code usando el formato numérico general del script", () => {
+    const sql = compileWithEnv("Num(Month([fecha]))", {
+      decimalSep: ".",
+      thousandSep: ",",
+      monthNames: [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      ],
+    });
+    expect(sql).toContain("CAST(EXTRACT(MONTH FROM");
+    expect(sql).toContain("AS STRING)");
+    expect(sql).not.toContain("STRING FORMAT");
   });
 
   it("implementa Num para los patrones de formato certificados inicialmente", () => {

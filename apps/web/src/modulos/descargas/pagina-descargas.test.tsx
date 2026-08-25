@@ -18,21 +18,64 @@ vi.mock("@/modulos/descargas/api", () => ({
       ],
     },
   ]),
-  listarCarpetaUsuarioGcs: vi.fn().mockImplementation(async (ruta = "") => ({
-    bucket: "bkt_dwh",
-    prefijoBase: "POCs/TalendDescargados/byronnasimba/",
-    ruta,
-    carpetaUsuario: "byronnasimba",
-    carpetas: ruta ? [] : ["test-bq-sftp/"],
-    archivos: [
-      {
-        nombre: "pruebagcp.csv",
-        formato: "CSV",
-        tamano: 27,
-        fecha: "2026-08-18T22:34:00.000Z",
-      },
-    ],
-  })),
+  listarCarpetaUsuarioGcs: vi.fn().mockImplementation(async (ruta = "") => {
+    const ejecucionNueva = "2880a223-3ee1-4d25-95eb-9e5974b0cc53";
+    const ejecucionAnterior = "460bcff9-427e-43e7-9974-32435e832639";
+    const ejecucionHistorica = "998e6a63-394e-4646-af3e-75f43ddec547";
+    const base = {
+      bucket: "bkt_dwh",
+      prefijoBase: "POCs/TalendDescargados/byronnasimba/",
+      ruta,
+      carpetaUsuario: "byronnasimba",
+      archivos: [],
+    };
+    if (ruta === "test-bq-sftp/") {
+      return {
+        ...base,
+        carpetas: [
+          `${ejecucionNueva}/`,
+          `${ejecucionAnterior}/`,
+          `${ejecucionHistorica}/`,
+        ],
+        carpetasEjecucion: [
+          {
+            carpeta: `${ejecucionNueva}/`,
+            ejecucionId: ejecucionNueva,
+            ejecutadoEn: "2026-08-20T20:31:00.000Z",
+            esMasReciente: true,
+          },
+          {
+            carpeta: `${ejecucionAnterior}/`,
+            ejecucionId: ejecucionAnterior,
+            ejecutadoEn: "2026-08-19T21:11:00.000Z",
+            esMasReciente: false,
+          },
+        ],
+      };
+    }
+    if (ruta === `test-bq-sftp/${ejecucionNueva}/`) {
+      return {
+        ...base,
+        carpetas: [],
+        ejecucionActual: {
+          ejecucionId: ejecucionNueva,
+          ejecutadoEn: "2026-08-20T20:31:00.000Z",
+        },
+      };
+    }
+    return {
+      ...base,
+      carpetas: ["test-bq-sftp/"],
+      archivos: [
+        {
+          nombre: "pruebagcp.csv",
+          formato: "CSV",
+          tamano: 27,
+          fecha: "2026-08-18T22:34:00.000Z",
+        },
+      ],
+    };
+  }),
   listarCarpetasUsuariosGcs: vi.fn().mockResolvedValue([
     {
       usuarioId: "u-1",
@@ -245,6 +288,57 @@ test("recargar conserva la subcarpeta personal indicada en la URL", async () => 
     "POCs/TalendDescargados/byronnasimba/test-bq-sftp",
   );
 });
+test("presenta ejecuciones por fecha y oculta los UUID completos", async () => {
+  window.history.replaceState({}, "", "/descargas?carpeta=test-bq-sftp%2F");
+  const vista = await montar();
+  expect(vista.textContent).toContain("Más reciente");
+  expect(vista.textContent).toContain("Ejecución del reporte");
+  expect(vista.textContent).toContain("20 ago 2026");
+  expect(vista.textContent).toContain("19 ago 2026");
+  expect(vista.textContent).toContain("Ejecución 998e6a63…");
+  expect(vista.textContent).not.toContain(
+    "2880a223-3ee1-4d25-95eb-9e5974b0cc53",
+  );
+  expect(vista.textContent).not.toContain(
+    "460bcff9-427e-43e7-9974-32435e832639",
+  );
+  expect(vista.textContent.indexOf("20 ago 2026")).toBeLessThan(
+    vista.textContent.indexOf("19 ago 2026"),
+  );
+});
+
+test("recargar dentro de una ejecución reemplaza el UUID del breadcrumb por su fecha", async () => {
+  const ejecucion = "2880a223-3ee1-4d25-95eb-9e5974b0cc53";
+  window.history.replaceState(
+    {},
+    "",
+    `/descargas?carpeta=${encodeURIComponent(`test-bq-sftp/${ejecucion}/`)}`,
+  );
+  const vista = await montar();
+  expect(vista.textContent).toContain("Ejecución · 20 ago 2026");
+  expect(vista.textContent).not.toContain(ejecucion);
+});
+
+test("una carpeta de reporte sin ejecuciones se muestra como estado vacío y no como error", async () => {
+  vi.mocked(listarCarpetaUsuarioGcs).mockResolvedValueOnce({
+    bucket: "bkt_dwh",
+    prefijoBase: "POCs/TalendDescargados/byronnasimba/",
+    ruta: "nuevo-reporte/",
+    carpetaUsuario: "byronnasimba",
+    carpetas: [],
+    archivos: [],
+  });
+  window.history.replaceState({}, "", "/descargas?carpeta=nuevo-reporte%2F");
+  const vista = await montar();
+  expect(vista.textContent).toContain("Aún no hay descargas para este reporte");
+  expect(vista.textContent).toContain(
+    "Ejecuta el reporte para generar la primera",
+  );
+  expect(vista.textContent).not.toContain(
+    "No se pudo consultar Google Cloud Storage",
+  );
+});
+
 test("descarga un archivo de la carpeta privada usando la URL firmada", async () => {
   const click = vi
     .spyOn(HTMLAnchorElement.prototype, "click")

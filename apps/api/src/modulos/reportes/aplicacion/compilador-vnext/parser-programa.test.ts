@@ -9,6 +9,26 @@ async function parseFixture(name: string) {
 }
 
 describe("parsearProgramaQlik", () => {
+  it("reconoce SELECT BigQuery generado por Qlik aunque no lleve prefijo SQL", () => {
+    const program = parsearProgramaQlik(`
+      LIB CONNECT TO [Bancolombia prueba:Google_BigQuery_lafavorita-182519];
+      [Ventas]: LOAD [Fecha], [Cantidad];
+      SELECT Fecha, Cantidad FROM ` + "`lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`" + `;
+    `);
+
+    expect(program.statements.map((item) => item.type)).toEqual([
+      "connect",
+      "load",
+      "native_sql",
+    ]);
+    const sql = program.statements[2];
+    expect(sql?.type).toBe("native_sql");
+    if (!sql || sql.type !== "native_sql") throw new Error("native_sql esperado");
+    expect(sql.sql.text).toBe(
+      "SELECT Fecha, Cantidad FROM `lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`",
+    );
+  });
+
   it("preserva GoogleSQL nativo con múltiples JOIN y ON compuesto", async () => {
     const program = await parseFixture("sql-native-multi-join.qlik");
     expect(program.statements.map((item) => item.type)).toEqual([
@@ -42,6 +62,26 @@ describe("parsearProgramaQlik", () => {
       throw new Error("native_sql esperado");
     for (const fragment of fragments)
       expect(sql.sql.text.toUpperCase()).toContain(fragment);
+  });
+
+  it("acepta comentario generado por Qlik entre INNER JOIN y LOAD", () => {
+    const program = parsearProgramaQlik(`
+      [Base]: LOAD [Fecha];
+      SELECT Fecha FROM \`p.d.base\`;
+      INNER JOIN([Base])
+        // [DIM_FECHA]:
+        LOAD [ID_FECHA], [NOM_FEC] AS [Fecha], [NOM_MES];
+      SELECT ID_FECHA, NOM_FEC, NOM_MES FROM \`p.d.dim_fecha\`;
+    `);
+
+    const joinLoad = program.statements[2];
+    expect(joinLoad).toMatchObject({
+      type: "load",
+      prefix: { type: "join", join: "inner", target: "Base" },
+    });
+    expect(joinLoad?.type === "load" ? joinLoad.body : "").toContain(
+      "[NOM_FEC] AS [Fecha]",
+    );
   });
 
   it("conserva el label y reconoce LOAD wildcard", async () => {

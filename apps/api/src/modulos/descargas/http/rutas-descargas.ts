@@ -72,12 +72,30 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
       const resultado = await almacenamiento.listarDirectorio(
         `${prefijoUsuario}${subruta}`,
       );
+      const ejecuciones = subruta
+        ? await dependencias.repositorioReportes.listarEjecucionesDescargas(
+            {
+              tenantQlikId: sesion.tenantId,
+              organizacionId: sesion.organizacionId,
+              usuarioId: sesion.usuarioId,
+              esAdministrador: false,
+            },
+            100,
+          )
+        : [];
+      const presentacionCarpetas = presentarCarpetasEjecucion(
+        resultado.carpetas,
+        ejecuciones,
+        subruta,
+      );
       return responderExito(c, {
         bucket: configuracion.bucket,
         prefijoBase: prefijoUsuario,
         ruta: subruta,
         carpetaUsuario,
-        carpetas: resultado.carpetas,
+        carpetas: presentacionCarpetas.carpetas,
+        carpetasEjecucion: presentacionCarpetas.carpetasEjecucion,
+        ejecucionActual: presentacionCarpetas.ejecucionActual,
         archivos: resultado.archivos.map((a) => ({
           nombre: a.nombre,
           formato: a.formato,
@@ -492,6 +510,80 @@ export function crearRutasDescargas(dependencias: DependenciasRutasDescargas) {
   });
 
   return rutas;
+}
+
+function presentarCarpetasEjecucion(
+  carpetas: string[],
+  ejecuciones: Awaited<
+    ReturnType<PuertoRepositorioReportes["listarEjecucionesDescargas"]>
+  >,
+  subruta: string,
+) {
+  const ejecucionPorId = new Map(ejecuciones.map((item) => [item.id, item]));
+  const segmentos = subruta.split("/").filter(Boolean);
+  const carpetasDisponibles = [...carpetas];
+  if (segmentos.length === 1) {
+    for (const ejecucion of ejecuciones) {
+      if (!ejecucion.uriBaseGcs.endsWith(`/${subruta}${ejecucion.id}/`))
+        continue;
+      const carpeta = `${ejecucion.id}/`;
+      if (!carpetasDisponibles.includes(carpeta))
+        carpetasDisponibles.push(carpeta);
+    }
+  }
+  const metadata = carpetasDisponibles.flatMap((carpeta) => {
+    const ejecucionId = carpeta.replace(/\/$/, "");
+    const ejecucion = ejecucionPorId.get(ejecucionId);
+    if (
+      !ejecucion ||
+      !ejecucion.uriBaseGcs.endsWith(`/${subruta}${ejecucionId}/`)
+    ) {
+      return [];
+    }
+    return [
+      {
+        carpeta,
+        ejecucionId,
+        ejecutadoEn: ejecucion.creadoEn.toISOString(),
+      },
+    ];
+  });
+  metadata.sort(
+    (a, b) => Date.parse(b.ejecutadoEn) - Date.parse(a.ejecutadoEn),
+  );
+  const metadataPorCarpeta = new Map(
+    metadata.map((item) => [item.carpeta, item]),
+  );
+  const carpetasOrdenadas = [...carpetasDisponibles].sort((a, b) => {
+    const actividadA = metadataPorCarpeta.get(a);
+    const actividadB = metadataPorCarpeta.get(b);
+    if (actividadA && actividadB) {
+      return (
+        Date.parse(actividadB.ejecutadoEn) - Date.parse(actividadA.ejecutadoEn)
+      );
+    }
+    if (actividadA) return -1;
+    if (actividadB) return 1;
+    return 0;
+  });
+  const ejecucionIdActual = segmentos.at(-1);
+  const ejecucionActual = ejecucionIdActual
+    ? ejecucionPorId.get(ejecucionIdActual)
+    : undefined;
+  const metadataActual = ejecucionActual?.uriBaseGcs.endsWith(`/${subruta}`)
+    ? {
+        ejecucionId: ejecucionActual.id,
+        ejecutadoEn: ejecucionActual.creadoEn.toISOString(),
+      }
+    : null;
+  return {
+    carpetas: carpetasOrdenadas,
+    carpetasEjecucion: metadata.map((item, indice) => ({
+      ...item,
+      esMasReciente: indice === 0,
+    })),
+    ejecucionActual: metadataActual,
+  };
 }
 
 function carpetaDesdeCorreo(correo: string | null | undefined): string | null {

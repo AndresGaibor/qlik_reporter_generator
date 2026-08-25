@@ -1,3 +1,14 @@
+/**
+ * @deprecated COMPILADOR LEGACY — No usar en código nuevo.
+ *
+ * Este módulo implementa el compilador BigQuery original (v1/v2) basado en el
+ * parser legacy `parsearDataflow`. Fue reemplazado por el compilador vNext
+ * (`compilador-vnext/`) que genera SQL idiomático con GROUP BY ALL, JOINs
+ * directos y eliminación de subconsultas innecesarias.
+ *
+ * Mantener sólo para referencia histórica. El punto de entrada de producción
+ * es `compilador-vnext/index.ts`.
+ */
 import {
   type CampoDataflow,
   type DialectoExpresion,

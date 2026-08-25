@@ -1,4 +1,6 @@
 import type { ResumenReporteDataflow } from "@qlik/contratos/flujos";
+import { compilarDataflowVNext } from "../../reportes/aplicacion/compilador-vnext/index.js";
+import { ErrorCompilacionVNext } from "../../reportes/aplicacion/compilador-vnext/modelo.js";
 import { parsearDataflow } from "../../reportes/aplicacion/parser-dataflow.js";
 import type {
   CampoDataflow,
@@ -36,23 +38,21 @@ export function resumirDataflowParaUsuario(
   const campos = proyectarCampos(plan);
   const filtros = plan.pasos
     .filter((paso) => paso.tipo === "filtrar")
-    .map((paso) => proyectarFiltro(paso.condicion))
+    .flatMap((paso) => dividirCondicionesAnd(paso.condicion))
+    .map((condicion) => proyectarFiltro(condicion))
     .filter((filtro) => filtro !== undefined);
-  const advertenciasParser = plan.operacionesNoSoportadas.map((item) =>
-    presentarOperacionNoSoportada(item.operacion, item.detalle),
-  );
+  const compatibilidad = evaluarCompatibilidadVNext(entrada.script);
   const advertencias = eliminarDuplicados(
     [
       ...(entrada.erroresQlik ?? []),
       ...(entrada.advertenciasQlik ?? []),
-      ...advertenciasParser,
+      ...compatibilidad.advertencias,
     ].map(limpiarDetalleTecnico),
   );
   const fuente = plan.fuentes[0];
   const partesTabla = fuente?.tabla.split(".") ?? [];
   const estado =
-    (entrada.erroresQlik?.length ?? 0) > 0 ||
-    plan.operacionesNoSoportadas.length > 0
+    (entrada.erroresQlik?.length ?? 0) > 0 || !compatibilidad.compatible
       ? "script_no_compatible"
       : filtros.length === 0
         ? "sin_filtros"
@@ -92,14 +92,29 @@ function esDataflowInvalidoGeneradoPorQlik(script: string): boolean {
   );
 }
 
-function presentarOperacionNoSoportada(
-  operacion: string,
-  detalle: string,
-): string {
-  if (/unknown statement|sentencia qlik no soportada/i.test(detalle)) {
-    return "Hay un paso del Dataflow que todavía no podemos interpretar. Revisa el diseño en Qlik Cloud.";
+function evaluarCompatibilidadVNext(script: string): {
+  compatible: boolean;
+  advertencias: string[];
+} {
+  try {
+    const resultado = compilarDataflowVNext(script);
+    return {
+      compatible: true,
+      advertencias: resultado.diagnostics.map((item) => item.message),
+    };
+  } catch (error) {
+    if (error instanceof ErrorCompilacionVNext) {
+      return { compatible: false, advertencias: [error.diagnostic.message] };
+    }
+    return {
+      compatible: false,
+      advertencias: [
+        error instanceof Error
+          ? error.message
+          : "No se pudo analizar el Dataflow con el compilador actual",
+      ],
+    };
   }
-  return `El paso “${humanizar(operacion)}” requiere revisión: ${detalle}`;
 }
 
 function limpiarDetalleTecnico(mensaje: string): string {
@@ -156,6 +171,54 @@ function proyectarCampos(plan: PlanDataflow): ResumenReporteDataflow["campos"] {
       ...(tipoInferido ? { tipoInferido } : {}),
     };
   });
+}
+
+function dividirCondicionesAnd(condicion: string): string[] {
+  const partes: string[] = [];
+  let actual = "";
+  let comilla: "'" | '"' | undefined;
+  let parentesis = 0;
+  let corchetes = 0;
+
+  for (let i = 0; i < condicion.length; i += 1) {
+    const caracter = condicion[i] ?? "";
+    const siguiente = condicion[i + 1] ?? "";
+    if (comilla) {
+      actual += caracter;
+      if (caracter === comilla) {
+        if (siguiente === comilla) {
+          actual += siguiente;
+          i += 1;
+        } else comilla = undefined;
+      }
+      continue;
+    }
+    if (caracter === "'" || caracter === '"') {
+      comilla = caracter;
+      actual += caracter;
+      continue;
+    }
+    if (caracter === "[") corchetes += 1;
+    if (caracter === "]") corchetes = Math.max(0, corchetes - 1);
+    if (corchetes === 0) {
+      if (caracter === "(") parentesis += 1;
+      if (caracter === ")") parentesis = Math.max(0, parentesis - 1);
+    }
+    if (
+      corchetes === 0 &&
+      parentesis === 0 &&
+      /^AND\b/i.test(condicion.slice(i)) &&
+      (i === 0 || /\s/.test(condicion[i - 1] ?? ""))
+    ) {
+      if (actual.trim()) partes.push(actual.trim());
+      actual = "";
+      i += 2;
+      continue;
+    }
+    actual += caracter;
+  }
+  if (actual.trim()) partes.push(actual.trim());
+  return partes.length > 0 ? partes : [condicion.trim()];
 }
 
 function proyectarFiltro(

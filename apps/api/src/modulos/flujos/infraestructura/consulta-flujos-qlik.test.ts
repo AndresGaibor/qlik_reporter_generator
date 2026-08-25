@@ -7,6 +7,7 @@ describe("ConsultaFlujosQlik", () => {
       listarFlujos: async () => [
         {
           id: "df-1",
+          appId: "app-real-1",
           name: "Ventas",
           createdAt: "2026-08-10T09:00:00Z",
           updatedAt: "2026-08-20T09:00:00Z",
@@ -18,6 +19,7 @@ describe("ConsultaFlujosQlik", () => {
     expect(await consulta.listar()).toEqual([
       expect.objectContaining({
         id: "df-1",
+        appId: "app-real-1",
         creadoEn: "2026-08-10T09:00:00Z",
         modificadoEn: "2026-08-20T09:00:00Z",
       }),

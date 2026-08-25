@@ -1,6 +1,7 @@
 import type { PreflightDataflowReporte } from "@qlik/contratos";
 import type { PlanDataflow } from "../dominio/plan-dataflow.js";
-import { compilarPlanABigQuery } from "./compilador-bigquery.js";
+import { compilarDataflowVNext } from "./compilador-vnext/index.js";
+import { ErrorCompilacionVNext } from "./compilador-vnext/modelo.js";
 import { parsearDataflow } from "./parser-dataflow.js";
 
 export interface LectorScriptDataflow {
@@ -42,11 +43,15 @@ export class PreflightDataflow {
     private readonly alcance: AlcanceBigQueryReporte,
   ) {}
 
-  async ejecutar(flujoIdQlik: string): Promise<PreflightDataflowReporte> {
+  async ejecutar(
+    flujoIdQlik: string,
+    appIdQlik = flujoIdQlik,
+  ): Promise<PreflightDataflowReporte> {
     const preparacion = await prepararDataflowActual(
       this.qlik,
       flujoIdQlik,
       this.alcance,
+      appIdQlik,
     );
     if (!preparacion.compatible) {
       return {
@@ -107,17 +112,17 @@ export async function prepararDataflowActual(
   qlik: LectorScriptDataflow,
   flujoIdQlik: string,
   alcance: AlcanceBigQueryReporte,
+  appIdQlik = flujoIdQlik,
 ): Promise<PreparacionDataflowActual> {
-  const { script } = await qlik.obtenerScriptApp(flujoIdQlik, "current");
+  const { script } = await qlik.obtenerScriptApp(appIdQlik, "current");
   const hashDataflowSha256 = await sha256Texto(script);
+  // LEGACY: parsearDataflow se usa SÓLO para:
+  //   1. Validar que todas las fuentes son BigQuery (normalizarFuentesBigQuery)
+  //   2. Construir el resumen estadístico (conteos de fuentes, filtros, joins)
+  // La generación de SQL se delega 100% al compilador vNext (compilarDataflowVNext).
   const plan = parsearDataflow(script);
   const problemasFuentes = normalizarFuentesBigQuery(plan, alcance);
-  const operacionesNoSoportadas = [
-    ...plan.operacionesNoSoportadas.map(
-      (item) => `${item.operacion}: ${item.detalle}`,
-    ),
-    ...problemasFuentes,
-  ];
+  const operacionesNoSoportadas = [...problemasFuentes];
   const resumen = {
     fuentes: plan.fuentes.length,
     filtros: plan.pasos.filter((paso) => paso.tipo === "filtrar").length,
@@ -138,17 +143,36 @@ export async function prepararDataflowActual(
     };
   }
 
-  const { sql, camposSalida } = compilarPlanABigQuery(plan);
-  return {
-    flujoIdQlik,
-    scriptDataflow: script,
-    hashDataflowSha256,
-    compatible: true,
-    operacionesNoSoportadas: [],
-    sqlBigQuery: sql,
-    camposSalida,
-    resumen,
-  };
+  try {
+    const compilacion = compilarDataflowVNext(script);
+    return {
+      flujoIdQlik,
+      scriptDataflow: script,
+      hashDataflowSha256,
+      compatible: true,
+      operacionesNoSoportadas: [],
+      sqlBigQuery: compilacion.sql,
+      camposSalida: plan.salida.campos,
+      resumen,
+    };
+  } catch (error) {
+    const detalle =
+      error instanceof ErrorCompilacionVNext
+        ? `${error.diagnostic.code}: ${error.diagnostic.message}`
+        : error instanceof Error
+          ? error.message
+          : "El compilador vNext no pudo procesar el Dataflow";
+    return {
+      flujoIdQlik,
+      scriptDataflow: script,
+      hashDataflowSha256,
+      compatible: false,
+      operacionesNoSoportadas: [detalle],
+      sqlBigQuery: "",
+      camposSalida: plan.salida.campos,
+      resumen,
+    };
+  }
 }
 
 export async function sha256Texto(texto: string): Promise<string> {

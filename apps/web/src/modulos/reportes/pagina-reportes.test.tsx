@@ -4,6 +4,7 @@ import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 
+const navegacion = vi.hoisted(() => ({ navegar: vi.fn() }));
 const api = vi.hoisted(() => ({
   obtenerReportes: vi.fn(async () => [
     {
@@ -14,7 +15,11 @@ const api = vi.hoisted(() => ({
       modificadoEn: "2026-08-18T12:00:00Z",
     },
   ]),
-  ejecutarReporte: vi.fn(),
+  ejecutarReporte: vi.fn(async () => ({
+    runId: "run-1",
+    ejecucionReporteId: "exec-1",
+    carpetaDescargas: "reporte-ventas/",
+  })),
   obtenerDataflowBaseReporte: vi.fn(async () => ({
     id: "base",
     nombre: "Base",
@@ -26,10 +31,21 @@ vi.mock("@/modulos/reportes/componentes/barra-filtros-reportes", () => ({
   BarraFiltrosReportes: () => <h1>Reportes</h1>,
 }));
 vi.mock("@/modulos/reportes/componentes/lista-reportes", () => ({
-  ListaReportes: ({ reportes }: { reportes: Array<{ nombre: string }> }) => (
+  ListaReportes: ({
+    reportes,
+    onEjecutar,
+  }: {
+    reportes: Array<{ id: string; nombre: string }>;
+    onEjecutar: (id: string) => void;
+  }) => (
     <div>
       {reportes.map((r) => (
-        <span key={r.nombre}>{String(r.nombre)}</span>
+        <div key={r.nombre}>
+          <span>{String(r.nombre)}</span>
+          <button type="button" onClick={() => onEjecutar(r.id)}>
+            Ejecutar
+          </button>
+        </div>
       ))}
     </div>
   ),
@@ -69,6 +85,9 @@ vi.mock("@/modulos/reportes/hooks/use-busqueda-diferida", () => ({
   useBusquedaDiferida: vi.fn(),
 }));
 vi.mock("@/app/contexto-vista", () => ({ useVistaUsuarioFinal: () => true }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => navegacion.navegar,
+}));
 vi.mock("@/compartido/componentes/ui/page-layout", () => ({
   PageLayout: ({ children }: { children: React.ReactNode }) => (
     <main>{children}</main>
@@ -159,4 +178,35 @@ test("filtra filas locales por nombre/Dataflow y espacio sin consultar Automates
 
   expect(filtrarReportes(filas, "ventas", "sp-2")).toEqual([filas[1]]);
   expect(reportes).toBeDefined();
+});
+
+test("ejecutar desde la lista abre la carpeta de descargas del reporte", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaReportes />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Reporte Ventas"),
+  );
+  const boton = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar"),
+  );
+  await act(async () =>
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() =>
+    expect(navegacion.navegar).toHaveBeenCalledWith({
+      to: "/descargas",
+      search: { carpeta: "reporte-ventas/" },
+    }),
+  );
 });

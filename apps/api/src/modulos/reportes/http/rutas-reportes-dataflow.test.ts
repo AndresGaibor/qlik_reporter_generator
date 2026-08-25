@@ -21,6 +21,7 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
               qlik.listarFlujos as (id?: string) => Promise<
                 Array<{
                   id: string;
+                  appId?: string;
                   name: string;
                   spaceId?: string;
                   createdAt?: string;
@@ -30,6 +31,7 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
             )(espacioId)
           ).map((f) => ({
             id: f.id,
+            ...(f.appId ? { appId: f.appId } : {}),
             nombre: f.name,
             espacioId: f.spaceId,
             espacioNombre: f.spaceId ?? "Espacio personal",
@@ -263,10 +265,25 @@ describe("fachada /api/reportes para Dataflows", () => {
     );
   });
 
+  it("expone la carpeta canónica de descargas en lista y detalle", async () => {
+    const app = appCon({
+      listarFlujos: vi.fn(async () => [
+        { id: "df-1", name: "Copia de Test_BQ_SFTP 2", spaceId: "sp-1" },
+      ]),
+    });
+
+    const listado = (await (await app.request("/api/reportes")).json()).datos;
+    const detalle = (await (await app.request("/api/reportes/df-1")).json())
+      .datos;
+
+    expect(listado[0].carpetaDescargas).toBe("copia-de-test-bq-sftp-2/");
+    expect(detalle.carpetaDescargas).toBe("copia-de-test-bq-sftp-2/");
+  });
+
   it("expone detalle, resumen y preflight del Dataflow actual", async () => {
     const qlik = {
       listarFlujos: vi.fn(async () => [
-        { id: "df-1", name: "Ventas", spaceId: "sp-1" },
+        { id: "df-1", appId: "app-real-1", name: "Ventas", spaceId: "sp-1" },
       ]),
       obtenerScriptApp: vi.fn(async () => ({
         script: "LOAD id; SQL SELECT id FROM `p.d.t`;",
@@ -285,6 +302,7 @@ describe("fachada /api/reportes para Dataflows", () => {
       (await (await app.request("/api/reportes/df-1/preflight")).json()).datos
         .flujoIdQlik,
     ).toBe("df-1");
+    expect(qlik.obtenerScriptApp).toHaveBeenCalledWith("app-real-1", "current");
   });
 
   it("rechaza un Dataflow que no está disponible en el tenant", async () => {
@@ -300,6 +318,7 @@ describe("fachada /api/reportes para Dataflows", () => {
     const ejecutar = vi.fn(async () => ({
       runId: "run-1",
       ejecucionReporteId: "exec-1",
+      carpetaDescargas: "ventas/",
     }));
     const listarEjecuciones = vi.fn(async () => []);
     const app = appCon(
@@ -316,6 +335,9 @@ describe("fachada /api/reportes para Dataflows", () => {
       method: "POST",
     });
     expect(respuesta.status).toBe(200);
+    expect((await respuesta.clone().json()).datos.carpetaDescargas).toBe(
+      "ventas/",
+    );
     expect(listarEjecuciones).toHaveBeenCalledWith(
       "df-1",
       "tenant-1",

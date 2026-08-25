@@ -72,7 +72,7 @@ export function analizarProgramaQlik(
   const mappings: PlanCompilacionVNext["mappings"] = {};
   const variables: VariablesQlik = new Map();
   let activeConnection: string | undefined;
-  let pendingLoad: CargaPendiente | undefined;
+  let pendingLoads: CargaPendiente[] = [];
   let relationSequence = 0;
   let outputRelationId: string | undefined;
   let lastTableName: string | undefined;
@@ -380,6 +380,9 @@ export function analizarProgramaQlik(
         fields: load.spec.fields.map((field) => field.alias),
         schemaKnown: true,
         dualFields: projectionAnalysis.dualFields,
+        dualComponents: projectionAnalysis.dualComponents,
+        internalFields: Object.keys(projectionAnalysis.dualComponents),
+        dualExpressions: projectionAnalysis.dualExpressions,
         span: load.span,
       });
     } else if (!load.spec.wildcard) {
@@ -719,6 +722,19 @@ export function analizarProgramaQlik(
     }
   };
 
+  const aplicarCargasPendientes = (sourceId: string): string => {
+    let currentId = sourceId;
+    for (const pending of [...pendingLoads].reverse())
+      currentId = aplicarCarga(pending, currentId);
+    pendingLoads = [];
+    return currentId;
+  };
+
+  const cargaPendienteExterna = (): CargaPendiente | undefined =>
+    pendingLoads[0];
+  const spanCargaPendiente = (): SourceSpan =>
+    cargaPendienteExterna()?.span ?? zeroSpan();
+
   const ejecutarStatements = (
     statements: QlikStatement[],
     scope: ControlScope,
@@ -726,22 +742,22 @@ export function analizarProgramaQlik(
     for (const statement of statements) {
       const signal = ejecutarStatement(statement, scope);
       if (signal) {
-        if (pendingLoad)
+        if (pendingLoads.length > 0)
           fail(
             "SYNTAX_LOAD_WITHOUT_SOURCE",
             "SYNTAX",
             "Una salida de control dejó un LOAD sin fuente asociada",
-            pendingLoad.span,
+            spanCargaPendiente(),
           );
         return signal;
       }
     }
-    if (pendingLoad)
+    if (pendingLoads.length > 0)
       fail(
         "SYNTAX_LOAD_WITHOUT_SOURCE",
         "SYNTAX",
         "Un bloque de control terminó con un LOAD sin fuente asociada",
-        pendingLoad.span,
+        spanCargaPendiente(),
       );
     return undefined;
   };
@@ -759,13 +775,6 @@ export function analizarProgramaQlik(
         );
         return undefined;
       case "load": {
-        if (pendingLoad)
-          fail(
-            "SYNTAX_LOAD_WITHOUT_SOURCE",
-            "SYNTAX",
-            "Existe un LOAD pendiente sin fuente asociada",
-            pendingLoad.span,
-          );
         const bodyExpandido = expandir(
           statement.body,
           variables,
@@ -791,12 +800,14 @@ export function analizarProgramaQlik(
                   },
                 }
               : load;
-          aplicarCarga(effectiveLoad, source.id);
+          const loaded = aplicarCarga(effectiveLoad, source.id);
+          if (pendingLoads.length > 0) aplicarCargasPendientes(loaded);
         } else if (spec.resident) {
           const source = table(spec.resident, statement.span);
-          aplicarCarga(load, source.id, spec.resident);
+          const loaded = aplicarCarga(load, source.id, spec.resident);
+          if (pendingLoads.length > 0) aplicarCargasPendientes(loaded);
         } else {
-          pendingLoad = load;
+          pendingLoads.push(load);
         }
         return undefined;
       }
@@ -819,9 +830,8 @@ export function analizarProgramaQlik(
           orderBy: extraerOrdenSql(sql),
           span: statement.span,
         });
-        if (pendingLoad) {
-          aplicarCarga(pendingLoad, native.id);
-          pendingLoad = undefined;
+        if (pendingLoads.length > 0) {
+          aplicarCargasPendientes(native.id);
         } else {
           outputRelationId = native.id;
         }
@@ -873,7 +883,7 @@ export function analizarProgramaQlik(
         return undefined;
       }
       case "if": {
-        if (pendingLoad)
+        if (pendingLoads.length > 0)
           fail(
             "SYNTAX_LOAD_WITHOUT_SOURCE",
             "SYNTAX",
@@ -887,7 +897,7 @@ export function analizarProgramaQlik(
         return ejecutarStatements(statement.elseStatements, scope);
       }
       case "switch": {
-        if (pendingLoad)
+        if (pendingLoads.length > 0)
           fail(
             "SYNTAX_LOAD_WITHOUT_SOURCE",
             "SYNTAX",
@@ -986,7 +996,7 @@ export function analizarProgramaQlik(
     statement: Extract<QlikStatement, { type: "for" }>,
     scope: ControlScope,
   ): ControlSignal | undefined => {
-    if (pendingLoad)
+    if (pendingLoads.length > 0)
       fail(
         "SYNTAX_LOAD_WITHOUT_SOURCE",
         "SYNTAX",
@@ -1059,7 +1069,7 @@ export function analizarProgramaQlik(
     statement: Extract<QlikStatement, { type: "do" }>,
     scope: ControlScope,
   ): ControlSignal | undefined => {
-    if (pendingLoad)
+    if (pendingLoads.length > 0)
       fail(
         "SYNTAX_LOAD_WITHOUT_SOURCE",
         "SYNTAX",
@@ -1220,12 +1230,12 @@ export function analizarProgramaQlik(
     inSub: false,
   });
 
-  if (pendingLoad)
+  if (pendingLoads.length > 0)
     fail(
       "SYNTAX_LOAD_WITHOUT_SOURCE",
       "SYNTAX",
       "LOAD sin fuente SQL o RESIDENT asociada",
-      pendingLoad.span,
+      spanCargaPendiente(),
     );
 
   return {
@@ -1500,7 +1510,7 @@ function analizarProyecciones(
     const directApplyMap = esApplyMapDirectoQlik(parsed);
     const sourceDual = referenciaDualSimple(parsed, source.dualComponents);
     const materialize =
-      field.alias === mappingValueAlias || directApplyMap || sourceDual;
+      isDual || field.alias === mappingValueAlias || directApplyMap || sourceDual;
     if (!materialize) {
       if (isDual) dualFields.push(field.alias);
       continue;

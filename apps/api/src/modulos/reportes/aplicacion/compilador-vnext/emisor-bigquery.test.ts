@@ -143,6 +143,29 @@ describe("emisión BigQuery vNext fase 1", () => {
     `);
     expect(result.sql).toContain("SELECT 'ab' AS texto");
   });
+
+  it("emite GROUP BY ALL en lugar de listar todas las dimensiones explícitamente", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD categoria, monto;
+      SQL SELECT categoria, monto FROM \`p.d.ventas\`;
+      [Salida]: LOAD
+        categoria,
+        Count(monto) AS total
+      RESIDENT [Base]
+      GROUP BY categoria;
+    `);
+    expect(result.sql).toEndWith("GROUP BY ALL");
+    expect(result.sql).not.toMatch(/GROUP BY \`categoria\`/);
+  });
+
+  it("emite GROUP BY ALL con estilo de script generado por Qlik Dataflow UI", async () => {
+    const result = await compile("regression-ventas-mensuales-dataflow-style.qlik");
+    // El compilador vNext debe usar GROUP BY ALL independientemente de si el
+    // script Qlik usa GROUP BY explícito con 26 columnas (patrón legacy Talend).
+    expect(result.sql).toContain("GROUP BY ALL");
+    expect(result.sql).not.toMatch(/GROUP BY `Año_year`/);
+  });
 });
 
 describe("emisión BigQuery de estado inter-record", () => {

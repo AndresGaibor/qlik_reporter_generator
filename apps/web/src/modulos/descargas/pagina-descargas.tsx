@@ -8,6 +8,7 @@ import { useManejoError } from "@/compartido/hooks/use-manejo-error";
 import { obtenerSesion } from "@/modulos/autenticacion/api";
 import {
   type CarpetaRegistradaGcs,
+  type CarpetaUsuarioGcs,
   type ExploradorGcs,
   eliminarArchivoCarpetaUsuarioGcs,
   eliminarDirectorioCarpetaUsuarioGcs,
@@ -138,6 +139,7 @@ export function PaginaDescargas() {
         nombreRaiz={carpetaUsuario.data?.carpetaUsuario ?? "Tu carpeta"}
         mostrarBucket={false}
         mostrarRutaTecnica={false}
+        mostrarEjecucionesAmigables
         datos={carpetaUsuario.data ?? null}
         cargando={carpetaUsuario.isLoading}
         error={
@@ -297,6 +299,32 @@ function MetricaCarpeta({
   );
 }
 
+function esUuid(valor: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    valor,
+  );
+}
+
+function abreviarUuid(valor: string) {
+  return `${valor.slice(0, 8)}…`;
+}
+
+function etiquetaSegmentoRuta(
+  segmento: string,
+  indice: number,
+  total: number,
+  ejecucionActual: { ejecucionId: string; ejecutadoEn: string } | null,
+) {
+  const esActual = indice === total - 1;
+  if (esActual && ejecucionActual?.ejecucionId === segmento) {
+    return `Ejecución · ${formatearFechaISO(ejecucionActual.ejecutadoEn)}`;
+  }
+  if (esActual && esUuid(segmento)) {
+    return `Ejecución ${abreviarUuid(segmento)}`;
+  }
+  return segmento;
+}
+
 function SeccionCarpetasUsuariosGcs({
   carpetas,
   onAbrir,
@@ -351,6 +379,7 @@ function SeccionExploradorGcs({
   nombreRaiz = "Raíz",
   mostrarBucket = true,
   mostrarRutaTecnica = false,
+  mostrarEjecucionesAmigables = false,
   datos,
   cargando,
   error,
@@ -367,7 +396,8 @@ function SeccionExploradorGcs({
   nombreRaiz?: string;
   mostrarBucket?: boolean;
   mostrarRutaTecnica?: boolean;
-  datos: ExploradorGcs | null;
+  mostrarEjecucionesAmigables?: boolean;
+  datos: ExploradorGcs | CarpetaUsuarioGcs | null;
   cargando: boolean;
   error: string | null;
   onAbrirCarpeta: (carpeta: string) => void;
@@ -380,6 +410,13 @@ function SeccionExploradorGcs({
 }) {
   if (!datos && !cargando && !error) return null;
   const segmentos = datos?.ruta.split("/").filter(Boolean) ?? [];
+  const datosUsuario =
+    mostrarEjecucionesAmigables && datos && "carpetaUsuario" in datos
+      ? datos
+      : null;
+  const ejecucionPorCarpeta = new Map(
+    (datosUsuario?.carpetasEjecucion ?? []).map((item) => [item.carpeta, item]),
+  );
   return (
     <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -441,7 +478,12 @@ function SeccionExploradorGcs({
                         : "text-brand-700 hover:underline"
                     }
                   >
-                    {segmento}
+                    {etiquetaSegmentoRuta(
+                      segmento,
+                      indice,
+                      segmentos.length,
+                      datosUsuario?.ejecucionActual ?? null,
+                    )}
                   </button>
                 </span>
               );
@@ -465,41 +507,66 @@ function SeccionExploradorGcs({
       )}
       {datos && !cargando && !error && (
         <div className="mt-5 grid gap-2">
-          {datos.carpetas.map((carpeta) => (
-            <div
-              key={carpeta}
-              className="group flex w-full items-center gap-2 rounded-lg border border-line-200 bg-surface p-1.5 transition hover:border-brand-200 hover:bg-brand-50/30"
-            >
-              <button
-                type="button"
-                onClick={() => onAbrirCarpeta(carpeta)}
-                className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left"
+          {datos.carpetas.map((carpeta) => {
+            const ejecucion = ejecucionPorCarpeta.get(carpeta);
+            const nombreCarpeta = carpeta.replace(/\/$/, "");
+            const pareceEjecucion = esUuid(nombreCarpeta);
+            return (
+              <div
+                key={carpeta}
+                className="group flex w-full items-center gap-2 rounded-lg border border-line-200 bg-surface p-1.5 transition hover:border-brand-200 hover:bg-brand-50/30"
               >
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-                    <Icon name="folder" size="sm" />
-                  </span>
-                  <span className="truncate font-semibold text-ink-800">
-                    {carpeta.replace(/\/$/, "")}
-                  </span>
-                </span>
-                <Icon
-                  name="chev"
-                  size="sm"
-                  className="rotate-180 text-ink-300 transition group-hover:text-brand-600"
-                />
-              </button>
-              {puedeEliminar && (
                 <button
                   type="button"
-                  onClick={() => onEliminarCarpeta?.(carpeta)}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-danger-600 hover:bg-danger-50"
+                  onClick={() => onAbrirCarpeta(carpeta)}
+                  className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left"
                 >
-                  <Icon name="trash" size="sm" /> Eliminar
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+                      <Icon name="folder" size="sm" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="truncate font-semibold text-ink-800">
+                          {ejecucion
+                            ? formatearFechaISO(ejecucion.ejecutadoEn)
+                            : pareceEjecucion
+                              ? `Ejecución ${abreviarUuid(nombreCarpeta)}`
+                              : nombreCarpeta}
+                        </span>
+                        {ejecucion?.esMasReciente && (
+                          <span className="rounded-full bg-success-50 px-2 py-0.5 text-[11px] font-semibold text-success-700">
+                            Más reciente
+                          </span>
+                        )}
+                      </span>
+                      {(ejecucion || pareceEjecucion) && (
+                        <span className="mt-0.5 block text-xs text-ink-500">
+                          {ejecucion
+                            ? "Ejecución del reporte"
+                            : "Sin fecha registrada"}
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                  <Icon
+                    name="chev"
+                    size="sm"
+                    className="rotate-180 text-ink-300 transition group-hover:text-brand-600"
+                  />
                 </button>
-              )}
-            </div>
-          ))}
+                {puedeEliminar && (
+                  <button
+                    type="button"
+                    onClick={() => onEliminarCarpeta?.(carpeta)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-danger-600 hover:bg-danger-50"
+                  >
+                    <Icon name="trash" size="sm" /> Eliminar
+                  </button>
+                )}
+              </div>
+            );
+          })}
           {datos.archivos.map((archivo) => (
             <div
               key={archivo.nombre}
@@ -544,8 +611,19 @@ function SeccionExploradorGcs({
             </div>
           ))}
           {datos.carpetas.length === 0 && datos.archivos.length === 0 && (
-            <div className="rounded-lg border border-dashed border-line-300 p-6 text-center text-sm text-ink-500">
-              Esta carpeta está vacía.
+            <div className="rounded-lg border border-dashed border-line-300 p-6 text-center">
+              {mostrarEjecucionesAmigables && segmentos.length === 1 ? (
+                <>
+                  <p className="text-sm font-semibold text-ink-800">
+                    Aún no hay descargas para este reporte
+                  </p>
+                  <p className="mt-1 text-sm text-ink-500">
+                    Ejecuta el reporte para generar la primera.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-ink-500">Esta carpeta está vacía.</p>
+              )}
             </div>
           )}
         </div>

@@ -15,6 +15,7 @@ export class ConsultaFlujosQlik implements PuertoConsultaFlujos {
     );
     return flujos.map((flujo) => ({
       id: flujo.id,
+      ...(flujo.appId ? { appId: flujo.appId } : {}),
       nombre: flujo.name,
       ...(flujo.spaceId ? { espacioId: flujo.spaceId } : {}),
       espacioNombre: flujo.spaceId

@@ -453,6 +453,7 @@ function parsearSentencia(statement: SentenciaCruda): QlikStatement {
   if (leadingPrefix) {
     prefix = leadingPrefix.prefix;
     body = leadingPrefix.rest;
+    body = body.slice(indicePrimerCodigo(body));
   }
 
   let label: string | undefined;
@@ -474,6 +475,7 @@ function parsearSentencia(statement: SentenciaCruda): QlikStatement {
     }
     prefix = localPrefix.prefix;
     body = localPrefix.rest;
+    body = body.slice(indicePrimerCodigo(body));
   }
 
   const load = body.match(/^LOAD\b([\s\S]*)$/i);
@@ -500,6 +502,19 @@ function parsearSentencia(statement: SentenciaCruda): QlikStatement {
         dialect: "bigquery",
         text: sqlText,
         span: desplazarSpan(span, code, Math.max(0, sqlOffsetInCode)),
+      },
+      span,
+      raw: statement.text,
+    };
+  }
+
+  if (/^SELECT\b/i.test(code)) {
+    return {
+      type: "native_sql",
+      sql: {
+        dialect: "bigquery",
+        text: code,
+        span,
       },
       span,
       raw: statement.text,

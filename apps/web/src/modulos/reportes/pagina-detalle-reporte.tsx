@@ -18,7 +18,7 @@ import {
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 type Pestana = "resumen" | "tecnico" | "historial";
@@ -27,6 +27,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const { tenant: tenantActivo } = useTenantActivo();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const client = useQueryClient();
+  const navegar = useNavigate();
   const [pestana, setPestana] = useState<Pestana>("resumen");
 
   const reporte = useQuery({
@@ -59,10 +60,14 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
 
   const ejecutar = useMutation({
     mutationFn: () => ejecutarReporte(id),
-    onSuccess: () => {
+    onSuccess: (resultado) => {
       mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
+      });
+      void navegar({
+        to: "/descargas",
+        search: { carpeta: resultado.carpetaDescargas },
       });
     },
     onError: (error: Error) => mostrarError(error.message),
@@ -110,6 +115,18 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         description={`Espacio: ${dataflow.espacioNombre ?? "Personal"}`}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void navegar({
+                  to: "/descargas",
+                  search: { carpeta: dataflow.carpetaDescargas },
+                })
+              }
+            >
+              <Icon name="download" size="sm" /> Ver descargas
+            </Button>
             {urlQlik && (
               <Button asChild variant="outline" size="sm">
                 <a href={urlQlik} target="_blank" rel="noopener noreferrer">

@@ -1021,8 +1021,8 @@ function emitComparisonCondition(
   expression: Extract<ExprQlik, { kind: "binary" }>,
   environment: EntornoExpresionQlik,
 ): string {
-  const left = emitValue(expression.left, environment);
-  const right = emitValue(expression.right, environment);
+  const left = emitComparisonOperand(expression.left, expression.right, environment);
+  const right = emitComparisonOperand(expression.right, expression.left, environment);
   if (expression.operator === "precedes" || expression.operator === "follows") {
     const op = expression.operator === "precedes" ? "<" : ">";
     return `CAST(${left} AS STRING) ${op} CAST(${right} AS STRING)`;
@@ -1030,6 +1030,54 @@ function emitComparisonCondition(
   if (expression.operator === "<>")
     return `((${left} IS NULL) != (${right} IS NULL) OR ${left} != ${right})`;
   return `${left} ${expression.operator} ${right}`;
+}
+
+function emitComparisonOperand(
+  expression: ExprQlik,
+  other: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  if (
+    expression.kind === "string" &&
+    other.kind === "identifier" &&
+    environment.dateFormat
+  ) {
+    const iso = parseQlikDateLiteral(expression.value, environment.dateFormat);
+    if (iso) return `DATE '${iso}'`;
+  }
+  return emitValue(expression, environment);
+}
+
+function parseQlikDateLiteral(value: string, format: string): string | undefined {
+  let year: number;
+  let month: number;
+  let day: number;
+  let match: RegExpMatchArray | null = null;
+
+  if (format === "M/D/YYYY" || format === "MM/DD/YYYY") {
+    match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) return undefined;
+    month = Number(match[1]);
+    day = Number(match[2]);
+    year = Number(match[3]);
+  } else if (format === "YYYY-MM-DD") {
+    match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!match) return undefined;
+    year = Number(match[1]);
+    month = Number(match[2]);
+    day = Number(match[3]);
+  } else {
+    return undefined;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  )
+    return undefined;
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function emitComparisonNullCase(
@@ -4256,16 +4304,21 @@ function emitNum(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 1, 4);
-  if (!args[1])
-    fail(
-      "NUM_FORMAT_REQUIRED",
-      `${originalName} sin formato explícito aún requiere el modelo completo de variables numéricas Qlik`,
-      originalName,
-      0,
-    );
+  const input = requiredArgument(args[0]);
+  const number =
+    contieneFuncionDual(input) ||
+    (input.kind === "identifier" && Boolean(environment.dualComponents?.[input.name]))
+      ? emitNumericValue(input, environment)
+      : emitNumericArgument(input, environment);
+  if (!args[1]) {
+    let result = `CAST(${number} AS STRING)`;
+    const decimalSep = environment.decimalSep ?? ".";
+    if (decimalSep !== ".")
+      result = `REPLACE(${result}, '.', ${quoteString(decimalSep)})`;
+    return result;
+  }
   const format = literalString(args[1], originalName);
   const bigQueryFormat = translateQlikNumberFormat(format, originalName);
-  const number = emitNumericArgument(requiredArgument(args[0]), environment);
   let result = `CAST(${number} AS STRING FORMAT ${quoteString(bigQueryFormat)})`;
   const decimalSep = args[2]
     ? literalString(args[2], originalName)
@@ -4316,6 +4369,8 @@ function qlikTimestampFromAny(sql: string): string {
 function translateQlikDateFormat(format: string, functionName: string): string {
   const formats: Record<string, string> = {
     "YYYY-MM-DD": "%Y-%m-%d",
+    "M/D/YYYY": "%m/%d/%Y",
+    "MM/DD/YYYY": "%m/%d/%Y",
     "DD/MM/YYYY": "%d/%m/%Y",
     "MM-DD-YYYY": "%m-%d-%Y",
     "YY.MM.DD": "%y.%m.%d",

@@ -78,6 +78,7 @@ export type RelacionVNext =
       projections: CampoLoadVNext[];
       groupBy: string[];
       aggregationOrderBy?: OrdenLoadVNext[];
+      dualExpressions?: Record<string, string>;
     })
   | (RelationBase & { op: "sort"; input: string; orderBy: OrdenLoadVNext[] })
   | (RelationBase & { op: "limit"; input: string; limitExpression: string })
