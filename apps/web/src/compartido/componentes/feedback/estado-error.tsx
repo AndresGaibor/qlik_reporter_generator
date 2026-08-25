@@ -96,19 +96,6 @@ export function EstadoError({
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-500">
           {copia.descripcion}
         </p>
-        {mensaje && tipo === "general" && (
-          <details className="mt-3">
-            <summary className="cursor-pointer text-xs text-ink-400 hover:text-ink-500">
-              Ver detalles técnicos
-            </summary>
-            <p
-              className="mt-1 text-left rounded bg-danger-50 px-3 py-2 text-xs text-danger-700"
-              data-detalle-error
-            >
-              {mensaje}
-            </p>
-          </details>
-        )}
         {onReintentar && (
           <Button type="button" className="mt-5 gap-2" onClick={onReintentar}>
             <Icon name="rows" size="sm" />

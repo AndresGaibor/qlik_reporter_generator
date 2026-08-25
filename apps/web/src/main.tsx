@@ -1,6 +1,7 @@
 import "@/index.css";
 import { Proveedores, clienteConsultas } from "@/app/proveedores";
 import { clienteApi } from "@/compartido/api/cliente";
+import { LimiteErrores } from "@/compartido/componentes/feedback/limite-errores";
 import { NotificacionesProvider } from "@/compartido/componentes/feedback/notificaciones";
 import { RouterProvider } from "@tanstack/react-router";
 import React from "react";
@@ -17,10 +18,12 @@ if (!raiz) throw new Error("No se encontró el elemento #root");
 
 ReactDOM.createRoot(raiz).render(
   <React.StrictMode>
-    <Proveedores>
-      <NotificacionesProvider>
-        <RouterProvider router={router} />
-      </NotificacionesProvider>
-    </Proveedores>
+    <LimiteErrores>
+      <Proveedores>
+        <NotificacionesProvider>
+          <RouterProvider router={router} />
+        </NotificacionesProvider>
+      </Proveedores>
+    </LimiteErrores>
   </React.StrictMode>,
 );
