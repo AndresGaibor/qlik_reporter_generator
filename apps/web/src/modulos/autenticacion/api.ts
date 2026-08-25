@@ -28,24 +28,45 @@ interface RespuestaIniciarSesion {
   error?: { mensaje: string };
 }
 
+const MENSAJE_API_NO_DISPONIBLE =
+  "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.";
+
+async function solicitarInicioSesion(
+  ruta: string,
+): Promise<RespuestaIniciarSesion> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(ruta, { headers: { Accept: "application/json" } });
+  } catch {
+    throw new Error(MENSAJE_API_NO_DISPONIBLE);
+  }
+
+  const contenido = await respuesta.text();
+  if (!respuesta.ok || !contenido.trim()) {
+    throw new Error(MENSAJE_API_NO_DISPONIBLE);
+  }
+
+  try {
+    return JSON.parse(contenido) as RespuestaIniciarSesion;
+  } catch {
+    throw new Error(MENSAJE_API_NO_DISPONIBLE);
+  }
+}
+
 export async function iniciarSesion(
   host: string,
 ): Promise<RespuestaIniciarSesion> {
-  const res = await fetch(
+  return solicitarInicioSesion(
     `/api/auth/qlik/iniciar?host=${encodeURIComponent(host)}&format=json`,
-    { headers: { Accept: "application/json" } },
   );
-  return res.json();
 }
 
 export async function iniciarSesionPorCorreo(
   correo: string,
 ): Promise<RespuestaIniciarSesion> {
-  const res = await fetch(
+  return solicitarInicioSesion(
     `/api/auth/qlik/iniciar-por-correo?correo=${encodeURIComponent(correo)}&format=json`,
-    { headers: { Accept: "application/json" } },
   );
-  return res.json();
 }
 
 export async function iniciarVerificacionOauth(
@@ -57,8 +78,7 @@ export async function iniciarVerificacionOauth(
     retorno,
     format: "json",
   });
-  const res = await fetch(`/api/auth/qlik/iniciar?${parametros.toString()}`, {
-    headers: { Accept: "application/json" },
-  });
-  return res.json();
+  return solicitarInicioSesion(
+    `/api/auth/qlik/iniciar?${parametros.toString()}`,
+  );
 }
