@@ -183,13 +183,13 @@ describe("parser de expresiones Qlik vNext / parser, texto, JSON y regex", () =>
 
   it("implementa Index con INSTR, N-ésima ocurrencia y búsqueda inversa", () => {
     expect(compile("Index([texto], 'ab')")).toContain(
-      "INSTR(CAST(`texto` AS STRING), CAST('ab' AS STRING), 1, 1)",
+      "INSTR(CAST(`texto` AS STRING), 'ab', 1, 1)",
     );
     expect(compile("Index([texto], 'ab', 2)")).toContain(
-      "INSTR(CAST(`texto` AS STRING), CAST('ab' AS STRING), 1, CAST(2 AS INT64))",
+      "INSTR(CAST(`texto` AS STRING), 'ab', 1, CAST(2 AS INT64))",
     );
     expect(compile("Index([texto], 'ab', -2)")).toContain(
-      "INSTR(CAST(`texto` AS STRING), CAST('ab' AS STRING), -1, ABS(CAST(-2 AS INT64)))",
+      "INSTR(CAST(`texto` AS STRING), 'ab', -1, ABS(CAST(-2 AS INT64)))",
     );
   });
 
@@ -312,7 +312,7 @@ describe("parser de expresiones Qlik vNext / parser, texto, JSON y regex", () =>
     const sql = compile("SubStringCount([texto], 'ab')");
     expect(sql).toContain("GENERATE_ARRAY");
     expect(sql).toContain("SUBSTR(");
-    expect(sql).toContain("= CAST('ab' AS STRING)");
+    expect(sql).toContain("= 'ab'");
     expect(sql).toContain("COUNTIF");
     expect(sql).not.toContain("REGEXP_");
   });
