@@ -1,7 +1,7 @@
 # Agent Navigation Guide for Qlik REST APIs & Toolkits
 
 Welcome! This directory contains the complete offline specification of Qlik Cloud REST APIs and Toolkits located at:
-`/Users/andresgaibor/code/javascript/qlik_automate_creator/docs`
+`/Users/andresgaibor/code/javascript/qlik_reportes_creator/docs`
 
 ## 📂 Directory Structure
 
