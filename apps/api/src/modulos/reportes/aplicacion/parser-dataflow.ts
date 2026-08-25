@@ -125,7 +125,6 @@ export function parsearDataflow(script: string): PlanDataflow {
           operacion: "SELECT",
           detalle: "SELECT BigQuery no reconocido",
         });
-        cargaPendiente = undefined;
         continue;
       }
       if (!conexionActual || !/big\s*query/i.test(conexionActual)) {
