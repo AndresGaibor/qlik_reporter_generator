@@ -53,6 +53,19 @@ describe("parser de expresiones Qlik vNext / parser, texto, JSON y regex", () =>
     expect(texto).toBe("`Codigo` = 'abc'");
   });
 
+  it("tipa literales ISO cuando BigQuery demuestra que el campo es DATE", () => {
+    const sql = emitirExpresionBigQuery(
+      parsearExpresionQlik(
+        "[Fecha] >= '2026-07-01' AND [Fecha] < '2026-08-01'",
+      ),
+      "condition",
+      { fieldTypes: { Fecha: "DATE" } },
+    );
+    expect(sql).toBe(
+      "(`Fecha` >= DATE '2026-07-01' AND `Fecha` < DATE '2026-08-01')",
+    );
+  });
+
   it("parsea llamadas anidadas y preserva la excepción NULL de &", () => {
     const sql = compile("Upper(Trim([Nombre completo])) & '-' & Year([Fecha])");
     expect(sql).toContain("UPPER(TRIM(`Nombre completo`))");

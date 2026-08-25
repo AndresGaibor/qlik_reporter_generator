@@ -191,13 +191,19 @@ export function emitComparisonOperand(
   other: ExprQlik,
   environment: EntornoExpresionQlik,
 ): string {
-  if (
-    expression.kind === "string" &&
-    other.kind === "identifier" &&
-    environment.dateFormat
-  ) {
-    const iso = parseQlikDateLiteral(expression.value, environment.dateFormat);
-    if (iso) return `DATE '${iso}'`;
+  if (expression.kind === "string" && other.kind === "identifier") {
+    const fieldType = environment.fieldTypes?.[other.name]?.toUpperCase();
+    if (fieldType === "DATE") {
+      const iso = parseQlikDateLiteral(expression.value, "YYYY-MM-DD");
+      if (iso) return `DATE '${iso}'`;
+    }
+    if (environment.dateFormat) {
+      const iso = parseQlikDateLiteral(
+        expression.value,
+        environment.dateFormat,
+      );
+      if (iso) return `DATE '${iso}'`;
+    }
   }
   return emitValue(expression, environment);
 }
