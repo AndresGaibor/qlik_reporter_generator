@@ -9,6 +9,7 @@ import type {
   PlanCompilacionVNext,
   RelacionVNext,
 } from "./ir.js";
+import type { DiagnosticoVNext } from "./modelo.js";
 
 const NUMERIC_TYPES = new Set(["INT64", "FLOAT64", "NUMERIC", "BIGNUMERIC"]);
 
@@ -19,12 +20,33 @@ export function enriquecerPlanConMetadataBigQuery(
   if (!catalogo || Object.keys(catalogo).length === 0) return plan;
   const relations: RelacionVNext[] = [];
   const byId = new Map<string, RelacionVNext>();
+  const diagnostics = [...plan.diagnostics];
   for (const relation of plan.relations) {
     const enriched = enriquecerRelacion(relation, byId, catalogo);
     relations.push(enriched);
     byId.set(enriched.id, enriched);
   }
-  return { ...plan, relations };
+  for (const relation of relations) {
+    if (relation.op === "join") {
+      const joinDiags = validarTiposJoinKeys(relation, byId);
+      diagnostics.push(...joinDiags);
+    }
+    if (
+      (relation.op === "project" || relation.op === "aggregate") &&
+      "input" in relation
+    ) {
+      const input = byId.get(relation.input);
+      if (input?.schemaKnown && input?.fieldMetadata) {
+        const fieldDiags = validarCamposConocidos(
+          relation.projections,
+          input.fieldMetadata,
+          relation.span,
+        );
+        diagnostics.push(...fieldDiags);
+      }
+    }
+  }
+  return { ...plan, relations, diagnostics };
 }
 
 function enriquecerRelacion(
@@ -124,6 +146,70 @@ function enriquecerJoin(
       ...new Set([...(left.sourceRefs ?? []), ...(right.sourceRefs ?? [])]),
     ],
   };
+}
+
+function validarTiposJoinKeys(
+  relation: Extract<RelacionVNext, { op: "join" }>,
+  byId: ReadonlyMap<string, RelacionVNext>,
+): DiagnosticoVNext[] {
+  const left = byId.get(relation.left);
+  const right = byId.get(relation.right);
+  if (!left || !right) return [];
+  const diagnostics: DiagnosticoVNext[] = [];
+  for (const key of relation.keys) {
+    const leftMeta = left.fieldMetadata?.[key];
+    const rightMeta = right.fieldMetadata?.[key];
+    if (!leftMeta || !rightMeta) continue;
+    const leftType = leftMeta.type.toUpperCase();
+    const rightType = rightMeta.type.toUpperCase();
+    if (leftType === rightType) continue;
+    const leftScalar =
+      leftMeta.mode === "REPEATED" ? `${leftType} (ARRAY)` : leftType;
+    const rightScalar =
+      rightMeta.mode === "REPEATED" ? `${rightType} (ARRAY)` : rightType;
+    const leftSource = leftMeta.sourceTable ? ` (${leftMeta.sourceTable})` : "";
+    const rightSource = rightMeta.sourceTable
+      ? ` (${rightMeta.sourceTable})`
+      : "";
+    diagnostics.push({
+      code: "JOIN_KEY_TYPE_MISMATCH",
+      category: "TYPE_SEMANTICS",
+      message: `JOIN key "${key}" tiene tipos incompatibles: izquierda ${leftScalar}${leftSource} vs derecha ${rightScalar}${rightSource}`,
+      span: relation.span,
+    });
+  }
+  return diagnostics;
+}
+
+function validarCamposConocidos(
+  projections: readonly { expression: string; alias: string }[],
+  inputMetadata: Readonly<Record<string, MetadataCampoIRVNext>>,
+  span: DiagnosticoVNext["span"],
+): DiagnosticoVNext[] {
+  const diagnostics: DiagnosticoVNext[] = [];
+  for (const projection of projections) {
+    const expression = projection.expression.trim();
+    if (expression === "*" || expression.endsWith(".*")) continue;
+    let ast: ExprQlik;
+    try {
+      ast = parsearExpresionQlik(expression);
+    } catch {
+      continue;
+    }
+    if (ast.kind !== "identifier") continue;
+    const fieldExists = Object.keys(inputMetadata).some(
+      (key) => key.toLowerCase() === ast.name.toLowerCase(),
+    );
+    if (!fieldExists) {
+      diagnostics.push({
+        code: "SCHEMA_KNOWN_FIELD_NOT_FOUND",
+        category: "NAME_RESOLUTION",
+        message: `Campo "${ast.name}" no existe en el schema conocido de la fuente`,
+        span,
+      });
+    }
+  }
+  return diagnostics;
 }
 
 function enriquecerUnion(
@@ -373,7 +459,7 @@ function parseSimpleSelect(sql: string): SimpleSelect | undefined {
   )
     return undefined;
   const match = cleaned.match(
-    /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+(`[^`]+`|[A-Za-z0-9_.-]+)(?:\s+(?:AS\s+)?[A-Za-z_][A-Za-z0-9_]*)?(?:\s+(?:WHERE|GROUP\s+BY|ORDER\s+BY|QUALIFY|HAVING|LIMIT)\b|\s*$)/i,
+    /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+((?:`[^`]+`|[A-Za-z0-9_]+)(?:\s*\.\s*(?:`[^`]+`|[A-Za-z0-9_]+))*)(?:\s+(?:AS\s+)?[A-Za-z_][A-Za-z0-9_]*)?(?:\s+(?:WHERE|GROUP\s+BY|ORDER\s+BY|QUALIFY|HAVING|LIMIT)\b|\s*$)/i,
   );
   if (!match?.[1] || !match[2]) return undefined;
   const items = splitTopLevel(match[1]).map(parseSelectItem);
@@ -427,5 +513,5 @@ function splitTopLevel(value: string): string[] {
 }
 
 function stripTicks(value: string): string {
-  return value.trim().replace(/^`|`$/g, "");
+  return value.trim().replace(/`/g, "");
 }
