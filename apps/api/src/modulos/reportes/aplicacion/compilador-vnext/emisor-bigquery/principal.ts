@@ -6,6 +6,7 @@ import {
   entornoAgregacion,
   entornoProyeccion,
   extraerEntornoExpresion,
+  metadataDeEntrada,
 } from "./entornos.js";
 import {
   emitirAutogenerate,
@@ -80,8 +81,14 @@ export function emitirRelacion(
       return emitirAutogenerate(relation, environment);
     case "native_sql":
       return relation.sql.trim().replace(/;\s*$/, "");
-    case "filter":
-      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nWHERE ${qlik(relation.condition, "condition", environment)}`;
+    case "filter": {
+      const input = byId.get(relation.input);
+      const filterEnvironment = {
+        ...environment,
+        ...metadataDeEntrada(input, environment),
+      };
+      return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nWHERE ${qlik(relation.condition, "condition", filterEnvironment)}`;
+    }
     case "project": {
       const input = byId.get(relation.input);
       const absorbed = input?.op === "filter" ? input : undefined;
@@ -165,13 +172,19 @@ export function emitirRelacion(
         includeInternal,
       )}\nFROM ${from}${where}\nGROUP BY ${group}`;
     }
-    case "sort":
+    case "sort": {
+      const input = byId.get(relation.input);
+      const sortEnvironment = {
+        ...environment,
+        ...metadataDeEntrada(input, environment),
+      };
       return `SELECT *\nFROM ${wrap(emit(relation.input, true), "src")}\nORDER BY ${relation.orderBy
         .map(
           (item) =>
-            `${qlik(item.expression, "value", environment)} ${item.direction.toUpperCase()}`,
+            `${qlik(item.expression, "value", sortEnvironment)} ${item.direction.toUpperCase()}`,
         )
         .join(", ")}`;
+    }
     case "limit": {
       const limit = relation.limitExpression.trim();
       if (!/^\d+$/.test(limit)) {

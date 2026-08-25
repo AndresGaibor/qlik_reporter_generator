@@ -1,4 +1,3 @@
-import { qlikDateFromAny, qlikTimestampFromAny } from "./conversiones.js";
 import { emitNumericValue, emitValue } from "./core-valores.js";
 import {
   emitFiscalYearStart,
@@ -7,6 +6,10 @@ import {
   firstFiscalMonth,
 } from "./temporal-contexto.js";
 import { formatDualDate, formatQlikTimestamp } from "./temporal-formato.js";
+import {
+  qlikDateFromTyped,
+  qlikTimestampFromTyped,
+} from "./temporal-tipado.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import { arity, arityRange, fail, requiredArgument } from "./utilidades.js";
 
@@ -16,12 +19,8 @@ export function emitInDay(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 3, 4);
-  const timestamp = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
-  const base = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[1]), environment),
-  );
+  const timestamp = typedTimestamp(requiredArgument(args[0]), environment);
+  const base = typedTimestamp(requiredArgument(args[1]), environment);
   const shift = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[2]), environment)}) AS INT64)`;
   const dayStart = args[3] ? emitNumericValue(args[3], environment) : "0";
   const offset = `CAST(ROUND((${dayStart}) * 86400000000) AS INT64)`;
@@ -39,12 +38,8 @@ export function emitInMonths(
 ): string {
   arityRange(originalName, args, 4, 5);
   const months = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[0]), environment)}) AS INT64)`;
-  const timestamp = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[1]), environment),
-  );
-  const base = qlikDateFromAny(
-    emitValue(requiredArgument(args[2]), environment),
-  );
+  const timestamp = typedTimestamp(requiredArgument(args[1]), environment);
+  const base = typedDate(requiredArgument(args[2]), environment);
   const period = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[3]), environment)}) AS INT64)`;
   const firstMonth = firstFiscalMonth(args[4], environment, originalName);
   const start = emitMonthsSegmentStart(base, months, period, firstMonth);
@@ -58,12 +53,8 @@ export function emitInYearToDate(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 3, 4);
-  const timestamp = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
-  const base = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[1]), environment),
-  );
+  const timestamp = typedTimestamp(requiredArgument(args[0]), environment);
+  const base = typedTimestamp(requiredArgument(args[1]), environment);
   const period = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[2]), environment)}) AS INT64)`;
   const firstMonth = firstFiscalMonth(args[3], environment, originalName);
   const baseDate = `DATE(${base})`;
@@ -78,12 +69,8 @@ export function emitNetworkDays(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 2, 10);
-  const start = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
-  const end = qlikDateFromAny(
-    emitValue(requiredArgument(args[1]), environment),
-  );
+  const start = typedDate(requiredArgument(args[0]), environment);
+  const end = typedDate(requiredArgument(args[1]), environment);
   const holidays = emitHolidayDates(args.slice(2), originalName, environment);
   const low = `LEAST(${start}, ${end})`;
   const high = `GREATEST(${start}, ${end})`;
@@ -112,9 +99,7 @@ export function emitWorkDateRaw(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 2, 10);
-  const reference = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const reference = typedDate(requiredArgument(args[0]), environment);
   const workdays = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[1]), environment)}) AS INT64)`;
   const holidays = emitHolidayDates(args.slice(2), originalName, environment);
   const range =
@@ -150,9 +135,7 @@ export function emitSetDateYearMonthRaw(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 3);
-  const timestamp = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const timestamp = typedTimestamp(requiredArgument(args[0]), environment);
   const year = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[1]), environment)}) AS INT64)`;
   const month = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[2]), environment)}) AS INT64)`;
   const day = `EXTRACT(DAY FROM ${timestamp})`;
@@ -222,5 +205,27 @@ export function emitUnsupportedTemporalRuntimeContext(
     `${originalName} requiere el contexto de zona horaria de Qlik; BigQuery solo puede representarlo con una política/IANA explícita del runtime`,
     originalName,
     0,
+  );
+}
+
+function typedDate(
+  expression: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  return qlikDateFromTyped(
+    expression,
+    emitValue(expression, environment),
+    environment,
+  );
+}
+
+function typedTimestamp(
+  expression: ExprQlik,
+  environment: EntornoExpresionQlik,
+): string {
+  return qlikTimestampFromTyped(
+    expression,
+    emitValue(expression, environment),
+    environment,
   );
 }

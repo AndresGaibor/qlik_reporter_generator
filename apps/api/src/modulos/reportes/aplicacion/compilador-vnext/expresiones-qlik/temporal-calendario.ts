@@ -5,6 +5,10 @@ import {
 } from "./conversiones.js";
 import { emitNumericValue, emitValue } from "./core-valores.js";
 import { formatDualDate } from "./temporal-formato.js";
+import {
+  qlikDateFromTyped,
+  qlikTimestampFromTyped,
+} from "./temporal-tipado.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import {
   arity,
@@ -58,9 +62,7 @@ export function emitWeekPart(
       originalName,
       0,
     );
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   return `EXTRACT(${kind === "week" ? "ISOWEEK" : "ISOYEAR"} FROM ${date})`;
 }
 
@@ -84,9 +86,7 @@ export function emitQuarter(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 1, 2);
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   if (!args[1]) return `EXTRACT(QUARTER FROM ${date})`;
   const firstMonth = `CAST(${emitValue(args[1], environment)} AS INT64)`;
   return `CASE WHEN ${firstMonth} BETWEEN 1 AND 12 THEN CAST(FLOOR(MOD(EXTRACT(MONTH FROM ${date}) - ${firstMonth} + 12, 12) / 3) + 1 AS INT64) ELSE NULL END`;
@@ -108,9 +108,7 @@ export function emitDate(
         0,
       ));
   const format = translateQlikDateFormat(qlikFormat, originalName);
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   return `FORMAT_DATE(${quoteString(format)}, ${date})`;
 }
 
@@ -130,9 +128,7 @@ export function weekDayParts(
       originalName,
       0,
     );
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   const actual = `MOD(EXTRACT(DAYOFWEEK FROM ${date}) + 5, 7)`;
   const numeric = `MOD(${actual} - ${firstWeekDay} + 7, 7)`;
   return { actual, numeric };
@@ -170,9 +166,7 @@ export function emitMonth(
       originalName,
       0,
     );
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   const cases = environment.monthNames
     .map((value, index) => `WHEN ${index + 1} THEN ${quoteString(value)}`)
     .join(" ");
@@ -220,9 +214,7 @@ export function emitDayBoundaryTimestamp(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 1, 3);
-  const timestamp = qlikTimestampFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const timestamp = typedTimestampArgument(args, environment);
   const period = args[1]
     ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
     : "0";
@@ -258,9 +250,7 @@ export function emitPeriodBoundaryTimestamp(
 ): string {
   const isMonth = kind === "monthend";
   arityRange(originalName, args, 1, isMonth ? 2 : 3);
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
-  );
+  const date = typedDateArgument(args, environment);
   const period = args[1]
     ? `CAST(TRUNC(${emitNumericValue(args[1], environment)}) AS INT64)`
     : "0";
@@ -299,4 +289,28 @@ export function emitPeriodBoundaryTimestamp(
 
   if (kind.endsWith("start")) return `TIMESTAMP(${start})`;
   return `TIMESTAMP_SUB(TIMESTAMP(DATE_ADD(${start}, ${nextInterval})), INTERVAL 1 MILLISECOND)`;
+}
+
+function typedDateArgument(
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const argument = requiredArgument(args[0]);
+  return qlikDateFromTyped(
+    argument,
+    emitValue(argument, environment),
+    environment,
+  );
+}
+
+function typedTimestampArgument(
+  args: ExprQlik[],
+  environment: EntornoExpresionQlik,
+): string {
+  const argument = requiredArgument(args[0]);
+  return qlikTimestampFromTyped(
+    argument,
+    emitValue(argument, environment),
+    environment,
+  );
 }

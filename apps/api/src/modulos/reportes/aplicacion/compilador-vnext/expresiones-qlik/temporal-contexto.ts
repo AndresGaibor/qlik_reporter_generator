@@ -2,6 +2,7 @@ import { qlikDateFromAny, translateQlikDateFormat } from "./conversiones.js";
 import { emitNumericValue, emitValue } from "./core-valores.js";
 import { literalInteger } from "./temporal-calendario.js";
 import { formatDualDate } from "./temporal-formato.js";
+import { qlikDateFromTyped } from "./temporal-tipado.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import {
   arityRange,
@@ -217,8 +218,11 @@ export function emitMonthStart(
       0,
     );
   const format = translateQlikDateFormat(qlikFormat, originalName);
-  const date = qlikDateFromAny(
-    emitValue(requiredArgument(args[0]), environment),
+  const argument = requiredArgument(args[0]);
+  const date = qlikDateFromTyped(
+    argument,
+    emitValue(argument, environment),
+    environment,
   );
   const period = args[1] ? emitValue(args[1], environment) : "0";
   const start = `DATE_ADD(DATE_TRUNC(${date}, MONTH), INTERVAL CAST(${period} AS INT64) MONTH)`;

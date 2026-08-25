@@ -77,6 +77,10 @@ import {
   formatDualDate,
 } from "./temporal-formato.js";
 import {
+  qlikDateExtractSource,
+  qlikTimeExtractSource,
+} from "./temporal-tipado.js";
+import {
   emitCharFilter,
   emitFindOneOf,
   emitIndex,
@@ -437,21 +441,15 @@ export function emitCall(
     arity(expression.name, args, 1);
     const argument = requiredArgument(args[0]);
     const value = emitValue(argument, environment);
-    const knownType =
-      argument.kind === "identifier"
-        ? environment.fieldTypes?.[argument.name]?.toUpperCase()
-        : undefined;
-    const date =
-      knownType && ["DATE", "DATETIME", "TIMESTAMP"].includes(knownType)
-        ? value
-        : qlikDateFromAny(value);
+    const date = qlikDateExtractSource(argument, value, environment);
     return `EXTRACT(${name.toUpperCase()} FROM ${date})`;
   }
   if (name === "week" || name === "weekyear")
     return emitWeekPart(name, expression.name, args, environment);
   if (["hour", "minute", "second"].includes(name)) {
     arity(expression.name, args, 1);
-    return `EXTRACT(${name.toUpperCase()} FROM ${qlikTimestampFromAny(emitValue(requiredArgument(args[0]), environment))})`;
+    const argument = requiredArgument(args[0]);
+    return `EXTRACT(${name.toUpperCase()} FROM ${qlikTimeExtractSource(argument, emitValue(argument, environment), environment)})`;
   }
   if (name === "quarter")
     return emitQuarter(expression.name, args, environment);

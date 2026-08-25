@@ -27,7 +27,12 @@ import {
 import { emitAdvancedTemporalNumeric } from "./temporal-dispatch.js";
 import { emitDualDateRaw, emitMakeTimeRaw } from "./temporal-formato.js";
 import {
+  qlikDateFromTyped,
+  qlikTimestampFromTyped,
+} from "./temporal-tipado.js";
+import {
   esTipoNumericoBigQuery,
+  esTipoTemporalBigQuery,
   esTipoTextoBigQuery,
   tipoCampoBigQuery,
 } from "./tipado-campos.js";
@@ -67,8 +72,12 @@ export function emitNumericComponent(
     const dual = environment.dualComponents?.[expression.name];
     if (dual) return qualifiedIdentifier(dual.numericField, environment);
     const identifier = qualifiedIdentifier(expression.name, environment);
-    if (esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment)))
-      return identifier;
+    const fieldType = tipoCampoBigQuery(expression.name, environment);
+    if (esTipoNumericoBigQuery(fieldType)) return identifier;
+    if (esTipoTemporalBigQuery(fieldType))
+      return qlikSerialFromTimestamp(
+        qlikTimestampFromTyped(expression, identifier, environment),
+      );
     return qlikNumeric(identifier);
   }
   if (expression.kind === "call" && expression.name.toLowerCase() === "null")
@@ -145,8 +154,12 @@ export function emitNumericValue(
     const dual = environment.dualComponents?.[expression.name];
     if (dual) return qualifiedIdentifier(dual.numericField, environment);
     const identifier = qualifiedIdentifier(expression.name, environment);
-    if (esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment)))
-      return identifier;
+    const fieldType = tipoCampoBigQuery(expression.name, environment);
+    if (esTipoNumericoBigQuery(fieldType)) return identifier;
+    if (esTipoTemporalBigQuery(fieldType))
+      return qlikSerialFromTimestamp(
+        qlikTimestampFromTyped(expression, identifier, environment),
+      );
     return environment.identifierQualifier
       ? identifier
       : qlikNumericOrTemporal(identifier);
@@ -210,12 +223,16 @@ export function emitNumericValue(
     }
     if (name === "month") {
       arity(expression.name, expression.args, 1);
-      return `EXTRACT(MONTH FROM ${qlikDateFromAny(emitValue(requiredArgument(expression.args[0]), environment))})`;
+      const argument = requiredArgument(expression.args[0]);
+      return `EXTRACT(MONTH FROM ${qlikDateFromTyped(argument, emitValue(argument, environment), environment)})`;
     }
     if (name === "monthstart") {
       arityRange(expression.name, expression.args, 1, 2);
-      const date = qlikDateFromAny(
-        emitValue(requiredArgument(expression.args[0]), environment),
+      const argument = requiredArgument(expression.args[0]);
+      const date = qlikDateFromTyped(
+        argument,
+        emitValue(argument, environment),
+        environment,
       );
       const period = expression.args[1]
         ? emitNumericValue(expression.args[1], environment)
@@ -322,11 +339,13 @@ export function emitNumericArgument(
   expression: ExprQlik,
   environment: EntornoExpresionQlik,
 ): string {
-  if (
-    expression.kind === "identifier" &&
-    esTipoNumericoBigQuery(tipoCampoBigQuery(expression.name, environment))
-  )
-    return qualifiedIdentifier(expression.name, environment);
+  if (expression.kind === "identifier") {
+    const fieldType = tipoCampoBigQuery(expression.name, environment);
+    if (esTipoNumericoBigQuery(fieldType))
+      return qualifiedIdentifier(expression.name, environment);
+    if (esTipoTemporalBigQuery(fieldType))
+      return emitNumericValue(expression, environment);
+  }
   if (
     (expression.kind === "binary" &&
       ["+", "-", "*", "/"].includes(expression.operator)) ||

@@ -8,7 +8,7 @@ import { construirCatalogoMetadata } from "../metadata.js";
 import { toBinding } from "./fuentes.js";
 import { fail, numberSetting, qlik, qlikLiteral } from "./utilidades.js";
 
-function metadataDeEntrada(
+export function metadataDeEntrada(
   input: RelacionVNext | undefined,
   base: EntornoExpresionQlik,
 ): Pick<EntornoExpresionQlik, "fieldMetadata" | "fieldTypes"> {
@@ -92,13 +92,16 @@ export function entornoAgregacion(
   input: RelacionVNext | undefined,
   base: EntornoExpresionQlik,
 ): EntornoExpresionQlik {
-  const order = (relation.orderBy ?? relation.aggregationOrderBy)?.map(
-    (item) =>
-      `${qlik(item.expression, "value", base)} ${item.direction.toUpperCase()}`,
-  );
-  return {
+  const inputEnvironment: EntornoExpresionQlik = {
     ...base,
     ...metadataDeEntrada(input, base),
+  };
+  const order = (relation.orderBy ?? relation.aggregationOrderBy)?.map(
+    (item) =>
+      `${qlik(item.expression, "value", inputEnvironment)} ${item.direction.toUpperCase()}`,
+  );
+  return {
+    ...inputEnvironment,
     ...(input?.dualComponents ? { dualComponents: input.dualComponents } : {}),
     ...(order && order.length > 0 ? { aggregationOrderBy: order } : {}),
   };

@@ -1,5 +1,6 @@
-import { qlikDateFromAny, translateQlikDateFormat } from "./conversiones.js";
+import { translateQlikDateFormat } from "./conversiones.js";
 import { emitNumericValue, emitValue } from "./core-valores.js";
+import { qlikDateFromTyped } from "./temporal-tipado.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import {
   arity,
@@ -258,16 +259,22 @@ export function emitDualDateRaw(
   }
   if (kind === "addyears") {
     arity(originalName, args, 2);
-    const date = qlikDateFromAny(
-      emitValue(requiredArgument(args[0]), environment),
+    const argument = requiredArgument(args[0]);
+    const date = qlikDateFromTyped(
+      argument,
+      emitValue(argument, environment),
+      environment,
     );
     const years = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[1]), environment)}) AS INT64)`;
     return `DATE_ADD(${date}, INTERVAL ${years} YEAR)`;
   }
   if (kind === "addmonths") {
     arityRange(originalName, args, 2, 3);
-    const date = qlikDateFromAny(
-      emitValue(requiredArgument(args[0]), environment),
+    const argument = requiredArgument(args[0]);
+    const date = qlikDateFromTyped(
+      argument,
+      emitValue(argument, environment),
+      environment,
     );
     const months = `CAST(TRUNC(${emitNumericValue(requiredArgument(args[1]), environment)}) AS INT64)`;
     const mode = args[2] ? emitNumericValue(args[2], environment) : "0";
