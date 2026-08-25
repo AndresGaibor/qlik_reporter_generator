@@ -1,4 +1,4 @@
-import { emitValue } from "./core-valores.js";
+import { emitTextValue, emitValue } from "./core-valores.js";
 import type { EntornoExpresionQlik, ExprQlik } from "./tipos.js";
 import { arity, arityRange, fail, requiredArgument } from "./utilidades.js";
 
@@ -8,7 +8,7 @@ export function emitMid(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 2, 3);
-  const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
+  const text = emitTextValue(requiredArgument(args[0]), environment);
   const start = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS INT64)`;
   if (!args[2]) return `SUBSTR(${text}, ${start})`;
   const count = `CAST(${emitValue(args[2], environment)} AS INT64)`;
@@ -22,8 +22,8 @@ export function emitCharFilter(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 2);
-  const source = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
-  const chars = `TO_CODE_POINTS(CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING))`;
+  const source = emitTextValue(requiredArgument(args[0]), environment);
+  const chars = `TO_CODE_POINTS(${emitTextValue(requiredArgument(args[1]), environment)})`;
   const predicate = kind === "keepchar" ? "IN" : "NOT IN";
   return `CASE WHEN ${source} IS NULL THEN NULL ELSE COALESCE((SELECT CODE_POINTS_TO_STRING(ARRAY_AGG(cp ORDER BY pos)) FROM UNNEST(TO_CODE_POINTS(${source})) AS cp WITH OFFSET AS pos WHERE cp ${predicate} UNNEST(${chars})), '') END`;
 }
@@ -34,8 +34,8 @@ export function emitIndex(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 2, 3);
-  const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
-  const substring = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING)`;
+  const text = emitTextValue(requiredArgument(args[0]), environment);
+  const substring = emitTextValue(requiredArgument(args[1]), environment);
   const count = args[2]
     ? `CAST(${emitValue(args[2], environment)} AS INT64)`
     : "1";
@@ -48,8 +48,8 @@ export function emitFindOneOf(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 2, 3);
-  const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
-  const charSet = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING)`;
+  const text = emitTextValue(requiredArgument(args[0]), environment);
+  const charSet = emitTextValue(requiredArgument(args[1]), environment);
   const count = args[2]
     ? `CAST(${emitValue(args[2], environment)} AS INT64)`
     : "1";
@@ -63,9 +63,9 @@ export function emitTextBetween(
   environment: EntornoExpresionQlik,
 ): string {
   arityRange(originalName, args, 3, 4);
-  const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
-  const before = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING)`;
-  const after = `CAST(${emitValue(requiredArgument(args[2]), environment)} AS STRING)`;
+  const text = emitTextValue(requiredArgument(args[0]), environment);
+  const before = emitTextValue(requiredArgument(args[1]), environment);
+  const after = emitTextValue(requiredArgument(args[2]), environment);
   const occurrence = args[3]
     ? `CAST(${emitValue(args[3], environment)} AS INT64)`
     : "1";
@@ -81,8 +81,8 @@ export function emitSubStringCount(
   environment: EntornoExpresionQlik,
 ): string {
   arity(originalName, args, 2);
-  const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
-  const substring = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING)`;
+  const text = emitTextValue(requiredArgument(args[0]), environment);
+  const substring = emitTextValue(requiredArgument(args[1]), environment);
   const lastStart = `LENGTH(${text}) - LENGTH(${substring}) + 1`;
   return `CASE WHEN ${text} IS NULL OR ${substring} IS NULL THEN NULL WHEN LENGTH(${substring}) = 0 THEN 0 ELSE (SELECT COUNTIF(SUBSTR(${text}, pos, LENGTH(${substring})) = ${substring}) FROM UNNEST(GENERATE_ARRAY(1, GREATEST(0, ${lastStart}))) AS pos) END`;
 }
@@ -99,12 +99,12 @@ export function emitMatch(
       originalName,
       0,
     );
-  const target = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
+  const target = emitTextValue(requiredArgument(args[0]), environment);
   const branches = args
     .slice(1)
     .map(
       (arg, index) =>
-        `WHEN ${target} = CAST(${emitValue(arg, environment)} AS STRING) THEN ${index + 1}`,
+        `WHEN ${target} = ${emitTextValue(arg, environment)} THEN ${index + 1}`,
     )
     .join(" ");
   return `CASE ${branches} ELSE 0 END`;
@@ -123,8 +123,8 @@ export function emitSubField(
       0,
     );
   arity(originalName, args, 3);
-  const text = `COALESCE(CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING), '')`;
-  const delimiter = `CAST(${emitValue(requiredArgument(args[1]), environment)} AS STRING)`;
+  const text = `COALESCE(${emitTextValue(requiredArgument(args[0]), environment)}, '')`;
+  const delimiter = emitTextValue(requiredArgument(args[1]), environment);
   const fieldNo = `CAST(${emitValue(requiredArgument(args[2]), environment)} AS INT64)`;
   const parts = `SPLIT(${text}, ${delimiter})`;
   return `CASE WHEN ${fieldNo} > 0 THEN ${parts}[SAFE_ORDINAL(${fieldNo})] WHEN ${fieldNo} < 0 THEN ${parts}[SAFE_ORDINAL(ARRAY_LENGTH(${parts}) + ${fieldNo} + 1)] ELSE NULL END`;
