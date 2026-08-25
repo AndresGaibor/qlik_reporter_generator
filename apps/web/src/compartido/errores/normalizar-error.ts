@@ -17,14 +17,10 @@ const MENSAJES_POR_CATEGORIA: Record<CategoriaError, string> = {
   conexion:
     "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.",
   sesion: "Tu sesión expiró. Inicia sesión nuevamente.",
-  permisos:
-    "No tienes permisos para realizar esta acción.",
-  validacion:
-    "Revisa los datos ingresados e intenta nuevamente.",
-  "no-encontrado":
-    "El recurso solicitado ya no está disponible.",
-  general:
-    "Ocurrió un problema inesperado. Intenta nuevamente.",
+  permisos: "No tienes permisos para realizar esta acción.",
+  validacion: "Revisa los datos ingresados e intenta nuevamente.",
+  "no-encontrado": "El recurso solicitado ya no está disponible.",
+  general: "Ocurrió un problema inesperado. Intenta nuevamente.",
 };
 
 function clasificarError(error: ErrorClienteApi): CategoriaError {
@@ -46,7 +42,7 @@ export function normalizarError(error: unknown): ErrorNormalizado {
     };
   }
   return {
-    mensaje: MENSAJES_POR_CATEGORIA["general"],
+    mensaje: MENSAJES_POR_CATEGORIA.general,
     categoria: "general",
   };
 }

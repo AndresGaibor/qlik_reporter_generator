@@ -4,6 +4,7 @@ import { Button } from "@/compartido/componentes/ui/button";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { PestanaMetadataFlujo } from "@/modulos/flujos/componentes/detalle/pestana-metadata-flujo";
@@ -65,7 +66,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
       });
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   if (reporte.isLoading)

@@ -1,6 +1,6 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
 /// <reference types="vitest" />
 import { describe, expect, it, vi } from "vitest";
-import { ErrorClienteApi } from "@/compartido/api/cliente";
 import {
   normalizarError,
   notificarErrorNoControlado,
@@ -15,7 +15,8 @@ describe("normalizarError", () => {
       "NETWORK_ERROR",
     );
     expect(normalizarError(error)).toEqual({
-      mensaje: "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.",
+      mensaje:
+        "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.",
       categoria: "conexion",
     });
   });
@@ -23,7 +24,8 @@ describe("normalizarError", () => {
   it("clasifica 503 como conexion", () => {
     const error = new ErrorClienteApi("interno", 503);
     expect(normalizarError(error)).toEqual({
-      mensaje: "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.",
+      mensaje:
+        "No pudimos conectar con el servidor. Intenta nuevamente en unos minutos.",
       categoria: "conexion",
     });
   });

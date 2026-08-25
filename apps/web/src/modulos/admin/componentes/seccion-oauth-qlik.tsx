@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import { iniciarVerificacionOauth } from "@/modulos/autenticacion/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -169,7 +170,7 @@ function TarjetaOauthTenant({
       }
     },
     onError: (err: Error) => {
-      mostrarError(err.message);
+      mostrarError(normalizarError(err).mensaje);
     },
   });
 

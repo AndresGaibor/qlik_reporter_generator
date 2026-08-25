@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import type { ConfiguracionBigQuery } from "../api";
@@ -85,7 +86,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
       );
       mostrarExito("Configuración de BigQuery guardada");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const probar = useMutation<
@@ -105,7 +106,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
       if (resultado.exitoso) mostrarExito(resultado.mensaje);
       else mostrarError(resultado.mensaje);
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   if (!tenantQlikId) return <BigQuerySinTenant />;

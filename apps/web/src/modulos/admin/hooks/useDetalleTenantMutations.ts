@@ -1,4 +1,5 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import type { ActualizarUsuario } from "@/modulos/admin/api";
 import {
   actualizarTenant,
@@ -37,7 +38,7 @@ export function useDetalleTenantMutations({
       queryClient.invalidateQueries({ queryKey: ["admin-tenants"] });
       mostrarExito("Configuración actualizada");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const agregarUsuario = useMutation({
@@ -51,7 +52,7 @@ export function useDetalleTenantMutations({
       onLimpiarFormularioUsuario();
       mostrarExito("Usuario autorizado");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const actualizarUsuario = useMutation({
@@ -64,7 +65,7 @@ export function useDetalleTenantMutations({
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       mostrarExito("Rol de usuario actualizado");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const eliminarUsuario = useMutation({
@@ -74,7 +75,7 @@ export function useDetalleTenantMutations({
       queryClient.invalidateQueries({ queryKey: ["admin-tenant", tenantId] });
       mostrarExito("Acceso del usuario eliminado");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const crearQlik = useMutation({
@@ -86,7 +87,7 @@ export function useDetalleTenantMutations({
       });
       mostrarExito("Conexión con Qlik Cloud registrada");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const hacerPrincipal = useMutation({
@@ -97,7 +98,7 @@ export function useDetalleTenantMutations({
       });
       mostrarExito("Conexión principal actualizada");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const eliminarQlik = useMutation({
@@ -108,7 +109,7 @@ export function useDetalleTenantMutations({
       });
       mostrarExito("Conexión con Qlik Cloud eliminada");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   return {

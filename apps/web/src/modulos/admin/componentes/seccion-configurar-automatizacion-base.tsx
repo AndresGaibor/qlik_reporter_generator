@@ -1,6 +1,7 @@
 import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import type { TenantQlik } from "@/modulos/admin/api";
 import { listarAutomatizacionesParaAdmin } from "@/modulos/admin/api";
 import { configurarAutomatizacionBaseTenant } from "@/modulos/admin/api";
@@ -62,8 +63,8 @@ export function SeccionConfigurarAutomatizacionBase({
         err.detalles !== null
           ? String((err.detalles as { razon?: unknown }).razon ?? "")
           : "";
-      setValidacion(detalle || err.message);
-      mostrarError(err.message);
+      setValidacion(detalle || normalizarError(err).mensaje);
+      mostrarError(normalizarError(err).mensaje);
     },
   });
 

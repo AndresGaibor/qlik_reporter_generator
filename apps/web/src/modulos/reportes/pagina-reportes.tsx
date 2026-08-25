@@ -2,6 +2,7 @@ import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import { useBusqueda } from "@/compartido/hooks/use-busqueda";
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
 import { usePaginacion } from "@/compartido/hooks/use-paginacion";
@@ -83,7 +84,7 @@ export function PaginaReportes() {
       mostrarExito("Ejecución del reporte iniciada");
       await queryClient.invalidateQueries({ queryKey: ["reportes"] });
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
     onSettled: () => setIdEjecutando(null),
   });
   if (consulta.isLoading) return <EstadoCarga mensaje="Cargando reportes..." />;

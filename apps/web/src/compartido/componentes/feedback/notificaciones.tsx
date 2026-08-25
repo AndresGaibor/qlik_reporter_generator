@@ -1,9 +1,14 @@
 import {
+  normalizarError,
+  registrarNotificadorErrores,
+} from "@/compartido/errores/normalizar-error";
+import {
   type ReactNode,
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -30,6 +35,15 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
   const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   );
+
+  useEffect(() => {
+    const limpiar = registrarNotificadorErrores((error) => {
+      const { mensaje } = normalizarError(error);
+      mostrarError(mensaje);
+    });
+    return limpiar;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => {

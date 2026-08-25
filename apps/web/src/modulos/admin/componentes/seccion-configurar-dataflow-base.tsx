@@ -1,5 +1,6 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import {
   type TenantQlik,
   configurarDataflowBaseTenant,
@@ -41,7 +42,7 @@ export function SeccionConfigurarDataflowBase({
       });
       mostrarExito("Dataflow base configurado");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   const opcionesBase = dataflows.map((dataflow) => ({

@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -46,7 +47,7 @@ export function PaginaSuperadmins() {
       queryClient.invalidateQueries({ queryKey: ["superadmins"] });
     },
     onError: (err: Error) => {
-      mostrarError(err.message);
+      mostrarError(normalizarError(err).mensaje);
     },
   });
 
@@ -56,7 +57,7 @@ export function PaginaSuperadmins() {
       queryClient.invalidateQueries({ queryKey: ["superadmins"] });
       mostrarExito("Superadministrador eliminado");
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   if (isLoading) {

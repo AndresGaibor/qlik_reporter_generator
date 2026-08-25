@@ -4,6 +4,7 @@ import { Button } from "@/compartido/componentes/ui/button";
 import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
 import { Icon, IconSprite } from "@/compartido/componentes/ui/icon";
 import { MarcaQlikReport } from "@/compartido/componentes/ui/marca-qlik-report";
+import { normalizarError } from "@/compartido/errores/normalizar-error";
 import {
   cambiarTenantActivo,
   cerrarSesion,
@@ -55,7 +56,7 @@ export function LayoutPrincipal() {
     onSuccess: async () => {
       await queryClient.invalidateQueries();
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
   const cerrar = useMutation({
     mutationFn: cerrarSesion,
@@ -63,14 +64,14 @@ export function LayoutPrincipal() {
       queryClient.clear();
       navegar({ to: "/login", replace: true });
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => mostrarError(normalizarError(error).mensaje),
   });
 
   useEffect(() => {
     if (!esLogin && consulta.error instanceof ErrorClienteApi) {
       if (consulta.error.estado === 401)
         navegar({ to: "/login", replace: true });
-      else mostrarError(consulta.error.message);
+      else mostrarError(normalizarError(consulta.error).mensaje);
     }
   }, [consulta.error, esLogin, mostrarError, navegar]);
 
@@ -128,9 +129,7 @@ export function LayoutPrincipal() {
             No pudimos verificar tu sesión
           </h1>
           <p className="mt-2 text-sm text-ink-500">
-            {consulta.error instanceof Error
-              ? consulta.error.message
-              : "Intenta nuevamente."}
+            {normalizarError(consulta.error).mensaje}
           </p>
           <div className="mt-4 flex justify-center gap-2">
             <Button variant="outline" onClick={() => consulta.refetch()}>
