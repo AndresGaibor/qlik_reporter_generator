@@ -1,0 +1,49 @@
+# AGENTS.md — Compilador / parser-programa
+
+Parsea sentencias y control de flujo Qlik a AST de programa.
+
+## Antes de modificar
+
+- Lee el `AGENTS.md` de los directorios padre; estas reglas son acumulativas.
+- Busca consumidores y contratos antes de cambiar una firma pública.
+- Mantén los cambios dentro de este límite salvo que el mapa de dependencias indique un cambio transversal.
+- No edites `dist`, `node_modules`, `.worktrees` ni artefactos generados.
+
+## Navegación local
+
+
+Imports internos frecuentes detectados:
+- `../ast.js`
+- `../modelo.js`
+- `../parser-carga.js`
+- `../scanner-qlik.js`
+- `./control.js`
+- `./sentencias.js`
+- `./utilidades.js`
+
+## Ver también
+
+- `docs/agents/CHANGE-MAP.md`
+- `docs/agents/DEPENDENCIES.md`
+- `docs/agents/NAVIGATION.json`
+
+## Prueba mínima
+
+Ejecuta primero los tests del subsistema y después los tests de conformance/corpus que puedan cubrir el cambio.
+
+<!-- agent-enrichment -->
+
+## Atajos para agentes
+
+Dependencias externas a esta área:
+- `apps/api/src/modulos/qlik` (13 imports detectados)
+- `apps/api/src/modulos/google-cloud` (6 imports detectados)
+- `apps/api/src/nucleo` (5 imports detectados)
+- `apps/api/src/modulos/automatizaciones` (4 imports detectados)
+- `apps/api/src/modulos/flujos` (4 imports detectados)
+- `apps/api/src/plataforma` (4 imports detectados)
+- `packages/contratos/src` (1 imports detectados)
+- `apps/api/src/modulos/descargas` (1 imports detectados)
+
+Para una modificación no trivial, busca primero el flujo correspondiente en `docs/agents/FEATURE-FLOWS.md`.
+Consulta `docs/agents/HOTSPOTS.md` antes de editar archivos de alta conectividad.
