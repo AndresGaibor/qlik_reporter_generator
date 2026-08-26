@@ -32,19 +32,30 @@ export type ArchivoResumenDescarga = z.infer<
   typeof esquemaArchivoResumenDescarga
 >;
 
-export const esquemaResumenDescargaEjecucion = z.object({
-  id: z.string().uuid(),
-  flujoIdQlik: z.string(),
-  creadoPorUsuarioId: z.string().uuid().nullable().optional(),
-  propietarioCorreo: z.string().nullable().optional(),
-  reporteNombre: z.string(),
-  automatizacionIdQlik: z.string(),
-  estado: z.string(),
-  mensajeError: z.string().nullable(),
-  creadoEn: z.string().datetime(),
-  finalizadoEn: z.string().datetime().nullable(),
-  archivos: z.array(esquemaArchivoResumenDescarga).default([]),
-});
+export const esquemaResumenDescargaEjecucion = z
+  .object({
+    id: z.string().uuid(),
+    flujoIdQlik: z.string(),
+    creadoPorUsuarioId: z.string().uuid().nullable().optional(),
+    propietarioCorreo: z.string().nullable().optional(),
+    reporteNombre: z.string(),
+    automatizacionIdQlik: z.string(),
+    estado: z.string(),
+    mensajeError: z.string().nullable(),
+    creadoEn: z.string().datetime(),
+    finalizadoEn: z.string().datetime().nullable(),
+    archivos: z.array(esquemaArchivoResumenDescarga).default([]),
+    ejecucionId: z.string().uuid().nullable().optional(),
+    jobIdBigQuery: z.string().nullable().optional(),
+    runIdQlik: z.string().nullable().optional(),
+    duracionTotalMs: z.number().int().nonnegative().nullable().optional(),
+    duracionBigQueryMs: z.number().int().nonnegative().nullable().optional(),
+    totalBytesProcessed: z.string().nullable().optional(),
+    totalBytesBilled: z.string().nullable().optional(),
+    totalSlotMs: z.string().nullable().optional(),
+    archivosExistentes: z.boolean().nullable().optional(),
+  })
+  .strict();
 export type ResumenDescargaEjecucion = z.infer<
   typeof esquemaResumenDescargaEjecucion
 >;

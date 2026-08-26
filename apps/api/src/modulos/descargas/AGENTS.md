@@ -15,6 +15,7 @@ Subdirectorios: `aplicacion/`, `http/`, `infraestructura/`.
 
 Tests cercanos:
 - `apps/api/src/modulos/descargas/aplicacion/servicio-descargas.test.ts`
+- `apps/api/src/modulos/descargas/http/rutas-descargas-bigquery.test.ts`
 - `apps/api/src/modulos/descargas/http/rutas-descargas.test.ts`
 - `apps/api/src/modulos/descargas/http/rutas-explorador-gcs.test.ts`
 - `apps/api/src/modulos/descargas/infraestructura/cliente-gcs.test.ts`
@@ -22,20 +23,20 @@ Tests cercanos:
 Imports internos frecuentes detectados:
 - `../../../../nucleo/errores/error-aplicacion.js`
 - `../../../../nucleo/http/respuestas.js`
+- `../../../google-cloud/aplicacion/puerto-jobs-bigquery.js`
 - `../../../nucleo/errores/error-aplicacion.js`
 - `../../../qlik/aplicacion/puertos/puerto-qlik.js`
 - `../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js`
 - `../../../reportes/aplicacion/sincronizar-ejecuciones-reporte.js`
+- `../../../reportes/aplicacion/sincronizar-jobs-bigquery-ejecucion.js`
 - `../../aplicacion/puerto-almacenamiento-descargas.js`
 - `../../aplicacion/servicio-descargas.js`
+- `../../google-cloud/aplicacion/puerto-jobs-bigquery.js`
 - `../../qlik/aplicacion/puertos/puerto-qlik.js`
 - `../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js`
 - `../../reportes/dominio/destino-gcs.js`
 - `../aplicacion/puerto-almacenamiento-descargas.js`
 - `./cliente-gcs.js`
-- `./helpers.js`
-- `./puerto-almacenamiento-descargas.js`
-- `./rutas-descargas.js`
 
 ## Ver también
 

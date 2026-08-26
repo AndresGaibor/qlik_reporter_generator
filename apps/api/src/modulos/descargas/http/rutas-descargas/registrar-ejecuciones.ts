@@ -5,6 +5,7 @@ import {
   responderExito,
 } from "../../../../nucleo/http/respuestas.js";
 import { SincronizarEjecucionesReporte } from "../../../reportes/aplicacion/sincronizar-ejecuciones-reporte.js";
+import { SincronizarJobsBigQueryEjecucion } from "../../../reportes/aplicacion/sincronizar-jobs-bigquery-ejecucion.js";
 import { ServicioDescargas } from "../../aplicacion/servicio-descargas.js";
 import { esAdministrador } from "./helpers.js";
 import type { DependenciasRutasDescargas } from "./tipos.js";
@@ -55,6 +56,41 @@ export function registrarRutasEjecuciones(
           ).ejecutar(flujoIdQlik, sesion.tenantId, sesion.organizacionId),
         ),
       );
+
+      if (dependencias.resolverJobsBigQuery) {
+        try {
+          const ejecucionFull = await Promise.all(
+            flujosDistintos.map((flujoIdQlik) =>
+              dependencias.repositorioReportes.listarEjecuciones(
+                flujoIdQlik,
+                sesion.tenantId,
+                sesion.organizacionId,
+                100,
+              ),
+            ),
+          );
+          const jobsBigQuery = await dependencias.resolverJobsBigQuery(c);
+          const sincronizadorBq = new SincronizarJobsBigQueryEjecucion(
+            dependencias.repositorioReportes,
+            jobsBigQuery,
+          );
+          await Promise.all(
+            ejecucionFull
+              .flat()
+              .filter(
+                (e) =>
+                  (e.estado === "preparando" || e.estado === "iniciada") &&
+                  Boolean(e.jobIdPrincipalBigQuery) &&
+                  Boolean(e.bigqueryProjectId),
+              )
+              .map((e) =>
+                sincronizadorBq.sincronizar(e.id).catch(() => undefined),
+              ),
+          );
+        } catch {
+          // Un fallo transitorio de BigQuery no debe detener el polling.
+        }
+      }
 
       ejecuciones = await servicio.listarEjecuciones({
         tenantQlikId: sesion.tenantId,

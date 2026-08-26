@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import type { PuertoJobsBigQuery } from "../../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { ServicioQlik } from "../../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { PuertoAlmacenamientoDescargas } from "../../aplicacion/puerto-almacenamiento-descargas.js";
@@ -17,6 +18,7 @@ export interface DependenciasRutasDescargas {
   resolverQlik(c: Context): Promise<ServicioQlik>;
   repositorioReportes: PuertoRepositorioReportes;
   resolverAlmacenamiento(c: Context): Promise<PuertoAlmacenamientoDescargas>;
+  resolverJobsBigQuery?: (c: Context) => Promise<PuertoJobsBigQuery>;
   resolverConfiguracionGcs?: (
     c: Context,
   ) => Promise<{ bucket: string; prefijo: string }>;

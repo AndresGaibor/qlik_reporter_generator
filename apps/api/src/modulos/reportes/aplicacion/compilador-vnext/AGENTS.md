@@ -66,7 +66,7 @@ Entry points probables:
 
 Dependencias externas a esta área:
 - `apps/api/src/modulos/qlik` (13 imports detectados)
-- `apps/api/src/modulos/google-cloud` (6 imports detectados)
+- `apps/api/src/modulos/google-cloud` (9 imports detectados)
 - `apps/api/src/nucleo` (5 imports detectados)
 - `apps/api/src/modulos/automatizaciones` (4 imports detectados)
 - `apps/api/src/modulos/flujos` (4 imports detectados)

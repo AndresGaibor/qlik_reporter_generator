@@ -88,7 +88,7 @@ export function EstadoPreflight({
           Hay pasos del Dataflow que todavía no pueden ejecutarse desde la
           plataforma.
         </p>
-        {mostrarDetallesTecnicos && (
+        {preflight.operacionesNoSoportadas.length > 0 && (
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-800">
             {preflight.operacionesNoSoportadas.map((operacion) => (
               <li key={operacion}>{operacion}</li>

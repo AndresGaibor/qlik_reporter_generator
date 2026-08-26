@@ -11,7 +11,9 @@
           "value": [
             { "key": "credenciales", "value": "{ $.Credenciales }" },
             { "key": "bq_number_csv", "value": "{ $.BqNumberCsv }" },
-            { "key": "bq_export_data", "value": "{ $.BqExportData }" }
+            { "key": "bq_export_data", "value": "{ $.BqExportData }" },
+            { "key": "jobid", "value": "{ $.JobId }" },
+            { "key": "projectid", "value": "{ $.ProjectId }" }
           ]
         }
       ]
@@ -32,6 +34,16 @@
       "name": "BqExportData",
       "type": "VariableBlock",
       "operations": [{ "id": "set_value", "value": "EXPORT_ANTERIOR" }]
+    },
+    {
+      "name": "JobId",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "JOB_ANTERIOR" }]
+    },
+    {
+      "name": "ProjectId",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "PROJECT_ANTERIOR" }]
     }
   ]
 }

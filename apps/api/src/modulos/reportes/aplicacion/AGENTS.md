@@ -39,11 +39,11 @@ Imports internos frecuentes detectados:
 - `../../fixtures/compiler-corpus/function-vectors.json`
 - `../../fixtures/compiler-corpus/runtime-function-status.json`
 - `../../fixtures/compiler-corpus/scenarios.json`
+- `../../google-cloud/aplicacion/puerto-jobs-bigquery.js`
 - `../../google-cloud/dominio/metadata-bigquery.js`
 - `../../qlik/aplicacion/puertos/puerto-qlik.js`
 - `../../qlik/dominio/modelos-qlik.js`
 - `../../qlik/infraestructura/error-api-qlik.js`
-- `../agregados-financieros.js`
 
 ## Ver también
 
@@ -57,7 +57,7 @@ Imports internos frecuentes detectados:
 
 Dependencias externas a esta área:
 - `apps/api/src/modulos/qlik` (13 imports detectados)
-- `apps/api/src/modulos/google-cloud` (6 imports detectados)
+- `apps/api/src/modulos/google-cloud` (9 imports detectados)
 - `apps/api/src/nucleo` (5 imports detectados)
 - `apps/api/src/modulos/automatizaciones` (4 imports detectados)
 - `apps/api/src/modulos/flujos` (4 imports detectados)

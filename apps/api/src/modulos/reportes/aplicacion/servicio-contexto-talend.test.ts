@@ -10,6 +10,8 @@ const consultas: ConsultasTalendBigQuery = {
   bqNumberCsv: "SELECT 0 AS export_part",
   bqExportData:
     "EXPORT DATA OPTIONS(uri='gs://b/parte-__PART_PADDED__-*.csv.gz') AS SELECT 1",
+  jobId: "qlikr_e410c97de580245000008dc8ee2d4",
+  projectId: "bq-project-123",
 };
 
 function valorVariable(
@@ -44,10 +46,10 @@ function workspacePlantillaSqlActual(): Record<string, unknown> {
             id: "context",
             mode: "keyValue",
             value: [
-              { key: "jobid", value: "{ $.jobid }" },
-              { key: "projectid", value: "{ $.projectid }" },
               { key: "credenciales", value: "{ $.Credenciales }" },
               { key: "sql", value: "{ $.sql }" },
+              { key: "job_id", value: "{ $.jobid }" },
+              { key: "id_projecto", value: "{ $.projectid }" },
             ],
           },
         ],
@@ -61,12 +63,24 @@ function workspacePlantillaSqlActual(): Record<string, unknown> {
             value:
               name === "Credenciales"
                 ? "/etc/credentials/gsc.json"
-                : `ANTERIOR_${name}`,
+                : name === "jobid"
+                  ? "ANTERIOR_jobid"
+                  : name === "projectid"
+                    ? "ANTERIOR_projectid"
+                    : `ANTERIOR_${name}`,
           },
         ],
       })),
     ],
   };
+}
+
+async function cargarFixtureSqlActual() {
+  const fixture = new URL(
+    "../fixtures/automate-talend-workspace-sql.sanitized.json",
+    import.meta.url,
+  );
+  return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
 }
 
 async function cargarFixture() {
@@ -78,17 +92,36 @@ async function cargarFixture() {
 }
 
 describe("inyectarContextoTalend", () => {
-  it("acepta la plantilla actual con una sola variable sql y solo reemplaza su SQL", () => {
+  it("inyecta SQL, job y proyecto en la plantilla SQL actual", () => {
     const workspace = workspacePlantillaSqlActual();
 
     expect(diagnosticarContratoTalend(workspace)).toEqual([]);
 
     const nuevo = inyectarContextoTalend(workspace, consultas);
     expect(valorVariable(nuevo, "sql")).toBe(consultas.sql);
-    expect(valorVariable(nuevo, "jobid")).toBe("ANTERIOR_jobid");
-    expect(valorVariable(nuevo, "projectid")).toBe("ANTERIOR_projectid");
+    expect(valorVariable(nuevo, "jobid")).toBe(consultas.jobId);
+    expect(valorVariable(nuevo, "projectid")).toBe(consultas.projectId);
     expect(valorVariable(nuevo, "Credenciales")).toBe(
       "/etc/credentials/gsc.json",
+    );
+  });
+
+  it("rechaza la automatización real si falta job_id o id_projecto", async () => {
+    const workspace = await cargarFixtureSqlActual();
+    const blocks = workspace.blocks as Array<Record<string, unknown>>;
+    const executeTask = blocks.find(
+      (block) => block.name === "executeTask",
+    ) as Record<string, unknown>;
+    const inputs = executeTask.inputs as Array<Record<string, unknown>>;
+    const contexto = inputs.find(
+      (input) => input.mode === "keyValue",
+    ) as Record<string, unknown>;
+    contexto.value = (contexto.value as Array<Record<string, unknown>>).filter(
+      (item) => item.key !== "job_id" && item.key !== "id_projecto",
+    );
+
+    expect(() => inyectarContextoTalend(workspace, consultas)).toThrow(
+      "job_id",
     );
   });
 

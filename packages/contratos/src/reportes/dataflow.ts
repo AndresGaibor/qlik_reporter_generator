@@ -36,30 +36,60 @@ export type PreflightDataflowReporte = z.infer<
   typeof esquemaPreflightDataflowReporte
 >;
 
-export const esquemaDetalleEjecucionReporte = z.object({
-  id: z.string().uuid(),
-  organizacionId: z.string().uuid(),
-  tenantQlikId: z.string().uuid(),
-  flujoIdQlik: z.string(),
-  flujoNombreSnapshot: z.string(),
-  flujoEspacioIdQlik: z.string().nullable(),
-  automatizacionIdQlik: z.string(),
-  runIdQlik: z.string().nullable(),
-  ejecutadoPorUsuarioId: z.string().uuid().nullable(),
-  automatizacionPersonalId: z.string().uuid().nullable(),
-  hashDataflowSha256: z.string().regex(/^[a-f0-9]{64}$/),
-  scriptDataflow: z.string(),
-  sqlBigQueryCompilado: z.string(),
-  scriptExportacion: z.string(),
-  uriBaseGcs: z.string().startsWith("gs://"),
-  estado: esquemaEstadoEjecucionReporte,
-  versionCompilador: z.number().int().positive(),
-  etapaError: z.string().nullable(),
-  mensajeError: z.string().nullable(),
-  iniciadoEn: z.string().datetime().nullable(),
-  finalizadoEn: z.string().datetime().nullable(),
-  creadoEn: z.string().datetime(),
+export const esquemaJobBigQuery = z.object({
+  jobId: z.string(),
+  parentJobId: z.string().nullable(),
+  tipo: z.string(),
+  estado: z.string(),
+  startTime: z.string().datetime().nullable(),
+  endTime: z.string().datetime().nullable(),
+  duracionMs: z.number().int().nonnegative().nullable(),
+  totalBytesProcessed: z.string().nullable(),
+  totalBytesBilled: z.string().nullable(),
+  totalSlotMs: z.string().nullable(),
 });
+export type JobBigQuery = z.infer<typeof esquemaJobBigQuery>;
+
+export const esquemaMetricasEjecucion = z.object({
+  duracionTotalMs: z.number().int().nonnegative().nullable(),
+  duracionBigQueryMs: z.number().int().nonnegative().nullable(),
+  totalBytesProcessed: z.string().nullable(),
+  totalBytesBilled: z.string().nullable(),
+  totalSlotMs: z.string().nullable(),
+});
+export type MetricasEjecucion = z.infer<typeof esquemaMetricasEjecucion>;
+
+export const esquemaDetalleEjecucionReporte = z
+  .object({
+    id: z.string().uuid(),
+    organizacionId: z.string().uuid(),
+    tenantQlikId: z.string().uuid(),
+    flujoIdQlik: z.string(),
+    flujoNombreSnapshot: z.string(),
+    flujoEspacioIdQlik: z.string().nullable(),
+    automatizacionIdQlik: z.string(),
+    runIdQlik: z.string().nullable(),
+    ejecutadoPorUsuarioId: z.string().uuid().nullable(),
+    automatizacionPersonalId: z.string().uuid().nullable(),
+    hashDataflowSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    scriptDataflow: z.string(),
+    sqlBigQueryCompilado: z.string(),
+    scriptExportacion: z.string(),
+    uriBaseGcs: z.string().startsWith("gs://"),
+    estado: esquemaEstadoEjecucionReporte,
+    versionCompilador: z.number().int().positive(),
+    etapaError: z.string().nullable(),
+    mensajeError: z.string().nullable(),
+    iniciadoEn: z.string().datetime().nullable(),
+    finalizadoEn: z.string().datetime().nullable(),
+    creadoEn: z.string().datetime(),
+    jobIdBigQuery: z.string().nullable().optional(),
+    bigQueryProjectId: z.string().nullable().optional(),
+    bigQueryLocation: z.string().nullable().optional(),
+    metricas: esquemaMetricasEjecucion.nullable().optional(),
+    jobsBigQuery: z.array(esquemaJobBigQuery).nullable().optional(),
+  })
+  .strict();
 export type DetalleEjecucionReporte = z.infer<
   typeof esquemaDetalleEjecucionReporte
 >;

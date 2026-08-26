@@ -12,6 +12,12 @@ Contratos compartidos del dominio `descargas`. Busca consumidores en `apps/web` 
 ## Navegación local
 
 
+Tests cercanos:
+- `packages/contratos/src/descargas/index.test.ts`
+
+Imports internos frecuentes detectados:
+- `./index.js`
+
 ## Ver también
 
 - `docs/agents/CHANGE-MAP.md`

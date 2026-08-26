@@ -5,6 +5,44 @@ export type EstadoEjecucionReportePersistida =
   | "error"
   | "detenida";
 
+export type TipoJobBigQueryPersistido =
+  | "principal"
+  | "script"
+  | "query"
+  | "export"
+  | "conteo"
+  | "child"
+  | "desconocido";
+
+export type EstadoJobBigQueryPersistido =
+  | "pendiente"
+  | "running"
+  | "done"
+  | "error";
+
+export interface JobBigQueryPersistido {
+  id?: string;
+  ejecucionReporteId: string;
+  jobId: string;
+  parentJobId: string | null;
+  projectId: string;
+  location: string;
+  tipo: TipoJobBigQueryPersistido;
+  estado: EstadoJobBigQueryPersistido;
+  creationTime: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  duracionMs: number | null;
+  totalBytesProcessed: string | null;
+  totalBytesBilled: string | null;
+  totalSlotMs: string | null;
+  cacheHit: boolean | null;
+  statementType: string | null;
+  errorReason: string | null;
+  errorMessage: string | null;
+  metadataJson: Record<string, unknown> | null;
+}
+
 export interface CrearEjecucionReportePersistida {
   id: string;
   organizacionId: string;
@@ -20,6 +58,9 @@ export interface CrearEjecucionReportePersistida {
   sqlBigQueryCompilado: string;
   scriptExportacion: string;
   uriBaseGcs: string;
+  jobIdPrincipalBigQuery?: string | null;
+  bigqueryProjectId?: string | null;
+  bigqueryLocation?: string | null;
   estado: "preparando";
   versionCompilador: number;
 }
@@ -32,6 +73,13 @@ export interface EjecucionReportePersistida
   runIdQlik?: string | null;
   etapaError?: string | null;
   mensajeError?: string | null;
+  jobIdPrincipalBigQuery?: string | null;
+  bigqueryProjectId?: string | null;
+  bigqueryLocation?: string | null;
+  qlikIniciadoEn?: Date | null;
+  bigqueryIniciadoEn?: Date | null;
+  bigqueryFinalizadoEn?: Date | null;
+  gcsFinalizadoEn?: Date | null;
   iniciadoEn?: Date | null;
   finalizadoEn?: Date | null;
   creadoEn?: Date;
@@ -49,6 +97,12 @@ export interface ResumenEjecucionDescarga {
   uriBaseGcs: string;
   creadoEn: Date;
   finalizadoEn: Date | null;
+  runIdQlik?: string | null;
+  jobIdBigQuery?: string | null;
+  bigqueryProjectId?: string | null;
+  bigqueryLocation?: string | null;
+  bigqueryIniciadoEn?: Date | null;
+  bigqueryFinalizadoEn?: Date | null;
 }
 
 export interface PuertoRepositorioReportes {
@@ -99,4 +153,23 @@ export interface PuertoRepositorioReportes {
     usuarioId?: string;
     esAdministrador?: boolean;
   }): Promise<ResumenEjecucionDescarga | null>;
+  obtenerEjecucionPorJobId(
+    jobId: string,
+  ): Promise<EjecucionReportePersistida | null>;
+  obtenerEjecucionPorId(id: string): Promise<EjecucionReportePersistida | null>;
+  guardarJobBigQueryEjecucion(job: JobBigQueryPersistido): Promise<void>;
+  listarJobsBigQueryPorEjecucion(
+    ejecucionId: string,
+  ): Promise<JobBigQueryPersistido[]>;
+  listarJobsBigQueryPorEjecucionIds(
+    ejecucionIds: string[],
+  ): Promise<Map<string, JobBigQueryPersistido[]>>;
+  actualizarTimestampsEjecucionBigQuery(
+    ejecucionId: string,
+    timestamps: {
+      bigqueryIniciadoEn?: Date | null;
+      bigqueryFinalizadoEn?: Date | null;
+    },
+  ): Promise<void>;
+  marcarGcsFinalizada(id: string, gcsFinalizadoEn: Date): Promise<void>;
 }

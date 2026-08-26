@@ -1,6 +1,26 @@
+import { Icon } from "@/compartido/componentes/ui/icon";
 import type { DetalleEjecucionReporte } from "@qlik/contratos";
 import { useEffect, useState } from "react";
 import { calcularDuracion } from "../../utiles-presentacion-reporte";
+
+function formatearTamanoBytes(valor: string | null | undefined): string {
+  if (!valor) return "—";
+  const num = Number(valor);
+  if (Number.isNaN(num)) return valor;
+  if (num === 0) return "0 B";
+  const k = 1024;
+  const tamanos = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(num) / Math.log(k));
+  return `${Number.parseFloat((num / k ** i).toFixed(1))} ${tamanos[i]}`;
+}
+
+function formatearDuracionMs(ms: number): string {
+  const segundos = Math.floor(ms / 1000);
+  const minutos = Math.floor(segundos / 60);
+  const resto = segundos % 60;
+  if (minutos === 0) return `${resto} s`;
+  return resto === 0 ? `${minutos} min` : `${minutos} min ${resto} s`;
+}
 
 export function HistorialAuditoriaReporte({
   ejecuciones,
@@ -103,9 +123,90 @@ export function HistorialAuditoriaReporte({
                       contenido={ejecucion.scriptExportacion}
                     />
                     <div className="grid gap-2 text-xs text-ink-500 sm:grid-cols-2">
-                      <span>Qlik run: {ejecucion.runIdQlik ?? "—"}</span>
                       <span>Compilador: v{ejecucion.versionCompilador}</span>
                     </div>
+                    {(ejecucion.metricas || ejecucion.jobIdBigQuery) && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                          BigQuery
+                        </p>
+                        <div className="grid gap-2 rounded-lg border border-line-200 bg-surface-subtle p-3">
+                          {ejecucion.metricas && (
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+                              {ejecucion.metricas.duracionBigQueryMs !=
+                                null && (
+                                <span className="text-ink-500">
+                                  Duración BQ:{" "}
+                                  <span className="font-semibold text-ink-700">
+                                    {formatearDuracionMs(
+                                      ejecucion.metricas.duracionBigQueryMs,
+                                    )}
+                                  </span>
+                                </span>
+                              )}
+                              {ejecucion.metricas.totalBytesProcessed && (
+                                <span className="text-ink-500">
+                                  Procesado:{" "}
+                                  <span className="font-semibold text-ink-700">
+                                    {formatearTamanoBytes(
+                                      ejecucion.metricas.totalBytesProcessed,
+                                    )}
+                                  </span>
+                                </span>
+                              )}
+                              {ejecucion.metricas.totalBytesBilled && (
+                                <span className="text-ink-500">
+                                  Facturado:{" "}
+                                  <span className="font-semibold text-ink-700">
+                                    {formatearTamanoBytes(
+                                      ejecucion.metricas.totalBytesBilled,
+                                    )}
+                                  </span>
+                                </span>
+                              )}
+                              {ejecucion.metricas.totalSlotMs && (
+                                <span className="text-ink-500">
+                                  Slot ms:{" "}
+                                  <span className="font-semibold text-ink-700">
+                                    {ejecucion.metricas.totalSlotMs}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            {ejecucion.jobIdBigQuery && (
+                              <LineaTecnicaCopy
+                                etiqueta="Job BQ"
+                                valor={ejecucion.jobIdBigQuery}
+                              />
+                            )}
+                            {ejecucion.bigQueryProjectId && (
+                              <span className="text-xs text-ink-500">
+                                Proyecto:{" "}
+                                <span className="font-mono text-xs text-ink-700">
+                                  {ejecucion.bigQueryProjectId}
+                                </span>
+                              </span>
+                            )}
+                            {ejecucion.bigQueryLocation && (
+                              <span className="text-xs text-ink-500">
+                                Location:{" "}
+                                <span className="font-mono text-xs text-ink-700">
+                                  {ejecucion.bigQueryLocation}
+                                </span>
+                              </span>
+                            )}
+                            {ejecucion.runIdQlik && (
+                              <LineaTecnicaCopy
+                                etiqueta="Run Qlik"
+                                valor={ejecucion.runIdQlik}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </details>
               )}
@@ -171,7 +272,10 @@ function EstadoAuditoria({ estado }: { estado: string }) {
 function BloqueCodigo({
   titulo,
   contenido,
-}: { titulo: string; contenido: string }) {
+}: {
+  titulo: string;
+  contenido: string;
+}) {
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
@@ -192,4 +296,28 @@ function formatearFecha(valor: string | null | undefined) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(fecha);
+}
+
+function LineaTecnicaCopy({
+  etiqueta,
+  valor,
+}: {
+  etiqueta: string;
+  valor: string;
+}) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="text-ink-500">{etiqueta}:</span>
+      <span className="font-mono text-xs text-ink-700">{valor}</span>
+      <button
+        type="button"
+        onClick={() => void navigator.clipboard.writeText(valor)}
+        className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold text-ink-500 hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        aria-label={`Copiar ${etiqueta}`}
+      >
+        <Icon name="copy" size="sm" />
+        Copiar
+      </button>
+    </span>
+  );
 }

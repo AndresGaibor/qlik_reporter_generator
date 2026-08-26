@@ -50,6 +50,13 @@
       "when": 1787119486360,
       "tag": "0006_persistir_ejecuciones_dataflow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787758291832,
+      "tag": "0007_trazabilidad_bigquery_jobs",
+      "breakpoints": true
     }
   ]
 }

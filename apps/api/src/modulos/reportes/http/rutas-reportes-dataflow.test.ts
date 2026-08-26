@@ -367,19 +367,16 @@ describe("fachada /api/reportes para Dataflows", () => {
       .mockResolvedValueOnce([activa])
       .mockResolvedValueOnce([activa])
       .mockResolvedValueOnce([completada]);
-    const marcarEjecucionCompletada = vi.fn(async () => undefined);
+    const marcarGcsFinalizada = vi.fn(async () => undefined);
     const estaFinalizada = vi.fn(async () => true);
     const app = appCon(
       {
         listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
-        listarEjecuciones: vi.fn(async () => [
-          { id: "run-1", status: "finished" },
-        ]),
       },
       {
         repositorioReportes: {
           listarEjecuciones,
-          marcarEjecucionCompletada,
+          marcarGcsFinalizada,
         } as never,
         resolverAlmacenamiento: async () => ({ estaFinalizada }) as never,
       },
@@ -391,10 +388,283 @@ describe("fachada /api/reportes para Dataflows", () => {
     expect(estaFinalizada).toHaveBeenCalledWith(
       "POCs/TalendDescargados/ventas/exec-1/",
     );
-    expect(marcarEjecucionCompletada).toHaveBeenCalledWith(
+    expect(marcarGcsFinalizada).toHaveBeenCalledWith(
       "exec-1",
       expect.any(Date),
     );
     expect((await respuesta.json()).datos[0].estado).toBe("completada");
+  });
+
+  it("sincroniza BigQuery para ejecucion con jobIdPrincipalBigQuery y bigqueryProjectId", async () => {
+    const execActiva = {
+      id: "exec-bq-1",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-bq-1/",
+      jobIdPrincipalBigQuery: "job-bq-1",
+      bigqueryProjectId: "project-bq-1",
+      bigqueryLocation: "US",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([{ ...execActiva, estado: "completada" }]);
+    const jobsBigQueryMock = {
+      obtenerJob: vi.fn().mockResolvedValue({
+        jobId: "job-bq-1",
+        projectId: "project-bq-1",
+        location: "US",
+        estado: "DONE",
+        creationTime: "2026-08-20T10:00:00Z",
+        startTime: "2026-08-20T10:00:01Z",
+        endTime: "2026-08-20T10:00:05Z",
+        totalBytesProcessed: "123",
+        totalBytesBilled: "100",
+        totalSlotMs: "50",
+        cacheHit: false,
+        statementType: "SELECT",
+        errorResult: null,
+        parentJobId: null,
+      }),
+      listarHijos: vi.fn().mockResolvedValue([]),
+    };
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          obtenerEjecucionPorId: vi.fn().mockResolvedValue(execActiva),
+        } as never,
+        resolverAlmacenamiento: async () =>
+          ({ estaFinalizada: vi.fn(async () => false) }) as never,
+        resolverJobsBigQuery: async () => jobsBigQueryMock as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(jobsBigQueryMock.obtenerJob).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: "job-bq-1", projectId: "project-bq-1" }),
+    );
+  });
+
+  it("no detiene el polling cuando sincronizacion BigQuery falla temporalmente", async () => {
+    const execActiva = {
+      id: "exec-bq-error",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-bq-error/",
+      jobIdPrincipalBigQuery: "job-bq-1",
+      bigqueryProjectId: "project-bq-1",
+      bigqueryLocation: "US",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([execActiva])
+      .mockResolvedValueOnce([execActiva]);
+    const jobsBigQueryMock = {
+      obtenerJob: vi
+        .fn()
+        .mockRejectedValue(new Error("BigQuery temporarily unavailable")),
+      listarHijos: vi.fn().mockResolvedValue([]),
+    };
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          obtenerEjecucionPorId: vi.fn().mockResolvedValue(execActiva),
+        } as never,
+        resolverAlmacenamiento: async () =>
+          ({ estaFinalizada: vi.fn(async () => false) }) as never,
+        resolverJobsBigQuery: async () => jobsBigQueryMock as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+  });
+
+  it("persiste gcsFinalizadoEn al detectar marcador GCS y no sobrescribe error especifico de Qlik/Talend", async () => {
+    const execConError = {
+      id: "exec-error-qlik",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-error-qlik/",
+      etapaError: "talend",
+      mensajeError: "Talend job failed: connection refused",
+      jobIdPrincipalBigQuery: null,
+      bigqueryProjectId: null,
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const execGcsFinalizado = {
+      ...execConError,
+      estado: "completada",
+      gcsFinalizadoEn: new Date("2026-08-20T10:05:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([execConError])
+      .mockResolvedValueOnce([execConError])
+      .mockResolvedValueOnce([execConError])
+      .mockResolvedValueOnce([execGcsFinalizado]);
+    const marcarGcsFinalizada = vi.fn(async () => undefined);
+    const estaFinalizada = vi.fn(async () => true);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          marcarGcsFinalizada,
+        } as never,
+        resolverAlmacenamiento: async () => ({ estaFinalizada }) as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(marcarGcsFinalizada).toHaveBeenCalledWith(
+      "exec-error-qlik",
+      expect.any(Date),
+    );
+  });
+
+  it("recupera ejecucion persistente tras reinicio: sin estado en memoria, con jobId y runId", async () => {
+    const execRecuperada = {
+      id: "exec-reinicio",
+      estado: "iniciada",
+      runIdQlik: "run-recuperado",
+      automatizacionIdQlik: "auto-recup",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-reinicio/",
+      jobIdPrincipalBigQuery: "job-recup-bq",
+      bigqueryProjectId: "project-recup",
+      bigqueryLocation: "EU",
+      qlikIniciadoEn: new Date("2026-08-25T09:00:00Z"),
+      bigqueryIniciadoEn: new Date("2026-08-25T09:00:05Z"),
+      bigqueryFinalizadoEn: null,
+      gcsFinalizadoEn: null,
+      creadoEn: new Date("2026-08-25T09:00:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([execRecuperada])
+      .mockResolvedValueOnce([execRecuperada])
+      .mockResolvedValueOnce([execRecuperada])
+      .mockResolvedValueOnce([{ ...execRecuperada, estado: "completada" }]);
+    const jobsBigQueryMock = {
+      obtenerJob: vi.fn().mockResolvedValue({
+        jobId: "job-recup-bq",
+        projectId: "project-recup",
+        location: "EU",
+        estado: "DONE",
+        creationTime: "2026-08-25T09:00:00Z",
+        startTime: "2026-08-25T09:00:01Z",
+        endTime: "2026-08-25T09:00:05Z",
+        totalBytesProcessed: "456",
+        totalBytesBilled: "200",
+        totalSlotMs: "100",
+        cacheHit: false,
+        statementType: "SELECT",
+        errorResult: null,
+        parentJobId: null,
+      }),
+      listarHijos: vi.fn().mockResolvedValue([]),
+    };
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          obtenerEjecucionPorId: vi.fn().mockResolvedValue(execRecuperada),
+        } as never,
+        resolverAlmacenamiento: async () =>
+          ({ estaFinalizada: vi.fn(async () => false) }) as never,
+        resolverJobsBigQuery: async () => jobsBigQueryMock as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(jobsBigQueryMock.obtenerJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: "job-recup-bq",
+        projectId: "project-recup",
+      }),
+    );
+  });
+
+  it("completa ejecucion via GCS cuando BigQuery retorna 404 pero marcador GCS existe", async () => {
+    const execBq404 = {
+      id: "exec-bq-404",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-bq-404/",
+      jobIdPrincipalBigQuery: "job-inexistente",
+      bigqueryProjectId: "project-bq",
+      bigqueryLocation: "US",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const listarEjecuciones = vi
+      .fn()
+      .mockResolvedValueOnce([execBq404])
+      .mockResolvedValueOnce([execBq404])
+      .mockResolvedValueOnce([execBq404])
+      .mockResolvedValueOnce([{ ...execBq404, estado: "completada" }]);
+    const jobsBigQueryMock = {
+      obtenerJob: vi.fn().mockResolvedValue(null),
+      listarHijos: vi.fn().mockResolvedValue([]),
+    };
+    const marcarGcsFinalizada = vi.fn(async () => undefined);
+    const estaFinalizada = vi.fn(async () => true);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones,
+          marcarGcsFinalizada,
+          obtenerEjecucionPorId: vi.fn().mockResolvedValue(execBq404),
+        } as never,
+        resolverAlmacenamiento: async () => ({ estaFinalizada }) as never,
+        resolverJobsBigQuery: async () => jobsBigQueryMock as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(respuesta.status).toBe(200);
+    expect(jobsBigQueryMock.obtenerJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: "job-inexistente",
+        projectId: "project-bq",
+      }),
+    );
+    expect(marcarGcsFinalizada).toHaveBeenCalledWith(
+      "exec-bq-404",
+      expect.any(Date),
+    );
   });
 });

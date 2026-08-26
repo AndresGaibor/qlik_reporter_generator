@@ -10,7 +10,7 @@ const worker = { id: "worker-db-1", automatizacionIdQlik: "worker-1" };
 const workspace = JSON.parse(
   await Bun.file(
     new URL(
-      "../fixtures/automate-talend-workspace.sanitized.json",
+      "../fixtures/automate-talend-workspace-sql.sanitized.json",
       import.meta.url,
     ),
   ).text(),
@@ -103,6 +103,9 @@ describe("EjecutarReporte", () => {
         automatizacionIdQlik: "worker-1",
         uriBaseGcs:
           "gs://bkt_dwh/POCs/TalendDescargados/andresgaiborreportes/ventas-diarias/11111111-1111-4111-8111-111111111111/",
+        jobIdPrincipalBigQuery: "qlikr_111111111111411181111111",
+        bigqueryProjectId: "p",
+        bigqueryLocation: "US",
       }),
     );
   });

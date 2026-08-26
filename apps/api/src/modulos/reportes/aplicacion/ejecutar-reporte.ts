@@ -177,6 +177,9 @@ export class EjecutarReporte {
         sqlBigQueryCompilado: preparacion.sqlBigQuery,
         scriptExportacion,
         uriBaseGcs,
+        jobIdPrincipalBigQuery: consultasTalend.jobId,
+        bigqueryProjectId: this.alcanceBigQuery.projectId,
+        bigqueryLocation: "US",
         estado: "preparando",
         versionCompilador: VERSION_COMPILADOR,
       });

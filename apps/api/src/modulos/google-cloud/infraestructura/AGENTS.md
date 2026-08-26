@@ -13,6 +13,7 @@ Adaptadores concretos para Postgres, Qlik, Google Cloud u otros servicios.
 
 
 Tests cercanos:
+- `apps/api/src/modulos/google-cloud/infraestructura/cliente-jobs-bigquery.test.ts`
 - `apps/api/src/modulos/google-cloud/infraestructura/estimador-bigquery.test.ts`
 - `apps/api/src/modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.test.ts`
 
@@ -21,6 +22,7 @@ Imports internos frecuentes detectados:
 - `../../../plataforma/persistencia/conexion.js`
 - `../../../plataforma/persistencia/esquema.js`
 - `../../../plataforma/seguridad/servicio-cifrado.js`
+- `../aplicacion/puerto-jobs-bigquery.js`
 - `../dominio/metadata-bigquery.js`
 - `./estimador-bigquery.js`
 - `./resolver-configuracion-google-cloud-postgres.js`

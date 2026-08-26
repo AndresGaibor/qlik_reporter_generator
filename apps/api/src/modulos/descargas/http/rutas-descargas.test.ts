@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { PuertoAlmacenamientoDescargas } from "../aplicacion/puerto-almacenamiento-descargas.js";
 import { crearRutasDescargas } from "./rutas-descargas.js";
@@ -216,6 +217,8 @@ describe("GET /api/descargas", () => {
     });
   });
 });
+
+// BigQuery sync tests moved to rutas-descargas-bigquery.test.ts
 
 describe("GET /api/descargas/administracion", () => {
   it("bloquea a usuarios finales", async () => {
