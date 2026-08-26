@@ -115,4 +115,28 @@ describe("resumirDataflowParaUsuario", () => {
     expect(JSON.stringify(resumen)).not.toContain("InvalidDataflow");
     expect(JSON.stringify(resumen)).not.toContain("app-id");
   });
+
+  it("no confunde If() válido con una Bifurcación procedural", async () => {
+    const script = await Bun.file(
+      new URL(
+        "../../reportes/fixtures/compiler-corpus/qlik/regression-bq-inventario-if-outer-join.qlik",
+        import.meta.url,
+      ),
+    ).text();
+    const resumen = resumir(script);
+
+    expect(resumen.estado).toBe("analizado");
+    expect(resumen.advertencias.join(" ")).not.toContain("Bifurcación");
+    expect(resumen.advertencias.join(" ")).not.toContain("SYNTAX_INVALID_IF");
+  });
+
+  it("mantiene diagnóstico accionable para un IF procedural malformado", () => {
+    const resumen = resumir(`${encabezado}
+      [base]: LOAD id; SELECT id FROM \`p.d.t\`;
+      IF id = 1;
+    `);
+
+    expect(resumen.estado).toBe("script_no_compatible");
+    expect(resumen.advertencias.join(" ")).toContain("Bifurcación");
+  });
 });
