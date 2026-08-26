@@ -45,6 +45,13 @@ describe("relacional vNext", () => {
     },
   );
 
+  it("normaliza OUTER JOIN de Qlik a FULL JOIN BigQuery", async () => {
+    const result = await compile("qlik-outer-join.qlik");
+    expect(result.sql).toContain("FULL JOIN");
+    expect(result.sql).toContain("l.`id` = r.`id`");
+    expect(result.sql).not.toContain("OUTER JOIN");
+  });
+
   it("compila Concatenate como UNION ALL sin deduplicar", async () => {
     const result = await compile("qlik-concatenate.qlik");
     expect(result.sql).toContain("UNION ALL");

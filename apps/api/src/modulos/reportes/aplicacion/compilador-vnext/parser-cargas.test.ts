@@ -15,6 +15,7 @@ describe("prefijos LOAD vNext", () => {
     ["qlik-left-join.qlik", { type: "join", join: "left", target: "A" }],
     ["qlik-right-join.qlik", { type: "join", join: "right", target: "A" }],
     ["qlik-full-join.qlik", { type: "join", join: "full", target: "A" }],
+    ["qlik-outer-join.qlik", { type: "join", join: "full", target: "A" }],
     ["qlik-concatenate.qlik", { type: "concatenate", target: "A" }],
     ["qlik-inner-keep.qlik", { type: "keep", keep: "inner", target: "A" }],
     ["qlik-left-keep.qlik", { type: "keep", keep: "left", target: "A" }],
@@ -27,6 +28,17 @@ describe("prefijos LOAD vNext", () => {
     expect(load?.type).toBe("load");
     if (load?.type !== "load") throw new Error("load esperado");
     expect(load.prefix).toMatchObject(expected);
+  });
+
+  it("no acepta OUTER KEEP como KEEP válido", () => {
+    const program = parsearProgramaQlik(`
+      [A]: LOAD id; SELECT id FROM \`p.d.a\`;
+      OUTER KEEP([A]) LOAD id; SELECT id FROM \`p.d.b\`;
+    `);
+    const statement = program.statements.find(
+      (item) => item.type === "unsupported" && item.keyword === "OUTER",
+    );
+    expect(statement).toBeDefined();
   });
 
   it("reconoce NoConcatenate después del label", async () => {

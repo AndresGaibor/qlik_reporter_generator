@@ -215,16 +215,16 @@ export function extraerPrefijoLoad(
     };
 
   const joinKeep = text.match(
-    /^(?:(INNER|LEFT|RIGHT|FULL)\s+)?(JOIN|KEEP)\s*(?:\(\s*\[?([^\]\)]+)\]?\s*\))?\s*/i,
+    /^(?:(INNER|LEFT|RIGHT|FULL|OUTER)\s+)?(JOIN|KEEP)\s*(?:\(\s*\[?([^\]\)]+)\]?\s*\))?\s*/i,
   );
   if (joinKeep) {
     const operation = joinKeep[2]?.toLowerCase();
-    const side = (joinKeep[1]?.toLowerCase() ??
-      (operation === "join" ? "full" : "inner")) as
-      | "inner"
-      | "left"
-      | "right"
-      | "full";
+    const rawSide = joinKeep[1]?.toLowerCase();
+    const side = (
+      rawSide === "outer"
+        ? "full"
+        : rawSide ?? (operation === "join" ? "full" : "inner")
+    ) as "inner" | "left" | "right" | "full";
     const target = joinKeep[3]?.trim();
     if (operation === "keep" && side === "full") return undefined;
     return {
