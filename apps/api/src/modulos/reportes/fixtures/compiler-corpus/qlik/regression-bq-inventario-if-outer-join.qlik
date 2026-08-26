@@ -1,0 +1,44 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Calcular campos 1]:
+NOCONCATENATE
+LOAD
+  [ID_LOCAL],
+  [NOM_TIPO_UOP],
+  If(
+    ([NOM_TIPO_UOP] <> 'SUBLUGAR DE TRABAJO'
+     and [NOM_TIPO_UOP] <> 'DEPARTAMENTO'
+     and [NOM_TIPO_UOP] <> 'INDUSTRIAS')
+    or [ID_LOCAL] = 0,
+    1,
+    0
+  ) AS [FILTRO_UOP];
+SELECT ID_LOCAL, NOM_TIPO_UOP FROM `p.d.uop`;
+
+[Seleccionar campos 2]:
+NOCONCATENATE
+LOAD [ID_LOCAL] AS [ID_UOP], [NOM_TIPO_UOP]
+RESIDENT [Calcular campos 1]
+WHERE [FILTRO_UOP] = 1;
+
+[Unir 5]:
+NOCONCATENATE
+LOAD [ID_UOP], [NOM_TIPO_UOP] AS [LEFT_TIPO]
+RESIDENT [Seleccionar campos 2]
+WHERE [ID_UOP] = 100;
+
+OUTER JOIN([Unir 5])
+LOAD [ID_UOP], [NOM_TIPO_UOP] AS [RIGHT_TIPO]
+RESIDENT [Seleccionar campos 2];
+
+[Salida]:
+NOCONCATENATE
+LOAD
+  [ID_UOP],
+  [LEFT_TIPO],
+  [RIGHT_TIPO],
+  If(
+    Not IsNull([LEFT_TIPO]),
+    'TIENE VENTAS ULTIMOS 5 DÍAS',
+    'SIN VENTAS'
+  ) AS [TIENE_VENTAS]
+RESIDENT [Unir 5];
