@@ -1,10 +1,20 @@
+import type { DetalleEjecucionReporte } from "@qlik/contratos";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test } from "vitest";
 import { HistorialAuditoriaReporte } from "./historial-auditoria-reporte";
 
-const ejecucion = {
+const ejecucionBase: DetalleEjecucionReporte = {
   id: "e-1",
+  organizacionId: "org-1",
+  tenantQlikId: "tenant-1",
+  flujoIdQlik: "flujo-1",
+  flujoNombreSnapshot: "Test Flow",
+  flujoEspacioIdQlik: null,
+  automatizacionIdQlik: "auto-1",
+  runIdQlik: "run-1",
+  ejecutadoPorUsuarioId: null,
+  automatizacionPersonalId: null,
   hashDataflowSha256: "a".repeat(64),
   scriptDataflow: "LOAD [id];",
   sqlBigQueryCompilado: "SELECT id FROM tabla",
@@ -12,11 +22,12 @@ const ejecucion = {
   uriBaseGcs: "gs://bkt/reporte/e-1/",
   estado: "completada",
   versionCompilador: 2,
-  runIdQlik: "run-1",
+  etapaError: null,
+  mensajeError: null,
   iniciadoEn: "2026-08-18T12:00:00Z",
   finalizadoEn: "2026-08-18T12:01:30Z",
   creadoEn: "2026-08-18T12:00:00Z",
-} as never;
+};
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -35,7 +46,7 @@ function montar(mostrarDetallesTecnicos: boolean) {
   act(() => {
     root?.render(
       <HistorialAuditoriaReporte
-        ejecuciones={[ejecucion]}
+        ejecuciones={[ejecucionBase]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
       />,
     );
@@ -61,4 +72,67 @@ test("muestra los scripts técnicos sobre fondo claro al administrador", () => {
   const bloque = vista.querySelector("pre");
   expect(bloque?.className).toContain("bg-surface");
   expect(bloque?.className).not.toContain("bg-slate-950");
+});
+
+test("muestra métricas BigQuery y controles de copia en auditoría técnica", () => {
+  const ejecucionConBigQuery: DetalleEjecucionReporte = {
+    ...ejecucionBase,
+    jobIdBigQuery: "job-xyz-789",
+    bigQueryProjectId: "my-project",
+    bigQueryLocation: "us-central1",
+    metricas: {
+      duracionTotalMs: 90000,
+      duracionBigQueryMs: 45000,
+      totalBytesProcessed: "4096",
+      totalBytesBilled: "2048",
+      totalSlotMs: "1024",
+    },
+  };
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(
+      <HistorialAuditoriaReporte
+        ejecuciones={[ejecucionConBigQuery]}
+        mostrarDetallesTecnicos={true}
+      />,
+    );
+  });
+  const texto = container.textContent ?? "";
+  expect(texto).toContain("45 s");
+  expect(texto).toContain("4 KB");
+  expect(texto).toContain("job-xyz-789");
+  expect(texto).toContain("my-project");
+  expect(texto).toContain("us-central1");
+  expect(texto).toContain("Copiar");
+  act(() => root.unmount());
+  container.remove();
+});
+
+test("oculta métricas BigQuery cuando no hay metadata", () => {
+  const ejecucionSinBigQuery: DetalleEjecucionReporte = {
+    ...ejecucionBase,
+    jobIdBigQuery: undefined,
+    bigQueryProjectId: undefined,
+    bigQueryLocation: undefined,
+    metricas: undefined,
+  };
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  act(() => {
+    root.render(
+      <HistorialAuditoriaReporte
+        ejecuciones={[ejecucionSinBigQuery]}
+        mostrarDetallesTecnicos={true}
+      />,
+    );
+  });
+  const texto = container.textContent ?? "";
+  expect(texto).not.toContain("job-xyz");
+  expect(texto).not.toContain("Copiar job");
+  expect(texto).not.toContain("Copiar run");
+  act(() => root.unmount());
+  container.remove();
 });

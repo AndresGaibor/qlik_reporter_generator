@@ -162,6 +162,7 @@
       "agents": "apps/api/src/modulos/descargas/AGENTS.md",
       "tests": [
         "apps/api/src/modulos/descargas/aplicacion/servicio-descargas.test.ts",
+        "apps/api/src/modulos/descargas/http/rutas-descargas-bigquery.test.ts",
         "apps/api/src/modulos/descargas/http/rutas-descargas.test.ts",
         "apps/api/src/modulos/descargas/http/rutas-explorador-gcs.test.ts",
         "apps/api/src/modulos/descargas/infraestructura/cliente-gcs.test.ts"
@@ -169,12 +170,15 @@
       "internalImports": [
         "../../../../nucleo/errores/error-aplicacion.js",
         "../../../../nucleo/http/respuestas.js",
+        "../../../google-cloud/aplicacion/puerto-jobs-bigquery.js",
         "../../../nucleo/errores/error-aplicacion.js",
         "../../../qlik/aplicacion/puertos/puerto-qlik.js",
         "../../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js",
         "../../../reportes/aplicacion/sincronizar-ejecuciones-reporte.js",
+        "../../../reportes/aplicacion/sincronizar-jobs-bigquery-ejecucion.js",
         "../../aplicacion/puerto-almacenamiento-descargas.js",
         "../../aplicacion/servicio-descargas.js",
+        "../../google-cloud/aplicacion/puerto-jobs-bigquery.js",
         "../../qlik/aplicacion/puertos/puerto-qlik.js",
         "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js",
         "../../reportes/dominio/destino-gcs.js",
@@ -229,6 +233,7 @@
       "kind": "backend-module",
       "agents": "apps/api/src/modulos/google-cloud/AGENTS.md",
       "tests": [
+        "apps/api/src/modulos/google-cloud/infraestructura/cliente-jobs-bigquery.test.ts",
         "apps/api/src/modulos/google-cloud/infraestructura/estimador-bigquery.test.ts",
         "apps/api/src/modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.test.ts"
       ],
@@ -237,6 +242,7 @@
         "../../../plataforma/persistencia/conexion.js",
         "../../../plataforma/persistencia/esquema.js",
         "../../../plataforma/seguridad/servicio-cifrado.js",
+        "../aplicacion/puerto-jobs-bigquery.js",
         "../dominio/metadata-bigquery.js",
         "./estimador-bigquery.js",
         "./resolver-configuracion-google-cloud-postgres.js"
@@ -295,14 +301,14 @@
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/inter-record.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/mapping-applymap.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/mapping-mapsubstring.test.ts",
+        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/metadata-ir-campos.test.ts",
+        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/metadata-ir-validaciones.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/metadata-ir.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/metadata.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/modularidad-fuentes.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/parser-cargas.test.ts",
         "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/parser-programa.test.ts",
-        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/registro-funciones.test.ts",
-        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/relacional.test.ts",
-        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/reporte-cobertura.test.ts"
+        "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/registro-funciones.test.ts"
       ],
       "internalImports": [
         "../../../../google-cloud/dominio/metadata-bigquery.js",
@@ -324,6 +330,7 @@
         "../../flujos/aplicacion/puertos/puerto-consulta-flujos.js",
         "../../flujos/aplicacion/resumir-dataflow.js",
         "../../flujos/http/rutas-clonado-dataflow.js",
+        "../../google-cloud/aplicacion/puerto-jobs-bigquery.js",
         "../../google-cloud/dominio/metadata-bigquery.js",
         "../../qlik/aplicacion/puertos/puerto-qlik.js",
         "../../qlik/dominio/modelos-qlik.js",
@@ -334,6 +341,7 @@
         "../aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js",
         "../aplicacion/puertos/puerto-repositorio-reportes.js",
         "../aplicacion/sincronizar-ejecuciones-reporte.js",
+        "../aplicacion/sincronizar-jobs-bigquery-ejecucion.js",
         "../ast.js",
         "../compilador-bigquery.js",
         "../control-flujo.js",
@@ -382,9 +390,7 @@
         "./core-valores.js",
         "./dispatcher.js",
         "./distribuciones.js",
-        "./dual.js",
-        "./ejecutar-reporte.js",
-        "./emisor-bigquery.js"
+        "./dual.js"
       ]
     },
     {
@@ -794,8 +800,12 @@
       "path": "packages/contratos/src/descargas",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/descargas/AGENTS.md",
-      "tests": [],
-      "internalImports": []
+      "tests": [
+        "packages/contratos/src/descargas/index.test.ts"
+      ],
+      "internalImports": [
+        "./index.js"
+      ]
     },
     {
       "path": "packages/contratos/src/flujos",

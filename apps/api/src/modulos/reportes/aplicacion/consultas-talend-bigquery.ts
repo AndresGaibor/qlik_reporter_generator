@@ -14,6 +14,12 @@ export interface ConsultasTalendBigQuery {
   sql: string;
   bqNumberCsv: string;
   bqExportData: string;
+  jobId?: string;
+  projectId?: string;
+}
+
+export function derivarJobId(ejecucionId: string): string {
+  return `qlikr_${ejecucionId.replace(/-/g, "").slice(0, 24)}`;
 }
 
 export function construirConsultasTalendBigQuery({
@@ -82,7 +88,13 @@ IF __END_ROW__ >= (
   SELECT 'ok' AS estado;
 END IF;`;
 
-  return { sql: sqlExportacion, bqNumberCsv, bqExportData };
+  return {
+    sql: sqlExportacion,
+    bqNumberCsv,
+    bqExportData,
+    jobId: derivarJobId(ejecucionId),
+    projectId,
+  };
 }
 
 export function serializarConsultasTalend(

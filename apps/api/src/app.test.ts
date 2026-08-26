@@ -136,8 +136,8 @@ describe("API", () => {
                     {
                       mode: "keyValue",
                       value: [
-                        { key: "jobid", value: "{ $.jobid }" },
-                        { key: "projectid", value: "{ $.projectid }" },
+                        { key: "job_id", value: "{ $.jobid }" },
+                        { key: "id_projecto", value: "{ $.projectid }" },
                         { key: "credenciales", value: "{ $.Credenciales }" },
                         { key: "sql", value: "{ $.sql }" },
                       ],
@@ -404,8 +404,8 @@ describe("API", () => {
             {
               mode: "keyValue",
               value: [
-                { key: "jobid", value: "{ $.jobid }" },
-                { key: "projectid", value: "{ $.projectid }" },
+                { key: "job_id", value: "{ $.jobid }" },
+                { key: "id_projecto", value: "{ $.projectid }" },
                 { key: "credenciales", value: "{ $.Credenciales }" },
                 { key: "sql", value: "{ $.sql }" },
               ],

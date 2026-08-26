@@ -3,11 +3,15 @@ import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
 const VARIABLES_TALEND_LEGACY = {
   bq_number_csv: { bloque: "BqNumberCsv", campo: "bqNumberCsv" },
   bq_export_data: { bloque: "BqExportData", campo: "bqExportData" },
+  jobid: { bloque: "JobId", campo: "jobId" },
+  projectid: { bloque: "ProjectId", campo: "projectId" },
 } as const;
 
 const CONTEXTOS_TALEND_ACTUALES = {
   credenciales: { bloque: "Credenciales" },
   sql: { bloque: "sql" },
+  job_id: { bloque: "jobid" },
+  id_projecto: { bloque: "projectid" },
 } as const;
 
 export function inyectarContextoTalend(
@@ -20,18 +24,30 @@ export function inyectarContextoTalend(
 
   if (usaContratoSql(blocks)) {
     inyectarVariable(blocks, "sql", consultas.sql, "sql");
+    if (consultas.jobId !== undefined) {
+      inyectarVariable(blocks, "jobid", consultas.jobId, "job_id");
+    }
+    if (consultas.projectId !== undefined) {
+      inyectarVariable(
+        blocks,
+        "projectid",
+        consultas.projectId,
+        "id_projecto",
+      );
+    }
     return copia;
   }
 
   for (const [claveTalend, definicion] of Object.entries(
     VARIABLES_TALEND_LEGACY,
   )) {
-    inyectarVariable(
-      blocks,
-      definicion.bloque,
-      consultas[definicion.campo],
-      claveTalend,
-    );
+    if (!encontrarBloque(blocks, definicion.bloque)) {
+      continue;
+    }
+    const valor = consultas[definicion.campo as keyof ConsultasTalendBigQuery];
+    if (valor !== undefined) {
+      inyectarVariable(blocks, definicion.bloque, valor, claveTalend);
+    }
   }
 
   return copia;
@@ -100,6 +116,7 @@ export function diagnosticarContratoTalend(
       problemas.push(`Falta set_value en el bloque "${definicion.bloque}"`);
     }
   }
+
   return problemas;
 }
 

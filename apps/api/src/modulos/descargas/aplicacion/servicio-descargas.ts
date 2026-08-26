@@ -5,7 +5,10 @@ import type {
   ResumenDescargaEjecucion,
 } from "@qlik/contratos/descargas";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
-import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
+import type {
+  JobBigQueryPersistido,
+  PuertoRepositorioReportes,
+} from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { parsearUriGcsPermitida } from "./puerto-almacenamiento-descargas.js";
 import type { PuertoAlmacenamientoDescargas } from "./puerto-almacenamiento-descargas.js";
 
@@ -41,10 +44,7 @@ export class ServicioDescargas implements IServicioDescargas {
         "listar",
       );
       if (finalizada) {
-        await this.repositorio.marcarEjecucionCompletada(
-          ejecucion.id,
-          new Date(),
-        );
+        await this.repositorio.marcarGcsFinalizada(ejecucion.id, new Date());
         estado = "completada";
       }
     }
@@ -133,18 +133,26 @@ export class ServicioDescargas implements IServicioDescargas {
             ))
           )
             return;
-          const finalizadoEn = new Date();
-          await this.repositorio.marcarEjecucionCompletada(
+          const gcsFinalizadoEn = new Date();
+          await this.repositorio.marcarGcsFinalizada(
             ejecucion.id,
-            finalizadoEn,
+            gcsFinalizadoEn,
           );
           ejecucion.estado = "completada";
-          ejecucion.finalizadoEn = finalizadoEn;
+          ejecucion.finalizadoEn = gcsFinalizadoEn;
         } catch {
           // Una ejecución histórica inválida no debe ocultar el resto de descargas.
         }
       }),
     );
+
+    const idsConJob = ejecuciones
+      .filter((e) => Boolean(e.jobIdBigQuery))
+      .map((e) => e.id);
+    const jobsPorEjecucion =
+      idsConJob.length > 0
+        ? await this.repositorio.listarJobsBigQueryPorEjecucionIds(idsConJob)
+        : new Map<string, JobBigQueryPersistido[]>();
 
     return Promise.all(
       ejecuciones.map(async (e) => {
@@ -154,6 +162,7 @@ export class ServicioDescargas implements IServicioDescargas {
           tamano: number;
           fecha: string | null;
         }> = [];
+        let archivosExistentes = false;
         if (e.estado === "completada") {
           const { prefijo } = parsearUriGcsPermitida(e.uriBaseGcs);
           if (prefijo.endsWith(`${e.id}/`)) {
@@ -175,8 +184,28 @@ export class ServicioDescargas implements IServicioDescargas {
               tamano: obj.tamanoBytes,
               fecha: obj.fecha ?? null,
             }));
+            archivosExistentes = objetos.length > 0;
           }
         }
+
+        const jobs = jobsPorEjecucion.get(e.id) ?? [];
+        const jobPrincipal = jobs.find((j) => j.jobId === e.jobIdBigQuery);
+
+        const duracionTotalMs =
+          e.finalizadoEn && e.creadoEn
+            ? e.finalizadoEn.getTime() - e.creadoEn.getTime()
+            : null;
+
+        let duracionBigQueryMs: number | null = null;
+        if (jobPrincipal?.endTime && jobPrincipal?.startTime) {
+          duracionBigQueryMs =
+            new Date(jobPrincipal.endTime).getTime() -
+            new Date(jobPrincipal.startTime).getTime();
+        } else if (e.bigqueryFinalizadoEn && e.bigqueryIniciadoEn) {
+          duracionBigQueryMs =
+            e.bigqueryFinalizadoEn.getTime() - e.bigqueryIniciadoEn.getTime();
+        }
+
         return {
           id: e.id,
           flujoIdQlik: e.flujoIdQlik,
@@ -189,6 +218,15 @@ export class ServicioDescargas implements IServicioDescargas {
           creadoEn: e.creadoEn.toISOString(),
           finalizadoEn: e.finalizadoEn?.toISOString() ?? null,
           archivos,
+          ejecucionId: e.id,
+          jobIdBigQuery: e.jobIdBigQuery ?? null,
+          runIdQlik: e.runIdQlik ?? null,
+          duracionTotalMs,
+          duracionBigQueryMs,
+          totalBytesProcessed: jobPrincipal?.totalBytesProcessed ?? null,
+          totalBytesBilled: jobPrincipal?.totalBytesBilled ?? null,
+          totalSlotMs: jobPrincipal?.totalSlotMs ?? null,
+          archivosExistentes,
         };
       }),
     );

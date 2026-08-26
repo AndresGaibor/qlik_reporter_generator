@@ -62,14 +62,19 @@ function workspaceValido() {
               { key: "credenciales", value: "{ $.Credenciales }" },
               { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
               { key: "bq_export_data", value: "{ $.BqExportData }" },
+              { key: "jobid", value: "{ $.JobId }" },
+              { key: "projectid", value: "{ $.ProjectId }" },
             ],
           },
         ],
       },
-      ...["Credenciales", "BqNumberCsv", "BqExportData"].map((name) => ({
-        name,
-        operations: [{ id: "set_value", value: "" }],
-      })),
+      ...[
+        "Credenciales",
+        "BqNumberCsv",
+        "BqExportData",
+        "JobId",
+        "ProjectId",
+      ].map((name) => ({ name, operations: [{ id: "set_value", value: "" }] })),
     ],
   };
 }

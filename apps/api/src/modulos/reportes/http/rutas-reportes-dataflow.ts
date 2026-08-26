@@ -13,6 +13,7 @@ import {
   type DependenciasClonadoDataflow,
   crearRutasClonadoDataflow,
 } from "../../flujos/http/rutas-clonado-dataflow.js";
+import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import {
   type EntradaEjecutarReporte,
@@ -23,8 +24,12 @@ import {
   type EstimadorBigQueryReporte,
   PreflightDataflow,
 } from "../aplicacion/preflight-dataflow.js";
-import type { PuertoRepositorioReportes } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
+import type {
+  JobBigQueryPersistido,
+  PuertoRepositorioReportes,
+} from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
+import { SincronizarJobsBigQueryEjecucion } from "../aplicacion/sincronizar-jobs-bigquery-ejecucion.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
   estimador: EstimadorBigQueryReporte;
@@ -46,6 +51,7 @@ export interface DependenciasRutasReportesDataflow {
   resolverAlmacenamiento?: (
     c: Context,
   ) => Promise<PuertoAlmacenamientoDescargas>;
+  resolverJobsBigQuery?: (c: Context) => Promise<PuertoJobsBigQuery>;
   resolverEjecutarReporte?: (c: Context) => Promise<
     (entrada: EntradaEjecutarReporte) => Promise<{
       runId: string;
@@ -197,6 +203,30 @@ export function crearRutasReportesDataflow(
         100,
       );
 
+      if (dependencias.resolverJobsBigQuery) {
+        try {
+          const jobsBigQuery = await dependencias.resolverJobsBigQuery(c);
+          const sincronizadorBq = new SincronizarJobsBigQueryEjecucion(
+            dependencias.repositorioReportes,
+            jobsBigQuery,
+          );
+          await Promise.all(
+            ejecuciones
+              .filter(
+                (e) =>
+                  esEjecucionActiva(e) &&
+                  Boolean(e.jobIdPrincipalBigQuery) &&
+                  Boolean(e.bigqueryProjectId),
+              )
+              .map((e) =>
+                sincronizadorBq.sincronizar(e.id).catch(() => undefined),
+              ),
+          );
+        } catch {
+          // Un fallo transitorio de BigQuery no debe detener el polling.
+        }
+      }
+
       if (dependencias.resolverAlmacenamiento) {
         try {
           const almacenamiento = await dependencias.resolverAlmacenamiento(c);
@@ -205,7 +235,7 @@ export function crearRutasReportesDataflow(
               const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
               if (!prefijo.endsWith(`${ejecucion.id}/`)) return;
               if (!(await almacenamiento.estaFinalizada(prefijo))) return;
-              await dependencias.repositorioReportes.marcarEjecucionCompletada(
+              await dependencias.repositorioReportes.marcarGcsFinalizada(
                 ejecucion.id,
                 new Date(),
               );
@@ -223,7 +253,18 @@ export function crearRutasReportesDataflow(
         100,
       );
     }
-    return responderExito(c, ejecuciones.map(serializarEjecucion));
+
+    const jobsPorEjecucion = await cargarJobsPorEjecucion(
+      ejecuciones,
+      dependencias.repositorioReportes,
+    );
+
+    return responderExito(
+      c,
+      ejecuciones.map((e) =>
+        serializarEjecucion(e, jobsPorEjecucion.get(e.id) ?? []),
+      ),
+    );
   });
 
   rutas.post("/:flujoId/ejecuciones", async (c) => {
@@ -295,9 +336,27 @@ function serializarEjecucion(
   ejecucion: Awaited<
     ReturnType<PuertoRepositorioReportes["listarEjecuciones"]>
   >[number],
+  jobs: JobBigQueryPersistido[],
 ) {
+  const jobPrincipal = jobs.find(
+    (j) => j.jobId === ejecucion.jobIdPrincipalBigQuery,
+  );
+  const childJobs = jobs.filter((j) => j.parentJobId !== null);
+
+  const metricas = calcularMetricasEjecucion(
+    ejecucion,
+    jobPrincipal,
+    childJobs,
+  );
+  const jobsBigQuery = jobs.map(mapJobBigQuery);
+
   return {
     ...ejecucion,
+    jobIdBigQuery: ejecucion.jobIdPrincipalBigQuery ?? null,
+    bigQueryProjectId: ejecucion.bigqueryProjectId ?? null,
+    bigQueryLocation: ejecucion.bigqueryLocation ?? null,
+    metricas,
+    jobsBigQuery,
     ejecutadoPorUsuarioId: ejecucion.ejecutadoPorUsuarioId ?? null,
     automatizacionPersonalId: ejecucion.automatizacionPersonalId ?? null,
     runIdQlik: ejecucion.runIdQlik ?? null,
@@ -310,6 +369,139 @@ function serializarEjecucion(
       new Date(0)
     ).toISOString(),
   };
+}
+
+function calcularMetricasEjecucion(
+  ejecucion: {
+    creadoEn?: Date;
+    iniciadoEn?: Date | null;
+    finalizadoEn?: Date | null;
+    bigqueryIniciadoEn?: Date | null;
+    bigqueryFinalizadoEn?: Date | null;
+  },
+  jobPrincipal: JobBigQueryPersistido | undefined,
+  childJobs: JobBigQueryPersistido[],
+): {
+  duracionTotalMs: number | null;
+  duracionBigQueryMs: number | null;
+  totalBytesProcessed: string | null;
+  totalBytesBilled: string | null;
+  totalSlotMs: string | null;
+} {
+  let duracionTotalMs: number | null = null;
+  if (ejecucion.finalizadoEn && ejecucion.creadoEn) {
+    duracionTotalMs =
+      ejecucion.finalizadoEn.getTime() - ejecucion.creadoEn.getTime();
+  }
+
+  let duracionBigQueryMs: number | null = null;
+  if (jobPrincipal?.endTime && jobPrincipal?.startTime) {
+    const end = new Date(jobPrincipal.endTime).getTime();
+    const start = new Date(jobPrincipal.startTime).getTime();
+    duracionBigQueryMs = end - start;
+  } else if (ejecucion.bigqueryFinalizadoEn && ejecucion.bigqueryIniciadoEn) {
+    duracionBigQueryMs =
+      ejecucion.bigqueryFinalizadoEn.getTime() -
+      ejecucion.bigqueryIniciadoEn.getTime();
+  }
+
+  if (jobPrincipal) {
+    return {
+      duracionTotalMs,
+      duracionBigQueryMs,
+      totalBytesProcessed: jobPrincipal.totalBytesProcessed,
+      totalBytesBilled: jobPrincipal.totalBytesBilled,
+      totalSlotMs: jobPrincipal.totalSlotMs,
+    };
+  }
+
+  if (childJobs.length === 0) {
+    return {
+      duracionTotalMs,
+      duracionBigQueryMs,
+      totalBytesProcessed: null,
+      totalBytesBilled: null,
+      totalSlotMs: null,
+    };
+  }
+
+  const sumBytes = (
+    key: "totalBytesProcessed" | "totalBytesBilled" | "totalSlotMs",
+  ) => {
+    const vals = childJobs
+      .map((j) => j[key])
+      .filter((v): v is string => v !== null && v !== undefined);
+    if (vals.length === 0) return null;
+    return vals.reduce(
+      (acc, v) => {
+        const n = BigInt(v);
+        return (BigInt(acc ?? "0") + n).toString();
+      },
+      null as string | null,
+    );
+  };
+
+  return {
+    duracionTotalMs,
+    duracionBigQueryMs,
+    totalBytesProcessed: sumBytes("totalBytesProcessed"),
+    totalBytesBilled: sumBytes("totalBytesBilled"),
+    totalSlotMs: sumBytes("totalSlotMs"),
+  };
+}
+
+function mapJobBigQuery(job: JobBigQueryPersistido): {
+  jobId: string;
+  parentJobId: string | null;
+  tipo: string;
+  estado: string;
+  startTime: string | null;
+  endTime: string | null;
+  duracionMs: number | null;
+  totalBytesProcessed: string | null;
+  totalBytesBilled: string | null;
+  totalSlotMs: string | null;
+} {
+  return {
+    jobId: job.jobId,
+    parentJobId: job.parentJobId,
+    tipo: job.tipo,
+    estado: job.estado,
+    startTime: job.startTime,
+    endTime: job.endTime,
+    duracionMs: job.duracionMs,
+    totalBytesProcessed: job.totalBytesProcessed,
+    totalBytesBilled: job.totalBytesBilled,
+    totalSlotMs: job.totalSlotMs,
+  };
+}
+
+async function cargarJobsPorEjecucion(
+  ejecuciones: Array<{ id: string; jobIdPrincipalBigQuery?: string | null }>,
+  repositorio: PuertoRepositorioReportes,
+): Promise<Map<string, JobBigQueryPersistido[]>> {
+  const idsConJob = ejecuciones
+    .filter((e) => Boolean(e.jobIdPrincipalBigQuery))
+    .map((e) => e.id);
+
+  if (idsConJob.length === 0) {
+    return new Map();
+  }
+
+  if (typeof repositorio.listarJobsBigQueryPorEjecucionIds === "function") {
+    return repositorio.listarJobsBigQueryPorEjecucionIds(idsConJob);
+  }
+
+  const map = new Map<string, JobBigQueryPersistido[]>();
+  await Promise.all(
+    idsConJob.map(async (id) => {
+      if (typeof repositorio.listarJobsBigQueryPorEjecucion === "function") {
+        const jobs = await repositorio.listarJobsBigQueryPorEjecucion(id);
+        map.set(id, jobs);
+      }
+    }),
+  );
+  return map;
 }
 function respuestaErrorAplicacion(c: Context, error: unknown) {
   if (!(error instanceof ErrorAplicacion)) throw error;

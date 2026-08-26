@@ -1,12 +1,14 @@
-import { and, desc, eq, max } from "drizzle-orm";
+import { and, desc, eq, inArray, max } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
   ejecucionesReportes,
+  jobsBigQueryEjecucion,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
   CrearEjecucionReportePersistida,
   EjecucionReportePersistida,
+  JobBigQueryPersistido,
   PuertoRepositorioReportes,
   ResumenEjecucionDescarga,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
@@ -158,6 +160,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         uriBaseGcs: ejecucionesReportes.uriBaseGcs,
         creadoEn: ejecucionesReportes.creadoEn,
         finalizadoEn: ejecucionesReportes.finalizadoEn,
+        runIdQlik: ejecucionesReportes.runIdQlik,
+        jobIdBigQuery: ejecucionesReportes.jobIdPrincipalBigQuery,
+        bigqueryProjectId: ejecucionesReportes.bigqueryProjectId,
+        bigqueryLocation: ejecucionesReportes.bigqueryLocation,
+        bigqueryIniciadoEn: ejecucionesReportes.bigqueryIniciadoEn,
+        bigqueryFinalizadoEn: ejecucionesReportes.bigqueryFinalizadoEn,
       })
       .from(ejecucionesReportes)
       .leftJoin(
@@ -204,6 +212,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         uriBaseGcs: ejecucionesReportes.uriBaseGcs,
         creadoEn: ejecucionesReportes.creadoEn,
         finalizadoEn: ejecucionesReportes.finalizadoEn,
+        runIdQlik: ejecucionesReportes.runIdQlik,
+        jobIdBigQuery: ejecucionesReportes.jobIdPrincipalBigQuery,
+        bigqueryProjectId: ejecucionesReportes.bigqueryProjectId,
+        bigqueryLocation: ejecucionesReportes.bigqueryLocation,
+        bigqueryIniciadoEn: ejecucionesReportes.bigqueryIniciadoEn,
+        bigqueryFinalizadoEn: ejecucionesReportes.bigqueryFinalizadoEn,
       })
       .from(ejecucionesReportes)
       .leftJoin(
@@ -223,6 +237,142 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .limit(1);
     return fila ?? null;
   }
+
+  async obtenerEjecucionPorJobId(
+    jobId: string,
+  ): Promise<EjecucionReportePersistida | null> {
+    const [fila] = await this.db
+      .select()
+      .from(ejecucionesReportes)
+      .where(eq(ejecucionesReportes.jobIdPrincipalBigQuery, jobId))
+      .limit(1);
+    return fila ? mapearEjecucion(fila) : null;
+  }
+
+  async obtenerEjecucionPorId(
+    id: string,
+  ): Promise<EjecucionReportePersistida | null> {
+    const [fila] = await this.db
+      .select()
+      .from(ejecucionesReportes)
+      .where(eq(ejecucionesReportes.id, id))
+      .limit(1);
+    return fila ? mapearEjecucion(fila) : null;
+  }
+
+  async guardarJobBigQueryEjecucion(job: JobBigQueryPersistido): Promise<void> {
+    const locationNormalizada = job.location ?? "US";
+    await this.db
+      .insert(jobsBigQueryEjecucion)
+      .values({
+        ...(job.id ? { id: job.id } : {}),
+        ejecucionReporteId: job.ejecucionReporteId,
+        jobId: job.jobId,
+        parentJobId: job.parentJobId,
+        projectId: job.projectId,
+        location: locationNormalizada,
+        tipo: job.tipo,
+        estado: job.estado,
+        creationTime: job.creationTime ? new Date(job.creationTime) : null,
+        startTime: job.startTime ? new Date(job.startTime) : null,
+        endTime: job.endTime ? new Date(job.endTime) : null,
+        duracionMs: job.duracionMs,
+        totalBytesProcessed: job.totalBytesProcessed,
+        totalBytesBilled: job.totalBytesBilled,
+        totalSlotMs: job.totalSlotMs,
+        cacheHit: job.cacheHit,
+        statementType: job.statementType,
+        errorReason: job.errorReason,
+        errorMessage: job.errorMessage,
+        metadataJson: job.metadataJson,
+      })
+      .onConflictDoUpdate({
+        target: [
+          jobsBigQueryEjecucion.projectId,
+          jobsBigQueryEjecucion.location,
+          jobsBigQueryEjecucion.jobId,
+        ],
+        set: {
+          parentJobId: job.parentJobId,
+          tipo: job.tipo,
+          estado: job.estado,
+          creationTime: job.creationTime ? new Date(job.creationTime) : null,
+          startTime: job.startTime ? new Date(job.startTime) : null,
+          endTime: job.endTime ? new Date(job.endTime) : null,
+          duracionMs: job.duracionMs,
+          totalBytesProcessed: job.totalBytesProcessed,
+          totalBytesBilled: job.totalBytesBilled,
+          totalSlotMs: job.totalSlotMs,
+          cacheHit: job.cacheHit,
+          statementType: job.statementType,
+          errorReason: job.errorReason,
+          errorMessage: job.errorMessage,
+          metadataJson: job.metadataJson,
+          actualizadoEn: new Date(),
+        },
+      });
+  }
+
+  async listarJobsBigQueryPorEjecucion(
+    ejecucionId: string,
+  ): Promise<JobBigQueryPersistido[]> {
+    const filas = await this.db
+      .select()
+      .from(jobsBigQueryEjecucion)
+      .where(eq(jobsBigQueryEjecucion.ejecucionReporteId, ejecucionId))
+      .orderBy(jobsBigQueryEjecucion.creationTime);
+    return filas.map(mapearJobBigQuery);
+  }
+
+  async listarJobsBigQueryPorEjecucionIds(
+    ejecucionIds: string[],
+  ): Promise<Map<string, JobBigQueryPersistido[]>> {
+    if (ejecucionIds.length === 0) {
+      return new Map();
+    }
+    const filas = await this.db
+      .select()
+      .from(jobsBigQueryEjecucion)
+      .where(inArray(jobsBigQueryEjecucion.ejecucionReporteId, ejecucionIds))
+      .orderBy(jobsBigQueryEjecucion.creationTime);
+    const map = new Map<string, JobBigQueryPersistido[]>();
+    for (const fila of filas) {
+      const jobs = map.get(fila.ejecucionReporteId) ?? [];
+      jobs.push(mapearJobBigQuery(fila));
+      map.set(fila.ejecucionReporteId, jobs);
+    }
+    return map;
+  }
+
+  async actualizarTimestampsEjecucionBigQuery(
+    ejecucionId: string,
+    timestamps: {
+      bigqueryIniciadoEn?: Date | null;
+      bigqueryFinalizadoEn?: Date | null;
+    },
+  ): Promise<void> {
+    const set: Record<string, unknown> = { actualizadoEn: new Date() };
+    if (timestamps.bigqueryIniciadoEn !== undefined) {
+      set.bigqueryIniciadoEn = timestamps.bigqueryIniciadoEn;
+    }
+    if (timestamps.bigqueryFinalizadoEn !== undefined) {
+      set.bigqueryFinalizadoEn = timestamps.bigqueryFinalizadoEn;
+    }
+    await this.db
+      .update(ejecucionesReportes)
+      .set(set)
+      .where(eq(ejecucionesReportes.id, ejecucionId));
+  }
+
+  async marcarGcsFinalizada(id: string, gcsFinalizadoEn: Date): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        gcsFinalizadoEn,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, id));
+  }
 }
 
 function mapearEjecucion(
@@ -233,5 +383,32 @@ function mapearEjecucion(
     ejecutadoPorUsuarioId: fila.ejecutadoPorUsuarioId,
     automatizacionPersonalId: fila.automatizacionPersonalId,
     estado: fila.estado as EjecucionReportePersistida["estado"],
+  };
+}
+
+function mapearJobBigQuery(
+  fila: typeof jobsBigQueryEjecucion.$inferSelect,
+): JobBigQueryPersistido {
+  return {
+    id: fila.id,
+    ejecucionReporteId: fila.ejecucionReporteId,
+    jobId: fila.jobId,
+    parentJobId: fila.parentJobId,
+    projectId: fila.projectId,
+    location: fila.location ?? "US",
+    tipo: fila.tipo as JobBigQueryPersistido["tipo"],
+    estado: fila.estado as JobBigQueryPersistido["estado"],
+    creationTime: fila.creationTime?.toISOString() ?? null,
+    startTime: fila.startTime?.toISOString() ?? null,
+    endTime: fila.endTime?.toISOString() ?? null,
+    duracionMs: fila.duracionMs,
+    totalBytesProcessed: fila.totalBytesProcessed,
+    totalBytesBilled: fila.totalBytesBilled,
+    totalSlotMs: fila.totalSlotMs,
+    cacheHit: fila.cacheHit,
+    statementType: fila.statementType,
+    errorReason: fila.errorReason,
+    errorMessage: fila.errorMessage,
+    metadataJson: fila.metadataJson as Record<string, unknown> | null,
   };
 }

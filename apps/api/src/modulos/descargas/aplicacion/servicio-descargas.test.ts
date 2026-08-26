@@ -24,6 +24,7 @@ function crearRepoMock() {
         }>,
     ),
     marcarEjecucionCompletada: vi.fn(async () => undefined),
+    marcarGcsFinalizada: vi.fn(async () => undefined),
     obtenerEjecucionDescarga: vi.fn(
       async () =>
         null as {
@@ -124,7 +125,7 @@ describe("ServicioDescargas", () => {
     const manifiesto = await servicio.crearManifiesto("e-lista", CONTEXTO);
 
     expect(manifiesto.archivos).toHaveLength(1);
-    expect(repo.marcarEjecucionCompletada).toHaveBeenCalledWith(
+    expect(repo.marcarGcsFinalizada).toHaveBeenCalledWith(
       "e-lista",
       expect.any(Date),
     );
@@ -263,7 +264,7 @@ describe("ServicioDescargas", () => {
 
     expect(resultado[0]?.estado).toBe("completada");
     expect(resultado[0]?.finalizadoEn).not.toBeNull();
-    expect(repo.marcarEjecucionCompletada).toHaveBeenCalledWith(
+    expect(repo.marcarGcsFinalizada).toHaveBeenCalledWith(
       "e-lista",
       expect.any(Date),
     );
@@ -407,5 +408,89 @@ describe("ServicioDescargas", () => {
     await expect(
       servicio.crearManifiesto("e-activa-permisos", CONTEXTO),
     ).rejects.toMatchObject({ codigo: "GCS_SIN_PERMISOS" });
+  });
+
+  it("crearManifiesto persiste gcsFinalizadoEn al detectar marcador GCS sin sobrescribir estado error previo", async () => {
+    const repo = crearRepoMock();
+    repo.obtenerEjecucionDescarga.mockResolvedValue({
+      id: "e-error-previo",
+      flujoNombreSnapshot: "Ventas",
+      automatizacionIdQlik: "auto-1",
+      estado: "error",
+      mensajeError: "Falló Talend",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-error-previo/",
+      creadoEn: new Date(),
+      finalizadoEn: null,
+    });
+    const alm = crearAlmacenamientoMock();
+    alm.estaFinalizada.mockResolvedValue(true);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    await expect(
+      servicio.crearManifiesto("e-error-previo", CONTEXTO),
+    ).rejects.toMatchObject({ codigo: "EJECUCION_NO_COMPLETADA" });
+  });
+
+  it("listarEjecuciones persiste gcsFinalizadoEn una sola vez al detectar marcador GCS", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-gcs-listo",
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "iniciada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-gcs-listo/",
+        creadoEn: new Date("2026-08-20T19:00:00Z"),
+        finalizadoEn: null,
+      },
+    ]);
+    const alm = crearAlmacenamientoMock();
+    alm.estaFinalizada.mockResolvedValue(true);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    await servicio.listarEjecuciones(CONTEXTO, 10);
+
+    expect(repo.marcarGcsFinalizada).toHaveBeenCalledWith(
+      "e-gcs-listo",
+      expect.any(Date),
+    );
+  });
+
+  it("listarEjecuciones no llama marcarGcsFinalizada si gcsFinalizadoEn ya esta persistido", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-ya-finalizado",
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs:
+          "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-ya-finalizado/",
+        creadoEn: new Date("2026-08-20T19:00:00Z"),
+        finalizadoEn: new Date("2026-08-20T19:05:00Z"),
+      },
+    ]);
+    const alm = crearAlmacenamientoMock();
+    alm.estaFinalizada.mockResolvedValue(true);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+    );
+
+    const resultado = await servicio.listarEjecuciones(CONTEXTO, 10);
+
+    expect(resultado[0]?.estado).toBe("completada");
+    expect(repo.marcarGcsFinalizada).not.toHaveBeenCalled();
   });
 });

@@ -11,6 +11,7 @@ import {
   credencialesQlik,
   ejecucionesReportes,
   identidadesQlik,
+  jobsBigQueryEjecucion,
   membresiasOrganizacion,
   organizaciones,
   sesionesUsuario,
@@ -213,7 +214,7 @@ describe("Esquema Drizzle", () => {
     const migraciones = readMigrationFiles({
       migrationsFolder: fileURLToPath(new URL("../drizzle/", import.meta.url)),
     });
-    expect(migraciones).toHaveLength(7);
+    expect(migraciones).toHaveLength(8);
     const journal = JSON.parse(
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
@@ -227,30 +228,46 @@ describe("Esquema Drizzle", () => {
       "0004_nice_speed_demon",
       "0005_separar_reportes_workers",
       "0006_persistir_ejecuciones_dataflow",
+      "0007_trazabilidad_bigquery_jobs",
     ]);
   });
 
-  it("ejecucionesReportes conserva la auditoría técnica de cada run", () => {
+  it("ejecucionesReportes conserva la auditoría técnica de cada run y columnas de trazabilidad BigQuery", () => {
     const cols = colNames(getTableConfig(ejecucionesReportes));
-    expect(cols).toEqual(
-      expect.arrayContaining([
-        "organizacion_id",
-        "tenant_qlik_id",
-        "flujo_id_qlik",
-        "flujo_nombre_snapshot",
-        "flujo_espacio_id_qlik",
-        "automatizacion_id_qlik",
-        "ejecutado_por_usuario_id",
-        "automatizacion_personal_id",
-        "hash_dataflow_sha256",
-        "script_dataflow",
-        "sql_bigquery_compilado",
-        "script_exportacion",
-        "uri_base_gcs",
-        "estado",
-      ]),
-    );
+    expect(cols).toEqual([
+      "id",
+      "organizacion_id",
+      "tenant_qlik_id",
+      "ejecutado_por_usuario_id",
+      "automatizacion_personal_id",
+      "flujo_id_qlik",
+      "flujo_nombre_snapshot",
+      "flujo_espacio_id_qlik",
+      "automatizacion_id_qlik",
+      "run_id_qlik",
+      "hash_dataflow_sha256",
+      "script_dataflow",
+      "sql_bigquery_compilado",
+      "script_exportacion",
+      "uri_base_gcs",
+      "estado",
+      "version_compilador",
+      "etapa_error",
+      "mensaje_error",
+      "job_id_principal_bigquery",
+      "bigquery_project_id",
+      "bigquery_location",
+      "qlik_iniciado_en",
+      "bigquery_iniciado_en",
+      "bigquery_finalizado_en",
+      "gcs_finalizado_en",
+      "iniciado_en",
+      "finalizado_en",
+      "creado_en",
+      "actualizado_en",
+    ]);
     expect(cols).not.toContain("configuracion_id");
+    expect(cols).not.toContain("tipo_ejecucion");
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {
@@ -302,5 +319,63 @@ describe("Esquema Drizzle", () => {
   it("ejecucionesReportes no persiste tipo de ejecución desde que solo existe manual", () => {
     const cols = colNames(getTableConfig(ejecucionesReportes));
     expect(cols).not.toContain("tipo_ejecucion");
+  });
+
+  it("jobsBigQueryEjecucion tiene todas las columnas de metadata de job BigQuery", () => {
+    const cols = colNames(getTableConfig(jobsBigQueryEjecucion));
+    expect(cols).toEqual([
+      "id",
+      "ejecucion_reporte_id",
+      "job_id",
+      "parent_job_id",
+      "project_id",
+      "location",
+      "tipo",
+      "estado",
+      "creation_time",
+      "start_time",
+      "end_time",
+      "duracion_ms",
+      "total_bytes_processed",
+      "total_bytes_billed",
+      "total_slot_ms",
+      "cache_hit",
+      "statement_type",
+      "error_reason",
+      "error_message",
+      "metadata_json",
+      "creado_en",
+      "actualizado_en",
+    ]);
+  });
+
+  it("jobsBigQueryEjecucion tiene métricas como TEXT para evitar pérdida de precisión > Number.MAX_SAFE_INTEGER", () => {
+    const config = getTableConfig(jobsBigQueryEjecucion);
+    for (const name of ["total_bytes_processed", "total_bytes_billed", "total_slot_ms"]) {
+      const col = config.columns.find((c) => c.name === name);
+      expect(col).toBeDefined();
+      const colDataType = col?.dataType as string | undefined;
+      expect(colDataType).toBe("string");
+    }
+  });
+
+  it("jobsBigQueryEjecucion tiene constraint única por projectId + location + jobId", () => {
+    const config = getTableConfig(jobsBigQueryEjecucion);
+    const uq = config.uniqueConstraints.find(
+      (uc) => uc.name === "uq_job_project_location",
+    );
+    expect(uq).toBeDefined();
+    expect(uq?.columns.map((c) => c.name)).toEqual([
+      "project_id",
+      "location",
+      "job_id",
+    ]);
+  });
+
+  it("jobsBigQueryEjecucion tiene índices en ejecucionReporteId, jobId y estado", () => {
+    const idxs = idxNames(getTableConfig(jobsBigQueryEjecucion));
+    expect(idxs).toContain("idx_jobs_ejecucion_reportes");
+    expect(idxs).toContain("idx_jobs_job_id");
+    expect(idxs).toContain("idx_jobs_estado");
   });
 });

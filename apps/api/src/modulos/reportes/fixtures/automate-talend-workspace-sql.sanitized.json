@@ -1,0 +1,41 @@
+{
+  "blocks": [
+    {
+      "name": "executeTask",
+      "type": "EndpointBlock",
+      "inputs": [
+        { "id": "task", "value": "TASK_ID_SANITIZED" },
+        {
+          "id": "context",
+          "mode": "keyValue",
+          "value": [
+            { "key": "credenciales", "value": "{ $.Credenciales }" },
+            { "key": "sql", "value": "{ $.sql }" },
+            { "key": "job_id", "value": "{ $.jobid }" },
+            { "key": "id_projecto", "value": "{ $.projectid }" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Credenciales",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "/etc/credentials/gsc.json" }]
+    },
+    {
+      "name": "sql",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "SQL_ANTERIOR" }]
+    },
+    {
+      "name": "jobid",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "JOB_ANTERIOR" }]
+    },
+    {
+      "name": "projectid",
+      "type": "VariableBlock",
+      "operations": [{ "id": "set_value", "value": "PROJECT_ANTERIOR" }]
+    }
+  ]
+}

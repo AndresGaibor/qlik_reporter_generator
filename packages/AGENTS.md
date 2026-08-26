@@ -17,6 +17,7 @@ Tests cercanos:
 - `packages/contratos/src/admin/configuracion-bigquery.test.ts`
 - `packages/contratos/src/admin/configuracion-secreta.test.ts`
 - `packages/contratos/src/admin/tenant-qlik.test.ts`
+- `packages/contratos/src/descargas/index.test.ts`
 - `packages/contratos/src/reportes/dataflow.test.ts`
 
 Imports internos frecuentes detectados:

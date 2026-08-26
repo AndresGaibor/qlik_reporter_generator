@@ -1,6 +1,7 @@
 import type { ResumenReporteDataflow } from "@qlik/contratos/flujos";
 import { compilarDataflowVNext } from "../../reportes/aplicacion/compilador-vnext/index.js";
 import { ErrorCompilacionVNext } from "../../reportes/aplicacion/compilador-vnext/modelo.js";
+import type { DiagnosticoVNext } from "../../reportes/aplicacion/compilador-vnext/modelo.js";
 import { parsearDataflow } from "../../reportes/aplicacion/parser-dataflow.js";
 import type {
   CampoDataflow,
@@ -104,7 +105,8 @@ function evaluarCompatibilidadVNext(script: string): {
     };
   } catch (error) {
     if (error instanceof ErrorCompilacionVNext) {
-      return { compatible: false, advertencias: [error.diagnostic.message] };
+      const advertencia = construirAdvertenciaLegible(error.diagnostic);
+      return { compatible: false, advertencias: [advertencia] };
     }
     return {
       compatible: false,
@@ -115,6 +117,92 @@ function evaluarCompatibilidadVNext(script: string): {
       ],
     };
   }
+}
+
+/**
+ * Convierte un diagnóstico técnico del compilador vNext en un mensaje accionable
+ * para el usuario, indicando qué componente del Dataflow debe revisar y cómo.
+ */
+function construirAdvertenciaLegible(
+  diagnostico: DiagnosticoVNext,
+): string {
+  const { code, snippet } = diagnostico;
+
+  const componentePorCodigo: Record<string, string> = {
+    SYNTAX_INVALID_IF:
+      'componente "Bifurcación" (IF … THEN … END IF)',
+    SYNTAX_UNTERMINATED_IF:
+      'componente "Bifurcación" al que le falta el cierre END IF',
+    SYNTAX_INVALID_ELSEIF:
+      'componente "Bifurcación" (ELSEIF … THEN)',
+    SYNTAX_INVALID_SWITCH:
+      'componente "Switch" (SWITCH … END SWITCH)',
+    SYNTAX_UNTERMINATED_SWITCH:
+      'componente "Switch" al que le falta el cierre END SWITCH',
+    SYNTAX_SWITCH_CASE_EXPECTED:
+      'componente "Switch" (se esperaba CASE, DEFAULT o END SWITCH)',
+    SYNTAX_INVALID_FOR:
+      'componente "Bucle FOR" (FOR … TO … NEXT)',
+    SYNTAX_UNTERMINATED_FOR:
+      'componente "Bucle FOR" al que le falta el cierre NEXT',
+    SYNTAX_FOR_COUNTER_MISMATCH:
+      'componente "Bucle FOR" cuyo NEXT no coincide con la variable de inicio',
+    SYNTAX_INVALID_DO:
+      'componente "Bucle DO … LOOP"',
+    SYNTAX_UNTERMINATED_DO:
+      'componente "Bucle DO" al que le falta el cierre LOOP',
+    SYNTAX_INVALID_LOOP:
+      'componente "Bucle DO … LOOP" (cláusula LOOP inválida)',
+    SYNTAX_DO_TWO_CONDITIONS:
+      'componente "Bucle DO … LOOP" (tiene condición en DO y en LOOP a la vez)',
+    SYNTAX_INVALID_SUB:
+      'componente "Subrutina" (SUB … END SUB)',
+    SYNTAX_UNTERMINATED_SUB:
+      'componente "Subrutina" al que le falta el cierre END SUB',
+    SYNTAX_INVALID_SUB_PARAMETER:
+      'componente "Subrutina" (uno de sus parámetros tiene un nombre inválido)',
+    SYNTAX_UNEXPECTED_CONTROL_CLAUSE:
+      "cláusula de control inesperada (ELSEIF, ELSE o ENDIF fuera de un IF)",
+    APPLYMAP_MAPPING_NOT_FOUND:
+      'función ApplyMap que referencia una tabla MAPPING no encontrada',
+    APPLYMAP_MAPPING_NAME_LITERAL_REQUIRED:
+      'función ApplyMap (el primer argumento debe ser un nombre literal de tabla)',
+    APPLYMAP_ARITY:
+      'función ApplyMap con número de argumentos incorrecto',
+    APPLYMAP_REQUIRES_TYPED_DUAL_LOWERING:
+      'función ApplyMap (requiere una tabla MAPPING cargada con MAPPING LOAD)',
+  };
+
+  const nombreComponente = componentePorCodigo[code];
+
+  const lineasSnippet = snippet
+    ? snippet
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(" / ")
+    : null;
+
+  const parteSnippet = lineasSnippet
+    ? ` El fragmento afectado es: "${lineasSnippet}".`
+    : "";
+
+  if (nombreComponente) {
+    return (
+      `El Dataflow contiene ${nombreComponente} que la plataforma aún no puede compilar.` +
+      parteSnippet +
+      ` Ábrelo en Qlik Cloud, localiza ese paso y simplifica o elimina la lógica de control. Luego pulsa "Actualizar" aquí.`
+    );
+  }
+
+  // Fallback: include the raw diagnostic message which contains the function/operation name.
+  return (
+    `El Dataflow contiene un paso que la plataforma aún no puede compilar: ${diagnostico.message}.` +
+    parteSnippet +
+    ` Ábrelo en Qlik Cloud, localiza ese paso y corrígelo. Luego pulsa "Actualizar" aquí.`
+  );
+
 }
 
 function limpiarDetalleTecnico(mensaje: string): string {

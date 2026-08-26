@@ -285,6 +285,13 @@ export const ejecucionesReportes = pgTable(
     versionCompilador: integer("version_compilador").notNull().default(1),
     etapaError: text("etapa_error"),
     mensajeError: text("mensaje_error"),
+    jobIdPrincipalBigQuery: text("job_id_principal_bigquery"),
+    bigqueryProjectId: text("bigquery_project_id"),
+    bigqueryLocation: text("bigquery_location"),
+    qlikIniciadoEn: timestamp("qlik_iniciado_en"),
+    bigqueryIniciadoEn: timestamp("bigquery_iniciado_en"),
+    bigqueryFinalizadoEn: timestamp("bigquery_finalizado_en"),
+    gcsFinalizadoEn: timestamp("gcs_finalizado_en"),
     iniciadoEn: timestamp("iniciado_en"),
     finalizadoEn: timestamp("finalizado_en"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
@@ -426,6 +433,54 @@ export const conexionesDestino = pgTable(
     ckEstado: check(
       "conexiones_destino_estado_check",
       sql`${t.estado} IN ('activo', 'error', 'desconectado')`,
+    ),
+  }),
+);
+
+export const jobsBigQueryEjecucion = pgTable(
+  "jobs_bigquery_ejecucion",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ejecucionReporteId: uuid("ejecucion_reporte_id")
+      .notNull()
+      .references(() => ejecucionesReportes.id, { onDelete: "cascade" }),
+    jobId: text("job_id").notNull(),
+    parentJobId: text("parent_job_id"),
+    projectId: text("project_id").notNull(),
+    location: text("location").default("US"),
+    tipo: text("tipo").notNull(),
+    estado: text("estado").notNull(),
+    creationTime: timestamp("creation_time"),
+    startTime: timestamp("start_time"),
+    endTime: timestamp("end_time"),
+    duracionMs: integer("duracion_ms"),
+    totalBytesProcessed: text("total_bytes_processed"),
+    totalBytesBilled: text("total_bytes_billed"),
+    totalSlotMs: text("total_slot_ms"),
+    cacheHit: boolean("cache_hit"),
+    statementType: text("statement_type"),
+    errorReason: text("error_reason"),
+    errorMessage: text("error_message"),
+    metadataJson: jsonb("metadata_json"),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    uqJobProjectLocation: unique("uq_job_project_location").on(
+      t.projectId,
+      t.location,
+      t.jobId,
+    ),
+    idxEjecucion: index("idx_jobs_ejecucion_reportes").on(t.ejecucionReporteId),
+    idxJobId: index("idx_jobs_job_id").on(t.jobId),
+    idxEstado: index("idx_jobs_estado").on(t.estado),
+    ckTipo: check(
+      "jobs_bigquery_tipo_check",
+      sql`${t.tipo} IN ('principal', 'script', 'query', 'export', 'conteo', 'child', 'desconocido')`,
+    ),
+    ckEstado: check(
+      "jobs_bigquery_estado_check",
+      sql`${t.estado} IN ('pendiente', 'running', 'done', 'error')`,
     ),
   }),
 );

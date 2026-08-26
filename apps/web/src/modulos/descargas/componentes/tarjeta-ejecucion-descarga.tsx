@@ -6,6 +6,7 @@ import {
 } from "@/compartido/componentes/ui/card";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { ResumenDescargaEjecucion } from "@qlik/contratos/descargas";
+import { useState } from "react";
 import {
   formatearDuracion,
   formatearFechaISO,
@@ -14,6 +15,14 @@ import {
 } from "../presentacion-ejecucion";
 import type { EstadoDescarga } from "../use-descarga-ejecucion";
 import { DescargaEjecucion } from "./descarga-ejecucion";
+
+function formatearDuracionMs(ms: number): string {
+  const segundos = Math.floor(ms / 1000);
+  const minutos = Math.floor(segundos / 60);
+  const resto = segundos % 60;
+  if (minutos === 0) return `${resto} s`;
+  return resto === 0 ? `${minutos} min` : `${minutos} min ${resto} s`;
+}
 
 interface TarjetaEjecucionDescargaProps {
   ejecucion: ResumenDescargaEjecucion;
@@ -43,6 +52,7 @@ export function TarjetaEjecucionDescarga({
   onDescargar,
   onCancelar,
 }: TarjetaEjecucionDescargaProps) {
+  const [mostrarTecnico, setMostrarTecnico] = useState(false);
   const presentacion = presentarEjecucion(ejecucion);
   const archivos = ejecucion.archivos ?? [];
   const totalTamano = archivos.reduce(
@@ -54,6 +64,11 @@ export function TarjetaEjecucionDescarga({
     ejecucion.finalizadoEn,
   );
   const disponible = presentacion.tipo === "completada" && archivos.length > 0;
+  const tieneBigQuery =
+    ejecucion.duracionBigQueryMs != null ||
+    ejecucion.jobIdBigQuery ||
+    ejecucion.runIdQlik ||
+    ejecucion.ejecucionId;
   return (
     <Card className="overflow-hidden border-line-200">
       <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -82,24 +97,80 @@ export function TarjetaEjecucionDescarga({
         ) : null}
 
         {presentacion.tipo === "completada" && (
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
-              <p className="text-ink-400">Resultado</p>
-              <p className="mt-1 font-semibold text-ink-800">
-                {archivos.length}{" "}
-                {archivos.length === 1 ? "archivo" : "archivos"}
-                {archivos.length > 0
-                  ? ` · ${formatearTamano(totalTamano)}`
-                  : ""}
-              </p>
+          <>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
+                <p className="text-ink-400">Resultado</p>
+                <p className="mt-1 font-semibold text-ink-800">
+                  {archivos.length}{" "}
+                  {archivos.length === 1 ? "archivo" : "archivos"}
+                  {archivos.length > 0
+                    ? ` · ${formatearTamano(totalTamano)}`
+                    : ""}
+                </p>
+              </div>
+              <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
+                <p className="text-ink-400">Duración</p>
+                <p className="mt-1 font-semibold text-ink-800">
+                  {duracion ?? "—"}
+                </p>
+              </div>
+              {ejecucion.duracionBigQueryMs != null && (
+                <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
+                  <p className="text-ink-400">BQ</p>
+                  <p className="mt-1 font-semibold text-ink-800">
+                    {formatearDuracionMs(ejecucion.duracionBigQueryMs)}
+                  </p>
+                </div>
+              )}
+              {ejecucion.totalBytesProcessed && (
+                <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
+                  <p className="text-ink-400">Procesado</p>
+                  <p className="mt-1 font-semibold text-ink-800">
+                    {formatearTamano(Number(ejecucion.totalBytesProcessed))}
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="rounded-lg border border-line-200 bg-surface-subtle px-3 py-2">
-              <p className="text-ink-400">Duración</p>
-              <p className="mt-1 font-semibold text-ink-800">
-                {duracion ?? "—"}
-              </p>
-            </div>
-          </div>
+            {tieneBigQuery && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMostrarTecnico((v) => !v)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-ink-500 hover:text-ink-700"
+                >
+                  <Icon
+                    name="chev"
+                    size="sm"
+                    className={`transition-transform ${mostrarTecnico ? "rotate-90" : "-rotate-180"}`}
+                  />
+                  Detalles técnicos
+                </button>
+                {mostrarTecnico && (
+                  <div className="mt-2 space-y-2 rounded-lg border border-line-200 bg-surface-subtle p-3">
+                    {ejecucion.ejecucionId && (
+                      <LineaTecnicaCopy
+                        etiqueta="Ejecución"
+                        valor={ejecucion.ejecucionId}
+                      />
+                    )}
+                    {ejecucion.jobIdBigQuery && (
+                      <LineaTecnicaCopy
+                        etiqueta="Job BQ"
+                        valor={ejecucion.jobIdBigQuery}
+                      />
+                    )}
+                    {ejecucion.runIdQlik && (
+                      <LineaTecnicaCopy
+                        etiqueta="Run Qlik"
+                        valor={ejecucion.runIdQlik}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
         {presentacion.tipo === "error" && (
           <div className="rounded-lg bg-danger-50 px-3 py-2.5">
@@ -138,9 +209,37 @@ export function TarjetaEjecucionDescarga({
   );
 }
 
+function LineaTecnicaCopy({
+  etiqueta,
+  valor,
+}: {
+  etiqueta: string;
+  valor: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-xs text-ink-500">
+        {etiqueta}:{" "}
+        <span className="font-mono text-xs text-ink-700">{valor}</span>
+      </span>
+      <button
+        type="button"
+        onClick={() => void navigator.clipboard.writeText(valor)}
+        className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold text-ink-500 hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        aria-label={`Copiar ${etiqueta}`}
+      >
+        <Icon name="copy" size="sm" />
+        Copiar
+      </button>
+    </div>
+  );
+}
+
 function EstadoBadge({
   estado,
-}: { estado: ReturnType<typeof presentarEjecucion> }) {
+}: {
+  estado: ReturnType<typeof presentarEjecucion>;
+}) {
   const base =
     "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold";
   switch (estado.tipo) {

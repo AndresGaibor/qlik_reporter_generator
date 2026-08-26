@@ -20,18 +20,19 @@ Tests cercanos:
 - `apps/api/src/arquitectura.test.ts`
 - `apps/api/src/dependencias-google-uuid.test.ts`
 - `apps/api/src/esquema.test.ts`
+- `apps/api/src/migracion-trazabilidad.test.ts`
 - `apps/api/src/modulos/admin/dominio/tenant-qlik.test.ts`
 - `apps/api/src/modulos/admin/http/rutas-automatizaciones-personales.test.ts`
 - `apps/api/src/modulos/admin/http/rutas-configuracion-bigquery.test.ts`
 - `apps/api/src/modulos/admin/http/rutas-configuracion-oauth.test.ts`
 - `apps/api/src/modulos/admin/infraestructura/helpers-admin.test.ts`
-- `apps/api/src/modulos/autenticacion-qlik/aplicacion/servicio-autenticacion.test.ts`
 
 Imports internos frecuentes detectados:
 - `../../../../google-cloud/dominio/metadata-bigquery.js`
 - `../../../../nucleo/errores/error-aplicacion.js`
 - `../../../../nucleo/http/respuestas.js`
 - `../../../../plataforma/persistencia/conexion.js`
+- `../../../google-cloud/aplicacion/puerto-jobs-bigquery.js`
 - `../../../google-cloud/dominio/metadata-bigquery.js`
 - `../../../nucleo/auditoria/puerto-auditoria.js`
 - `../../../nucleo/errores/error-aplicacion.js`
@@ -43,7 +44,6 @@ Imports internos frecuentes detectados:
 - `../../../plataforma/persistencia/conexion.js`
 - `../../../plataforma/persistencia/esquema.js`
 - `../../../plataforma/seguridad/servicio-cifrado.js`
-- `../../../qlik/aplicacion/puertos/puerto-qlik.js`
 
 ## Ver también
 

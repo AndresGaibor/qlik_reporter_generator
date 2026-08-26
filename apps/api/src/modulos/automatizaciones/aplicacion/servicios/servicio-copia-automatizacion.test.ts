@@ -60,6 +60,42 @@ describe("copiarAutomatizacionPersonal", () => {
     expect(JSON.stringify(definicion.workspace)).not.toContain("dataflow");
     expect(JSON.stringify(definicion.workspace)).not.toContain("Appid");
     expect(JSON.stringify(definicion.workspace)).not.toContain("autor");
+    const blocks = (definicion.workspace as { blocks: Array<Record<string, unknown>> })
+      .blocks;
+    const executeTask = blocks.find((block) => block.name === "executeTask");
+    const espera = blocks.find(
+      (block) =>
+        block.snippet_guid === "087a1ce0-037c-11ee-9163-4dcbc6412d48",
+    );
+    expect(espera).toBeDefined();
+    expect(executeTask?.childId).toBe(espera?.id as string);
+  });
+
+  it("no cambia el propietario cuando Qlik ya creó la copia para el usuario", async () => {
+    const cambiarPropietario = vi.fn(async () => undefined);
+    const actualizarAutomatizacion = vi.fn(async (_id, definicion) => ({
+      id: "worker-1",
+      ...definicion,
+    }));
+    const qlik = {
+      copiarAutomatizacion: vi.fn(async () => ({ id: "worker-1" })),
+      cambiarPropietarioAutomatizacion: cambiarPropietario,
+      obtenerAutomatizacion: vi.fn(async () => ({
+        ownerId: "user-1",
+        workspace: await workspaceTalend(),
+      })),
+      actualizarAutomatizacion,
+    } as unknown as ServicioQlik;
+
+    const resultado = await copiarAutomatizacionPersonal(qlik, {
+      nombre: "Worker personal",
+      plantillaIdQlik: "base-1",
+      propietarioIdQlik: "user-1",
+    });
+
+    expect(resultado.error).toBeUndefined();
+    expect(cambiarPropietario).not.toHaveBeenCalled();
+    expect(actualizarAutomatizacion).toHaveBeenCalledTimes(1);
   });
 
   it("distingue un GET fallido de una copia estructuralmente inválida", async () => {

@@ -54,8 +54,8 @@ Dependencias externas a esta área:
 - `apps/api/src/modulos/admin` (4 imports detectados)
 - `apps/api/src/nucleo` (4 imports detectados)
 - `apps/api/src/modulos/descargas` (3 imports detectados)
+- `apps/api/src/modulos/google-cloud` (3 imports detectados)
 - `apps/api/src/modulos/autenticacion-qlik` (2 imports detectados)
-- `apps/api/src/modulos/flujos` (2 imports detectados)
 
 Para una modificación no trivial, busca primero el flujo correspondiente en `docs/agents/FEATURE-FLOWS.md`.
 Consulta `docs/agents/HOTSPOTS.md` antes de editar archivos de alta conectividad.

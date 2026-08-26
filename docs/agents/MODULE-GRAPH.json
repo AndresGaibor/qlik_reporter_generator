@@ -27,15 +27,15 @@
         "imports": 3
       },
       {
+        "target": "apps/api/src/modulos/google-cloud",
+        "imports": 3
+      },
+      {
         "target": "apps/api/src/modulos/autenticacion-qlik",
         "imports": 2
       },
       {
         "target": "apps/api/src/modulos/flujos",
-        "imports": 2
-      },
-      {
-        "target": "apps/api/src/modulos/google-cloud",
         "imports": 2
       },
       {
@@ -116,7 +116,7 @@
     "apps/api/src/modulos/descargas": [
       {
         "target": "apps/api/src/modulos/reportes",
-        "imports": 8
+        "imports": 10
       },
       {
         "target": "apps/api/src/nucleo",
@@ -124,6 +124,10 @@
       },
       {
         "target": "apps/api/src/modulos/qlik",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/modulos/google-cloud",
         "imports": 3
       },
       {
@@ -176,7 +180,7 @@
       },
       {
         "target": "apps/api/src/modulos/google-cloud",
-        "imports": 6
+        "imports": 9
       },
       {
         "target": "apps/api/src/nucleo",
@@ -284,7 +288,7 @@
     "apps/web/src/modulos/reportes": [
       {
         "target": "packages/contratos/src",
-        "imports": 4
+        "imports": 5
       },
       {
         "target": "packages/contratos/src/automatizaciones",

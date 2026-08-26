@@ -36,6 +36,7 @@ import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-fl
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
+import { ClienteJobsBigQuery } from "./modulos/google-cloud/infraestructura/cliente-jobs-bigquery.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -517,6 +518,17 @@ export async function crearAplicacion(
           sesion.tenantId,
         );
         return parsearUriGcsPermitida(google.gcsUri);
+      },
+      resolverJobsBigQuery: async (c) => {
+        const sesion = await resolverSesion(c);
+        const google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
+        return new ClienteJobsBigQuery({
+          projectId: google.projectId,
+          credencialesJson: google.credencialesJson,
+        });
       },
       minutosFirma: configuracion?.GOOGLE_SIGNED_URL_MINUTOS ?? 15,
     }),
