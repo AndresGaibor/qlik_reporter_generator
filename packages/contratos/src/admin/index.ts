@@ -124,6 +124,7 @@ export const esquemaConfigurarBigQuery = z.object({
     .optional(),
   limiteMiB: z.number().positive().optional(),
   limiteUsd: z.number().positive().optional(),
+  maximoFilasPorArchivo: z.number().int().min(1).max(1_000_000).default(1_000_000),
   precioUsdPorTib: z.number().positive().default(6.25),
 });
 
@@ -136,6 +137,7 @@ export const esquemaConfiguracionBigQuery = z.object({
   gcsUri: z.string().optional(),
   clientEmail: z.string().email().optional(),
   credencialesConfiguradas: z.boolean(),
+  maximoFilasPorArchivo: z.number().int().min(1).max(1_000_000).default(1_000_000),
   mensajeError: z.string().nullable().optional(),
 });
 

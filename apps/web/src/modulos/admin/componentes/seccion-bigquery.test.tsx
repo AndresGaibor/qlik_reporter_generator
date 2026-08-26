@@ -112,6 +112,14 @@ test("abre edición bajo demanda y permite cancelarla", async () => {
   expect(vista.querySelector("textarea")).toBeNull();
 });
 
+test("permite configurar el máximo de filas por archivo descargado", async () => {
+  const vista = await montar();
+  await act(async () => boton("Editar configuración")?.click());
+  const input = vista.querySelector<HTMLInputElement>("#bigquery-max-rows");
+  expect(input).not.toBeNull();
+  expect(input?.value).toBe("1000000");
+});
+
 test("prueba la conexión directamente desde el resumen", async () => {
   await montar();
   await act(async () => {

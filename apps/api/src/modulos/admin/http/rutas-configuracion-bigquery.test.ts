@@ -90,6 +90,7 @@ describe("configuración BigQuery administrativa", () => {
         body: JSON.stringify({
           dataset: "demo_lafavorita",
           gcsUri: "gs://bkt_dwh/POCs/TalendDescargados/",
+          maximoFilasPorArchivo: 250_000,
           credencialesJson: JSON.stringify(credenciales),
         }),
       },
@@ -104,6 +105,7 @@ describe("configuración BigQuery administrativa", () => {
         projectId: "poc-bigquery-talend",
         clientEmail: "sa@example.iam.gserviceaccount.com",
         dataset: "demo_lafavorita",
+        maximoFilasPorArchivo: 250_000,
       }),
     );
     expect(JSON.stringify(cuerpo)).not.toContain("PRIVATE KEY");

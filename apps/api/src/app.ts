@@ -528,7 +528,10 @@ export async function crearAplicacion(
           sesion.organizacionId,
           sesion.tenantId,
         );
-        return parsearUriGcsPermitida(google.gcsUri);
+        return {
+          ...parsearUriGcsPermitida(google.gcsUri),
+          maximoFilasPorArchivo: google.maximoFilasPorArchivo,
+        };
       },
       resolverJobsBigQuery: async (c) => {
         const sesion = await resolverSesion(c);

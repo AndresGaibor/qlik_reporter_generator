@@ -30,7 +30,7 @@ function configuracion() {
 
 async function workspaceTalend(): Promise<Record<string, unknown>> {
   const fixture = new URL(
-    "../fixtures/automate-talend-workspace.sanitized.json",
+    "../fixtures/automate-talend-workspace-sql.sanitized.json",
     import.meta.url,
   );
   return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
@@ -166,14 +166,14 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     );
     expect(auditorias[0]?.scriptDataflow).toBe(SCRIPT_V1);
     expect(auditorias[1]?.scriptDataflow).toBe(SCRIPT_V2);
-    expect(valorVariable(workspaces[0] ?? {}, "BqNumberCsv")).toContain(
+    expect(valorVariable(workspaces[0] ?? {}, "sql")).toContain(
       "monto > 0",
     );
-    expect(valorVariable(workspaces[1] ?? {}, "BqNumberCsv")).toContain(
+    expect(valorVariable(workspaces[1] ?? {}, "sql")).toContain(
       "monto > 100",
     );
-    expect(valorVariable(workspaces[0] ?? {}, "BqNumberCsv")).not.toBe(
-      valorVariable(workspaces[1] ?? {}, "BqNumberCsv"),
+    expect(valorVariable(workspaces[0] ?? {}, "sql")).not.toBe(
+      valorVariable(workspaces[1] ?? {}, "sql"),
     );
     expect(valorVariable(workspaces[0] ?? {}, "Credenciales")).toBe(
       "/etc/credentials/gsc.json",
@@ -256,16 +256,14 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     expect(auditoria?.uriBaseGcs).toBe(
       `gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/`,
     );
-    expect(valorVariable(workspace, "BqNumberCsv")).toContain(
+    expect(valorVariable(workspace, "sql")).toContain(
       "WHERE `Fecha` = DATE '2026-06-01'",
     );
-    expect(valorVariable(workspace, "BqExportData")).toContain(
-      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-__PART_PADDED__-*.csv'`,
+    expect(valorVariable(workspace, "sql")).toContain(
+      `uri = 'gs://bkt_dwh/POCs/TalendDescargados/user1/ventas-df/${ejecucionId}/parte-*.csv.gz'`,
     );
-    expect(valorVariable(workspace, "BqNumberCsv")).toContain("GENERATE_ARRAY");
-    expect(valorVariable(workspace, "BqExportData")).toContain(
-      "__finalizado__-*.csv",
-    );
+    expect(valorVariable(workspace, "sql")).toContain("compression = 'GZIP'");
+    expect(valorVariable(workspace, "sql")).not.toContain("GENERATE_ARRAY");
     expect(String(auditoria?.scriptExportacion)).not.toContain(
       "STORE [Filtro 1_DEFAULT]",
     );

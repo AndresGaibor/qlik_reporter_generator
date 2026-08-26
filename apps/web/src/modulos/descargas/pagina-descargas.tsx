@@ -17,6 +17,7 @@ import {
   listarCarpetaUsuarioGcs,
   listarCarpetasUsuariosGcs,
   listarExploradorGcs,
+  urlCsvParteCarpetaUsuarioGcs,
   urlZipCarpetaUsuarioGcs,
 } from "@/modulos/descargas/api";
 import {
@@ -170,6 +171,13 @@ export function PaginaDescargas() {
           })
         }
         onDescargar={async (nombre) => {
+          if (/\.csv$/i.test(nombre)) {
+            descargarDesdeEnlace({
+              nombre,
+              url: urlCsvParteCarpetaUsuarioGcs(rutaCarpeta, nombre),
+            });
+            return;
+          }
           const firmado = await firmarArchivoCarpetaUsuarioGcs(
             `${rutaCarpeta}${nombre}`,
           );

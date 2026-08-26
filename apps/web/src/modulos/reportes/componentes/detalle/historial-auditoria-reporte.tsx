@@ -98,6 +98,15 @@ export function HistorialAuditoriaReporte({
                 )}
               </div>
 
+              {ejecucion.jobIdBigQuery && (
+                <div className="mt-3 w-fit max-w-full rounded-lg border border-line-200 bg-surface-subtle px-3 py-2 shadow-sm">
+                  <LineaTecnicaCopy
+                    etiqueta="Job ID"
+                    valor={ejecucion.jobIdBigQuery}
+                  />
+                </div>
+              )}
+
               <p className="mt-3 break-all font-mono text-[11px] text-ink-500">
                 {ejecucion.uriBaseGcs}
               </p>
@@ -331,9 +340,11 @@ function LineaTecnicaCopy({
   valor: string;
 }) {
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
       <span className="text-ink-500">{etiqueta}:</span>
-      <span className="font-mono text-xs text-ink-700">{valor}</span>
+      <span className="min-w-0 break-all font-mono text-xs text-ink-700">
+        {valor}
+      </span>
       <button
         type="button"
         onClick={() => void navigator.clipboard.writeText(valor)}

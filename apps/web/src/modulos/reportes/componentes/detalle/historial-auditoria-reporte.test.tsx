@@ -39,14 +39,17 @@ afterEach(() => {
   container = undefined;
 });
 
-function montar(mostrarDetallesTecnicos: boolean) {
+function montar(
+  mostrarDetallesTecnicos: boolean,
+  ejecucion: DetalleEjecucionReporte = ejecucionBase,
+) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
   act(() => {
     root?.render(
       <HistorialAuditoriaReporte
-        ejecuciones={[ejecucionBase]}
+        ejecuciones={[ejecucion]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
       />,
     );
@@ -63,6 +66,18 @@ test("oculta la auditoría técnica y la huella SHA al usuario final sin ocultar
   expect(vista.textContent).not.toContain("Ver auditoría técnica");
   expect(vista.textContent).not.toContain("Script Dataflow utilizado");
   expect(vista.textContent).toContain("Tiempo transcurrido: 1 min 30 s");
+});
+
+test("muestra el Job ID de BigQuery en el historial normal con acción de copia", () => {
+  const vista = montar(false, {
+    ...ejecucionBase,
+    jobIdBigQuery: "bquxjob_1234567890_abcdef",
+  });
+
+  expect(vista.textContent).toContain("Job ID");
+  expect(vista.textContent).toContain("bquxjob_1234567890_abcdef");
+  expect(vista.querySelector('[aria-label="Copiar Job ID"]')).toBeTruthy();
+  expect(vista.textContent).not.toContain("Ver auditoría técnica");
 });
 
 test("muestra los scripts técnicos sobre fondo claro al administrador", () => {

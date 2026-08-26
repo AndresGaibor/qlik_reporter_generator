@@ -4,6 +4,10 @@ import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 
 vi.mock("@/modulos/descargas/api", () => ({
+  urlCsvParteCarpetaUsuarioGcs: vi.fn(
+    (ruta: string, archivo: string) =>
+      `/api/descargas/carpeta/csv?ruta=${encodeURIComponent(ruta)}&archivo=${encodeURIComponent(archivo)}`,
+  ),
   urlZipCarpetaUsuarioGcs: vi.fn(
     (ruta = "") =>
       `/api/descargas/carpeta/zip?ruta=${encodeURIComponent(ruta)}`,
@@ -185,6 +189,7 @@ import {
   eliminarArchivoCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   listarCarpetaUsuarioGcs,
+  urlCsvParteCarpetaUsuarioGcs,
   listarExploradorGcs,
 } from "@/modulos/descargas/api";
 import { PaginaDescargas } from "./pagina-descargas";
@@ -351,7 +356,7 @@ test("una carpeta de reporte sin ejecuciones se muestra como estado vacío y no 
   );
 });
 
-test("descarga un archivo de la carpeta privada usando la URL firmada", async () => {
+test("descarga un archivo de la carpeta privada como CSV normalizado", async () => {
   const click = vi
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(() => {});
@@ -364,9 +369,11 @@ test("descarga un archivo de la carpeta privada usando la URL firmada", async ()
     boton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
   await vi.waitFor(() => {
-    expect(firmarArchivoCarpetaUsuarioGcs).toHaveBeenCalledWith(
+    expect(urlCsvParteCarpetaUsuarioGcs).toHaveBeenCalledWith(
+      "",
       "pruebagcp.csv",
     );
+    expect(firmarArchivoCarpetaUsuarioGcs).not.toHaveBeenCalled();
     expect(click).toHaveBeenCalledOnce();
   });
   click.mockRestore();

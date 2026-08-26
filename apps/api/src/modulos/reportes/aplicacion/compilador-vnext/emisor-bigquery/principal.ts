@@ -22,7 +22,7 @@ import {
   mismaExpresionQlik,
 } from "./relacional.js";
 import type { EmisionBigQueryVNext } from "./tipos.js";
-import { fail, qlik, quote, wrap } from "./utilidades.js";
+import { fail, indent, qlik, quote, wrap } from "./utilidades.js";
 
 export function emitirBigQueryVNext(
   plan: PlanCompilacionVNext,
@@ -41,8 +41,13 @@ export function emitirBigQueryVNext(
       "El programa no produjo una relación de salida exportable",
     );
 
+  const sharedRelationIds = relacionesCompartidasFactorizables(output.id, byId);
+  const cteNames = new Map(
+    sharedRelationIds.map((id) => [id, `shared_${normalizarIdCte(id)}`]),
+  );
   const cache = new Map<string, string>();
-  const emit = (id: string, includeInternal = false): string => {
+
+  const emitInline = (id: string, includeInternal = false): string => {
     const cacheKey = `${id}:${includeInternal ? "internal" : "visible"}`;
     const cached = cache.get(cacheKey);
     if (cached) return cached;
@@ -60,11 +65,120 @@ export function emitirBigQueryVNext(
     return sql;
   };
 
+  const emit = (id: string, includeInternal = false): string => {
+    const cteName = cteNames.get(id);
+    if (cteName) return `SELECT *\nFROM ${cteName}`;
+    return emitInline(id, includeInternal);
+  };
+
+  const body = emit(output.id, false).trim().replace(/;\s*$/, "");
+  const ctes = ordenarCtes(sharedRelationIds, byId).map((id) => {
+    const name = cteNames.get(id);
+    if (!name) fail("BIGQUERY_CTE_NAME_MISSING", `No existe CTE para ${id}`);
+    return `${name} AS (\n${indent(emitInline(id, false), 2)}\n)`;
+  });
+
   return {
-    sql: emit(output.id, false).trim().replace(/;\s*$/, ""),
+    sql: ctes.length > 0 ? `WITH ${ctes.join(",\n")}\n${body}` : body,
     strategy:
       output.op === "native_sql" ? "source_sql_passthrough" : "single_query",
   };
+}
+
+function dependenciasRelacion(relation: RelacionVNext): string[] {
+  switch (relation.op) {
+    case "join":
+      return [relation.left, relation.right];
+    case "union_all":
+      return relation.inputs;
+    case "semi_filter":
+      return [relation.input, relation.against];
+    case "filter":
+    case "project":
+    case "aggregate":
+    case "sort":
+    case "limit":
+    case "unpivot":
+    case "generic":
+    case "stateful":
+      return [relation.input];
+    case "inline":
+    case "autogenerate":
+    case "native_sql":
+      return [];
+  }
+}
+
+function tieneCamposInternos(relation: RelacionVNext): boolean {
+  return (
+    (relation.internalFields?.length ?? 0) > 0 ||
+    Object.keys(relation.dualComponents ?? {}).length > 0 ||
+    ("dualExpressions" in relation &&
+      Object.keys(relation.dualExpressions ?? {}).length > 0)
+  );
+}
+
+function esRelacionFactorizable(relation: RelacionVNext): boolean {
+  if (tieneCamposInternos(relation)) return false;
+  return !["inline", "autogenerate", "native_sql", "join", "generic"].includes(
+    relation.op,
+  );
+}
+
+function relacionesCompartidasFactorizables(
+  outputId: string,
+  byId: Map<string, RelacionVNext>,
+): string[] {
+  const references = new Map<string, number>();
+  const visited = new Set<string>();
+
+  const visit = (id: string): void => {
+    if (visited.has(id)) return;
+    visited.add(id);
+    const relation = byId.get(id);
+    if (!relation) return;
+    for (const dependency of dependenciasRelacion(relation)) {
+      references.set(dependency, (references.get(dependency) ?? 0) + 1);
+      visit(dependency);
+    }
+  };
+
+  visit(outputId);
+  return [...references.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([id]) => id)
+    .filter((id) => {
+      const relation = byId.get(id);
+      return relation ? esRelacionFactorizable(relation) : false;
+    });
+}
+
+function ordenarCtes(
+  ids: readonly string[],
+  byId: Map<string, RelacionVNext>,
+): string[] {
+  const candidates = new Set(ids);
+  const visited = new Set<string>();
+  const ordered: string[] = [];
+
+  const visit = (id: string): void => {
+    if (visited.has(id)) return;
+    visited.add(id);
+    const relation = byId.get(id);
+    if (!relation) return;
+    for (const dependency of dependenciasRelacion(relation)) {
+      if (candidates.has(dependency)) visit(dependency);
+    }
+    ordered.push(id);
+  };
+
+  for (const id of ids) visit(id);
+  return ordered;
+}
+
+function normalizarIdCte(id: string): string {
+  const normalized = id.replace(/[^A-Za-z0-9_]/g, "_");
+  return normalized || "relation";
 }
 
 export function emitirRelacion(

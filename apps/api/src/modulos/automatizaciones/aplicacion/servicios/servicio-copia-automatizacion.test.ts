@@ -4,7 +4,7 @@ import { copiarAutomatizacionPersonal } from "./servicio-copia-automatizacion.js
 
 async function workspaceTalend(): Promise<Record<string, unknown>> {
   const fixture = new URL(
-    "../../../reportes/fixtures/automate-talend-workspace.sanitized.json",
+    "../../../reportes/fixtures/automate-talend-workspace-sql.sanitized.json",
     import.meta.url,
   );
   return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;

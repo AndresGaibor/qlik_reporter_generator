@@ -2,6 +2,7 @@ import type { ResumenReporteDataflow } from "@qlik/contratos/flujos";
 import { compilarDataflowVNext } from "../../reportes/aplicacion/compilador-vnext/index.js";
 import { ErrorCompilacionVNext } from "../../reportes/aplicacion/compilador-vnext/modelo.js";
 import type { DiagnosticoVNext } from "../../reportes/aplicacion/compilador-vnext/modelo.js";
+import { localizarComponenteDataflow } from "../../reportes/aplicacion/contexto-diagnostico-dataflow.js";
 import { parsearDataflow } from "../../reportes/aplicacion/parser-dataflow.js";
 import type {
   CampoDataflow,
@@ -105,7 +106,7 @@ function evaluarCompatibilidadVNext(script: string): {
     };
   } catch (error) {
     if (error instanceof ErrorCompilacionVNext) {
-      const advertencia = construirAdvertenciaLegible(error.diagnostic);
+      const advertencia = construirAdvertenciaLegible(error.diagnostic, script);
       return { compatible: false, advertencias: [advertencia] };
     }
     return {
@@ -125,8 +126,10 @@ function evaluarCompatibilidadVNext(script: string): {
  */
 function construirAdvertenciaLegible(
   diagnostico: DiagnosticoVNext,
+  script: string,
 ): string {
   const { code, snippet } = diagnostico;
+  const componenteExacto = localizarComponenteDataflow(script, diagnostico);
 
   const componentePorCodigo: Record<string, string> = {
     SYNTAX_INVALID_IF:
@@ -188,22 +191,19 @@ function construirAdvertenciaLegible(
     ? ` El fragmento afectado es: "${lineasSnippet}".`
     : "";
 
+  if (componenteExacto) {
+    return `El Dataflow contiene el componente "${componenteExacto}" que la plataforma aún no puede compilar: ${diagnostico.message}.${parteSnippet} Ábrelo en Qlik Cloud, localiza ese componente y corrígelo. Luego pulsa "Actualizar" aquí.`;
+  }
+
   if (nombreComponente) {
-    return (
-      `El Dataflow contiene ${nombreComponente} que la plataforma aún no puede compilar.` +
-      parteSnippet +
-      ` Ábrelo en Qlik Cloud, localiza ese paso y simplifica o elimina la lógica de control. Luego pulsa "Actualizar" aquí.`
-    );
+    return `El Dataflow contiene ${nombreComponente} que la plataforma aún no puede compilar.${parteSnippet} Ábrelo en Qlik Cloud, localiza ese paso y simplifica o elimina la lógica de control. Luego pulsa "Actualizar" aquí.`;
   }
 
   // Fallback: include the raw diagnostic message which contains the function/operation name.
-  return (
-    `El Dataflow contiene un paso que la plataforma aún no puede compilar: ${diagnostico.message}.` +
-    parteSnippet +
-    ` Ábrelo en Qlik Cloud, localiza ese paso y corrígelo. Luego pulsa "Actualizar" aquí.`
-  );
-
+  return `El Dataflow contiene un paso que la plataforma aún no puede compilar: ${diagnostico.message}.${parteSnippet} Ábrelo en Qlik Cloud, localiza ese paso y corrígelo. Luego pulsa "Actualizar" aquí.`;
 }
+
+// El localizador del componente se comparte con el preflight.
 
 function limpiarDetalleTecnico(mensaje: string): string {
   if (/contains\s+validation\s+errors|InvalidDataflow/i.test(mensaje)) {
@@ -348,6 +348,11 @@ function detectarRangoTemporal(
     ["<", "<="].includes(filtro.operador),
   );
   const igualdad = relacionados.find((filtro) => filtro.operador === "=");
+  const fechaFinal = final?.valorPredeterminado
+    ? final.operador === "<"
+      ? desplazarFechaCalendario(final.valorPredeterminado, -1)
+      : final.valorPredeterminado
+    : igualdad?.valorPredeterminado;
   return {
     campo,
     ...((inicial?.valorPredeterminado ?? igualdad?.valorPredeterminado)
@@ -356,13 +361,33 @@ function detectarRangoTemporal(
             inicial?.valorPredeterminado ?? igualdad?.valorPredeterminado,
         }
       : {}),
-    ...((final?.valorPredeterminado ?? igualdad?.valorPredeterminado)
-      ? {
-          fechaFinal:
-            final?.valorPredeterminado ?? igualdad?.valorPredeterminado,
-        }
-      : {}),
+    ...(fechaFinal ? { fechaFinal } : {}),
   };
+}
+
+function desplazarFechaCalendario(valor: string, dias: number): string {
+  const iso = valor.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const qlik = valor.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!iso && !qlik) return valor;
+
+  const year = Number(iso?.[1] ?? qlik?.[3]);
+  const month = Number(iso?.[2] ?? qlik?.[1]);
+  const day = Number(iso?.[3] ?? qlik?.[2]);
+  const fecha = new Date(Date.UTC(year, month - 1, day));
+  if (
+    Number.isNaN(fecha.getTime()) ||
+    fecha.getUTCFullYear() !== year ||
+    fecha.getUTCMonth() !== month - 1 ||
+    fecha.getUTCDate() !== day
+  ) {
+    return valor;
+  }
+
+  fecha.setUTCDate(fecha.getUTCDate() + dias);
+  const yyyy = fecha.getUTCFullYear();
+  const mm = String(fecha.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(fecha.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function generarDescripcion(

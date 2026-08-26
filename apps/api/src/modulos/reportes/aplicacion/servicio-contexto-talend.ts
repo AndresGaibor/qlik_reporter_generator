@@ -1,13 +1,6 @@
 import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
 
-const VARIABLES_TALEND_LEGACY = {
-  bq_number_csv: { bloque: "BqNumberCsv", campo: "bqNumberCsv" },
-  bq_export_data: { bloque: "BqExportData", campo: "bqExportData" },
-  jobid: { bloque: "JobId", campo: "jobId" },
-  projectid: { bloque: "ProjectId", campo: "projectId" },
-} as const;
-
-const CONTEXTOS_TALEND_ACTUALES = {
+const CONTEXTOS_TALEND = {
   credenciales: { bloque: "Credenciales" },
   sql: { bloque: "sql" },
   job_id: { bloque: "jobid" },
@@ -22,34 +15,13 @@ export function inyectarContextoTalend(
   validarContratoTalend(copia);
   const blocks = Array.isArray(copia.blocks) ? copia.blocks : [];
 
-  if (usaContratoSql(blocks)) {
-    inyectarVariable(blocks, "sql", consultas.sql, "sql");
-    if (consultas.jobId !== undefined) {
-      inyectarVariable(blocks, "jobid", consultas.jobId, "job_id");
-    }
-    if (consultas.projectId !== undefined) {
-      inyectarVariable(
-        blocks,
-        "projectid",
-        consultas.projectId,
-        "id_projecto",
-      );
-    }
-    return copia;
+  inyectarVariable(blocks, "sql", consultas.sql, "sql");
+  if (consultas.jobId !== undefined) {
+    inyectarVariable(blocks, "jobid", consultas.jobId, "job_id");
   }
-
-  for (const [claveTalend, definicion] of Object.entries(
-    VARIABLES_TALEND_LEGACY,
-  )) {
-    if (!encontrarBloque(blocks, definicion.bloque)) {
-      continue;
-    }
-    const valor = consultas[definicion.campo as keyof ConsultasTalendBigQuery];
-    if (valor !== undefined) {
-      inyectarVariable(blocks, definicion.bloque, valor, claveTalend);
-    }
+  if (consultas.projectId !== undefined) {
+    inyectarVariable(blocks, "projectid", consultas.projectId, "id_projecto");
   }
-
   return copia;
 }
 
@@ -58,12 +30,7 @@ export function diagnosticarContratoTalend(
 ): string[] {
   const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
   const problemas: string[] = [];
-  const contextos = usaContratoSql(blocks)
-    ? CONTEXTOS_TALEND_ACTUALES
-    : {
-        credenciales: { bloque: "Credenciales" },
-        ...VARIABLES_TALEND_LEGACY,
-      };
+  const contextos = CONTEXTOS_TALEND;
 
   const executeTask = encontrarBloque(blocks, "executeTask");
   if (!executeTask) {
@@ -127,28 +94,6 @@ export function validarContratoTalend(
   if (problemas.length > 0) {
     throw new Error(problemas.join("; "));
   }
-}
-
-function usaContratoSql(blocks: unknown[]): boolean {
-  if (encontrarBloque(blocks, "sql")) return true;
-
-  const executeTask = encontrarBloque(blocks, "executeTask");
-  const inputs = Array.isArray(executeTask?.inputs) ? executeTask.inputs : [];
-  return inputs.some((input) => {
-    if (
-      typeof input !== "object" ||
-      input === null ||
-      !Array.isArray((input as Record<string, unknown>).value)
-    ) {
-      return false;
-    }
-    return ((input as Record<string, unknown>).value as unknown[]).some(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        (item as Record<string, unknown>).key === "sql",
-    );
-  });
 }
 
 function inyectarVariable(

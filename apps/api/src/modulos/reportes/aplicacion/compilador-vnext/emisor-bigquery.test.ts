@@ -160,7 +160,9 @@ describe("emisión BigQuery vNext fase 1", () => {
   });
 
   it("fusiona de forma segura el flujo real de Ventas sin subconsultas redundantes", async () => {
-    const result = await compile("regression-ventas-mensuales-dataflow-style.qlik");
+    const result = await compile(
+      "regression-ventas-mensuales-dataflow-style.qlik",
+    );
 
     expect(result.strategy).toBe("single_query");
     expect(result.sql).toContain("INNER JOIN");
@@ -173,6 +175,39 @@ describe("emisión BigQuery vNext fase 1", () => {
     expect(result.sql).toContain("AS `Año`");
     expect(result.sql).not.toContain("`Año_year`");
     expect(result.sql).not.toMatch(/FROM \(\s*SELECT[\s\S]*FROM \(/);
+  });
+
+  it("factoriza una relación compartida para no duplicar su subgrafo SQL", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD id, categoria, monto;
+      SQL SELECT id, categoria, monto FROM \`p.d.ventas\`;
+
+      [Agregada]:
+      NOCONCATENATE
+      LOAD id, categoria, Sum(monto) AS total
+      RESIDENT [Base]
+      GROUP BY id, categoria;
+
+      [Rama]:
+      NOCONCATENATE
+      LOAD id, total AS left_total
+      RESIDENT [Agregada]
+      WHERE categoria = 'A';
+
+      OUTER JOIN([Rama])
+      LOAD id, total AS right_total
+      RESIDENT [Agregada];
+
+      [Salida]:
+      NOCONCATENATE
+      LOAD id, left_total, right_total
+      RESIDENT [Rama];
+    `);
+
+    expect(result.sql).toMatch(/^WITH shared_r\d+ AS \(/);
+    expect(result.sql.match(/FROM `p\.d\.ventas`/g)).toHaveLength(1);
+    expect(result.sql.match(/SUM\(`monto`\)/g)).toHaveLength(1);
   });
 });
 

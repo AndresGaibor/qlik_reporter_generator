@@ -117,6 +117,14 @@ export function eliminarDirectorioCarpetaUsuarioGcs(ruta: string) {
   );
 }
 
+export function urlCsvParteCarpetaUsuarioGcs(
+  ruta: string,
+  archivo: string,
+): string {
+  const query = new URLSearchParams({ ruta, archivo }).toString();
+  return `/api/descargas/carpeta/csv?${query}`;
+}
+
 export function urlZipCarpetaUsuarioGcs(ruta = ""): string {
   const query = new URLSearchParams(ruta ? { ruta } : {}).toString();
   return `/api/descargas/carpeta/zip${query ? `?${query}` : ""}`;

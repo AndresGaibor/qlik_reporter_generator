@@ -9,13 +9,25 @@ import {
   cerrarSesion,
   obtenerSesion,
 } from "@/modulos/autenticacion/api";
+import {
+  decidirAccionSesionWebQlik,
+  verificarSesionWebQlik,
+} from "@/modulos/autenticacion/verificar-sesion-web-qlik";
 import { obtenerEstadoSetup } from "@/modulos/setup/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BarraUsuario, HeaderLink } from "./componentes-header";
 import { VistaContext } from "./contexto-vista";
 import { NAVEGACION } from "./navegacion";
+
+const WEB_INTEGRATION_ID =
+  import.meta.env.VITE_QLIK_WEB_INTEGRATION_ID?.trim() ?? "";
+const INTERVALO_VERIFICACION_QLIK_MS = 60_000;
+
+function claveSesionWebVerificada(tenantHost: string): string {
+  return `qlik-report:sesion-web-verificada:${tenantHost}:${WEB_INTEGRATION_ID}`;
+}
 
 export function LayoutPrincipal() {
   const navegar = useNavigate();
@@ -24,6 +36,7 @@ export function LayoutPrincipal() {
   const { mostrarError } = useNotificaciones();
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   const [modoUsuarioFinal, setModoUsuarioFinal] = useState(false);
+  const cierreAutomaticoEnCurso = useRef(false);
 
   const esLogin = ubicacion.pathname === "/login";
   const esSetup = ubicacion.pathname === "/setup";
@@ -65,6 +78,73 @@ export function LayoutPrincipal() {
     },
     onError: (error: Error) => mostrarError(error.message),
   });
+
+  useEffect(() => {
+    const sesion = consulta.data;
+    if (!sesion || esLogin || esSetup || !WEB_INTEGRATION_ID) return;
+
+    let cancelada = false;
+    const claveVerificada = claveSesionWebVerificada(sesion.tenantHost);
+
+    const comprobarSesionQlik = async () => {
+      const estado = await verificarSesionWebQlik({
+        tenantHost: sesion.tenantHost,
+        webIntegrationId: WEB_INTEGRATION_ID,
+      });
+      if (cancelada) return;
+
+      let verificadaAntes = false;
+      try {
+        verificadaAntes = window.localStorage.getItem(claveVerificada) === "1";
+      } catch {
+        // El almacenamiento puede estar deshabilitado; no debe romper la app.
+      }
+
+      const accion = decidirAccionSesionWebQlik(estado, verificadaAntes);
+      if (accion === "marcar_verificada") {
+        try {
+          window.localStorage.setItem(claveVerificada, "1");
+        } catch {
+          // Sin almacenamiento, mantenemos la sesión local sin falsos positivos.
+        }
+        return;
+      }
+
+      if (accion !== "cerrar" || cierreAutomaticoEnCurso.current) return;
+      cierreAutomaticoEnCurso.current = true;
+      try {
+        await cerrarSesion();
+        queryClient.clear();
+        navegar({ to: "/login", replace: true });
+      } catch (error) {
+        cierreAutomaticoEnCurso.current = false;
+        mostrarError(
+          error instanceof Error
+            ? error.message
+            : "No se pudo cerrar la sesión local después de cerrar Qlik Cloud.",
+        );
+      }
+    };
+
+    void comprobarSesionQlik();
+    const intervalo = window.setInterval(
+      () => void comprobarSesionQlik(),
+      INTERVALO_VERIFICACION_QLIK_MS,
+    );
+    const alRecuperarFoco = () => void comprobarSesionQlik();
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible") void comprobarSesionQlik();
+    };
+    window.addEventListener("focus", alRecuperarFoco);
+    document.addEventListener("visibilitychange", alCambiarVisibilidad);
+
+    return () => {
+      cancelada = true;
+      window.clearInterval(intervalo);
+      window.removeEventListener("focus", alRecuperarFoco);
+      document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+    };
+  }, [consulta.data, esLogin, esSetup, mostrarError, navegar, queryClient]);
 
   useEffect(() => {
     if (!esLogin && consulta.error instanceof ErrorClienteApi) {

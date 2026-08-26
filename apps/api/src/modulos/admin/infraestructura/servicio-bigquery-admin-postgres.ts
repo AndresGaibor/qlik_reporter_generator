@@ -21,6 +21,7 @@ export interface EntradaGuardarBigQueryAdmin {
   clientEmail?: string;
   limiteMiB?: number;
   limiteUsd?: number;
+  maximoFilasPorArchivo: number;
   precioUsdPorTib: number;
 }
 
@@ -42,7 +43,11 @@ export class ServicioBigQueryAdminPostgres {
     });
 
     if (!fila) {
-      return { configurada: false, credencialesConfiguradas: false };
+      return {
+        configurada: false,
+        credencialesConfiguradas: false,
+        maximoFilasPorArchivo: 1_000_000,
+      };
     }
 
     const config = fila.config as Record<string, unknown>;
@@ -62,6 +67,10 @@ export class ServicioBigQueryAdminPostgres {
       clientEmail:
         typeof config.clientEmail === "string" ? config.clientEmail : undefined,
       credencialesConfiguradas: Boolean(secretos.credencialesJson),
+      maximoFilasPorArchivo:
+        typeof config.maximoFilasPorArchivo === "number"
+          ? config.maximoFilasPorArchivo
+          : 1_000_000,
       mensajeError: fila.mensajeError,
     };
   }
@@ -174,6 +183,7 @@ export class ServicioBigQueryAdminPostgres {
       ...(entrada.limiteUsd === undefined
         ? {}
         : { limiteUsd: entrada.limiteUsd }),
+      maximoFilasPorArchivo: entrada.maximoFilasPorArchivo,
       precioUsdPorTib: entrada.precioUsdPorTib,
     };
 
@@ -209,6 +219,7 @@ export class ServicioBigQueryAdminPostgres {
       gcsUri: config.gcsUri,
       clientEmail: entrada.clientEmail,
       credencialesConfiguradas: true,
+      maximoFilasPorArchivo: entrada.maximoFilasPorArchivo,
       mensajeError: null,
     };
   }

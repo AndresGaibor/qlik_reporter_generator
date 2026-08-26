@@ -117,6 +117,15 @@ export class ClienteGcs implements PuertoAlmacenamientoDescargas {
       .createReadStream();
   }
 
+  abrirEscritura(nombreObjeto: string) {
+    return this.storage.bucket(this.bucket).file(nombreObjeto).createWriteStream({
+      resumable: false,
+      contentType: nombreObjeto.toLowerCase().endsWith(".gz")
+        ? "application/gzip"
+        : "text/csv; charset=utf-8",
+    });
+  }
+
   async firmar(nombreObjeto: string, minutos: number): Promise<string> {
     const archivo = this.storage.bucket(this.bucket).file(nombreObjeto);
 

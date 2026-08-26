@@ -6,6 +6,7 @@ import type {
 import type { PlanDataflow } from "../dominio/plan-dataflow.js";
 import { compilarDataflowVNext } from "./compilador-vnext/index.js";
 import { ErrorCompilacionVNext } from "./compilador-vnext/modelo.js";
+import { localizarComponenteDataflow } from "./contexto-diagnostico-dataflow.js";
 import { parsearDataflow } from "./parser-dataflow.js";
 
 export interface LectorScriptDataflow {
@@ -166,12 +167,16 @@ export async function prepararDataflowActual(
       resumen,
     };
   } catch (error) {
-    const detalle =
-      error instanceof ErrorCompilacionVNext
-        ? `${error.diagnostic.code}: ${error.diagnostic.message}`
-        : error instanceof Error
+    let detalle: string;
+    if (error instanceof ErrorCompilacionVNext) {
+      const componente = localizarComponenteDataflow(script, error.diagnostic);
+      detalle = `${error.diagnostic.code}: ${componente ? `componente "${componente}": ` : ""}${error.diagnostic.message}`;
+    } else {
+      detalle =
+        error instanceof Error
           ? error.message
           : "El compilador vNext no pudo procesar el Dataflow";
+    }
     return {
       flujoIdQlik,
       scriptDataflow: script,

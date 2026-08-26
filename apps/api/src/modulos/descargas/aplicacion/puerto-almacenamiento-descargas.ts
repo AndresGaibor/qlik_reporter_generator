@@ -1,4 +1,4 @@
-import type { Readable } from "node:stream";
+import type { Readable, Writable } from "node:stream";
 import { URI_BASE_GCS_REPORTES } from "../../reportes/dominio/destino-gcs.js";
 
 export const BUCKET_GCS_PERMITIDO = "bkt_dwh";
@@ -26,6 +26,7 @@ export interface PuertoAlmacenamientoDescargas {
   eliminarArchivo?(nombreObjeto: string): Promise<void>;
   eliminarPrefijo?(prefijo: string): Promise<number>;
   abrirLectura?(nombreObjeto: string): Readable;
+  abrirEscritura?(nombreObjeto: string): Writable;
 }
 
 export function parsearUriGcsPermitida(uri: string): {

@@ -33,6 +33,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   const [editando, setEditando] = useState(false);
   const [dataset, setDataset] = useState("");
   const [gcsUri, setGcsUri] = useState("gs://bkt_dwh/POCs/TalendDescargados/");
+  const [maximoFilasPorArchivo, setMaximoFilasPorArchivo] = useState(1_000_000);
   const [credencialesJson, setCredencialesJson] = useState("");
   const consulta = useQuery({
     queryKey: [CLAVE_CONSULTA, organizacionId, tenantQlikId],
@@ -44,7 +45,12 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   useEffect(() => {
     if (configuracion?.dataset !== undefined) setDataset(configuracion.dataset);
     if (configuracion?.gcsUri) setGcsUri(configuracion.gcsUri);
-  }, [configuracion?.dataset, configuracion?.gcsUri]);
+    setMaximoFilasPorArchivo(configuracion?.maximoFilasPorArchivo ?? 1_000_000);
+  }, [
+    configuracion?.dataset,
+    configuracion?.gcsUri,
+    configuracion?.maximoFilasPorArchivo,
+  ]);
   const analisis = useMemo(
     () =>
       credencialesJson.trim()
@@ -70,6 +76,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
       return guardarConfiguracionBigQuery(organizacionId, tenantQlikId, {
         dataset: dataset.trim(),
         gcsUri: gcsUri.trim(),
+        maximoFilasPorArchivo,
         ...(credencialesJson.trim()
           ? { credencialesJson: credencialesJson.trim() }
           : {}),
@@ -113,6 +120,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
   const cancelar = () => {
     setDataset(configuracion?.dataset ?? "");
     setGcsUri(configuracion?.gcsUri ?? "gs://bkt_dwh/POCs/TalendDescargados/");
+    setMaximoFilasPorArchivo(configuracion?.maximoFilasPorArchivo ?? 1_000_000);
     setCredencialesJson("");
     setEditando(false);
   };
@@ -153,6 +161,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
             configuracion={configuracion}
             dataset={dataset}
             gcsUri={gcsUri}
+            maximoFilasPorArchivo={maximoFilasPorArchivo}
             credencialesJson={credencialesJson}
             analisis={analisis}
             habilitado={habilitado}
@@ -160,6 +169,7 @@ export function SeccionBigQuery({ organizacionId, tenantQlikId }: Props) {
             mostrarCancelar={configurada}
             onDataset={setDataset}
             onGcsUri={setGcsUri}
+            onMaximoFilasPorArchivo={setMaximoFilasPorArchivo}
             onCredenciales={setCredencialesJson}
             onCancelar={cancelar}
             onGuardar={() => guardar.mutate()}

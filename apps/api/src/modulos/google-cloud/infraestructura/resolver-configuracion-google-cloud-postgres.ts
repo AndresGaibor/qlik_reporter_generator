@@ -8,6 +8,7 @@ export interface ConfiguracionGoogleCloud {
   projectId: string;
   dataset: string;
   gcsUri: string;
+  maximoFilasPorArchivo: number;
   credencialesJson: string;
   secretoRefs: Record<string, unknown>;
 }
@@ -46,6 +47,13 @@ export class ResolverConfiguracionGoogleCloudPostgres {
       typeof config.gcsUri === "string" && config.gcsUri.trim()
         ? config.gcsUri.trim()
         : "gs://bkt_dwh/POCs/TalendDescargados/";
+    const maximoFilasPorArchivo =
+      typeof config.maximoFilasPorArchivo === "number" &&
+      Number.isInteger(config.maximoFilasPorArchivo) &&
+      config.maximoFilasPorArchivo > 0 &&
+      config.maximoFilasPorArchivo <= 1_000_000
+        ? config.maximoFilasPorArchivo
+        : 1_000_000;
 
     if (!projectId || !dataset) {
       throw new ErrorAplicacion(
@@ -74,6 +82,13 @@ export class ResolverConfiguracionGoogleCloudPostgres {
       );
     }
 
-    return { projectId, dataset, gcsUri, credencialesJson, secretoRefs };
+    return {
+      projectId,
+      dataset,
+      gcsUri,
+      maximoFilasPorArchivo,
+      credencialesJson,
+      secretoRefs,
+    };
   }
 }

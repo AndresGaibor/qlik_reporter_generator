@@ -25,6 +25,21 @@ describe("configuración BigQuery", () => {
     ).toBe("demo_lafavorita");
   });
 
+  it("acepta un máximo configurable de filas por CSV y limita a un millón", () => {
+    expect(
+      esquemaConfigurarBigQuery.parse({
+        dataset: "demo_lafavorita",
+        maximoFilasPorArchivo: 250_000,
+      }).maximoFilasPorArchivo,
+    ).toBe(250_000);
+    expect(() =>
+      esquemaConfigurarBigQuery.parse({
+        dataset: "demo_lafavorita",
+        maximoFilasPorArchivo: 1_000_001,
+      }),
+    ).toThrow();
+  });
+
   it("rechaza credenciales que no son service_account", () => {
     expect(() =>
       esquemaCredencialesBigQuery.parse({ ...credenciales, type: "user" }),

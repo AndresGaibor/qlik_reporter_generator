@@ -62,20 +62,28 @@ describe("resumirDataflowParaUsuario", () => {
     });
   });
 
-  it("separa un WHERE compuesto en filtros desde/hasta", () => {
+  it("separa un WHERE compuesto y resume el límite final exclusivo como el último día incluido", () => {
     const resumen = resumir(`${encabezado}
-      [base]: LOAD [Fecha], [Total]; SELECT Fecha, Total FROM ` + "`p.d.ventas`" + `;
+      [base]: LOAD [Fecha], [Total]; SELECT Fecha, Total FROM \`p.d.ventas\`;
       [salida]: LOAD [Fecha], [Total] RESIDENT [base]
       WHERE [Fecha] >= '2026-07-01' AND [Fecha] < '2026-08-01';`);
 
     expect(resumen.filtros).toEqual([
-      expect.objectContaining({ campo: "Fecha", operador: ">=", valorPredeterminado: "2026-07-01" }),
-      expect.objectContaining({ campo: "Fecha", operador: "<", valorPredeterminado: "2026-08-01" }),
+      expect.objectContaining({
+        campo: "Fecha",
+        operador: ">=",
+        valorPredeterminado: "2026-07-01",
+      }),
+      expect.objectContaining({
+        campo: "Fecha",
+        operador: "<",
+        valorPredeterminado: "2026-08-01",
+      }),
     ]);
     expect(resumen.rangoTemporal).toEqual({
       campo: "Fecha",
       fechaInicial: "2026-07-01",
-      fechaFinal: "2026-08-01",
+      fechaFinal: "2026-07-31",
     });
   });
 
@@ -138,5 +146,29 @@ describe("resumirDataflowParaUsuario", () => {
 
     expect(resumen.estado).toBe("script_no_compatible");
     expect(resumen.advertencias.join(" ")).toContain("Bifurcación");
+  });
+
+  it("identifica el componente exacto de Qlik cuando falla una expresión dentro de un filtro con CRLF", () => {
+    const script = `${encabezado}
+      [Calcular campos 1]:
+      LOAD
+        [NOM_TIPO_UOP],
+        If([NOM_TIPO_UOP] = 'TIENDA', 1, 0) AS [FILTRO_UOP];
+      SQL SELECT NOM_TIPO_UOP FROM \`p.d.unidades\`;
+
+      INNER JOIN([Calcular campos 1])
+      // [Seleccionar campos 1], [Filtro 2_DEFAULT]
+      LOAD [NOM_TIPO_UOP], [FILTRO_UOP];
+      LOAD [NOM_TIPO_UOP], [FILTRO_UOP]
+      RESIDENT [Calcular campos 1]
+      WHERE NOT (CountRegEx([NOM_TIPO_UOP], [FILTRO_UOP]));
+    `.replace(/\n/g, "\r\n");
+    const resumen = resumir(script);
+
+    expect(resumen.estado).toBe("script_no_compatible");
+    expect(resumen.advertencias.join(" ")).toContain(
+      'componente "Filtro 2_DEFAULT"',
+    );
+    expect(resumen.advertencias.join(" ")).toContain("CountRegEx");
   });
 });

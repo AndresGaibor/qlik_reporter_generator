@@ -334,6 +334,26 @@ describe("parser de expresiones Qlik vNext / parser, texto, JSON y regex", () =>
     expect(index).toContain("ARRAY_LENGTH(");
   });
 
+  it("IndexRegEx admite patrones dinámicos para ocurrencias positivas", () => {
+    const first = compile("IndexRegEx([texto], [patron])");
+    expect(first).toContain(
+      "REGEXP_INSTR(CAST(`texto` AS STRING), CAST(`patron` AS STRING), 1, 1)",
+    );
+    expect(first).not.toContain("REGEXP_EXTRACT_ALL");
+
+    const second = compile("IndexRegEx([texto], [patron], 2)");
+    expect(second).toContain(
+      "REGEXP_INSTR(CAST(`texto` AS STRING), CAST(`patron` AS STRING), 1, 2)",
+    );
+  });
+
+  it("IndexRegEx rechaza búsqueda inversa con patrón dinámico", () => {
+    expectCode(
+      () => compile("IndexRegEx([texto], [patron], -1)"),
+      "REGEX_DYNAMIC_PATTERN_REVERSE_UNSUPPORTED",
+    );
+  });
+
   it("MatchRegEx exige match completo y conserva la variante I", () => {
     const exact = compile("MatchRegEx([texto], '[a-z]+', '[0-9]+')");
     expect(exact).toContain("REGEXP_CONTAINS");

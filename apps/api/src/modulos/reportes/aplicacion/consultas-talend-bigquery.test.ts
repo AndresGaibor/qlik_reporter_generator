@@ -25,37 +25,13 @@ describe("construirConsultasTalendBigQuery", () => {
     expect(consultas.sql).not.toContain("__finalizado__");
   });
 
-  it("genera las dos consultas directas que espera el Job actual", () => {
+  it("expone únicamente el contrato moderno", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
 
-    expect(consultas.bqNumberCsv).toContain("GENERATE_ARRAY");
-    expect(consultas.bqNumberCsv).toContain("CEIL(total_rows / 1000000.0)");
-    expect(consultas.bqNumberCsv).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqExportData).toContain("parte-__PART_PADDED__-*.csv'");
-    expect(consultas.bqExportData).toContain(
-      "BETWEEN __START_ROW__ AND __END_ROW__",
-    );
-    expect(consultas.bqExportData).toContain("Fecha = DATE '2026-06-01'");
-    expect(consultas.bqExportData).not.toContain("compression");
-    expect(consultas.bqExportData).toContain("__finalizado__-*.csv");
-    expect(consultas.bqExportData).toContain("SELECT 'ok' AS estado");
-    expect(consultas.bqExportData).not.toContain("CREATE OR REPLACE TABLE");
-    expect(consultas.bqExportData).not.toContain("DROP TABLE");
+    expect(Object.keys(consultas).sort()).toEqual(["jobId", "projectId", "sql"]);
   });
 
-  it("no crea ni consulta tablas temporales", () => {
-    const consultas = construirConsultasTalendBigQuery(entrada);
-    expect(consultas.bqNumberCsv).not.toContain("__qlik_reportes_");
-    expect(consultas.bqExportData).not.toContain("__qlik_reportes_");
-  });
-
-  it("mantiene el máximo Excel en 1.000.000 y rechaza entradas inseguras", () => {
-    expect(() =>
-      construirConsultasTalendBigQuery({
-        ...entrada,
-        maximoFilasPorArchivo: 1_000_001,
-      }),
-    ).toThrow("1.000.000");
+  it("rechaza entradas inseguras", () => {
     expect(() =>
       construirConsultasTalendBigQuery({
         ...entrada,

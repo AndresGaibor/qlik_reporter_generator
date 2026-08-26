@@ -69,6 +69,76 @@ describe("PreflightDataflow", () => {
     expect(estimador.estimarConsulta).not.toHaveBeenCalled();
   });
 
+  it("incluye el componente exacto de Qlik en un diagnóstico de compilación", async () => {
+    const script = `
+      LIB CONNECT TO [Google BigQuery:Produccion];
+      [Calcular campos 1]:
+      LOAD [NOM_TIPO_UOP], If([NOM_TIPO_UOP] = 'TIENDA', 1, 0) AS [FILTRO_UOP];
+      SQL SELECT NOM_TIPO_UOP FROM \`proyecto.dataset.unidades\`;
+
+      INNER JOIN([Calcular campos 1])
+      // [Seleccionar campos 1], [Filtro 2_DEFAULT]
+      LOAD [NOM_TIPO_UOP], [FILTRO_UOP];
+      LOAD [NOM_TIPO_UOP], [FILTRO_UOP]
+      RESIDENT [Calcular campos 1]
+      WHERE NOT (CountRegEx([NOM_TIPO_UOP], [FILTRO_UOP]));
+    `.replace(/\n/g, "\r\n");
+    const qlik = { obtenerScriptApp: vi.fn(async () => ({ script })) };
+    const estimador = {
+      estimarConsulta: vi.fn(async () => ({
+        bytesProcesados: 1,
+        costoEstimadoUsd: 0,
+      })),
+    };
+
+    const resultado = await new PreflightDataflow(qlik, estimador, {
+      projectId: "proyecto",
+      dataset: "dataset",
+    }).ejecutar("bq-inventario");
+
+    expect(resultado.compatible).toBe(false);
+    expect(resultado.operacionesNoSoportadas.join(" ")).toContain(
+      'componente "Filtro 2_DEFAULT"',
+    );
+    expect(resultado.operacionesNoSoportadas.join(" ")).toContain(
+      "FUNCTION_LITERAL_FORMAT_REQUIRED",
+    );
+    expect(estimador.estimarConsulta).not.toHaveBeenCalled();
+  });
+
+  it("compila IndexRegEx con patrón dinámico como BQ_Inventario", async () => {
+    const script = `
+      LIB CONNECT TO [Google BigQuery:Produccion];
+      [Calcular campos 1]:
+      LOAD [NOM_TIPO_UOP], If([NOM_TIPO_UOP] = 'TIENDA', 1, 0) AS [FILTRO_UOP];
+      SQL SELECT NOM_TIPO_UOP FROM \`proyecto.dataset.unidades\`;
+
+      [Salida]:
+      LOAD [NOM_TIPO_UOP], [FILTRO_UOP]
+      RESIDENT [Calcular campos 1]
+      WHERE NOT (IndexRegEx([NOM_TIPO_UOP], [FILTRO_UOP]));
+    `;
+    const qlik = { obtenerScriptApp: vi.fn(async () => ({ script })) };
+    const estimador = {
+      estimarConsulta: vi.fn(async () => ({
+        bytesProcesados: 1,
+        costoEstimadoUsd: 0,
+      })),
+    };
+
+    const resultado = await new PreflightDataflow(qlik, estimador, {
+      projectId: "proyecto",
+      dataset: "dataset",
+    }).ejecutar("bq-inventario-index-regex-dinamico");
+
+    expect(resultado.compatible).toBe(true);
+    expect(resultado.operacionesNoSoportadas).toEqual([]);
+    expect(resultado.sqlBigQuery).toContain(
+      "REGEXP_INSTR(CAST(`NOM_TIPO_UOP` AS STRING), CAST(`FILTRO_UOP` AS STRING), 1, 1)",
+    );
+    expect(estimador.estimarConsulta).toHaveBeenCalledTimes(1);
+  });
+
   it("compila con vNext Num minúsculo y preceding LOAD como el reporte BQ_Ventas_M", async () => {
     const script =
       `

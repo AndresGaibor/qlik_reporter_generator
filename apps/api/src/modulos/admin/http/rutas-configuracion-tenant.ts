@@ -43,6 +43,7 @@ export interface DependenciasRutasConfiguracionTenant {
     clientEmail?: string;
     limiteMiB?: number;
     limiteUsd?: number;
+    maximoFilasPorArchivo: number;
     precioUsdPorTib: number;
   }) => Promise<ConfiguracionBigQuery>;
 }
@@ -220,6 +221,7 @@ export function crearRutasConfiguracionTenant({
           ...(clientEmail ? { clientEmail } : {}),
           ...(entrada.limiteMiB ? { limiteMiB: entrada.limiteMiB } : {}),
           ...(entrada.limiteUsd ? { limiteUsd: entrada.limiteUsd } : {}),
+          maximoFilasPorArchivo: entrada.maximoFilasPorArchivo,
           precioUsdPorTib: entrada.precioUsdPorTib,
         }),
       );

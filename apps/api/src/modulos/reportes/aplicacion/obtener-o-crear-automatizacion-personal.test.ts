@@ -19,7 +19,7 @@ const ctx = {
 
 async function workspaceValido() {
   const fixture = new URL(
-    "../fixtures/automate-talend-workspace.sanitized.json",
+    "../fixtures/automate-talend-workspace-sql.sanitized.json",
     import.meta.url,
   );
   return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
@@ -156,7 +156,7 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
   it("valida la plantilla antes de copiar y detalla todos los bloques faltantes", async () => {
     const workspace = await workspaceValido();
     const blocks = workspace.blocks as Array<Record<string, unknown>>;
-    workspace.blocks = blocks.filter((block) => block.name !== "BqExportData");
+    workspace.blocks = blocks.filter((block) => block.name !== "sql");
     const qlik = {
       obtenerAutomatizacion: vi.fn(async () => ({ workspace })),
       copiarAutomatizacion: vi.fn(),
@@ -166,7 +166,7 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     });
     await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
       codigo: "WORKER_TEMPLATE_INCOMPATIBLE",
-      message: expect.stringContaining('Falta el bloque "BqExportData"'),
+      message: expect.stringContaining('Falta el bloque "sql"'),
     });
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
   });

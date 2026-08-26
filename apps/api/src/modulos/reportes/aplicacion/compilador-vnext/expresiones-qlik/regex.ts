@@ -55,8 +55,21 @@ export function emitIndexRegEx(
 ): string {
   arityRange(originalName, args, 2, 3);
   const text = `CAST(${emitValue(requiredArgument(args[0]), environment)} AS STRING)`;
+  const patternExpression = requiredArgument(args[1]);
+
+  if (patternExpression.kind !== "string") {
+    const occurrence = args[2]
+      ? literalDynamicRegexOccurrence(args[2], originalName)
+      : 1;
+    const dynamicPattern = `CAST(${emitValue(patternExpression, environment)} AS STRING)`;
+    const pattern = insensitive
+      ? `CONCAT('(?i:', ${dynamicPattern}, ')')`
+      : dynamicPattern;
+    return `CASE WHEN ${text} IS NULL OR ${dynamicPattern} IS NULL THEN NULL ELSE REGEXP_INSTR(${text}, ${pattern}, 1, ${occurrence}) END`;
+  }
+
   const pattern = quoteString(
-    prepararRegexQlik(requiredArgument(args[1]), originalName, insensitive),
+    prepararRegexQlik(patternExpression, originalName, insensitive),
   );
   const count = args[2]
     ? `CAST(TRUNC(${emitNumericValue(args[2], environment)}) AS INT64)`
@@ -64,6 +77,38 @@ export function emitIndexRegEx(
   const matches = `REGEXP_EXTRACT_ALL(${text}, ${pattern})`;
   const fromRight = `ARRAY_LENGTH(${matches}) + ${count} + 1`;
   return `CASE WHEN ${text} IS NULL OR ${count} IS NULL THEN NULL WHEN ${count} > 0 THEN REGEXP_INSTR(${text}, ${pattern}, 1, ${count}) WHEN ${count} < 0 AND ${fromRight} > 0 THEN REGEXP_INSTR(${text}, ${pattern}, 1, ${fromRight}) ELSE 0 END`;
+}
+
+function literalDynamicRegexOccurrence(
+  expression: ExprQlik,
+  originalName: string,
+): number {
+  let raw: string | undefined;
+  if (expression.kind === "number") raw = expression.raw;
+  else if (
+    expression.kind === "unary" &&
+    ["+", "-"].includes(expression.operator) &&
+    expression.operand.kind === "number"
+  )
+    raw = `${expression.operator}${expression.operand.raw}`;
+
+  if (!raw || !/^[+-]?\d+$/.test(raw))
+    fail(
+      "REGEX_DYNAMIC_PATTERN_OCCURRENCE_LITERAL_REQUIRED",
+      `${originalName} con patrón dinámico requiere una ocurrencia entera literal positiva`,
+      originalName,
+      0,
+    );
+
+  const occurrence = Number(raw);
+  if (occurrence <= 0)
+    fail(
+      "REGEX_DYNAMIC_PATTERN_REVERSE_UNSUPPORTED",
+      `${originalName} con patrón dinámico solo admite ocurrencias positivas en esta fase`,
+      originalName,
+      0,
+    );
+  return occurrence;
 }
 
 export function emitMatchRegEx(

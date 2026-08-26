@@ -21,7 +21,11 @@ export interface DependenciasRutasDescargas {
   resolverJobsBigQuery?: (c: Context) => Promise<PuertoJobsBigQuery>;
   resolverConfiguracionGcs?: (
     c: Context,
-  ) => Promise<{ bucket: string; prefijo: string }>;
+  ) => Promise<{
+    bucket: string;
+    prefijo: string;
+    maximoFilasPorArchivo?: number;
+  }>;
   resolverUsuariosOrganizacion?: (
     organizacionId: string,
   ) => Promise<Array<{ id: string; correo: string | null }>>;

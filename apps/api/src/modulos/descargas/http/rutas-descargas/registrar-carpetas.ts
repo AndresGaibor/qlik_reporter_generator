@@ -1,7 +1,13 @@
-import { Readable } from "node:stream";
+import { PassThrough, Readable } from "node:stream";
 import { ZipArchive } from "archiver";
 import type { Hono } from "hono";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
+import {
+  abrirCsvFuente,
+  esDirectorioCacheDescargas,
+  MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
+  particionarCsvDescarga,
+} from "../../aplicacion/particionar-csv-descarga.js";
 import {
   responderError,
   responderExito,
@@ -54,9 +60,8 @@ export function registrarRutasCarpeta(
     const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
     try {
       const prefijoUsuario = `${configuracion.prefijo}${carpetaUsuario}/`;
-      const resultado = await almacenamiento.listarDirectorio(
-        `${prefijoUsuario}${subruta}`,
-      );
+      const prefijoDirectorio = `${prefijoUsuario}${subruta}`;
+      const resultado = await almacenamiento.listarDirectorio(prefijoDirectorio);
       const ejecuciones = subruta
         ? await dependencias.repositorioReportes.listarEjecucionesDescargas(
             {
@@ -69,7 +74,9 @@ export function registrarRutasCarpeta(
           )
         : [];
       const presentacionCarpetas = presentarCarpetasEjecucion(
-        resultado.carpetas,
+        resultado.carpetas.filter(
+          (carpeta) => !esDirectorioCacheDescargas(carpeta),
+        ),
         ejecuciones,
         subruta,
       );
@@ -81,12 +88,15 @@ export function registrarRutasCarpeta(
         carpetas: presentacionCarpetas.carpetas,
         carpetasEjecucion: presentacionCarpetas.carpetasEjecucion,
         ejecucionActual: presentacionCarpetas.ejecucionActual,
-        archivos: resultado.archivos.map((a) => ({
-          nombre: a.nombre,
-          formato: a.formato,
-          tamano: a.tamanoBytes,
-          fecha: a.fecha ?? null,
-        })),
+        archivos: resultado.archivos.map((archivo) => {
+          const presentado = presentarArchivoFuente(archivo.nombre, archivo.formato);
+          return {
+            nombre: presentado.nombre,
+            formato: presentado.formato,
+            tamano: archivo.tamanoBytes,
+            fecha: archivo.fecha ?? null,
+          };
+        }),
       });
     } catch (error) {
       return responderErrorGcs(c, error);
@@ -118,9 +128,8 @@ export function registrarRutasCarpeta(
       );
     try {
       const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
-      const directorio = await almacenamiento.listarDirectorio(
-        `${configuracion.prefijo}${carpetaUsuario}/${subruta}`,
-      );
+      const prefijoDirectorio = `${configuracion.prefijo}${carpetaUsuario}/${subruta}`;
+      const directorio = await almacenamiento.listarDirectorio(prefijoDirectorio);
       if (directorio.archivos.length === 0)
         return responderError(
           c,
@@ -130,12 +139,37 @@ export function registrarRutasCarpeta(
             codigo: "CARPETA_SIN_ARCHIVOS",
           },
         );
+      const fuentesCsv = directorio.archivos.filter((archivo) =>
+        /\.csv(?:\.gz)?$/i.test(archivo.nombre),
+      );
+      if (fuentesCsv.length === 0)
+        return responderError(
+          c,
+          "La carpeta actual no contiene CSV para descargar",
+          422,
+          { codigo: "CSV_FUENTE_NO_DISPONIBLE" },
+        );
+
       const zip = new ZipArchive({ store: true });
-      for (const archivo of directorio.archivos)
-        zip.append(almacenamiento.abrirLectura(archivo.rutaCompleta), {
-          name: archivo.nombre,
+      void particionarCsvDescarga(
+        almacenamiento,
+        fuentesCsv,
+        configuracion.maximoFilasPorArchivo ??
+          MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
+        (nombre) => {
+          const entrada = new PassThrough();
+          zip.append(entrada, { name: nombre });
+          return entrada;
+        },
+      )
+        .then(() => zip.finalize())
+        .catch((error) => {
+          zip.destroy(
+            error instanceof Error
+              ? error
+              : new Error("No se pudo generar el ZIP de descarga"),
+          );
         });
-      void zip.finalize();
       const nombreBase =
         subruta.split("/").filter(Boolean).at(-1) ?? carpetaUsuario;
       return new Response(
@@ -149,6 +183,60 @@ export function registrarRutasCarpeta(
         },
       );
     } catch (error) {
+      return responderErrorGcs(c, error);
+    }
+  });
+
+  rutas.get("/carpeta/csv", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const carpetaUsuario = carpetaDesdeCorreo(sesion.correo);
+    if (!carpetaUsuario || !dependencias.resolverConfiguracionGcs)
+      return responderError(
+        c,
+        "No se pudo resolver la carpeta del usuario",
+        422,
+        { codigo: "CARPETA_USUARIO_NO_DISPONIBLE" },
+      );
+    const archivo = c.req.query("archivo")?.trim() ?? "";
+    if (!/^[^/\\]+\.csv$/i.test(archivo))
+      return responderError(c, "El archivo CSV solicitado no es válido", 422, {
+        codigo: "ARCHIVO_CSV_INVALIDO",
+      });
+    const configuracion = await dependencias.resolverConfiguracionGcs(c);
+    const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+    if (!almacenamiento.listarDirectorio || !almacenamiento.abrirLectura)
+      return responderError(
+        c,
+        "El almacenamiento no permite descargar CSV",
+        501,
+        { codigo: "GCS_LECTURA_NO_DISPONIBLE" },
+      );
+    try {
+      const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
+      const prefijoDirectorio = `${configuracion.prefijo}${carpetaUsuario}/${subruta}`;
+      const directorio = await almacenamiento.listarDirectorio(prefijoDirectorio);
+      const fuente =
+        directorio.archivos.find((item) => item.nombre === archivo) ??
+        directorio.archivos.find((item) => item.nombre === `${archivo}.gz`);
+      if (!fuente || !/\.csv(?:\.gz)?$/i.test(fuente.nombre))
+        return responderError(c, "El archivo CSV no existe", 404, {
+          codigo: "ARCHIVO_CSV_NO_ENCONTRADO",
+        });
+      return new Response(
+        Readable.toWeb(abrirCsvFuente(almacenamiento, fuente)) as unknown as BodyInit,
+        {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename="${archivo}"`,
+            "Cache-Control": "no-store",
+          },
+        },
+      );
+    } catch (error) {
+      if (error instanceof ErrorAplicacion)
+        return responderError(c, error.message, error.estadoHttp as 422, {
+          codigo: error.codigo,
+        });
       return responderErrorGcs(c, error);
     }
   });
@@ -291,4 +379,17 @@ export function registrarRutasCarpeta(
       return responderErrorGcs(c, error);
     }
   });
+}
+
+function presentarArchivoFuente(
+  nombre: string,
+  formato?: "CSV" | "CSV.GZ" | "PARQUET",
+): { nombre: string; formato: "CSV" | "PARQUET" } {
+  if (/\.csv\.gz$/i.test(nombre)) {
+    return { nombre: nombre.replace(/\.gz$/i, ""), formato: "CSV" };
+  }
+  if (/\.parquet$/i.test(nombre) || formato === "PARQUET") {
+    return { nombre, formato: "PARQUET" };
+  }
+  return { nombre, formato: "CSV" };
 }

@@ -16,12 +16,16 @@ export function ResumenConexionBigQuery({
 }) {
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 rounded-xl border border-brand-100 bg-brand-50/40 p-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 rounded-xl border border-brand-100 bg-brand-50/40 p-4 sm:grid-cols-2 xl:grid-cols-5">
         <DatoResumen
           etiqueta="Proyecto"
           valor={configuracion.projectId ?? "—"}
         />
         <DatoResumen etiqueta="Dataset" valor={configuracion.dataset ?? "—"} />
+        <DatoResumen
+          etiqueta="Máx. filas / CSV"
+          valor={(configuracion.maximoFilasPorArchivo ?? 1_000_000).toLocaleString("es-EC")}
+        />
         <DatoResumen
           etiqueta="Cuenta de servicio"
           valor={configuracion.clientEmail ?? "—"}
