@@ -117,6 +117,78 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(container?.textContent).not.toContain("Inactivo");
 });
 
+test("abre la pestaña historial cuando el hash indica #historial", async () => {
+  window.location.hash = "#historial";
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Historial de ejecuciones"),
+  );
+  window.location.hash = "";
+});
+
+test("abre Resumen por defecto cuando el hash es desconocido", async () => {
+  window.location.hash = "#otra";
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Resumen"),
+  );
+  expect(container?.textContent).not.toContain("Historial de ejecuciones");
+  window.location.hash = "";
+});
+
+test("al cambiar de pestaña actualiza el hash de la URL", async () => {
+  window.location.hash = "";
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Resumen"),
+  );
+  const botonHistorial = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Historial"),
+  );
+  expect(botonHistorial).toBeTruthy();
+  await act(async () =>
+    botonHistorial?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  expect(window.location.hash).toBe("#historial");
+  window.location.hash = "";
+});
+
 test("ofrece ver descargas y navega a la carpeta canónica del reporte", async () => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },

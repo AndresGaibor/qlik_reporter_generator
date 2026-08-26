@@ -8,6 +8,7 @@ const TERMINALES = new Map<string, "error" | "detenida">([
   ["exceeded limit", "error"],
   ["stopped", "detenida"],
 ]);
+const SNIPPET_ESPERA_TALEND = "087a1ce0-037c-11ee-9163-4dcbc6412d48";
 
 export class SincronizarEjecucionesReporte {
   constructor(
@@ -19,7 +20,8 @@ export class SincronizarEjecucionesReporte {
     flujoIdQlik: string,
     tenantQlikId: string,
     organizacionId: string,
-  ) {
+  ): Promise<Map<string, Date>> {
+    const finalizadasTrasTalend = new Map<string, Date>();
     const locales = await this.repositorio.listarEjecuciones(
       flujoIdQlik,
       tenantQlikId,
@@ -33,10 +35,11 @@ export class SincronizarEjecucionesReporte {
         item.estado !== "error" &&
         item.estado !== "detenida",
     );
-    if (pendientes.length === 0) return;
+    if (pendientes.length === 0) return finalizadasTrasTalend;
 
     const porAutomate = new Map<string, Map<string, EjecucionQlik>>();
     const automatesEliminados = new Set<string>();
+    const esperaTalendPorAutomate = new Map<string, boolean>();
     for (const automatizacionIdQlik of new Set(
       pendientes.map((item) => item.automatizacionIdQlik),
     )) {
@@ -72,9 +75,20 @@ export class SincronizarEjecucionesReporte {
         .get(local.automatizacionIdQlik)
         ?.get(local.runIdQlik);
       if (!remota) continue;
+      const fecha = fechaTerminal(remota.stopTime, remota.updatedAt);
+      if (remota.status.toLowerCase() === "finished") {
+        if (
+          await this.terminoDespuesDeEsperarTalend(
+            local.automatizacionIdQlik,
+            esperaTalendPorAutomate,
+          )
+        ) {
+          finalizadasTrasTalend.set(local.id, fecha);
+        }
+        continue;
+      }
       const estado = TERMINALES.get(remota.status.toLowerCase());
       if (!estado) continue;
-      const fecha = fechaTerminal(remota.stopTime, remota.updatedAt);
 
       if (estado === "error") {
         const detalle = await this.obtenerDetalleError(
@@ -93,6 +107,29 @@ export class SincronizarEjecucionesReporte {
 
       await this.repositorio.marcarEstadoEjecucion(local.id, estado, fecha);
     }
+    return finalizadasTrasTalend;
+  }
+
+  private async terminoDespuesDeEsperarTalend(
+    automatizacionIdQlik: string,
+    cache: Map<string, boolean>,
+  ): Promise<boolean> {
+    const cacheado = cache.get(automatizacionIdQlik);
+    if (cacheado !== undefined) return cacheado;
+    const automatizacion = await this.qlik.obtenerAutomatizacion(
+      automatizacionIdQlik,
+    );
+    const esperaTalend = Array.isArray(automatizacion.workspace?.blocks)
+      ? automatizacion.workspace.blocks.some(
+          (bloque) =>
+            typeof bloque === "object" &&
+            bloque !== null &&
+            (bloque as Record<string, unknown>).snippet_guid ===
+              SNIPPET_ESPERA_TALEND,
+        )
+      : false;
+    cache.set(automatizacionIdQlik, esperaTalend);
+    return esperaTalend;
   }
 
   private async obtenerDetalleError(

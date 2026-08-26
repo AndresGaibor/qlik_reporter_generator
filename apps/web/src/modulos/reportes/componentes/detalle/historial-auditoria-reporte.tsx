@@ -67,12 +67,25 @@ export function HistorialAuditoriaReporte({
                   <p className="mt-1 text-sm text-ink-500">
                     {textoFase(ejecucion.estado)} · Tiempo transcurrido:{" "}
                     <span className="font-semibold text-ink-700">
-                      {calcularDuracion(
-                        ejecucion.creadoEn,
-                        ejecucion.finalizadoEn ?? undefined,
-                        ahora,
-                      )}
+                      {ejecucion.metricas?.duracionTotalMs != null
+                        ? formatearDuracionMs(ejecucion.metricas.duracionTotalMs)
+                        : calcularDuracion(
+                            ejecucion.iniciadoEn ?? ejecucion.creadoEn,
+                            ejecucion.finalizadoEn ?? undefined,
+                            ahora,
+                          )}
                     </span>
+                    {ejecucion.metricas?.duracionBigQueryMs != null && (
+                      <>
+                        {" · "}
+                        BigQuery:{" "}
+                        <span className="font-semibold text-ink-700">
+                          {formatearDuracionMs(
+                            ejecucion.metricas.duracionBigQueryMs,
+                          )}
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
                 {mostrarDetallesTecnicos && (
@@ -91,8 +104,7 @@ export function HistorialAuditoriaReporte({
 
               {ejecucion.mensajeError ? (
                 <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-                  {ejecucion.etapaError ? `${ejecucion.etapaError}: ` : ""}
-                  {ejecucion.mensajeError}
+                  {presentarMensajeError(ejecucion)}
                 </p>
               ) : null}
 
@@ -249,6 +261,19 @@ function textoFase(estado: string) {
     default:
       return "Estado desconocido";
   }
+}
+
+function presentarMensajeError(ejecucion: DetalleEjecucionReporte): string {
+  const mensaje = ejecucion.mensajeError?.toLowerCase() ?? "";
+  if (
+    ejecucion.etapaError === "talend" &&
+    mensaje.includes("409") &&
+    mensaje.includes("duplicate")
+  ) {
+    return "La exportación no pudo iniciarse porque ya existe una solicitud con el mismo identificador. Intenta nuevamente en unos minutos.";
+  }
+
+  return ejecucion.mensajeError ?? "";
 }
 
 function EstadoAuditoria({ estado }: { estado: string }) {

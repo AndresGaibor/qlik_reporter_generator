@@ -376,6 +376,17 @@ export async function crearAplicacion(
         new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverBigQuery: resolverBigQueryReporte,
       resolverSesion,
+      resolverJobsBigQuery: async (c) => {
+        const sesion = await resolverSesion(c);
+        const google = await resolverGoogle.resolver(
+          sesion.organizacionId,
+          sesion.tenantId,
+        );
+        return new ClienteJobsBigQuery({
+          projectId: google.projectId,
+          credencialesJson: google.credencialesJson,
+        });
+      },
       resolverAlmacenamiento: async (c) => {
         const sesion = await resolverSesion(c);
         const google = await resolverGoogle.resolver(

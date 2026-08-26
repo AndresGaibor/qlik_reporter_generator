@@ -110,6 +110,47 @@ test("muestra métricas BigQuery y controles de copia en auditoría técnica", (
   container.remove();
 });
 
+test("prioriza la duración verificada y presenta errores duplicados de Talend de forma accionable", () => {
+  const ejecucionConError: DetalleEjecucionReporte = {
+    ...ejecucionBase,
+    estado: "error",
+    creadoEn: "2026-08-26T12:00:00Z",
+    iniciadoEn: "2026-08-26T17:04:51Z",
+    finalizadoEn: "2026-08-26T17:05:14Z",
+    etapaError: "talend",
+    mensajeError: "Talend terminó con HTTP 409 duplicate para el job_id por defecto.",
+    metricas: {
+      duracionTotalMs: 22578,
+      duracionBigQueryMs: 17676,
+      totalBytesProcessed: null,
+      totalBytesBilled: null,
+      totalSlotMs: null,
+    },
+  };
+  const vista = document.createElement("div");
+  document.body.append(vista);
+  const root = createRoot(vista);
+  act(() => {
+    root.render(
+      <HistorialAuditoriaReporte
+        ejecuciones={[ejecucionConError]}
+        mostrarDetallesTecnicos={false}
+      />,
+    );
+  });
+
+  expect(vista.textContent).toContain("Tiempo transcurrido: 22 s");
+  expect(vista.textContent).toContain("BigQuery: 17 s");
+  expect(vista.textContent).toContain(
+    "La exportación no pudo iniciarse porque ya existe una solicitud con el mismo identificador. Intenta nuevamente en unos minutos.",
+  );
+  expect(vista.textContent).not.toContain("Talend terminó");
+  expect(vista.textContent).not.toContain("HTTP 409");
+
+  act(() => root.unmount());
+  vista.remove();
+});
+
 test("oculta métricas BigQuery cuando no hay metadata", () => {
   const ejecucionSinBigQuery: DetalleEjecucionReporte = {
     ...ejecucionBase,

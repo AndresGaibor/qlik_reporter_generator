@@ -196,7 +196,39 @@ describe("SincronizarEjecucionesReporte", () => {
       listarEjecuciones: vi.fn(async () => [
         { id: "run-1", status: "finished" },
       ]),
+      obtenerAutomatizacion: vi.fn(async () => ({ workspace: { blocks: [] } })),
     } as unknown as ServicioQlik);
+    expect(marcar).not.toHaveBeenCalled();
+  });
+
+  it("reporta el fin Talend sin completar antes de confirmar BigQuery", async () => {
+    const marcar = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoEjecucion: marcar,
+    };
+
+    const finalizadas = await llamada(repo, {
+      listarEjecuciones: vi.fn(async () => [
+        { id: "run-1", status: "finished", stopTime: "2026-08-26T17:05:15Z" },
+      ]),
+      obtenerAutomatizacion: vi.fn(async () => ({
+        workspace: {
+          blocks: [
+            { snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" },
+          ],
+        },
+      })),
+    } as unknown as ServicioQlik);
+
+    expect(finalizadas.get("e-1")).toEqual(new Date("2026-08-26T17:05:15Z"));
     expect(marcar).not.toHaveBeenCalled();
   });
 

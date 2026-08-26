@@ -93,9 +93,9 @@ export class ClienteJobsBigQuery implements PuertoJobsBigQuery {
       projectId: String(ref.projectId ?? projectId),
       location: String(ref.location ?? location ?? "US"),
       estado: (status.state as MetadatoJobBigQuery["estado"]) ?? "PENDING",
-      creationTime: String(stats.creationTime ?? ""),
-      startTime: stats.startTime ? String(stats.startTime) : null,
-      endTime: stats.endTime ? String(stats.endTime) : null,
+      creationTime: normalizarTimestampBigQuery(stats.creationTime) ?? "",
+      startTime: normalizarTimestampBigQuery(stats.startTime),
+      endTime: normalizarTimestampBigQuery(stats.endTime),
       totalBytesProcessed:
         queryStats.totalBytesProcessed != null
           ? String(queryStats.totalBytesProcessed)
@@ -119,4 +119,12 @@ export class ClienteJobsBigQuery implements PuertoJobsBigQuery {
       parentJobId: ref.parentJobId ? String(ref.parentJobId) : null,
     };
   }
+}
+
+function normalizarTimestampBigQuery(valor: unknown): string | null {
+  if (valor === null || valor === undefined || valor === "") return null;
+  const texto = String(valor);
+  if (!/^\d+$/.test(texto)) return texto;
+  const fecha = new Date(Number(texto));
+  return Number.isNaN(fecha.getTime()) ? texto : fecha.toISOString();
 }
