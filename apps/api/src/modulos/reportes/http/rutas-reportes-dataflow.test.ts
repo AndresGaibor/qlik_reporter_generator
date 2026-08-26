@@ -455,6 +455,168 @@ describe("fachada /api/reportes para Dataflows", () => {
     );
   });
 
+  it("recupera métricas BigQuery de una ejecución completada sin timestamps", async () => {
+    const ejecucion = {
+      id: "exec-bq-recuperable",
+      estado: "completada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs:
+        "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-bq-recuperable/",
+      jobIdPrincipalBigQuery: "job-bq-recuperable",
+      bigqueryProjectId: "project-bq-1",
+      bigqueryLocation: "US",
+      bigqueryFinalizadoEn: null,
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const obtenerJob = vi.fn(async () => ({
+      jobId: "job-bq-recuperable",
+      projectId: "project-bq-1",
+      location: "US",
+      estado: "DONE" as const,
+      creationTime: "2026-08-20T10:00:00Z",
+      startTime: "2026-08-20T10:00:01Z",
+      endTime: "2026-08-20T10:00:05Z",
+      totalBytesProcessed: "123",
+      totalBytesBilled: "100",
+      totalSlotMs: "50",
+      cacheHit: false,
+      statementType: "EXPORT_DATA",
+      errorResult: null,
+      parentJobId: null,
+    }));
+    const app = appCon(
+      { listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]) },
+      {
+        repositorioReportes: {
+          listarEjecuciones: vi.fn(async () => [ejecucion]),
+          obtenerEjecucionPorId: vi.fn(async () => ejecucion),
+          guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
+          actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+        } as never,
+        resolverJobsBigQuery: async () =>
+          ({ obtenerJob, listarHijos: vi.fn(async () => []) }) as never,
+      },
+    );
+
+    await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(obtenerJob).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: "job-bq-recuperable" }),
+    );
+  });
+
+  it("completa tras confirmar Talend y el job principal BigQuery", async () => {
+    const ejecucion = {
+      id: "exec-confirmada",
+      estado: "iniciada",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-confirmada/",
+      jobIdPrincipalBigQuery: "job-confirmada",
+      bigqueryProjectId: "project-bq-1",
+      bigqueryLocation: "US",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const marcarEstadoEjecucion = vi.fn(async () => undefined);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+        listarEjecuciones: vi.fn(async () => [
+          {
+            id: "run-1",
+            status: "finished",
+            stopTime: "2026-08-20T10:00:05Z",
+          },
+        ]),
+        obtenerAutomatizacion: vi.fn(async () => ({
+          workspace: {
+            blocks: [
+              { snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" },
+            ],
+          },
+        })),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones: vi.fn(async () => [ejecucion]),
+          obtenerEjecucionPorId: vi.fn(async () => ejecucion),
+          guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
+          actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+          listarJobsBigQueryPorEjecucionIds: vi.fn(async () =>
+            new Map([
+              [
+                "exec-confirmada",
+                [
+                  {
+                    tipo: "principal",
+                    estado: "done",
+                    endTime: "2026-08-20T10:00:09Z",
+                  },
+                ],
+              ],
+            ]),
+          ),
+          marcarEstadoEjecucion,
+        } as never,
+        resolverJobsBigQuery: async () =>
+          ({
+            obtenerJob: vi.fn(async () => ({
+              jobId: "job-confirmada",
+              projectId: "project-bq-1",
+              location: "US",
+              estado: "DONE",
+              creationTime: "2026-08-20T10:00:00Z",
+              startTime: "2026-08-20T10:00:01Z",
+              endTime: "2026-08-20T10:00:09Z",
+              totalBytesProcessed: "1",
+              totalBytesBilled: "1",
+              totalSlotMs: "1",
+              cacheHit: false,
+              statementType: "EXPORT_DATA",
+              errorResult: null,
+              parentJobId: null,
+            })),
+            listarHijos: vi.fn(async () => []),
+          }) as never,
+      },
+    );
+
+    await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(marcarEstadoEjecucion).toHaveBeenCalledWith(
+      "exec-confirmada",
+      "completada",
+      new Date("2026-08-20T10:00:09Z"),
+    );
+  });
+
+  it("calcula la duración total desde el inicio y no desde creadoEn", async () => {
+    const ejecucion = {
+      id: "exec-duracion",
+      estado: "completada",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-duracion/",
+      creadoEn: new Date("2026-08-20T05:00:00Z"),
+      iniciadoEn: new Date("2026-08-20T10:00:00Z"),
+      finalizadoEn: new Date("2026-08-20T10:00:20Z"),
+    };
+    const app = appCon(
+      { listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]) },
+      {
+        repositorioReportes: {
+          listarEjecuciones: vi.fn(async () => [ejecucion]),
+          listarJobsBigQueryPorEjecucionIds: vi.fn(async () => new Map()),
+        } as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect((await respuesta.json()).datos[0].metricas.duracionTotalMs).toBe(
+      20_000,
+    );
+  });
+
   it("no detiene el polling cuando sincronizacion BigQuery falla temporalmente", async () => {
     const execActiva = {
       id: "exec-bq-error",

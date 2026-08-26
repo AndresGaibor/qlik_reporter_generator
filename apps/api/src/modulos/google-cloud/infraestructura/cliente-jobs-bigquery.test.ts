@@ -125,6 +125,29 @@ describe("ClienteJobsBigQuery", () => {
       });
     });
 
+    it("convierte timestamps BigQuery en milisegundos a ISO", async () => {
+      const jobMock = crearJobMock({
+        jobReference: { projectId: "project-1", jobId: "job-1" },
+        statistics: {
+          creationTime: "1787763896609",
+          startTime: "1787763896822",
+          endTime: "1787763914498",
+          query: {},
+        },
+        status: { state: "DONE" },
+      });
+      const cliente = new (await import("./cliente-jobs-bigquery.js"))
+        .ClienteJobsBigQuery({ projectId: "project-1" }, crearClienteMock(jobMock));
+
+      const resultado = await cliente.obtenerJob({
+        projectId: "project-1",
+        jobId: "job-1",
+      });
+
+      expect(resultado?.startTime).toBe("2026-08-26T17:04:56.822Z");
+      expect(resultado?.endTime).toBe("2026-08-26T17:05:14.498Z");
+    });
+
     it("mapea job con errorResult", async () => {
       const rawMetadata = {
         jobReference: {

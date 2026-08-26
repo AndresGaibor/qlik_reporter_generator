@@ -185,24 +185,13 @@ export function crearRutasReportesDataflow(
     );
 
     const hayActivas = ejecuciones.some(esEjecucionActiva);
-    if (hayActivas) {
-      try {
-        const qlik = await dependencias.resolverQlik(c);
-        await new SincronizarEjecucionesReporte(
-          qlik,
-          dependencias.repositorioReportes,
-        ).ejecutar(flujo.id, sesion.tenantId, sesion.organizacionId);
-      } catch {
-        // El historial sigue disponible aunque Qlik no responda temporalmente.
-      }
-
-      ejecuciones = await dependencias.repositorioReportes.listarEjecuciones(
-        flujo.id,
-        sesion.tenantId,
-        sesion.organizacionId,
-        100,
-      );
-
+    const hayPendientesBigQuery = ejecuciones.some(
+      (ejecucion) =>
+        Boolean(ejecucion.jobIdPrincipalBigQuery) &&
+        Boolean(ejecucion.bigqueryProjectId) &&
+        !ejecucion.bigqueryFinalizadoEn,
+    );
+    if (hayActivas || hayPendientesBigQuery) {
       if (dependencias.resolverJobsBigQuery) {
         try {
           const jobsBigQuery = await dependencias.resolverJobsBigQuery(c);
@@ -214,9 +203,9 @@ export function crearRutasReportesDataflow(
             ejecuciones
               .filter(
                 (e) =>
-                  esEjecucionActiva(e) &&
                   Boolean(e.jobIdPrincipalBigQuery) &&
-                  Boolean(e.bigqueryProjectId),
+                  Boolean(e.bigqueryProjectId) &&
+                  (esEjecucionActiva(e) || !e.bigqueryFinalizadoEn),
               )
               .map((e) =>
                 sincronizadorBq.sincronizar(e.id).catch(() => undefined),
@@ -226,6 +215,49 @@ export function crearRutasReportesDataflow(
           // Un fallo transitorio de BigQuery no debe detener el polling.
         }
       }
+
+      if (hayActivas) {
+        try {
+          const qlik = await dependencias.resolverQlik(c);
+          const finalizadasTrasTalend = await new SincronizarEjecucionesReporte(
+            qlik,
+            dependencias.repositorioReportes,
+          ).ejecutar(flujo.id, sesion.tenantId, sesion.organizacionId);
+          if (finalizadasTrasTalend.size > 0) {
+            const jobsPorEjecucion =
+              await dependencias.repositorioReportes.listarJobsBigQueryPorEjecucionIds(
+                [...finalizadasTrasTalend.keys()],
+              );
+            await Promise.all(
+              [...finalizadasTrasTalend.entries()].map(
+                async ([ejecucionId, finalizadoPorQlik]) => {
+                  const principal = jobsPorEjecucion
+                    .get(ejecucionId)
+                    ?.find((job) => job.tipo === "principal");
+                  if (principal?.estado !== "done") return;
+                  const finalizadoEn = principal.endTime
+                    ? new Date(principal.endTime)
+                    : finalizadoPorQlik;
+                  await dependencias.repositorioReportes.marcarEstadoEjecucion(
+                    ejecucionId,
+                    "completada",
+                    finalizadoEn,
+                  );
+                },
+              ),
+            );
+          }
+        } catch {
+          // El historial sigue disponible aunque Qlik no responda temporalmente.
+        }
+      }
+
+      ejecuciones = await dependencias.repositorioReportes.listarEjecuciones(
+        flujo.id,
+        sesion.tenantId,
+        sesion.organizacionId,
+        100,
+      );
 
       if (dependencias.resolverAlmacenamiento) {
         try {
@@ -389,9 +421,10 @@ function calcularMetricasEjecucion(
   totalSlotMs: string | null;
 } {
   let duracionTotalMs: number | null = null;
-  if (ejecucion.finalizadoEn && ejecucion.creadoEn) {
+  const inicioTotal = ejecucion.iniciadoEn ?? ejecucion.creadoEn;
+  if (ejecucion.finalizadoEn && inicioTotal) {
     duracionTotalMs =
-      ejecucion.finalizadoEn.getTime() - ejecucion.creadoEn.getTime();
+      ejecucion.finalizadoEn.getTime() - inicioTotal.getTime();
   }
 
   let duracionBigQueryMs: number | null = null;
