@@ -10,6 +10,7 @@ export function mapearTenantParaAutomatizaciones(
     automatizacionBaseNombre?: string | null;
     dataflowBaseIdQlik?: string | null;
     dataflowBaseNombre?: string | null;
+    dataflowPlantillas?: Array<{ id: string; nombre: string }>;
   } & Record<string, unknown>,
 ) {
   return {
@@ -18,6 +19,9 @@ export function mapearTenantParaAutomatizaciones(
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
     dataflowBaseIdQlik: fila.dataflowBaseIdQlik,
     dataflowBaseNombre: fila.dataflowBaseNombre,
+    ...(fila.dataflowPlantillas
+      ? { dataflowPlantillas: fila.dataflowPlantillas }
+      : {}),
   };
 }
 

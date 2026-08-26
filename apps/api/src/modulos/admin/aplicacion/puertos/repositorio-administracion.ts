@@ -21,6 +21,7 @@ export interface TenantQlikAdministrable {
   automatizacionBaseNombre?: string | null;
   dataflowBaseIdQlik?: string | null;
   dataflowBaseNombre?: string | null;
+  dataflowPlantillas?: Array<{ id: string; nombre: string }>;
   creadoEn: Date;
 }
 
@@ -139,8 +140,7 @@ export interface RepositorioAdministracion {
   configurarDataflowBase(
     organizacionId: string,
     tenantQlikId: string,
-    dataflowBaseIdQlik: string,
-    dataflowBaseNombre?: string,
+    plantillas: Array<{ id: string; nombre: string }>,
   ): Promise<TenantQlikAdministrable | null>;
   eliminarTenantQlik(
     organizacionId: string,

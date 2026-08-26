@@ -1,5 +1,5 @@
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
-import { SelectBuscable } from "@/compartido/componentes/ui/select-buscable";
+import { Button } from "@/compartido/componentes/ui/button";
 import {
   type TenantQlik,
   configurarDataflowBaseTenant,
@@ -20,69 +20,84 @@ export function SeccionConfigurarDataflowBase({
 }: Props) {
   const { mostrarExito, mostrarError } = useNotificaciones();
   const queryClient = useQueryClient();
-  const [seleccionado, setSeleccionado] = useState(
-    tenantQlik.dataflowBaseIdQlik || "",
-  );
+  const iniciales =
+    tenantQlik.dataflowPlantillas?.map((item) => item.id) ??
+    (tenantQlik.dataflowBaseIdQlik ? [tenantQlik.dataflowBaseIdQlik] : []);
+  const [seleccionados, setSeleccionados] = useState<string[]>(iniciales);
   const { data: dataflows = [], isLoading } = useQuery<ResumenFlujo[]>({
     queryKey: ["dataflows-admin-list", tenantQlik.id],
     queryFn: () => obtenerFlujosConFiltros(),
   });
   const guardar = useMutation({
-    mutationFn: (dataflow: ResumenFlujo) =>
+    mutationFn: () =>
       configurarDataflowBaseTenant(
         organizacionId,
         tenantQlik.id,
-        dataflow.id,
-        dataflow.nombre,
+        seleccionados.map((id) => {
+          const dataflow = dataflows.find((item) => item.id === id);
+          const anterior = tenantQlik.dataflowPlantillas?.find(
+            (item) => item.id === id,
+          );
+          return {
+            id,
+            nombre: dataflow?.nombre ?? anterior?.nombre ?? "Dataflow base",
+          };
+        }),
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["admin-tenants-qlik", organizacionId],
       });
-      mostrarExito("Dataflow base configurado");
+      mostrarExito("Plantillas de Dataflow configuradas");
     },
     onError: (error: Error) => mostrarError(error.message),
   });
 
-  const opcionesBase = dataflows.map((dataflow) => ({
-    id: dataflow.id,
-    nombre: `${dataflow.nombre} (ID: ${dataflow.id.slice(0, 8)}…)`,
-    espacioNombre: dataflow.espacioNombre || "Personal",
-  }));
-  const existeActual = opcionesBase.some(
-    (opcion) => opcion.id === tenantQlik.dataflowBaseIdQlik,
-  );
-  const opciones =
-    tenantQlik.dataflowBaseIdQlik && !existeActual
-      ? [
-          {
-            id: tenantQlik.dataflowBaseIdQlik,
-            nombre: `${tenantQlik.dataflowBaseNombre || "Dataflow base"} (ID: ${tenantQlik.dataflowBaseIdQlik.slice(0, 8)}…)`,
-            espacioNombre: "Plantilla activa actual",
-          },
-          ...opcionesBase,
-        ]
-      : opcionesBase;
-
-  const seleccionar = (id: string) => {
-    const dataflow = dataflows.find((item) => item.id === id) ?? {
-      id,
-      nombre: tenantQlik.dataflowBaseNombre || "Dataflow base",
-      espacioNombre: "",
-    };
-    setSeleccionado(id);
-    guardar.mutate(dataflow);
-  };
-
   return (
-    <SelectBuscable
-      placeholder="Busca y selecciona el Dataflow plantilla…"
-      searchPlaceholder="Escribe el nombre para filtrar…"
-      emptyText="No encontramos Dataflows disponibles para usar como plantilla."
-      opciones={opciones}
-      valorSeleccionado={seleccionado}
-      onSeleccionar={seleccionar}
-      cargando={isLoading || guardar.isPending}
-    />
+    <div className="space-y-3">
+      <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border border-line-200 p-3">
+        {isLoading ? (
+          <p className="text-sm text-ink-500">Cargando Dataflows…</p>
+        ) : null}
+        {dataflows.map((dataflow) => (
+          <label
+            key={dataflow.id}
+            className="flex cursor-pointer items-start gap-3 rounded-md p-2 hover:bg-app"
+          >
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={seleccionados.includes(dataflow.id)}
+              onChange={(evento) =>
+                setSeleccionados((actuales) =>
+                  evento.target.checked
+                    ? [...actuales, dataflow.id]
+                    : actuales.filter((id) => id !== dataflow.id),
+                )
+              }
+            />
+            <span>
+              <span className="block text-sm font-semibold text-ink-900">
+                {dataflow.nombre}
+              </span>
+              <span className="block text-xs text-ink-500">
+                {dataflow.espacioNombre || "Personal"}
+              </span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-ink-500">
+          {seleccionados.length} seleccionada(s)
+        </p>
+        <Button
+          disabled={seleccionados.length === 0 || guardar.isPending}
+          onClick={() => guardar.mutate()}
+        >
+          {guardar.isPending ? "Guardando…" : "Guardar plantillas"}
+        </Button>
+      </div>
+    </div>
   );
 }

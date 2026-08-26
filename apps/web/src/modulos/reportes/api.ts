@@ -49,10 +49,17 @@ export function obtenerDataflowBaseReporte() {
   return clienteApi.get<DataflowBaseDisponible>(`${RUTA}/plantilla-base`);
 }
 
-export function crearReporteDesdePlantilla(nombre: string) {
+export function obtenerPlantillasDataflowReporte() {
+  return clienteApi.get<DataflowBaseDisponible[]>(`${RUTA}/plantillas`);
+}
+
+export function crearReporteDesdePlantilla(
+  nombre: string,
+  plantillaId?: string,
+) {
   return clienteApi.post<ResultadoClonarDataflowBase>(
     `${RUTA}/desde-plantilla`,
-    { nombre },
+    { nombre, plantillaId },
   );
 }
 

@@ -20,10 +20,9 @@ const api = vi.hoisted(() => ({
     ejecucionReporteId: "exec-1",
     carpetaDescargas: "reporte-ventas/",
   })),
-  obtenerDataflowBaseReporte: vi.fn(async () => ({
-    id: "base",
-    nombre: "Base",
-  })),
+  obtenerPlantillasDataflowReporte: vi.fn(async () => [
+    { id: "base", nombre: "Base" },
+  ]),
 }));
 
 vi.mock("./api", () => api);

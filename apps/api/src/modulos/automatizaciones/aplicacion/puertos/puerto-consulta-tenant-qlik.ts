@@ -5,5 +5,6 @@ export interface PuertoConsultaTenantQlik {
     automatizacionBaseNombre?: string | null;
     dataflowBaseIdQlik?: string | null;
     dataflowBaseNombre?: string | null;
+    dataflowPlantillas?: Array<{ id: string; nombre: string }>;
   } | null>;
 }

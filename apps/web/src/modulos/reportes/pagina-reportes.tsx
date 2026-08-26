@@ -8,7 +8,7 @@ import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import {
   ejecutarReporte,
-  obtenerDataflowBaseReporte,
+  obtenerPlantillasDataflowReporte,
   obtenerReportes,
 } from "@/modulos/reportes/api";
 import type { ResumenReporte } from "@qlik/contratos";
@@ -54,7 +54,7 @@ export function PaginaReportes() {
   });
   const plantilla = useQuery({
     queryKey: ["reportes-plantilla-base", tenantActivo?.id],
-    queryFn: obtenerDataflowBaseReporte,
+    queryFn: obtenerPlantillasDataflowReporte,
     retry: false,
   });
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -130,10 +130,10 @@ export function PaginaReportes() {
             total={filtrados.length}
           />
         ) : null}
-        {plantilla.data && tenantActivo?.host ? (
+        {plantilla.data?.length && tenantActivo?.host ? (
           <ModalCrearReporteDesdePlantilla
             abierto={modalAbierto}
-            nombrePlantilla={plantilla.data.nombre}
+            plantillas={plantilla.data}
             host={tenantActivo.host}
             onCerrar={() => setModalAbierto(false)}
             onCreado={() =>

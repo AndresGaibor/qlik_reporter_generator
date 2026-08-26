@@ -63,6 +63,9 @@ export const esquemaTenantQlik = z.object({
   automatizacionBaseNombre: z.string().nullable().optional(),
   dataflowBaseIdQlik: z.string().nullable().optional(),
   dataflowBaseNombre: z.string().nullable().optional(),
+  dataflowPlantillas: z
+    .array(z.object({ id: z.string(), nombre: z.string() }))
+    .optional(),
   creadoEn: z.string(),
 });
 
@@ -78,8 +81,9 @@ export const esquemaConfigurarAutomatizacionBase = z.object({
 });
 
 export const esquemaConfigurarDataflowBase = z.object({
-  dataflowBaseIdQlik: z.string().min(1),
-  dataflowBaseNombre: z.string().optional(),
+  plantillas: z
+    .array(z.object({ id: z.string().min(1), nombre: z.string().min(1) }))
+    .min(1),
 });
 
 export type TenantQlik = z.infer<typeof esquemaTenantQlik>;
