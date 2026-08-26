@@ -19,16 +19,35 @@ import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detall
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Pestana = "resumen" | "tecnico" | "historial";
+
+const PESTANAS_VALIDAS: ReadonlySet<string> = new Set([
+  "resumen",
+  "tecnico",
+  "historial",
+]);
+
+function leerHashPestana(): Pestana {
+  const hash = window.location.hash.replace("#", "");
+  return PESTANAS_VALIDAS.has(hash) ? (hash as Pestana) : "resumen";
+}
 
 export function PaginaDetalleReporte({ id }: { id: string }) {
   const { tenant: tenantActivo } = useTenantActivo();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const client = useQueryClient();
   const navegar = useNavigate();
-  const [pestana, setPestana] = useState<Pestana>("resumen");
+  const [pestana, setPestana] = useState<Pestana>(leerHashPestana);
+
+  useEffect(() => {
+    function onHashChange() {
+      setPestana(leerHashPestana());
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   const reporte = useQuery({
     queryKey: ["reporte", tenantActivo?.id, id],
@@ -161,7 +180,10 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
           <button
             key={key}
             type="button"
-            onClick={() => setPestana(key)}
+            onClick={() => {
+              setPestana(key);
+              window.location.hash = key;
+            }}
             className={`border-b-2 px-3 py-2 font-semibold transition-colors ${
               pestana === key
                 ? "border-brand-600 text-ink-900"
