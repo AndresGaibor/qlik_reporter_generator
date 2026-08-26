@@ -60,4 +60,25 @@ FROM \`p.d.t\` WHERE id = 1;
       expect((error as ErrorCompilacionVNext).diagnostic.code).toBe(code);
     }
   });
+
+  it.each(["If(", "If ("])(
+    "no separa %s como IF procedural dentro de LOAD",
+    (ifStart) => {
+      const script = `[Calcular campos 1]:\nNOCONCATENATE\nLOAD\n  [ID_LOCAL],\n  ${ifStart}\n    [ID_LOCAL] = 0,\n    1,\n    0\n  ) AS [FILTRO_UOP];\nSELECT ID_LOCAL FROM \`p.d.uop\`;`;
+      const statements = escanearSentenciasQlik(script);
+
+      expect(statements).toHaveLength(2);
+      expect(statements[0]?.text).toContain("NOCONCATENATE");
+      expect(statements[0]?.text).toContain("AS [FILTRO_UOP]");
+      expect(statements[0]?.text).toContain(ifStart);
+      expect(statements[1]?.text).toStartWith("SELECT ID_LOCAL");
+    },
+  );
+
+  it("no activa control procedural cuando If() contiene literal THEN como argumento", () => {
+    const statements = escanearSentenciasQlik(
+      "[A]: LOAD id, If(flag, 'THEN', 'ELSE') AS texto; SELECT id, flag FROM `p.d.t`;",
+    );
+    expect(statements).toHaveLength(2);
+  });
 });

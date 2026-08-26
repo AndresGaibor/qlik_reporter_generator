@@ -145,7 +145,7 @@ function sentenciaNativaEnCurso(
 }
 
 function lineaControl(script: string, start: number): boolean {
-  return /^(?:\s*)(?:IF\b|ELSEIF\b|ELSE\b|END\s+IF\b|SWITCH\b|CASE\b|DEFAULT\b|END\s+SWITCH\b|FOR\b|NEXT\b|DO\b|LOOP\b|SUB\b|END\s+SUB\b|CALL\b|EXIT\b)/i.test(
+  return /^(?:\s*)(?:IF\b(?!\s*\()|ELSEIF\b|ELSE\b|END\s+IF\b|SWITCH\b|CASE\b|DEFAULT\b|END\s+SWITCH\b|FOR\b|NEXT\b|DO\b|LOOP\b|SUB\b|END\s+SUB\b|CALL\b|EXIT\b)/i.test(
     script.slice(
       start,
       script.indexOf("\n", start) < 0
@@ -161,7 +161,7 @@ function modoControlCompleto(line: string): boolean {
     .replace(/\/\/.*$/, "")
     .replace(/--.*$/, "")
     .trim();
-  return /^(?:IF\b[\s\S]*\bTHEN|ELSEIF\b[\s\S]*\bTHEN|ELSE|END\s+IF|SWITCH\b[\s\S]*|CASE\b[\s\S]*|DEFAULT|END\s+SWITCH|FOR\b[\s\S]*|NEXT\b[\s\S]*|DO\b[\s\S]*|LOOP\b[\s\S]*|SUB\b[\s\S]*|END\s+SUB|CALL\b[\s\S]*|EXIT\b[\s\S]*)$/i.test(
+  return /^(?:IF\b(?!\s*\()[\s\S]*\bTHEN|ELSEIF\b[\s\S]*\bTHEN|ELSE|END\s+IF|SWITCH\b[\s\S]*|CASE\b[\s\S]*|DEFAULT|END\s+SWITCH|FOR\b[\s\S]*|NEXT\b[\s\S]*|DO\b[\s\S]*|LOOP\b[\s\S]*|SUB\b[\s\S]*|END\s+SUB|CALL\b[\s\S]*|EXIT\b[\s\S]*)$/i.test(
     code,
   );
 }

@@ -94,4 +94,18 @@ describe("parsearProgramaQlik", () => {
       wildcard: true,
     });
   });
+
+  it("preserva If() como expresión dentro de LOAD multilinea con AS", () => {
+    const script = `[Calcular campos 1]:\nNOCONCATENATE\nLOAD\n  [ID_LOCAL],\n  If(\n    ([NOM_TIPO_UOP] <> 'SUBLUGAR DE TRABAJO'\n     and [NOM_TIPO_UOP] <> 'DEPARTAMENTO'\n     and [NOM_TIPO_UOP] <> 'INDUSTRIAS')\n    or [ID_LOCAL] = 0,\n    1,\n    0\n  ) AS [FILTRO_UOP];\nSELECT ID_LOCAL, NOM_TIPO_UOP FROM \`p.d.uop\`;`;
+    const program = parsearProgramaQlik(script);
+    expect(program.statements.map((item) => item.type)).toEqual([
+      "load",
+      "native_sql",
+    ]);
+    const load = program.statements[0];
+    expect(load?.type).toBe("load");
+    if (load?.type !== "load") throw new Error("load esperado");
+    expect(load.body).toContain("If(");
+    expect(load.body).toContain("AS [FILTRO_UOP]");
+  });
 });
