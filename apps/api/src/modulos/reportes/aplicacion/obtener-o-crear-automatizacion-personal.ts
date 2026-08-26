@@ -3,7 +3,7 @@ import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/p
 import { copiarAutomatizacionPersonal } from "../../automatizaciones/aplicacion/servicios/servicio-copia-automatizacion.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { AutomatizacionQlik } from "../../qlik/dominio/modelos-qlik.js";
-import { ErrorApiQlik } from "../../qlik/infraestructura/error-api-qlik.js";
+import { esNoEncontradoQlik } from "../../qlik/infraestructura/error-api-qlik.js";
 import type {
   AutomatizacionPersonalPersistida,
   PuertoRepositorioAutomatizacionesPersonales,
@@ -162,14 +162,4 @@ export class ObtenerOCrearAutomatizacionPersonal {
     }
     return resultado;
   }
-}
-
-function esNoEncontradoQlik(error: unknown): boolean {
-  if (error instanceof ErrorApiQlik) return error.estadoHttp === 404;
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "estadoHttp" in error &&
-    (error as { estadoHttp?: unknown }).estadoHttp === 404
-  );
 }

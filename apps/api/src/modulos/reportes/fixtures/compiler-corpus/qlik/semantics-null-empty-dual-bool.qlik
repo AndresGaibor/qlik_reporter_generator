@@ -1,0 +1,7 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id,
+  texto & null() AS concat_null,
+  If(flag, -1, 0) AS qlik_bool,
+  Num(numero, '#,##0.00') AS numero_dual,
+  If(Len(texto)=0, 'EMPTY', If(IsNull(texto), 'NULL', 'VALUE')) AS estado_texto;
+SQL SELECT id, texto, flag, numero FROM `p.d.tipos`;

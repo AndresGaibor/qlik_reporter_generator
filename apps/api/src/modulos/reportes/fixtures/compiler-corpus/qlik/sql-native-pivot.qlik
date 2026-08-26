@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT * FROM (SELECT producto, trimestre, venta FROM `p.d.ventas`)
+PIVOT(SUM(venta) FOR trimestre IN ('Q1','Q2','Q3','Q4'));

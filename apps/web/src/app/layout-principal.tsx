@@ -171,7 +171,7 @@ export function LayoutPrincipal() {
     <div className="ambient min-h-screen overflow-x-hidden bg-app text-ink-900">
       <IconSprite />
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-line-200 bg-surface/95 px-4 shadow-sm backdrop-blur sm:px-8">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line-200 bg-surface/98 px-4 backdrop-blur sm:px-6">
           <div className="flex shrink-0 items-center border-r border-line-200 pr-4">
             <MarcaQlikReport tam="sm" />
           </div>
@@ -190,7 +190,7 @@ export function LayoutPrincipal() {
             ))}
           </nav>
 
-          <div className="ml-auto hidden items-center gap-4 md:flex">
+          <div className="ml-auto hidden items-center gap-3 md:flex">
             {tenantsDisponibles.length > 1 && (
               <ContextSwitcher
                 tenants={tenantsDisponibles}
@@ -253,7 +253,7 @@ export function LayoutPrincipal() {
                   }
                   className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)]"
                 />
-                Vista usuario final
+                Previsualizar como usuario
               </label>
             )}
             <div className="mt-3 flex items-center justify-between border-t border-line-200 pt-3">
@@ -269,7 +269,7 @@ export function LayoutPrincipal() {
           </div>
         )}
 
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 sm:py-10 lg:px-16">
+        <main className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-12">
           <VistaContext.Provider value={{ modoUsuarioFinal, esAdmin }}>
             <Outlet />
           </VistaContext.Provider>

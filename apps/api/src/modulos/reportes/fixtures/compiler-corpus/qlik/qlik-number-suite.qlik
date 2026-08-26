@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, Num(monto, '#,##0.00') AS monto_fmt, Round(monto, 0.01) AS redondeado, Floor(monto) AS piso, Ceil(monto) AS techo;
+SQL SELECT id, monto FROM `p.d.a`;

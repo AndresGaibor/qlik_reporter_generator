@@ -11,6 +11,7 @@ export interface EntradaConsultasTalendBigQuery {
 }
 
 export interface ConsultasTalendBigQuery {
+  sql: string;
   bqNumberCsv: string;
   bqExportData: string;
 }
@@ -32,6 +33,7 @@ export function construirConsultasTalendBigQuery({
   validarMaximoFilas(maximoFilasPorArchivo);
   const ventanaOrden = construirVentanaOrden(columnasOrden);
   const fuente = `source AS (\n  ${indentar(sqlFuente, 2)}\n)`;
+  const sqlExportacion = `EXPORT DATA OPTIONS (\n  uri = '${uri}/parte-*.csv.gz',\n  format = 'CSV',\n  compression = 'GZIP',\n  overwrite = TRUE,\n  header = TRUE,\n  field_delimiter = '|'\n)\nAS\n${sqlFuente};`;
   const bqNumberCsv = `WITH ${fuente},
 total AS (
   SELECT COUNT(*) AS total_rows
@@ -80,19 +82,13 @@ IF __END_ROW__ >= (
   SELECT 'ok' AS estado;
 END IF;`;
 
-  return { bqNumberCsv, bqExportData };
+  return { sql: sqlExportacion, bqNumberCsv, bqExportData };
 }
 
 export function serializarConsultasTalend(
   consultas: ConsultasTalendBigQuery,
 ): string {
-  return [
-    "-- bq_number_csv",
-    consultas.bqNumberCsv,
-    "",
-    "-- bq_export_data",
-    consultas.bqExportData,
-  ].join("\n");
+  return consultas.sql;
 }
 
 function normalizarSqlFuente(sql: string): string {

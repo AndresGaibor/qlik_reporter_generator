@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[A]: LOAD id, valor; SQL SELECT id, valor FROM `p.d.a`;
+[B]: NoConcatenate LOAD id, valor RESIDENT [A];

@@ -14,7 +14,10 @@ import {
   crearRutasClonadoDataflow,
 } from "../../flujos/http/rutas-clonado-dataflow.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
-import type { EntradaEjecutarReporte } from "../aplicacion/ejecutar-reporte.js";
+import {
+  type EntradaEjecutarReporte,
+  construirCarpetaDescargasReporte,
+} from "../aplicacion/ejecutar-reporte.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
@@ -43,12 +46,12 @@ export interface DependenciasRutasReportesDataflow {
   resolverAlmacenamiento?: (
     c: Context,
   ) => Promise<PuertoAlmacenamientoDescargas>;
-  resolverEjecutarReporte?: (
-    c: Context,
-  ) => Promise<
-    (
-      entrada: EntradaEjecutarReporte,
-    ) => Promise<{ runId: string; ejecucionReporteId: string }>
+  resolverEjecutarReporte?: (c: Context) => Promise<
+    (entrada: EntradaEjecutarReporte) => Promise<{
+      runId: string;
+      ejecucionReporteId: string;
+      carpetaDescargas: string;
+    }>
   >;
   dependenciasClonado: DependenciasClonadoDataflow;
 }
@@ -76,13 +79,42 @@ export function crearRutasReportesDataflow(
     ).ejecutar(espacioId);
     if (q)
       flujos = flujos.filter((flujo) => flujo.nombre.toLowerCase().includes(q));
-    return responderExito(c, flujos);
+
+    const sesion = await dependencias.resolverSesion(c);
+    const ultimasEjecuciones =
+      await dependencias.repositorioReportes.listarUltimasEjecucionesPorFlujo(
+        sesion.tenantId,
+        sesion.organizacionId,
+      );
+    const ultimaEjecucionPorFlujo = new Map(
+      ultimasEjecuciones.map((ejecucion) => [
+        ejecucion.flujoIdQlik,
+        ejecucion.ultimaEjecucionEn,
+      ]),
+    );
+    const reportes = flujos
+      .map((flujo) => ({
+        id: flujo.id,
+        nombre: flujo.nombre,
+        espacioId: flujo.espacioId ?? null,
+        espacioNombre: flujo.espacioNombre ?? null,
+        modificadoEn: flujo.modificadoEn ?? null,
+        creadoEn: flujo.creadoEn ?? null,
+        ultimaEjecucionEn:
+          ultimaEjecucionPorFlujo.get(flujo.id)?.toISOString() ?? null,
+        carpetaDescargas: construirCarpetaDescargasReporte(flujo.nombre),
+      }))
+      .sort(compararActividadReporte);
+    return responderExito(c, reportes);
   });
 
   rutas.get("/:flujoId", async (c) => {
     const flujo = await obtenerFlujo(c);
     if (!flujo) return noEncontradoDataflow(c);
-    return responderExito(c, flujo);
+    return responderExito(c, {
+      ...flujo,
+      carpetaDescargas: construirCarpetaDescargasReporte(flujo.nombre),
+    });
   });
 
   rutas.get("/:flujoId/resumen", async (c) => {
@@ -90,7 +122,10 @@ export function crearRutasReportesDataflow(
     if (!flujo) return noEncontradoDataflow(c);
     const qlik = await dependencias.resolverQlik(c);
     try {
-      const { script } = await qlik.obtenerScriptApp(flujo.id, "current");
+      const { script } = await qlik.obtenerScriptApp(
+        flujo.appId ?? flujo.id,
+        "current",
+      );
       const validacion = await qlik.validarScriptApp(script);
       return responderExito(
         c,
@@ -128,7 +163,7 @@ export function crearRutasReportesDataflow(
       await new PreflightDataflow(qlik, bigQuery.estimador, {
         projectId: bigQuery.projectId,
         dataset: bigQuery.dataset,
-      }).ejecutar(flujo.id),
+      }).ejecutar(flujo.id, flujo.appId ?? flujo.id),
     );
   });
 
@@ -212,6 +247,32 @@ export function crearRutasReportesDataflow(
     }
   });
   return rutas;
+}
+
+function compararActividadReporte(
+  a: {
+    nombre: string;
+    creadoEn: string | null;
+    modificadoEn: string | null;
+    ultimaEjecucionEn: string | null;
+  },
+  b: {
+    nombre: string;
+    creadoEn: string | null;
+    modificadoEn: string | null;
+    ultimaEjecucionEn: string | null;
+  },
+) {
+  const actividadA = Date.parse(
+    a.ultimaEjecucionEn ?? a.creadoEn ?? a.modificadoEn ?? "",
+  );
+  const actividadB = Date.parse(
+    b.ultimaEjecucionEn ?? b.creadoEn ?? b.modificadoEn ?? "",
+  );
+  const diferencia =
+    (Number.isNaN(actividadB) ? 0 : actividadB) -
+    (Number.isNaN(actividadA) ? 0 : actividadA);
+  return diferencia || a.nombre.localeCompare(b.nombre, "es");
 }
 
 function esEjecucionActiva(ejecucion: { estado: string }) {

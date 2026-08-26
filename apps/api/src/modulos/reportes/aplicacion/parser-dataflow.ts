@@ -7,6 +7,7 @@ import type {
   PasoDataflow,
   PlanDataflow,
 } from "../dominio/plan-dataflow.js";
+import { obtenerFuncionQlik } from "./compilador-vnext/registro-funciones.js";
 
 const FUNCIONES_QLIK_SOPORTADAS = new Set([
   "Upper",
@@ -28,13 +29,14 @@ const FUNCIONES_QLIK_SOPORTADAS = new Set([
   "Round",
   "Floor",
   "Ceil",
-]);
+].map((nombre) => nombre.toLowerCase()));
 
 interface CargaPendiente {
   etiqueta?: string;
   join?: { tipo: "inner" | "left" | "right" | "full"; objetivo: string };
   campos: CampoDataflow[];
   distinct: boolean;
+  where?: string;
 }
 
 interface SelectSql {
@@ -56,7 +58,7 @@ export function parsearDataflow(script: string): PlanDataflow {
   let conexionActual: string | undefined;
   let formatoFechaQlik: string | undefined;
   let tablaSalidaStore: string | undefined;
-  let cargaPendiente: CargaPendiente | undefined;
+  let cargasPendientes: CargaPendiente[] = [];
   let secuencia = 0;
 
   const nombreInterno = (prefijo: string) => `__${prefijo}_${++secuencia}`;
@@ -64,6 +66,22 @@ export function parsearDataflow(script: string): PlanDataflow {
     camposPorTabla.set(nombre, campos);
     tablasActivas.add(nombre);
     if (usuario && !tablasUsuario.includes(nombre)) tablasUsuario.push(nombre);
+  };
+  const aplicarCargasPendientes = (entrada: string): string => {
+    let relacion = entrada;
+    for (const carga of [...cargasPendientes].reverse()) {
+      relacion = aplicarCarga(
+        carga,
+        relacion,
+        camposPorTabla,
+        pasos,
+        operacionesNoSoportadas,
+        registrarTabla,
+        nombreInterno,
+      );
+    }
+    cargasPendientes = [];
+    return relacion;
   };
 
   for (const sentenciaOriginal of dividirSentencias(limpiarScript(script))) {
@@ -107,7 +125,6 @@ export function parsearDataflow(script: string): PlanDataflow {
           operacion: "SELECT",
           detalle: "SELECT BigQuery no reconocido",
         });
-        cargaPendiente = undefined;
         continue;
       }
       if (!conexionActual || !/big\s*query/i.test(conexionActual)) {
@@ -158,17 +175,8 @@ export function parsearDataflow(script: string): PlanDataflow {
         relacion = filtrada;
       }
 
-      if (cargaPendiente) {
-        relacion = aplicarCarga(
-          cargaPendiente,
-          relacion,
-          camposPorTabla,
-          pasos,
-          operacionesNoSoportadas,
-          registrarTabla,
-          nombreInterno,
-        );
-        cargaPendiente = undefined;
+      if (cargasPendientes.length > 0) {
+        relacion = aplicarCargasPendientes(relacion);
       } else {
         registrarTabla(relacion, camposPorTabla.get(relacion) ?? [], false);
       }
@@ -206,7 +214,7 @@ export function parsearDataflow(script: string): PlanDataflow {
           camposPorTabla.set(filtrada, camposPorTabla.get(relacion) ?? []);
           relacion = filtrada;
         }
-        const salida = aplicarCarga(
+        let salida = aplicarCarga(
           pendiente,
           relacion,
           camposPorTabla,
@@ -228,14 +236,17 @@ export function parsearDataflow(script: string): PlanDataflow {
           camposPorTabla.set(ordenada, camposPorTabla.get(salida) ?? []);
           if (!carga.join && carga.etiqueta)
             registrarTabla(carga.etiqueta, camposPorTabla.get(ordenada) ?? []);
+          salida = ordenada;
         }
+        if (cargasPendientes.length > 0) salida = aplicarCargasPendientes(salida);
       } else {
-        cargaPendiente = {
+        cargasPendientes.push({
           etiqueta: carga.etiqueta,
           join: carga.join,
           campos: carga.campos,
           distinct: carga.distinct,
-        };
+          where: carga.where,
+        });
       }
       continue;
     }
@@ -247,7 +258,7 @@ export function parsearDataflow(script: string): PlanDataflow {
     });
   }
 
-  if (cargaPendiente) {
+  if (cargasPendientes.length > 0) {
     operacionesNoSoportadas.push({
       operacion: "LOAD",
       detalle: "LOAD sin SELECT o RESIDENT asociado",
@@ -478,9 +489,11 @@ function detectarFuncionesNoSoportadas(
       /\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/g,
     )) {
       const funcion = match[1] ?? "";
+      const registrada = obtenerFuncionQlik(funcion);
       if (
-        !FUNCIONES_QLIK_SOPORTADAS.has(funcion) &&
-        !salida.some((item) => item.operacion === funcion)
+        !FUNCIONES_QLIK_SOPORTADAS.has(funcion.toLowerCase()) &&
+        registrada?.runtimeStatus !== "implemented" &&
+        !salida.some((item) => item.operacion.toLowerCase() === funcion.toLowerCase())
       ) {
         salida.push({
           operacion: funcion,

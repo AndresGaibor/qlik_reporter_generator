@@ -18,16 +18,18 @@ import {
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+
+type Pestana = "resumen" | "tecnico" | "historial";
 
 export function PaginaDetalleReporte({ id }: { id: string }) {
   const { tenant: tenantActivo } = useTenantActivo();
   const { mostrarError, mostrarExito } = useNotificaciones();
   const client = useQueryClient();
-  const [pestana, setPestana] = useState<"diseno" | "detalles" | "historial">(
-    "diseno",
-  );
+  const navegar = useNavigate();
+  const [pestana, setPestana] = useState<Pestana>("resumen");
+
   const reporte = useQuery({
     queryKey: ["reporte", tenantActivo?.id, id],
     queryFn: () => obtenerReporte(id),
@@ -47,20 +49,25 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
     queryFn: () => obtenerEjecucionesReporte(id),
     retry: false,
-    refetchInterval: (consulta) => {
-      const hayActivas = consulta.state.data?.some(
+    refetchInterval: (consulta) =>
+      consulta.state.data?.some(
         (ejecucion) =>
           ejecucion.estado === "preparando" || ejecucion.estado === "iniciada",
-      );
-      return hayActivas ? 2_000 : false;
-    },
+      )
+        ? 2_000
+        : false,
   });
+
   const ejecutar = useMutation({
     mutationFn: () => ejecutarReporte(id),
-    onSuccess: () => {
-      mostrarExito("Ejecución iniciada");
+    onSuccess: (resultado) => {
+      mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
+      });
+      void navegar({
+        to: "/descargas",
+        search: { carpeta: resultado.carpetaDescargas },
       });
     },
     onError: (error: Error) => mostrarError(error.message),
@@ -76,7 +83,12 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
       />
     );
   }
+
   const dataflow = reporte.data;
+  const ejecucionesActuales = ejecuciones.data ?? [];
+  const procesando = ejecucionesActuales.some(
+    (item) => item.estado === "preparando" || item.estado === "iniciada",
+  );
   const urlQlik = tenantActivo?.host
     ? construirUrlVerFlujoQlik(tenantActivo.host, id, dataflow.espacioId ?? "")
     : null;
@@ -92,38 +104,57 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     <PageLayout>
       <Link
         to="/reportes"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-ink-500"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-500 hover:text-ink-800"
       >
-        <Icon name="chev" size="sm" className="rotate-180" /> Volver a reportes
+        <Icon name="chev" size="sm" className="rotate-180" />
+        Reportes
       </Link>
+
       <PageHeader
         title={dataflow.nombre}
-        description={`Dataflow de Qlik · Espacio ${dataflow.espacioNombre ?? "Personal"}`}
+        description={`Espacio: ${dataflow.espacioNombre ?? "Personal"}`}
         actions={
           <div className="flex flex-wrap gap-2">
-            {urlQlik ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void navegar({
+                  to: "/descargas",
+                  search: { carpeta: dataflow.carpetaDescargas },
+                })
+              }
+            >
+              <Icon name="download" size="sm" /> Ver descargas
+            </Button>
+            {urlQlik && (
               <Button asChild variant="outline" size="sm">
                 <a href={urlQlik} target="_blank" rel="noopener noreferrer">
                   <Icon name="ext" size="sm" /> Ver en Qlik Cloud
                 </a>
               </Button>
-            ) : null}
+            )}
             <Button
               size="sm"
-              disabled={ejecutar.isPending}
+              disabled={ejecutar.isPending || procesando}
               onClick={() => ejecutar.mutate()}
             >
-              <Icon name="play" size="sm" />{" "}
-              {ejecutar.isPending ? "Ejecutando…" : "Ejecutar reporte"}
+              <Icon name="play" size="sm" />
+              {procesando
+                ? "Procesando…"
+                : ejecutar.isPending
+                  ? "Iniciando…"
+                  : "Ejecutar reporte"}
             </Button>
           </div>
         }
       />
-      <div className="flex max-w-fit rounded-xl bg-line-200/60 p-1 text-sm shadow-xs">
+
+      <div className="flex w-fit gap-1 border-b border-line-200 text-sm">
         {(
           [
-            ["diseno", "Diseño y validación"],
-            ["detalles", "Detalles"],
+            ["resumen", "Resumen"],
+            ["tecnico", "Detalles técnicos"],
             ["historial", "Historial"],
           ] as const
         ).map(([key, label]) => (
@@ -131,25 +162,31 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             key={key}
             type="button"
             onClick={() => setPestana(key)}
-            className={`rounded-lg px-4 py-2 font-semibold ${pestana === key ? "bg-surface text-ink-900 shadow-sm" : "text-ink-500"}`}
+            className={`border-b-2 px-3 py-2 font-semibold transition-colors ${
+              pestana === key
+                ? "border-brand-600 text-ink-900"
+                : "border-transparent text-ink-500 hover:text-ink-800"
+            }`}
           >
             {label}
           </button>
         ))}
       </div>
-      {(ejecuciones.data ?? []).some(
-        (item) => item.estado === "preparando" || item.estado === "iniciada",
-      ) ? (
-        <output className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-200 border-t-amber-700" />
+
+      {procesando && (
+        <output className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-200 border-t-amber-700" />
           <span>
-            El reporte sigue procesándose. La automatización puede haber
-            terminado mientras el job genera los archivos.
+            <strong className="block font-semibold">
+              Preparando el reporte…
+            </strong>
+            Los archivos aparecerán en Descargas cuando el proceso finalice.
           </span>
         </output>
-      ) : null}
-      {pestana === "diseno" ? (
-        <div className="space-y-6">
+      )}
+
+      {pestana === "resumen" && (
+        <div className="space-y-5">
           <PestanaScriptFlujo
             resumen={resumen.data}
             cargando={resumen.isLoading}
@@ -157,8 +194,15 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             error={resumen.error}
             onActualizar={() => void resumen.refetch()}
           />
-          <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
-            <h2 className="mb-3 font-semibold text-ink-900">Preflight</h2>
+          <section className="rounded-lg border border-line-200 bg-surface p-5">
+            <div className="mb-4">
+              <h2 className="text-sm font-semibold text-ink-900">
+                Estimación de ejecución
+              </h2>
+              <p className="mt-1 text-sm text-ink-500">
+                Valores aproximados antes de iniciar el procesamiento.
+              </p>
+            </div>
             <EstadoPreflight
               preflight={preflight.data}
               validando={preflight.isLoading}
@@ -166,14 +210,31 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             />
           </section>
         </div>
-      ) : null}
-      {pestana === "detalles" ? <PestanaMetadataFlujo flujo={flujo} /> : null}
-      {pestana === "historial" ? (
+      )}
+
+      {pestana === "tecnico" && (
+        <div className="space-y-5">
+          <PestanaMetadataFlujo flujo={flujo} />
+          <section className="rounded-lg border border-line-200 bg-surface p-5">
+            <h2 className="mb-4 text-sm font-semibold text-ink-900">
+              Validación y SQL
+            </h2>
+            <EstadoPreflight
+              preflight={preflight.data}
+              validando={preflight.isLoading}
+              error={preflight.error}
+              mostrarDetallesTecnicos
+            />
+          </section>
+        </div>
+      )}
+
+      {pestana === "historial" && (
         <HistorialAuditoriaReporte
-          ejecuciones={ejecuciones.data ?? []}
+          ejecuciones={ejecucionesActuales}
           mostrarDetallesTecnicos={false}
         />
-      ) : null}
+      )}
     </PageLayout>
   );
 }

@@ -136,14 +136,15 @@ describe("API", () => {
                     {
                       mode: "keyValue",
                       value: [
+                        { key: "jobid", value: "{ $.jobid }" },
+                        { key: "projectid", value: "{ $.projectid }" },
                         { key: "credenciales", value: "{ $.Credenciales }" },
-                        { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
-                        { key: "bq_export_data", value: "{ $.BqExportData }" },
+                        { key: "sql", value: "{ $.sql }" },
                       ],
                     },
                   ],
                 },
-                ...["Credenciales", "BqNumberCsv", "BqExportData"].map(
+                ...["jobid", "projectid", "Credenciales", "sql"].map(
                   (name) => ({
                     name,
                     operations: [{ id: "set_value", value: "" }],
@@ -403,14 +404,15 @@ describe("API", () => {
             {
               mode: "keyValue",
               value: [
+                { key: "jobid", value: "{ $.jobid }" },
+                { key: "projectid", value: "{ $.projectid }" },
                 { key: "credenciales", value: "{ $.Credenciales }" },
-                { key: "bq_number_csv", value: "{ $.BqNumberCsv }" },
-                { key: "bq_export_data", value: "{ $.BqExportData }" },
+                { key: "sql", value: "{ $.sql }" },
               ],
             },
           ],
         },
-        ...["Credenciales", "BqNumberCsv", "BqExportData"].map((name) => ({
+        ...["jobid", "projectid", "Credenciales", "sql"].map((name) => ({
           name,
           operations: [{ id: "set_value", value: "" }],
         })),
@@ -518,6 +520,7 @@ describe("API", () => {
         flujoIdQlik: "flujo-1",
         automatizacionPersonalId: "66666666-6666-4666-8666-666666666666",
         uriBaseGcs: expect.stringContaining("/andresgaibor/ventas/"),
+        scriptExportacion: expect.stringContaining("compression = 'GZIP'"),
       }),
     );
   });
@@ -531,6 +534,7 @@ describe("API", () => {
     );
     const repositorioReportes = {
       listarEjecuciones: vi.fn(async () => []),
+      listarUltimasEjecucionesPorFlujo: vi.fn(async () => []),
     };
     const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
@@ -558,5 +562,8 @@ describe("API", () => {
     });
     expect(listarFlujos).toHaveBeenCalledTimes(2);
     expect(repositorioReportes.listarEjecuciones).not.toHaveBeenCalled();
+    expect(
+      repositorioReportes.listarUltimasEjecucionesPorFlujo,
+    ).toHaveBeenCalledWith("tenant-1", "org-1");
   });
 });

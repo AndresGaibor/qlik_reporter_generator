@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[A]: LOAD id, valor; SQL SELECT id, valor FROM `p.d.a`;
+RENAME FIELD valor TO monto; RENAME TABLE A TO Hechos; DROP FIELD id FROM Hechos;

@@ -18,17 +18,25 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
         listar: async (espacioId?: string) =>
           (
             await (
-              qlik.listarFlujos as (
-                id?: string,
-              ) => Promise<
-                Array<{ id: string; name: string; spaceId?: string }>
+              qlik.listarFlujos as (id?: string) => Promise<
+                Array<{
+                  id: string;
+                  appId?: string;
+                  name: string;
+                  spaceId?: string;
+                  createdAt?: string;
+                  updatedAt?: string;
+                }>
               >
             )(espacioId)
           ).map((f) => ({
             id: f.id,
+            ...(f.appId ? { appId: f.appId } : {}),
             nombre: f.name,
             espacioId: f.spaceId,
             espacioNombre: f.spaceId ?? "Espacio personal",
+            ...(f.createdAt ? { creadoEn: f.createdAt } : {}),
+            ...(f.updatedAt ? { modificadoEn: f.updatedAt } : {}),
           })),
       }),
       resolverBigQuery: async () => ({
@@ -49,6 +57,7 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
       },
       repositorioReportes: {
         listarEjecuciones: vi.fn(async () => []),
+        listarUltimasEjecucionesPorFlujo: vi.fn(async () => []),
       } as never,
       ...extras,
     }),
@@ -176,7 +185,12 @@ describe("fachada /api/reportes para Dataflows", () => {
     ]);
     const app = appCon(
       { listarFlujos, listarEspacios: vi.fn(async () => []) },
-      { repositorioReportes: { listar: vi.fn() } as never },
+      {
+        repositorioReportes: {
+          listar: vi.fn(),
+          listarUltimasEjecucionesPorFlujo: vi.fn(async () => []),
+        } as never,
+      },
     );
 
     const respuesta = await app.request(
@@ -190,10 +204,86 @@ describe("fachada /api/reportes para Dataflows", () => {
     ]);
   });
 
+  it("ordena reportes por última ejecución y usa creación como respaldo", async () => {
+    const listarUltimasEjecucionesPorFlujo = vi.fn(async () => [
+      {
+        flujoIdQlik: "df-1",
+        ultimaEjecucionEn: new Date("2026-08-20T12:00:00Z"),
+      },
+      {
+        flujoIdQlik: "df-3",
+        ultimaEjecucionEn: new Date("2026-08-18T12:00:00Z"),
+      },
+    ]);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [
+          {
+            id: "df-3",
+            name: "Antiguo usado",
+            createdAt: "2026-08-01T00:00:00Z",
+          },
+          {
+            id: "df-2",
+            name: "Nuevo sin ejecutar",
+            createdAt: "2026-08-19T12:00:00Z",
+          },
+          {
+            id: "df-1",
+            name: "Usado recientemente",
+            createdAt: "2026-08-10T00:00:00Z",
+          },
+        ]),
+      },
+      {
+        repositorioReportes: {
+          listarUltimasEjecucionesPorFlujo,
+          listarEjecuciones: vi.fn(async () => []),
+        } as never,
+      },
+    );
+
+    const respuesta = await app.request("/api/reportes");
+    const datos = (await respuesta.json()).datos;
+
+    expect(datos.map((reporte: { id: string }) => reporte.id)).toEqual([
+      "df-1",
+      "df-2",
+      "df-3",
+    ]);
+    expect(datos[0]).toMatchObject({
+      creadoEn: "2026-08-10T00:00:00Z",
+      ultimaEjecucionEn: "2026-08-20T12:00:00.000Z",
+    });
+    expect(datos[1]).toMatchObject({
+      creadoEn: "2026-08-19T12:00:00Z",
+      ultimaEjecucionEn: null,
+    });
+    expect(listarUltimasEjecucionesPorFlujo).toHaveBeenCalledWith(
+      "tenant-1",
+      "org-1",
+    );
+  });
+
+  it("expone la carpeta canónica de descargas en lista y detalle", async () => {
+    const app = appCon({
+      listarFlujos: vi.fn(async () => [
+        { id: "df-1", name: "Copia de Test_BQ_SFTP 2", spaceId: "sp-1" },
+      ]),
+    });
+
+    const listado = (await (await app.request("/api/reportes")).json()).datos;
+    const detalle = (await (await app.request("/api/reportes/df-1")).json())
+      .datos;
+
+    expect(listado[0].carpetaDescargas).toBe("copia-de-test-bq-sftp-2/");
+    expect(detalle.carpetaDescargas).toBe("copia-de-test-bq-sftp-2/");
+  });
+
   it("expone detalle, resumen y preflight del Dataflow actual", async () => {
     const qlik = {
       listarFlujos: vi.fn(async () => [
-        { id: "df-1", name: "Ventas", spaceId: "sp-1" },
+        { id: "df-1", appId: "app-real-1", name: "Ventas", spaceId: "sp-1" },
       ]),
       obtenerScriptApp: vi.fn(async () => ({
         script: "LOAD id; SQL SELECT id FROM `p.d.t`;",
@@ -212,6 +302,7 @@ describe("fachada /api/reportes para Dataflows", () => {
       (await (await app.request("/api/reportes/df-1/preflight")).json()).datos
         .flujoIdQlik,
     ).toBe("df-1");
+    expect(qlik.obtenerScriptApp).toHaveBeenCalledWith("app-real-1", "current");
   });
 
   it("rechaza un Dataflow que no está disponible en el tenant", async () => {
@@ -227,6 +318,7 @@ describe("fachada /api/reportes para Dataflows", () => {
     const ejecutar = vi.fn(async () => ({
       runId: "run-1",
       ejecucionReporteId: "exec-1",
+      carpetaDescargas: "ventas/",
     }));
     const listarEjecuciones = vi.fn(async () => []);
     const app = appCon(
@@ -243,6 +335,9 @@ describe("fachada /api/reportes para Dataflows", () => {
       method: "POST",
     });
     expect(respuesta.status).toBe(200);
+    expect((await respuesta.clone().json()).datos.carpetaDescargas).toBe(
+      "ventas/",
+    );
     expect(listarEjecuciones).toHaveBeenCalledWith(
       "df-1",
       "tenant-1",

@@ -1,7 +1,10 @@
 {
   "name": "qlik-automatizaciones",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "bun run --parallel dev:api dev:web",
     "dev:api": "bun run --cwd apps/api dev",
@@ -16,7 +19,10 @@
     "lint:fix": "biome check --write .",
     "db:migrate": "bun run --cwd apps/api db:migrate",
     "db:check": "bun run --cwd apps/api db:check",
-    "db:seed": "bun run --cwd apps/api db:seed"
+    "db:seed": "bun run --cwd apps/api db:seed",
+    "agents:docs": "python3 scripts/agents/generate-agent-docs.py && python3 scripts/agents/enrich-agent-docs.py",
+    "agents:index": "python3 scripts/agents/generate-agent-docs.py && python3 scripts/agents/enrich-agent-docs.py",
+    "agents:check": "bun run agents:docs && python3 scripts/agents/check-agent-docs.py && python3 scripts/agents/check-agent-quality.py"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

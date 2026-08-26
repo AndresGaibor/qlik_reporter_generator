@@ -1,0 +1,12 @@
+SET vModo='A';
+SWITCH '$(vModo)'
+CASE 'A'
+  [Salida]: LOAD * INLINE [id
+1];
+CASE 'B'
+  [Salida]: LOAD * INLINE [id
+2];
+DEFAULT
+  [Salida]: LOAD * INLINE [id
+0];
+END SWITCH;

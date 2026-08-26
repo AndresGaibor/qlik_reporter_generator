@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { ErrorApiQlik } from "../../qlik/infraestructura/error-api-qlik.js";
 import { SincronizarEjecucionesReporte } from "./sincronizar-ejecuciones-reporte.js";
 
 function llamada(repo: Record<string, unknown>, qlik: ServicioQlik) {
@@ -103,6 +104,79 @@ describe("SincronizarEjecucionesReporte", () => {
       metodo: "GET",
       ruta: "/api/workflows/automations/auto-old/runs/run-shared",
     });
+  });
+
+  it("marca detenidas las ejecuciones cuyo automate fue eliminado y continúa con los demás", async () => {
+    const marcarEstado = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-borrada",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-borrada",
+          estado: "iniciada",
+        },
+        {
+          id: "e-viva",
+          runIdQlik: "run-2",
+          automatizacionIdQlik: "auto-viva",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoEjecucion: marcarEstado,
+    };
+    const listar = vi.fn(async (automatizacionIdQlik: string) => {
+      if (automatizacionIdQlik === "auto-borrada") {
+        throw new ErrorApiQlik(
+          404,
+          "Not Found",
+          "/api/workflows/automations/auto-borrada/runs",
+        );
+      }
+      return [{ id: "run-2", status: "stopped" }];
+    });
+
+    await llamada(repo, {
+      listarEjecuciones: listar,
+    } as unknown as ServicioQlik);
+
+    expect(marcarEstado).toHaveBeenCalledWith(
+      "e-borrada",
+      "detenida",
+      expect.any(Date),
+    );
+    expect(marcarEstado).toHaveBeenCalledWith(
+      "e-viva",
+      "detenida",
+      expect.any(Date),
+    );
+  });
+
+  it("propaga errores de Qlik distintos de 404", async () => {
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "iniciada",
+        },
+      ]),
+      marcarEstadoEjecucion: vi.fn(async () => undefined),
+    };
+    const error = new ErrorApiQlik(
+      403,
+      "Forbidden",
+      "/api/workflows/automations/auto-1/runs",
+    );
+
+    await expect(
+      llamada(repo, {
+        listarEjecuciones: vi.fn(async () => {
+          throw error;
+        }),
+      } as unknown as ServicioQlik),
+    ).rejects.toBe(error);
   });
 
   it("no marca completada solo porque Qlik responde finished", async () => {

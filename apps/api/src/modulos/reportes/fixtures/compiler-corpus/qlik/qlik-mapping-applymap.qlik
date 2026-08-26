@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Mapa]: MAPPING LOAD codigo, descripcion; SQL SELECT codigo, descripcion FROM `p.d.catalogo`;
+[Salida]: LOAD id, ApplyMap('Mapa', codigo, 'DESCONOCIDO') AS descripcion;
+SQL SELECT id, codigo FROM `p.d.hechos`;

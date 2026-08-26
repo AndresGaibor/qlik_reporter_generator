@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "bun:test";
-import { EjecutarReporte } from "./ejecutar-reporte.js";
+import {
+  EjecutarReporte,
+  construirCarpetaDescargasReporte,
+} from "./ejecutar-reporte.js";
 
 const SCRIPT =
   "LIB CONNECT TO [Google BigQuery:Prod]; SQL SELECT id FROM `p.d.t`;";
@@ -16,7 +19,7 @@ const workspace = JSON.parse(
 function caso(opciones: { estimarError?: Error } = {}) {
   const qlik = {
     listarFlujos: vi.fn(async () => [
-      { id: "df-1", name: "Ventas Diarias", spaceId: "sp-1" },
+      { id: "df-1", appId: "app-real-1", name: "Ventas Diarias", spaceId: "sp-1" },
     ]),
     obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
     obtenerAutomatizacion: vi.fn(async () => ({
@@ -68,10 +71,18 @@ function caso(opciones: { estimarError?: Error } = {}) {
   return { ejecutar, qlik, repositorio, workers, estimador };
 }
 
+describe("nombre de carpeta de descargas", () => {
+  it("genera una carpeta estable y legible desde el nombre del reporte", () => {
+    expect(construirCarpetaDescargasReporte("Copia de Test_BQ_SFTP 2")).toBe(
+      "copia-de-test-bq-sftp-2/",
+    );
+  });
+});
+
 describe("EjecutarReporte", () => {
   it("resuelve el Dataflow actual por flujoIdQlik y audita su snapshot", async () => {
-    const { ejecutar, repositorio, workers } = caso();
-    await ejecutar.ejecutar({
+    const { ejecutar, qlik, repositorio, workers } = caso();
+    const resultado = await ejecutar.ejecutar({
       flujoIdQlik: "df-1",
       tenantId: "tenant-1",
       organizacionId: "org-1",
@@ -79,6 +90,8 @@ describe("EjecutarReporte", () => {
       usuarioIdQlik: "qlik-1",
       correo: "Andres.Gaibor+reportes@correo.com",
     });
+    expect(resultado.carpetaDescargas).toBe("ventas-diarias/");
+    expect(qlik.obtenerScriptApp).toHaveBeenCalledWith("app-real-1", "current");
     expect(workers.ejecutar).toHaveBeenCalled();
     expect(repositorio.crearEjecucion).toHaveBeenCalledWith(
       expect.objectContaining({

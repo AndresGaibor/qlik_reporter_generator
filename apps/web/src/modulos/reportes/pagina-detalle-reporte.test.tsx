@@ -4,6 +4,7 @@ import type React from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
 
+const navegacion = vi.hoisted(() => ({ navegar: vi.fn() }));
 const api = vi.hoisted(() => ({
   obtenerReporte: vi.fn(async () => ({
     id: "df-1",
@@ -11,6 +12,7 @@ const api = vi.hoisted(() => ({
     espacioId: "sp-1",
     espacioNombre: "Analítica",
     modificadoEn: "2026-08-18T12:00:00Z",
+    carpetaDescargas: "ventas/",
   })),
   obtenerResumenReporte: vi.fn(async () => ({
     flujoId: "df-1",
@@ -33,7 +35,11 @@ const api = vi.hoisted(() => ({
     resumen: { fuentes: 1, filtros: 0, joins: 0, camposSalida: 1 },
   })),
   obtenerEjecucionesReporte: vi.fn(async () => []),
-  ejecutarReporte: vi.fn(async () => ({ runId: "run-1" })),
+  ejecutarReporte: vi.fn(async () => ({
+    runId: "run-1",
+    ejecucionReporteId: "exec-1",
+    carpetaDescargas: "ventas/",
+  })),
 }));
 vi.mock("@/modulos/reportes/api", () => api);
 vi.mock("@/compartido/hooks/use-tenant-activo", () => ({
@@ -63,6 +69,7 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => (
     <a href="/reportes">{children}</a>
   ),
+  useNavigate: () => navegacion.navegar,
 }));
 import { PaginaDetalleReporte } from "./pagina-detalle-reporte";
 
@@ -88,9 +95,7 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
       </QueryClientProvider>,
     ),
   );
-  await vi.waitFor(() =>
-    expect(container?.textContent).toContain("Diseño del Dataflow"),
-  );
+  await vi.waitFor(() => expect(container?.textContent).toContain("Resumen"));
   expect(api.obtenerReporte).toHaveBeenCalledWith("df-1");
   expect(api.obtenerResumenReporte).toHaveBeenCalledWith("df-1");
   expect(api.preflightDataflowReporte).toHaveBeenCalledWith("df-1");
@@ -105,6 +110,70 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(
     client.getQueryData(["ejecuciones-reporte", "tenant-1", "df-1"]),
   ).toBeDefined();
+  expect(container?.textContent).toContain("Detalles técnicos");
+  expect(container?.textContent).not.toContain("Diseño y validación");
+  expect(container?.textContent).not.toContain("Dataflow de Qlik ·");
   expect(container?.textContent).not.toContain("Clonar");
   expect(container?.textContent).not.toContain("Inactivo");
+});
+
+test("ofrece ver descargas y navega a la carpeta canónica del reporte", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Ver descargas"),
+  );
+  const boton = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ver descargas"),
+  );
+  expect(boton).toBeTruthy();
+  await act(async () =>
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  expect(navegacion.navegar).toHaveBeenCalledWith({
+    to: "/descargas",
+    search: { carpeta: "ventas/" },
+  });
+});
+
+test("al ejecutar redirige a la carpeta de descargas devuelta por el servidor", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Ejecutar reporte"),
+  );
+  const boton = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar reporte"),
+  );
+  await act(async () =>
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() =>
+    expect(navegacion.navegar).toHaveBeenCalledWith({
+      to: "/descargas",
+      search: { carpeta: "ventas/" },
+    }),
+  );
 });

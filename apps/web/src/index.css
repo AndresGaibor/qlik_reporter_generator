@@ -2,7 +2,7 @@
    index.css · sistema de diseño "Automatizaciones"  (look Qlik Cloud)
    Tailwind v4 · los tokens VIVEN aquí, no en tailwind.config.js
    ===================================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Source+Sans+3:opsz,wght@6..21,400;6..21,500;6..21,600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:opsz,wght@6..21,400;6..21,500;6..21,600;6..21,700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------
@@ -13,29 +13,43 @@
   --color-brand-700: #007a37; /* press / hover fuerte            */
   --color-brand-600: #009845; /* PRIMARIO                        */
   --color-brand-500: #18a957; /* acento / glyph                  */
+  --color-brand-300: #78c997;
+  --color-brand-200: #b9e4ca;
   --color-brand-100: #e3f4ea; /* fila activa / anillo de foco    */
   --color-brand-50: #f1faf5; /* banner éxito / selección suave  */
+  --color-brand-800: #00602c;
 
   /* OBJETO · azul que ETIQUETA, no que acciona (chips de espacio/tipo) */
   --color-obj-600: #1464c0;
   --color-obj-50: #e8f0fb;
 
   /* TINTA · jerarquía del texto (4 escalones, ni uno más) */
+  --color-ink-950: #17181a;
   --color-ink-900: #202124;
+  --color-ink-800: #2f3134;
   --color-ink-700: #3c4043;
+  --color-ink-600: #4d5156;
   --color-ink-500: #5f6368;
   --color-ink-400: #8a8f98;
   --color-ink-300: #b8bcc4;
 
   /* SUPERFICIES · lo que calla para que lo demás hable */
   --color-surface: #ffffff;
-  --color-app: #f6f7f8;
+  --color-surface-subtle: #f9fafb;
+  --color-app: #f5f6f7;
   --color-hover: #f2f4f6;
   --color-line-200: #e1e3e6; /* borde por defecto + divisores   */
   --color-line-300: #c7cbd1; /* borde en hover / foco suave     */
 
   /* SEMÁNTICA */
+  --color-danger-50: #fdf2f1;
+  --color-danger-200: #f4c7c3;
   --color-danger-600: #d93025;
+  --color-danger-700: #b3261e;
+  --color-danger-800: #8c1d18;
+  --color-danger-900: #681510;
+  --color-success-50: #ecf8f1;
+  --color-success-700: #08743b;
   --color-warn-600: #e8a317;
   --color-avatar: #57b894; /* menta de avatar (no es marca)   */
 
@@ -51,7 +65,7 @@
   --shadow-focus: 0 0 0 3px var(--color-brand-100);
 
   /* TIPO · tres voces, un rol cada una */
-  --font-display: "Space Grotesk", system-ui, sans-serif; /* titulares, wordmark, métricas */
+  --font-display: "Source Sans 3", system-ui, sans-serif; /* titulares sobrios */
   --font-sans: "Source Sans 3", system-ui, sans-serif; /* TODO lo demás (histórica Qlik) */
   --font-mono: "IBM Plex Mono", ui-monospace, monospace; /* IDs / hosts / fechas técnicas */
 
@@ -159,45 +173,10 @@
    COMPONENTES · lo que tiene vida (pseudo-elementos, observers, pulso)
    --------------------------------------------------------------------- */
 @layer components {
-  /* Fondo ambient: dot-grid tenue + UN glow verde esquinero (no aurora) */
+  /* Superficie de aplicación: neutra y sin decoración ambiental. */
   .ambient {
     position: relative;
     isolation: isolate;
-  }
-  .ambient::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -2;
-    background-image: radial-gradient(
-      var(--color-line-200) 1px,
-      transparent 1px
-    );
-    background-size: 22px 22px;
-    -webkit-mask-image: radial-gradient(
-      120% 90% at 50% 0%,
-      #000 30%,
-      transparent 75%
-    );
-    mask-image: radial-gradient(120% 90% at 50% 0%, #000 30%, transparent 75%);
-    opacity: 0.5;
-  }
-  .ambient::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    pointer-events: none;
-    top: -16%;
-    right: -8%;
-    width: min(52vw, 720px);
-    aspect-ratio: 1;
-    background: radial-gradient(
-      circle at center,
-      var(--color-brand-100) 0%,
-      transparent 62%
-    );
-    filter: blur(26px);
-    opacity: 0.5;
   }
 
   /* Scroll-reveal: entra con fade + 8px cuando el observer lo marca .in */

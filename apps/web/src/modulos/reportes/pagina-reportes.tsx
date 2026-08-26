@@ -13,6 +13,7 @@ import {
 } from "@/modulos/reportes/api";
 import type { ResumenReporte } from "@qlik/contratos";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { BarraFiltrosReportes } from "./componentes/barra-filtros-reportes";
 import { ListaReportes } from "./componentes/lista-reportes";
@@ -38,6 +39,7 @@ export function filtrarReportes(
 export function PaginaReportes() {
   const { mostrarError, mostrarExito } = useNotificaciones();
   const queryClient = useQueryClient();
+  const navegar = useNavigate();
   const { tenant: tenantActivo } = useTenantActivo();
   const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia(
     tenantActivo?.id,
@@ -79,9 +81,13 @@ export function PaginaReportes() {
   const ejecutar = useMutation({
     mutationFn: ejecutarReporte,
     onMutate: setIdEjecutando,
-    onSuccess: async () => {
+    onSuccess: (resultado) => {
       mostrarExito("Ejecución del reporte iniciada");
-      await queryClient.invalidateQueries({ queryKey: ["reportes"] });
+      void queryClient.invalidateQueries({ queryKey: ["reportes"] });
+      void navegar({
+        to: "/descargas",
+        search: { carpeta: resultado.carpetaDescargas },
+      });
     },
     onError: (error: Error) => mostrarError(error.message),
     onSettled: () => setIdEjecutando(null),

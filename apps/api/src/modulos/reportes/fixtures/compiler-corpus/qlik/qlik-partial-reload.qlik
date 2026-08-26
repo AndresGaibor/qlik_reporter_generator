@@ -1,0 +1,2 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+ADD [Salida]: LOAD id, monto; SQL SELECT id, monto FROM `p.d.delta`;

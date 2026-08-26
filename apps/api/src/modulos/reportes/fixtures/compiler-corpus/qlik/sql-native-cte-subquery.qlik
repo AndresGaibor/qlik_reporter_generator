@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL WITH base AS (SELECT id, monto FROM `p.d.ventas` WHERE monto > 0)
+SELECT id, monto FROM base WHERE id IN (SELECT id FROM `p.d.clientes_activos`);

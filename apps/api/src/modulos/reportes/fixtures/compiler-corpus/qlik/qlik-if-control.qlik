@@ -1,0 +1,8 @@
+SET vModo='A';
+IF '$(vModo)'='A' THEN
+  [Salida]: LOAD * INLINE [id,valor
+1,A];
+ELSE
+  [Salida]: LOAD * INLINE [id,valor
+2,B];
+END IF;

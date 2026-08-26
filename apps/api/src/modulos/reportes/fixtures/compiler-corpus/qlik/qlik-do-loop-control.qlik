@@ -1,0 +1,4 @@
+LET vI=0;
+DO WHILE $(vI) < 3
+  LET vI=$(vI)+1;
+LOOP;

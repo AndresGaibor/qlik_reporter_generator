@@ -42,13 +42,13 @@ describe("parsearDataflow", () => {
     const plan = parsearDataflow(`
       LIB CONNECT TO [Google BigQuery:BigQuery_Produccion];
       [salida]:
-      LOAD ApplyMap('mapa', [TiendaId]) AS [Tienda];
+      LOAD FuncionInventada([TiendaId]) AS [Tienda];
       SQL SELECT TiendaId FROM \`demo-proyecto.ds.tabla\`;
     `);
 
     expect(plan.operacionesNoSoportadas).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ operacion: "ApplyMap" }),
+        expect.objectContaining({ operacion: "FuncionInventada" }),
       ]),
     );
   });
@@ -73,6 +73,24 @@ describe("parsearDataflow", () => {
         }),
       ]),
     );
+  });
+
+  it("acepta num case-insensitive y compone preceding LOAD sobre RESIDENT", () => {
+    const plan = parsearDataflow(`
+      SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD Fecha, Cantidad;
+      SELECT Fecha, Cantidad FROM ` + "`p.d.ventas`" + `;
+      [Fechas]: LOAD num(Month(Fecha)) AS Mes, Cantidad RESIDENT [Base];
+      [Salida]: LOAD Mes, Total;
+      LOAD Mes, Count(Cantidad) AS Total RESIDENT [Fechas] GROUP BY Mes;
+      STORE [Salida] INTO [lib://x/out.csv] (txt);
+      DROP TABLE [Salida];
+    `);
+
+    expect(plan.operacionesNoSoportadas).toEqual([]);
+    expect(plan.salida.tablaLogica).toBe("Salida");
+    expect(plan.salida.campos).toEqual(["Mes", "Total"]);
   });
 
   it("marca incompatible un wildcard mezclado con campos calculados", () => {

@@ -78,6 +78,41 @@ describe("RepositorioReportesPostgres", () => {
     expect(serializado).toContain("organizacion_id");
   });
 
+  it("obtiene una sola fecha de última ejecución por flujo dentro del tenant", async () => {
+    const condiciones: unknown[] = [];
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: (where: unknown) => {
+            condiciones.push(where);
+            return {
+              groupBy: async () => [
+                {
+                  flujoIdQlik: "flujo-1",
+                  ultimaEjecucionEn: new Date("2026-08-20T12:00:00Z"),
+                },
+              ],
+            };
+          },
+        }),
+      }),
+    };
+
+    const resultado = await new RepositorioReportesPostgres(
+      db as never,
+    ).listarUltimasEjecucionesPorFlujo("tenant-1", "organizacion-1");
+
+    expect(resultado).toEqual([
+      {
+        flujoIdQlik: "flujo-1",
+        ultimaEjecucionEn: new Date("2026-08-20T12:00:00Z"),
+      },
+    ]);
+    const serializado = Bun.inspect(condiciones, { depth: 20 });
+    expect(serializado).toContain("tenant_qlik_id");
+    expect(serializado).toContain("organizacion_id");
+  });
+
   it("marca el estado terminal por ID de ejecución y no por run Qlik", async () => {
     let condicion: unknown;
     const db = {

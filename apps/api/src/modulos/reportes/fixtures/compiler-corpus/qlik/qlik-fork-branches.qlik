@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Base]: LOAD id, tipo, monto; SQL SELECT id, tipo, monto FROM `p.d.ventas`;
+[A]: NoConcatenate LOAD * RESIDENT [Base] WHERE tipo='A';
+[B]: NoConcatenate LOAD * RESIDENT [Base] WHERE tipo='B';

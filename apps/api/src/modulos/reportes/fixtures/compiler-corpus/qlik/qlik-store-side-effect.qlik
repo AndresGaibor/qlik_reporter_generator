@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *; SQL SELECT id, monto FROM `p.d.ventas`;
+STORE [Salida] INTO [lib://out/salida.qvd] (qvd);

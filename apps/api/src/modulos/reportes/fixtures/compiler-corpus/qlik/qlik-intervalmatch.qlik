@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Eventos]: LOAD evento, instante; SQL SELECT evento, instante FROM `p.d.eventos`;
+[Intervalos]: LOAD inicio, fin, categoria; SQL SELECT inicio, fin, categoria FROM `p.d.intervalos`;
+INTERVALMATCH (instante) LOAD inicio, fin RESIDENT [Intervalos];

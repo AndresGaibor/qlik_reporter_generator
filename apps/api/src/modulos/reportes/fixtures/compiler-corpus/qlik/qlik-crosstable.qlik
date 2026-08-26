@@ -1,0 +1,4 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+CROSSTABLE (Mes, Venta, 1)
+[Salida]: LOAD producto, ene, feb, mar;
+SQL SELECT producto, ene, feb, mar FROM `p.d.ventas_wide`;

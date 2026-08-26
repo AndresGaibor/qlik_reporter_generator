@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, Hash128(id, texto) AS h128, Hash256(id, texto) AS h256;
+SQL SELECT id, texto FROM `p.d.a`;

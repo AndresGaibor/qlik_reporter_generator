@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD categoria, Count(*) AS filas, Count(DISTINCT id) AS ids, Sum(DISTINCT monto) AS monto_distinto, NullCount(valor) AS nulos, NumericCount(valor) AS numericos, TextCount(valor) AS textos, MissingCount(valor) AS faltantes, RangeSum(a,b,c) AS suma_rango, RangeAvg(a,b,c) AS promedio_rango GROUP BY categoria;
+SQL SELECT categoria, id, monto, valor, a, b, c FROM `p.d.metricas`;

@@ -1,0 +1,941 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-21",
+  "scenarios": [
+    {
+      "id": "sql-native-inner-join",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-inner-join.qlik",
+      "processors": [
+        "Join",
+        "Select fields"
+      ],
+      "features": [
+        "native_sql",
+        "inner_join"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-left-join",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-left-join.qlik",
+      "processors": [
+        "Join",
+        "Select fields"
+      ],
+      "features": [
+        "native_sql",
+        "left_join"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-right-join",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-right-join.qlik",
+      "processors": [
+        "Join",
+        "Select fields"
+      ],
+      "features": [
+        "native_sql",
+        "right_join"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-full-join",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-full-join.qlik",
+      "processors": [
+        "Join",
+        "Select fields"
+      ],
+      "features": [
+        "native_sql",
+        "full_join"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-multi-join",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-multi-join.qlik",
+      "processors": [
+        "Join"
+      ],
+      "features": [
+        "native_sql",
+        "multi_join",
+        "composite_on"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-where-group-all",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-where-group-all.qlik",
+      "processors": [
+        "Filter",
+        "Aggregate"
+      ],
+      "features": [
+        "where",
+        "group_by_all"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-having",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-having.qlik",
+      "processors": [
+        "Aggregate",
+        "Filter"
+      ],
+      "features": [
+        "having"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-qualify-window",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-qualify-window.qlik",
+      "processors": [
+        "Window",
+        "Sort",
+        "Filter"
+      ],
+      "features": [
+        "window",
+        "qualify"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-cte-subquery",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-cte-subquery.qlik",
+      "processors": [],
+      "features": [
+        "cte",
+        "subquery"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-union",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-union.qlik",
+      "processors": [
+        "Union"
+      ],
+      "features": [
+        "union_all"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-distinct-order-limit",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-distinct-order-limit.qlik",
+      "processors": [
+        "Select fields",
+        "Sort",
+        "Sample"
+      ],
+      "features": [
+        "distinct",
+        "order_by",
+        "limit"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-pivot",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-pivot.qlik",
+      "processors": [
+        "Pivot"
+      ],
+      "features": [
+        "pivot"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-unpivot",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-unpivot.qlik",
+      "processors": [
+        "Unpivot"
+      ],
+      "features": [
+        "unpivot",
+        "include_nulls"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "sql-native-comments-semicolons",
+      "family": "native-sql",
+      "target": "single_query",
+      "fixture": "qlik/sql-native-comments-semicolons.qlik",
+      "processors": [],
+      "features": [
+        "comments",
+        "quoted_semicolon"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-filter-project",
+      "family": "qlik-relational",
+      "target": "single_query",
+      "fixture": "qlik/qlik-filter-project.qlik",
+      "processors": [
+        "Filter",
+        "Select fields",
+        "Strings",
+        "Calculate fields"
+      ],
+      "features": [
+        "preceding_load",
+        "where"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-resident-chain",
+      "family": "qlik-relational",
+      "target": "single_query",
+      "fixture": "qlik/qlik-resident-chain.qlik",
+      "processors": [
+        "Filter",
+        "Aggregate"
+      ],
+      "features": [
+        "resident",
+        "drop_table",
+        "group_by"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-inner-join",
+      "family": "qlik-join",
+      "target": "single_query",
+      "fixture": "qlik/qlik-inner-join.qlik",
+      "processors": [
+        "Join"
+      ],
+      "features": [
+        "qlik_join",
+        "inner"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-left-join",
+      "family": "qlik-join",
+      "target": "single_query",
+      "fixture": "qlik/qlik-left-join.qlik",
+      "processors": [
+        "Join"
+      ],
+      "features": [
+        "qlik_join",
+        "left"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-right-join",
+      "family": "qlik-join",
+      "target": "single_query",
+      "fixture": "qlik/qlik-right-join.qlik",
+      "processors": [
+        "Join"
+      ],
+      "features": [
+        "qlik_join",
+        "right"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-full-join",
+      "family": "qlik-join",
+      "target": "single_query",
+      "fixture": "qlik/qlik-full-join.qlik",
+      "processors": [
+        "Join"
+      ],
+      "features": [
+        "qlik_join",
+        "full"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-inner-keep",
+      "family": "qlik-keep",
+      "target": "multi_relation",
+      "fixture": "qlik/qlik-inner-keep.qlik",
+      "processors": [],
+      "features": [
+        "keep",
+        "inner"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-left-keep",
+      "family": "qlik-keep",
+      "target": "multi_relation",
+      "fixture": "qlik/qlik-left-keep.qlik",
+      "processors": [],
+      "features": [
+        "keep",
+        "left"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-right-keep",
+      "family": "qlik-keep",
+      "target": "multi_relation",
+      "fixture": "qlik/qlik-right-keep.qlik",
+      "processors": [],
+      "features": [
+        "keep",
+        "right"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-concatenate",
+      "family": "qlik-concatenate",
+      "target": "single_query",
+      "fixture": "qlik/qlik-concatenate.qlik",
+      "processors": [
+        "Union"
+      ],
+      "features": [
+        "concatenate"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-noconcatenate",
+      "family": "qlik-concatenate",
+      "target": "multi_relation",
+      "fixture": "qlik/qlik-noconcatenate.qlik",
+      "processors": [],
+      "features": [
+        "noconcatenate",
+        "auto_concatenate_barrier"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-mapping-applymap",
+      "family": "qlik-mapping",
+      "target": "single_query",
+      "fixture": "qlik/qlik-mapping-applymap.qlik",
+      "processors": [],
+      "features": [
+        "mapping",
+        "applymap"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-crosstable",
+      "family": "qlik-shape",
+      "target": "single_query",
+      "fixture": "qlik/qlik-crosstable.qlik",
+      "processors": [
+        "Unpivot"
+      ],
+      "features": [
+        "crosstable"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-intervalmatch",
+      "family": "qlik-interval",
+      "target": "single_query",
+      "fixture": "qlik/qlik-intervalmatch.qlik",
+      "processors": [],
+      "features": [
+        "intervalmatch"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-generic-load",
+      "family": "qlik-shape",
+      "target": "multi_relation",
+      "fixture": "qlik/qlik-generic-load.qlik",
+      "processors": [],
+      "features": [
+        "generic"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-hierarchy",
+      "family": "qlik-hierarchy",
+      "target": "recursive_cte",
+      "fixture": "qlik/qlik-hierarchy.qlik",
+      "processors": [],
+      "features": [
+        "hierarchy"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-hierarchy-belongs-to",
+      "family": "qlik-hierarchy",
+      "target": "recursive_cte",
+      "fixture": "qlik/qlik-hierarchy-belongs-to.qlik",
+      "processors": [],
+      "features": [
+        "hierarchy_belongs_to"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-qualify-unqualify",
+      "family": "qlik-names",
+      "target": "single_query",
+      "fixture": "qlik/qlik-qualify-unqualify.qlik",
+      "processors": [],
+      "features": [
+        "qualify",
+        "unqualify"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-null-environment",
+      "family": "qlik-null",
+      "target": "single_query",
+      "fixture": "qlik/qlik-null-environment.qlik",
+      "processors": [
+        "Cleanse"
+      ],
+      "features": [
+        "nullasvalue",
+        "isnull",
+        "empty_vs_null"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-set-let-expansion",
+      "family": "qlik-variables",
+      "target": "compile_time",
+      "fixture": "qlik/qlik-set-let-expansion.qlik",
+      "processors": [
+        "Qlik script"
+      ],
+      "features": [
+        "set",
+        "let",
+        "dollar_expansion"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-exists",
+      "family": "qlik-stateful",
+      "target": "single_query",
+      "fixture": "qlik/qlik-exists.qlik",
+      "processors": [],
+      "features": [
+        "exists"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-peek-previous",
+      "family": "qlik-stateful",
+      "target": "window_or_stateful",
+      "fixture": "qlik/qlik-peek-previous.qlik",
+      "processors": [
+        "Window"
+      ],
+      "features": [
+        "previous",
+        "peek",
+        "order_dependency"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-row-counters",
+      "family": "qlik-stateful",
+      "target": "window_or_stateful",
+      "fixture": "qlik/qlik-row-counters.qlik",
+      "processors": [],
+      "features": [
+        "rowno",
+        "recno",
+        "iterno",
+        "while_load"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-autonumber",
+      "family": "qlik-stateful",
+      "target": "stateful_expression",
+      "fixture": "qlik/qlik-autonumber.qlik",
+      "processors": [
+        "Concatenate fields"
+      ],
+      "features": [
+        "autonumber",
+        "string_concat"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-drop-rename",
+      "family": "qlik-symbols",
+      "target": "multi_statement",
+      "fixture": "qlik/qlik-drop-rename.qlik",
+      "processors": [
+        "Remove fields"
+      ],
+      "features": [
+        "rename_field",
+        "rename_table",
+        "drop_field"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-string-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-string-suite.qlik",
+      "processors": [
+        "Strings"
+      ],
+      "features": [
+        "upper",
+        "trim",
+        "left",
+        "mid",
+        "len",
+        "index",
+        "findoneof",
+        "capitalize",
+        "levenshtein",
+        "isjson",
+        "textbetween",
+        "substringcount"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-date-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-date-suite.qlik",
+      "processors": [
+        "Dates"
+      ],
+      "features": [
+        "date",
+        "year",
+        "month",
+        "monthstart",
+        "monthend",
+        "quarterstart",
+        "quarterend",
+        "yearstart",
+        "yearend",
+        "week",
+        "weekyear",
+        "weekday",
+        "makedate",
+        "maketime",
+        "addyears",
+        "addmonths"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-json-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-json-suite.qlik",
+      "processors": [
+        "Calculate fields"
+      ],
+      "features": [
+        "jsonget",
+        "json_pointer",
+        "jsonset"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-number-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-number-suite.qlik",
+      "processors": [
+        "Numbers",
+        "Math"
+      ],
+      "features": [
+        "num",
+        "round",
+        "floor",
+        "ceil"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-aggregate-range-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-aggregate-range-suite.qlik",
+      "processors": [
+        "Aggregate",
+        "Math"
+      ],
+      "features": [
+        "count",
+        "distinct",
+        "counter_aggregations",
+        "range_sum",
+        "range_avg"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-math-trig-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-math-trig-suite.qlik",
+      "processors": [
+        "Math",
+        "Calculate fields"
+      ],
+      "features": [
+        "exp",
+        "log",
+        "pow",
+        "sqrt",
+        "trigonometry",
+        "constants"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-split-suite",
+      "family": "expressions",
+      "target": "single_query",
+      "fixture": "qlik/qlik-split-suite.qlik",
+      "processors": [
+        "Split fields"
+      ],
+      "features": [
+        "subfield"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-hash-suite",
+      "family": "expressions",
+      "target": "single_query_or_udf",
+      "fixture": "qlik/qlik-hash-suite.qlik",
+      "processors": [
+        "Hash"
+      ],
+      "features": [
+        "hash128",
+        "hash256"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-fork-branches",
+      "family": "qlik-dag",
+      "target": "query_plan",
+      "fixture": "qlik/qlik-fork-branches.qlik",
+      "processors": [
+        "Fork"
+      ],
+      "features": [
+        "multiple_consumers",
+        "resident"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-table-recipe-generated-script",
+      "family": "table-recipe",
+      "target": "generated_script_contract",
+      "fixture": "qlik/qlik-table-recipe-generated-script.qlik",
+      "processors": [
+        "Table recipe",
+        "Strings",
+        "Numbers"
+      ],
+      "features": [
+        "golden_capture_required"
+      ],
+      "source": "synthetic-representative",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-if-control",
+      "family": "control-flow",
+      "target": "compile_time_or_multi_statement",
+      "fixture": "qlik/qlik-if-control.qlik",
+      "processors": [
+        "Qlik script"
+      ],
+      "features": [
+        "if_then_else",
+        "inline"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-switch-control",
+      "family": "control-flow",
+      "target": "compile_time_or_multi_statement",
+      "fixture": "qlik/qlik-switch-control.qlik",
+      "processors": [],
+      "features": [
+        "switch_case"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-for-control",
+      "family": "control-flow",
+      "target": "compile_time_or_multi_statement",
+      "fixture": "qlik/qlik-for-control.qlik",
+      "processors": [],
+      "features": [
+        "for_next",
+        "autogenerate"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-do-loop-control",
+      "family": "control-flow",
+      "target": "multi_statement",
+      "fixture": "qlik/qlik-do-loop-control.qlik",
+      "processors": [],
+      "features": [
+        "do_loop",
+        "let"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-sub-call",
+      "family": "control-flow",
+      "target": "compile_time_or_multi_statement",
+      "fixture": "qlik/qlik-sub-call.qlik",
+      "processors": [],
+      "features": [
+        "sub",
+        "call"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-first-sample",
+      "family": "qlik-sampling",
+      "target": "single_query",
+      "fixture": "qlik/qlik-first-sample.qlik",
+      "processors": [
+        "Sample"
+      ],
+      "features": [
+        "first_prefix"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-store-side-effect",
+      "family": "side-effect",
+      "target": "target_side_effect",
+      "fixture": "qlik/qlik-store-side-effect.qlik",
+      "processors": [],
+      "features": [
+        "store"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-filelist-external",
+      "family": "external-environment",
+      "target": "external_enumeration",
+      "fixture": "qlik/qlik-filelist-external.qlik",
+      "processors": [],
+      "features": [
+        "filelist",
+        "for_each",
+        "external_files"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-partial-reload",
+      "family": "incremental-state",
+      "target": "stateful_reload",
+      "fixture": "qlik/qlik-partial-reload.qlik",
+      "processors": [],
+      "features": [
+        "partial_reload",
+        "add_prefix"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "regression-ventas-mensuales-join",
+      "family": "regression",
+      "target": "single_query",
+      "fixture": "qlik/regression-ventas-mensuales-join.qlik",
+      "processors": [
+        "Join",
+        "Filter",
+        "Aggregate",
+        "Select fields"
+      ],
+      "features": [
+        "user_regression",
+        "native_sql",
+        "inner_join",
+        "group_by_all"
+      ],
+      "source": "user-regression",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "semantics-null-empty-dual-bool",
+      "family": "semantics",
+      "target": "single_query_or_udf",
+      "fixture": "qlik/semantics-null-empty-dual-bool.qlik",
+      "processors": [
+        "Concatenate fields",
+        "Cleanse",
+        "Numbers"
+      ],
+      "features": [
+        "null",
+        "empty",
+        "dual",
+        "boolean_minus_one"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    },
+    {
+      "id": "qlik-calculate-complex-expression",
+      "family": "expressions",
+      "target": "single_query_or_udf",
+      "fixture": "qlik/qlik-calculate-complex-expression.qlik",
+      "processors": [
+        "Calculate fields",
+        "Strings",
+        "Math",
+        "Dates",
+        "Concatenate fields"
+      ],
+      "features": [
+        "nested_functions",
+        "coercion",
+        "concat"
+      ],
+      "source": "synthetic",
+      "status": "future_acceptance"
+    }
+  ]
+}

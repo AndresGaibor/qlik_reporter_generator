@@ -1,0 +1,205 @@
+// Estilo "generado por Qlik Dataflow UI":
+// - LOAD RESIDENT + INNER JOIN + GROUP BY explícito con todas las dimensiones
+// El compilador vNext debe emitir GROUP BY ALL en lugar del lista explícita.
+
+SET DateFormat='M/D/YYYY';
+LIB CONNECT TO [Bancolombia prueba:Google_BigQuery_lafavorita-182519];
+
+[VENTAS_MENSUALES_A]:
+NOCONCATENATE
+LOAD
+	[Fecha],
+	[Formato],
+	[Zona Smx Unidad Operativa],
+	[Cod Ref],
+	[Unidad Operativa],
+	[División],
+	[Departamento],
+	[Clasificación],
+	[Sub Clasificación],
+	[Origen Compra],
+	[Proveedor],
+	[Código de Barras Padre],
+	[Comprador],
+	[Código de departamento],
+	[Bodega],
+	[Sub bodega],
+	[Item padre],
+	[Unidad de compra],
+	[Clase de mercadería],
+	[Gerencia comercial],
+	[Venta Neta USD],
+	[Cantidad],
+	[Costo Neto];
+SELECT Fecha,
+	Formato,
+	`Zona Smx Unidad Operativa`,
+	`Cod Ref`,
+	`Unidad Operativa`,
+	`División`,
+	Departamento,
+	`Clasificación`,
+	`Sub Clasificación`,
+	`Origen Compra`,
+	Proveedor,
+	`Código de Barras Padre`,
+	Comprador,
+	`Código de departamento`,
+	Bodega,
+	`Sub bodega`,
+	`Item padre`,
+	`Unidad de compra`,
+	`Clase de mercadería`,
+	`Gerencia comercial`,
+	`Venta Neta USD`,
+	Cantidad,
+	`Costo Neto`
+FROM `lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`;
+
+[Unir 1]:
+NOCONCATENATE
+LOAD
+	[Fecha],
+	[Formato],
+	[Zona Smx Unidad Operativa],
+	[Cod Ref],
+	[Unidad Operativa],
+	[División],
+	[Departamento],
+	[Clasificación],
+	[Sub Clasificación],
+	[Origen Compra],
+	[Proveedor],
+	[Código de Barras Padre],
+	[Comprador],
+	[Código de departamento],
+	[Bodega],
+	[Sub bodega],
+	[Item padre],
+	[Unidad de compra],
+	[Clase de mercadería],
+	[Gerencia comercial],
+	[Venta Neta USD],
+	[Cantidad],
+	[Costo Neto]
+RESIDENT [VENTAS_MENSUALES_A]
+WHERE [Fecha] >= '2026-07-01' AND [Fecha] < '2026-08-01';
+
+LIB CONNECT TO [Bancolombia prueba:Google_BigQuery_lafavorita-182519];
+
+INNER JOIN([Unir 1])
+	LOAD
+	[ID_FECHA],
+	[NOM_FEC] AS [Fecha],
+	[NOM_MES];
+	SELECT `ID_FECHA`,
+	`NOM_FEC`,
+	`NOM_MES`
+FROM `lafavorita-182519`.EDWH.`DIM_FECHA`;
+
+[Fechas 1]:
+NOCONCATENATE
+LOAD
+	[Fecha],
+	Year([Fecha]) AS [Año_year],
+	[Formato],
+	[Zona Smx Unidad Operativa],
+	[Cod Ref],
+	[Unidad Operativa],
+	[División],
+	[Departamento],
+	[Clasificación],
+	[Sub Clasificación],
+	[Origen Compra],
+	[Proveedor],
+	[Código de Barras Padre],
+	[Comprador],
+	[Código de departamento],
+	[Bodega],
+	[Sub bodega],
+	[Item padre],
+	[Unidad de compra],
+	[Clase de mercadería],
+	[Gerencia comercial],
+	[Venta Neta USD],
+	[Cantidad],
+	[Costo Neto],
+	[ID_FECHA],
+	[NOM_MES]
+RESIDENT [Unir 1];
+DROP TABLE [Unir 1];
+
+[Seleccionar campos 1]:
+NOCONCATENATE
+LOAD
+	'Ventas' AS [Tipo],
+	'14.Ventas' AS [Transacción],
+	[Año_year] AS [Año],
+	[NOM_MES] AS [Mes],
+	[Bodega],
+	[Sub bodega] AS [Sub_bodega],
+	[División],
+	[Código de departamento] AS [Código_de_departamento],
+	[Departamento],
+	[Clasificación],
+	[Sub Clasificación] AS [Sub_Clasificación],
+	[Origen Compra] AS [Origen_Compra],
+	[Proveedor],
+	[Gerencia comercial] AS [Gerencia_Comercial],
+	[Comprador],
+	[Zona Smx Unidad Operativa] AS [Zona],
+	[Formato],
+	[Cod Ref] AS [Cod_Ref],
+	[Unidad Operativa] AS [Unidad_Operativa],
+	'' AS [Número_del_Documento],
+	'' AS [Innerpack],
+	'' AS [Innerpack_Descripción],
+	[Código de Barras Padre] AS [Código_de_Barras_Padre],
+	[Item padre] AS [Item_padre],
+	[Unidad de compra] AS [Unidad_de_compra],
+	[Clase de mercadería] AS [Clase_de_mercadería],
+	'0' AS [Código Tipo Transacción],
+	0 AS [Código Motivo Transacción],
+	[Cantidad],
+	[Costo de Venta],
+	[Neto Venta],
+	'0' AS [Causal de Ajuste],
+	0 AS [Local V],
+	0 AS [Comercial V],
+	0 AS [CD V],
+	0 AS [Local Q],
+	0 AS [Comercial Q],
+	0 AS [CD Q],
+	0 AS [Operativo V],
+	0 AS [Operativo Q];
+LOAD
+	[Año_year],
+	[Formato],
+	[Zona Smx Unidad Operativa],
+	[Cod Ref],
+	[Unidad Operativa],
+	[División],
+	[Departamento],
+	[Clasificación],
+	[Sub Clasificación],
+	[Origen Compra],
+	[Proveedor],
+	[Código de Barras Padre],
+	[Comprador],
+	[Código de departamento],
+	[Bodega],
+	[Sub bodega],
+	[Item padre],
+	[Unidad de compra],
+	[Clase de mercadería],
+	[Gerencia comercial],
+	[NOM_MES],
+	Sum([Cantidad]) AS [Cantidad],
+	Sum([Costo Neto]) AS [Costo de Venta],
+	Sum([Venta Neta USD]) AS [Neto Venta]
+RESIDENT [Fechas 1]
+GROUP BY [Año_year], [Formato], [Zona Smx Unidad Operativa], [Cod Ref], [Unidad Operativa], [División], [Departamento], [Clasificación], [Sub Clasificación], [Origen Compra], [Proveedor], [Código de Barras Padre], [Comprador], [Código de departamento], [Bodega], [Sub bodega], [Item padre], [Unidad de compra], [Clase de mercadería], [Gerencia comercial], [NOM_MES];
+DROP TABLE [Fechas 1];
+
+STORE [Seleccionar campos 1] INTO [lib://Bancolombia prueba:SFTP//upload/VentasM1.csv] (txt);
+DROP TABLE [Seleccionar campos 1];

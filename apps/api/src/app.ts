@@ -235,6 +235,8 @@ export async function crearAplicacion(
         credencialesJson: google.credencialesJson,
         estimador: {
           estimarConsulta: estimador.estimarConsulta.bind(estimador),
+          obtenerMetadataTabla: estimador.obtenerMetadataTabla.bind(estimador),
+          obtenerEsquemaTabla: estimador.obtenerEsquemaTabla.bind(estimador),
         },
       };
     });

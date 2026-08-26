@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, SubField(texto, '|', 1) AS parte1, SubField(texto, '|', 2) AS parte2;
+SQL SELECT id, texto FROM `p.d.a`;

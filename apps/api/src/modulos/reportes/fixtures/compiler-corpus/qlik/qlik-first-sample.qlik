@@ -1,0 +1,2 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+FIRST 10 [Salida]: LOAD *; SQL SELECT id, monto FROM `p.d.ventas` ORDER BY id;

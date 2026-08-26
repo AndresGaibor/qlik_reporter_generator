@@ -1,6 +1,4 @@
 import { Avatar, inicialesDe } from "@/compartido/componentes/ui/avatar";
-import { Button } from "@/compartido/componentes/ui/button";
-import { ContextSwitcher } from "@/compartido/componentes/ui/context-switcher";
 import { Icon, type IconName } from "@/compartido/componentes/ui/icon";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { RutaNav } from "./navegacion";
@@ -19,9 +17,9 @@ export function HeaderLink({
     <Link
       to={to}
       className={[
-        "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors duration-150 ease-soft font-medium",
+        "relative flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
         activo
-          ? "bg-brand-50 text-brand-700 font-semibold"
+          ? "bg-brand-50 text-brand-800"
           : "text-ink-700 hover:bg-hover hover:text-ink-900",
       ].join(" ")}
     >
@@ -51,39 +49,49 @@ export function BarraUsuario({
   onCerrarSesion: () => void;
 }) {
   return (
-    <div className="flex items-center gap-4">
-      {esAdmin && (
-        <label
-          className="flex cursor-pointer items-center gap-2 text-xs font-medium text-ink-600"
-          title="Oculta las opciones administrativas para previsualizar la vista del usuario final"
-        >
-          <input
-            type="checkbox"
-            checked={modoUsuarioFinal}
-            onChange={(evento) =>
-              onCambiarModoUsuarioFinal(evento.target.checked)
-            }
-            className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)]"
-          />
-          <span className="hidden xl:inline">Vista usuario final</span>
-        </label>
-      )}
-
-      <div className="flex items-center gap-2.5 border-l border-line-200 pl-4">
+    <details className="group relative">
+      <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-hover [&::-webkit-details-marker]:hidden">
         <Avatar iniciales={inicialesDe(nombre)} src={avatarUrl} tam="md" />
-        <span className="hidden text-sm font-semibold text-ink-900 lg:inline-block">
+        <span className="hidden max-w-52 truncate font-semibold text-ink-900 lg:inline-block">
           {nombre}
         </span>
+        <Icon
+          name="chev"
+          size="sm"
+          className="-rotate-90 text-ink-400 transition group-open:rotate-90"
+        />
+      </summary>
+      <div className="absolute right-0 z-50 mt-2 w-72 rounded-lg border border-line-200 bg-surface p-2 shadow-panel">
+        <div className="border-b border-line-200 px-3 py-2">
+          <p className="truncate text-sm font-semibold text-ink-900">
+            {nombre}
+          </p>
+          <p className="mt-0.5 text-xs text-ink-500">
+            {esAdmin ? "Administrador" : "Usuario"}
+          </p>
+        </div>
+        {esAdmin && (
+          <label className="mt-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm text-ink-700 hover:bg-hover">
+            <span>Previsualizar como usuario</span>
+            <input
+              type="checkbox"
+              checked={modoUsuarioFinal}
+              onChange={(evento) =>
+                onCambiarModoUsuarioFinal(evento.target.checked)
+              }
+              className="h-4 w-4 rounded border-line-300 accent-[var(--color-brand-600)]"
+            />
+          </label>
+        )}
+        <button
+          type="button"
+          data-accion="cerrar-sesion"
+          onClick={onCerrarSesion}
+          className="mt-1 flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-ink-700 hover:bg-hover hover:text-ink-900"
+        >
+          Cerrar sesión
+        </button>
       </div>
-
-      <Button
-        variant="outline"
-        size="sm"
-        data-accion="cerrar-sesion"
-        onClick={onCerrarSesion}
-      >
-        Cerrar sesión
-      </Button>
-    </div>
+    </details>
   );
 }

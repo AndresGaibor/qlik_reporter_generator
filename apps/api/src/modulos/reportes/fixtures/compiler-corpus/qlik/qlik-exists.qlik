@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Permitidos]: LOAD DISTINCT id; SQL SELECT id FROM `p.d.permitidos`;
+[Salida]: LOAD id, monto WHERE Exists(id); SQL SELECT id, monto FROM `p.d.ventas`;

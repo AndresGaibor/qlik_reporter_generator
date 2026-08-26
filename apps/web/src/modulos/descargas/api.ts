@@ -60,8 +60,22 @@ export function firmarArchivoExploradorGcs(ruta: string) {
   );
 }
 
+export interface CarpetaEjecucionGcs {
+  carpeta: string;
+  ejecucionId: string;
+  ejecutadoEn: string;
+  esMasReciente: boolean;
+}
+
+export interface EjecucionActualCarpetaGcs {
+  ejecucionId: string;
+  ejecutadoEn: string;
+}
+
 export interface CarpetaUsuarioGcs extends ExploradorGcs {
   carpetaUsuario: string;
+  carpetasEjecucion?: CarpetaEjecucionGcs[];
+  ejecucionActual?: EjecucionActualCarpetaGcs | null;
 }
 
 export interface CarpetaRegistradaGcs {
@@ -104,8 +118,6 @@ export function eliminarDirectorioCarpetaUsuarioGcs(ruta: string) {
 }
 
 export function urlZipCarpetaUsuarioGcs(ruta = ""): string {
-  const parametros = new URLSearchParams();
-  if (ruta) parametros.set("ruta", ruta);
-  const query = parametros.toString();
+  const query = new URLSearchParams(ruta ? { ruta } : {}).toString();
   return `/api/descargas/carpeta/zip${query ? `?${query}` : ""}`;
 }

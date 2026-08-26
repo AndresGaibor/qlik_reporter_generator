@@ -26,6 +26,16 @@ export class ErrorApiQlik extends Error {
   }
 }
 
+export function esNoEncontradoQlik(error: unknown): boolean {
+  if (error instanceof ErrorApiQlik) return error.estadoHttp === 404;
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "estadoHttp" in error &&
+    (error as { estadoHttp?: unknown }).estadoHttp === 404
+  );
+}
+
 interface ResultadoAnalisis {
   mensaje: string;
   codigo: string | undefined;

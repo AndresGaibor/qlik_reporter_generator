@@ -1,8 +1,13 @@
 import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
 
-const VARIABLES_TALEND = {
+const VARIABLES_TALEND_LEGACY = {
   bq_number_csv: { bloque: "BqNumberCsv", campo: "bqNumberCsv" },
   bq_export_data: { bloque: "BqExportData", campo: "bqExportData" },
+} as const;
+
+const CONTEXTOS_TALEND_ACTUALES = {
+  credenciales: { bloque: "Credenciales" },
+  sql: { bloque: "sql" },
 } as const;
 
 export function inyectarContextoTalend(
@@ -13,23 +18,20 @@ export function inyectarContextoTalend(
   validarContratoTalend(copia);
   const blocks = Array.isArray(copia.blocks) ? copia.blocks : [];
 
-  for (const [claveTalend, definicion] of Object.entries(VARIABLES_TALEND)) {
-    const bloque = buscarBloque(blocks, definicion.bloque);
-    const operaciones = Array.isArray(bloque.operations)
-      ? bloque.operations
-      : [];
-    const setValue = operaciones.find(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        String((item as Record<string, unknown>).id ?? "") === "set_value",
-    ) as Record<string, unknown> | undefined;
-    if (!setValue) {
-      throw new Error(
-        `La automatización base no contiene set_value en ${definicion.bloque} para ${claveTalend}`,
-      );
-    }
-    setValue.value = consultas[definicion.campo];
+  if (usaContratoSql(blocks)) {
+    inyectarVariable(blocks, "sql", consultas.sql, "sql");
+    return copia;
+  }
+
+  for (const [claveTalend, definicion] of Object.entries(
+    VARIABLES_TALEND_LEGACY,
+  )) {
+    inyectarVariable(
+      blocks,
+      definicion.bloque,
+      consultas[definicion.campo],
+      claveTalend,
+    );
   }
 
   return copia;
@@ -40,10 +42,12 @@ export function diagnosticarContratoTalend(
 ): string[] {
   const blocks = Array.isArray(workspace.blocks) ? workspace.blocks : [];
   const problemas: string[] = [];
-  const contextos = {
-    credenciales: { bloque: "Credenciales" },
-    ...VARIABLES_TALEND,
-  } as const;
+  const contextos = usaContratoSql(blocks)
+    ? CONTEXTOS_TALEND_ACTUALES
+    : {
+        credenciales: { bloque: "Credenciales" },
+        ...VARIABLES_TALEND_LEGACY,
+      };
 
   const executeTask = encontrarBloque(blocks, "executeTask");
   if (!executeTask) {
@@ -108,6 +112,50 @@ export function validarContratoTalend(
   }
 }
 
+function usaContratoSql(blocks: unknown[]): boolean {
+  if (encontrarBloque(blocks, "sql")) return true;
+
+  const executeTask = encontrarBloque(blocks, "executeTask");
+  const inputs = Array.isArray(executeTask?.inputs) ? executeTask.inputs : [];
+  return inputs.some((input) => {
+    if (
+      typeof input !== "object" ||
+      input === null ||
+      !Array.isArray((input as Record<string, unknown>).value)
+    ) {
+      return false;
+    }
+    return ((input as Record<string, unknown>).value as unknown[]).some(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        (item as Record<string, unknown>).key === "sql",
+    );
+  });
+}
+
+function inyectarVariable(
+  blocks: unknown[],
+  nombreBloque: string,
+  valor: string,
+  claveTalend: string,
+): void {
+  const bloque = buscarBloque(blocks, nombreBloque);
+  const operaciones = Array.isArray(bloque.operations) ? bloque.operations : [];
+  const setValue = operaciones.find(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      String((item as Record<string, unknown>).id ?? "") === "set_value",
+  ) as Record<string, unknown> | undefined;
+  if (!setValue) {
+    throw new Error(
+      `La automatización base no contiene set_value en ${nombreBloque} para ${claveTalend}`,
+    );
+  }
+  setValue.value = valor;
+}
+
 function encontrarBloque(
   blocks: unknown[],
   nombre: string,
@@ -124,12 +172,7 @@ function buscarBloque(
   blocks: unknown[],
   nombre: string,
 ): Record<string, unknown> {
-  const bloque = blocks.find(
-    (item) =>
-      typeof item === "object" &&
-      item !== null &&
-      String((item as Record<string, unknown>).name ?? "") === nombre,
-  ) as Record<string, unknown> | undefined;
+  const bloque = encontrarBloque(blocks, nombre);
   if (!bloque) {
     throw new Error(
       `La automatización base no contiene el bloque "${nombre}" requerido`,

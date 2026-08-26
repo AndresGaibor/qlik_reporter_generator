@@ -12,6 +12,13 @@ import type {
   ResumenReporteDataflow,
 } from "@qlik/contratos/flujos";
 
+export type ResumenReporteConDescargas = ResumenReporte & {
+  carpetaDescargas: string;
+};
+export type DetalleReporteConDescargas = DetalleReporte & {
+  carpetaDescargas: string;
+};
+
 const RUTA = "/reportes";
 const RUTA_AUTOMATIZACIONES_QLIK = "/qlik/automatizaciones";
 
@@ -20,8 +27,9 @@ function idUrl(id: string) {
 }
 
 export function obtenerReportes(espacioId?: string, busqueda?: string) {
-  if (!espacioId && !busqueda) return clienteApi.get<ResumenReporte[]>(RUTA);
-  return clienteApi.get<ResumenReporte[]>(RUTA, {
+  if (!espacioId && !busqueda)
+    return clienteApi.get<ResumenReporteConDescargas[]>(RUTA);
+  return clienteApi.get<ResumenReporteConDescargas[]>(RUTA, {
     parametros: {
       ...(espacioId ? { espacioId } : {}),
       ...(busqueda ? { q: busqueda } : {}),
@@ -30,7 +38,7 @@ export function obtenerReportes(espacioId?: string, busqueda?: string) {
 }
 
 export function obtenerReporte(id: string) {
-  return clienteApi.get<DetalleReporte>(idUrl(id));
+  return clienteApi.get<DetalleReporteConDescargas>(idUrl(id));
 }
 
 export function obtenerResumenReporte(flujoId: string) {
@@ -53,9 +61,11 @@ export function obtenerEjecucionesReporte(id: string) {
 }
 
 export function ejecutarReporte(id: string) {
-  return clienteApi.post<{ runId: string; ejecucionReporteId?: string }>(
-    `${idUrl(id)}/ejecuciones`,
-  );
+  return clienteApi.post<{
+    runId: string;
+    ejecucionReporteId: string;
+    carpetaDescargas: string;
+  }>(`${idUrl(id)}/ejecuciones`);
 }
 
 export function preflightDataflowReporte(flujoId: string) {

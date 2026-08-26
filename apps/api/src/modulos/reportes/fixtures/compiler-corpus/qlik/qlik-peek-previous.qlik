@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, fecha, monto, Previous(monto) AS monto_previo, Peek('monto', -1) AS peek_previo;
+SQL SELECT id, fecha, monto FROM `p.d.ventas` ORDER BY id, fecha;

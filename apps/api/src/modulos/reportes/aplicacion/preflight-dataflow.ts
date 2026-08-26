@@ -1,6 +1,11 @@
 import type { PreflightDataflowReporte } from "@qlik/contratos";
+import type {
+  CatalogoMetadataBigQuery,
+  MetadataTablaBigQuery,
+} from "../../google-cloud/dominio/metadata-bigquery.js";
 import type { PlanDataflow } from "../dominio/plan-dataflow.js";
-import { compilarPlanABigQuery } from "./compilador-bigquery.js";
+import { compilarDataflowVNext } from "./compilador-vnext/index.js";
+import { ErrorCompilacionVNext } from "./compilador-vnext/modelo.js";
 import { parsearDataflow } from "./parser-dataflow.js";
 
 export interface LectorScriptDataflow {
@@ -11,6 +16,8 @@ export interface LectorScriptDataflow {
 }
 
 export interface EstimadorBigQueryReporte {
+  obtenerMetadataTabla?(tabla: string): Promise<MetadataTablaBigQuery>;
+  obtenerEsquemaTabla?(tabla: string): Promise<Record<string, string>>;
   estimarConsulta(
     sql: string,
   ): Promise<{ bytesProcesados: number; costoEstimadoUsd: number }>;
@@ -42,11 +49,15 @@ export class PreflightDataflow {
     private readonly alcance: AlcanceBigQueryReporte,
   ) {}
 
-  async ejecutar(flujoIdQlik: string): Promise<PreflightDataflowReporte> {
+  async ejecutar(
+    flujoIdQlik: string,
+    appIdQlik = flujoIdQlik,
+  ): Promise<PreflightDataflowReporte> {
     const preparacion = await prepararDataflowActual(
       this.qlik,
       flujoIdQlik,
-      this.alcance,
+      { ...this.alcance, estimador: this.estimador },
+      appIdQlik,
     );
     if (!preparacion.compatible) {
       return {
@@ -107,17 +118,17 @@ export async function prepararDataflowActual(
   qlik: LectorScriptDataflow,
   flujoIdQlik: string,
   alcance: AlcanceBigQueryReporte,
+  appIdQlik = flujoIdQlik,
 ): Promise<PreparacionDataflowActual> {
-  const { script } = await qlik.obtenerScriptApp(flujoIdQlik, "current");
+  const { script } = await qlik.obtenerScriptApp(appIdQlik, "current");
   const hashDataflowSha256 = await sha256Texto(script);
+  // LEGACY: parsearDataflow se usa SÓLO para:
+  //   1. Validar que todas las fuentes son BigQuery (normalizarFuentesBigQuery)
+  //   2. Construir el resumen estadístico (conteos de fuentes, filtros, joins)
+  // La generación de SQL se delega 100% al compilador vNext (compilarDataflowVNext).
   const plan = parsearDataflow(script);
   const problemasFuentes = normalizarFuentesBigQuery(plan, alcance);
-  const operacionesNoSoportadas = [
-    ...plan.operacionesNoSoportadas.map(
-      (item) => `${item.operacion}: ${item.detalle}`,
-    ),
-    ...problemasFuentes,
-  ];
+  const operacionesNoSoportadas = [...problemasFuentes];
   const resumen = {
     fuentes: plan.fuentes.length,
     filtros: plan.pasos.filter((paso) => paso.tipo === "filtrar").length,
@@ -138,16 +149,93 @@ export async function prepararDataflowActual(
     };
   }
 
-  const { sql, camposSalida } = compilarPlanABigQuery(plan);
+  try {
+    const metadata = await obtenerMetadataCamposBigQuery(
+      plan,
+      alcance.estimador,
+    );
+    const compilacion = compilarDataflowVNext(script, metadata);
+    return {
+      flujoIdQlik,
+      scriptDataflow: script,
+      hashDataflowSha256,
+      compatible: true,
+      operacionesNoSoportadas: [],
+      sqlBigQuery: compilacion.sql,
+      camposSalida: plan.salida.campos,
+      resumen,
+    };
+  } catch (error) {
+    const detalle =
+      error instanceof ErrorCompilacionVNext
+        ? `${error.diagnostic.code}: ${error.diagnostic.message}`
+        : error instanceof Error
+          ? error.message
+          : "El compilador vNext no pudo procesar el Dataflow";
+    return {
+      flujoIdQlik,
+      scriptDataflow: script,
+      hashDataflowSha256,
+      compatible: false,
+      operacionesNoSoportadas: [detalle],
+      sqlBigQuery: "",
+      camposSalida: plan.salida.campos,
+      resumen,
+    };
+  }
+}
+
+async function obtenerMetadataCamposBigQuery(
+  plan: PlanDataflow,
+  estimador?: EstimadorBigQueryReporte,
+): Promise<{
+  fieldTypes?: Readonly<Record<string, string>>;
+  sourceMetadata?: CatalogoMetadataBigQuery;
+}> {
+  const obtenerMetadataTabla = estimador?.obtenerMetadataTabla;
+  const obtenerEsquemaTabla = estimador?.obtenerEsquemaTabla;
+  if (!obtenerMetadataTabla && !obtenerEsquemaTabla) return {};
+
+  const catalogo: Record<string, MetadataTablaBigQuery> = {};
+  const schemas: Array<Record<string, string>> = [];
+  for (const fuente of plan.fuentes) {
+    try {
+      if (obtenerMetadataTabla) {
+        const metadata = await obtenerMetadataTabla(fuente.tabla);
+        catalogo[fuente.tabla] = metadata;
+        schemas.push(
+          Object.fromEntries(
+            Object.entries(metadata.fields).map(([name, field]) => [
+              name,
+              field.type,
+            ]),
+          ),
+        );
+      } else if (obtenerEsquemaTabla) {
+        schemas.push(await obtenerEsquemaTabla(fuente.tabla));
+      }
+    } catch {
+      schemas.push({});
+    }
+  }
+
+  const tipos: Record<string, string> = {};
+  const conflictivos = new Set<string>();
+  for (const schema of schemas) {
+    for (const [field, type] of Object.entries(schema)) {
+      const normalized = type.toUpperCase();
+      if (tipos[field] && tipos[field] !== normalized) {
+        delete tipos[field];
+        conflictivos.add(field);
+      } else if (!conflictivos.has(field)) {
+        tipos[field] = normalized;
+      }
+    }
+  }
+
   return {
-    flujoIdQlik,
-    scriptDataflow: script,
-    hashDataflowSha256,
-    compatible: true,
-    operacionesNoSoportadas: [],
-    sqlBigQuery: sql,
-    camposSalida,
-    resumen,
+    ...(Object.keys(tipos).length > 0 ? { fieldTypes: tipos } : {}),
+    ...(Object.keys(catalogo).length > 0 ? { sourceMetadata: catalogo } : {}),
   };
 }
 

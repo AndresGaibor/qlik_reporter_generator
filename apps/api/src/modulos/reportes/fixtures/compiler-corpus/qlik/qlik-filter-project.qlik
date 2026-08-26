@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, Upper(categoria) AS Categoria, monto WHERE monto > 0;
+SQL SELECT id, categoria, monto FROM `p.d.ventas`;

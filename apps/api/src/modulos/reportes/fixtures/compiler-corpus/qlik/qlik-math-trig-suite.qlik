@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD id, Exp(x) AS exp_x, Log(x) AS log_x, Log10(x) AS log10_x, Pow(x, y) AS potencia, Sqr(x) AS cuadrado, Sqrt(x) AS raiz, Sin(x) AS seno, Cos(x) AS coseno, Atan2(y, x) AS angulo, e() AS e_const, pi() AS pi_const;
+SQL SELECT id, x, y FROM `p.d.metricas`;

@@ -69,6 +69,81 @@ describe("PreflightDataflow", () => {
     expect(estimador.estimarConsulta).not.toHaveBeenCalled();
   });
 
+  it("compila con vNext Num minúsculo y preceding LOAD como el reporte BQ_Ventas_M", async () => {
+    const script =
+      `
+      SET DateFormat='M/D/YYYY';
+      SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD Fecha, Cantidad;
+      SELECT Fecha, Cantidad FROM ` +
+      "`proyecto.dataset.ventas`" +
+      `;
+      [Fechas]: LOAD num(Month(Fecha)) AS Mes, Cantidad RESIDENT [Base]
+      WHERE Fecha >= '2026-07-01' AND Fecha < '2026-08-01';
+      [Salida]: LOAD Mes, Total;
+      LOAD Mes, Count(Cantidad) AS Total RESIDENT [Fechas] GROUP BY Mes;
+    `;
+    const qlik = { obtenerScriptApp: vi.fn(async () => ({ script })) };
+    const estimador = {
+      estimarConsulta: vi.fn(async () => ({
+        bytesProcesados: 10,
+        costoEstimadoUsd: 0,
+      })),
+    };
+    const resultado = await new PreflightDataflow(qlik, estimador, {
+      projectId: "proyecto",
+      dataset: "dataset",
+    }).ejecutar("bq-ventas-m");
+
+    expect(resultado.compatible).toBe(true);
+    expect(resultado.operacionesNoSoportadas).toEqual([]);
+    expect(resultado.sqlBigQuery).toContain("COUNT(`Cantidad`) AS `Total`");
+    expect(resultado.sqlBigQuery).toContain("Fecha` >= '2026-07-01'");
+    expect(resultado.sqlBigQuery).toContain("Fecha` < '2026-08-01'");
+    expect(estimador.estimarConsulta).toHaveBeenCalledTimes(1);
+  });
+
+  it("usa metadata de tipos BigQuery al compilar funciones temporales", async () => {
+    const script = `
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD Fecha;
+      SQL SELECT Fecha FROM \`proyecto.dataset.ventas\`;
+      [Salida]: LOAD Year(Fecha) AS Anio RESIDENT [Base];
+    `;
+    const qlik = { obtenerScriptApp: vi.fn(async () => ({ script })) };
+    const estimador = {
+      obtenerMetadataTabla: vi.fn(async () => ({
+        tableId: "proyecto.dataset.ventas",
+        fields: { Fecha: { type: "DATE", mode: "REQUIRED" as const } },
+        timePartitioning: {
+          type: "DAY",
+          field: "Fecha",
+          requirePartitionFilter: true,
+        },
+        clusteringFields: ["Fecha"],
+      })),
+      estimarConsulta: vi.fn(async () => ({
+        bytesProcesados: 1,
+        costoEstimadoUsd: 0,
+      })),
+    };
+
+    const resultado = await new PreflightDataflow(qlik, estimador, {
+      projectId: "proyecto",
+      dataset: "dataset",
+    }).ejecutar("tipos-bq");
+
+    expect(resultado.compatible).toBe(true);
+    expect(estimador.obtenerMetadataTabla).toHaveBeenCalledWith(
+      "proyecto.dataset.ventas",
+    );
+    expect(resultado.sqlBigQuery).toContain(
+      "EXTRACT(YEAR FROM `Fecha`) AS `Anio`",
+    );
+    expect(resultado.sqlBigQuery).not.toContain("EXTRACT(YEAR FROM COALESCE(");
+  });
+
   it("devuelve el SQL compilado cuando BigQuery no puede validar el dry-run", async () => {
     const qlik = {
       obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT_OK })),

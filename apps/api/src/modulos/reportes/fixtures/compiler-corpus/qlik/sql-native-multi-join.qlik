@@ -1,0 +1,6 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+[Salida]: LOAD *;
+SQL SELECT a.id, b.nombre, c.zona
+FROM `p.d.a` a
+LEFT JOIN `p.d.b` b ON a.id = b.id
+INNER JOIN `p.d.c` c ON a.zona_id = c.id AND c.activo = TRUE;

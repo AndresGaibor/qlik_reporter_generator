@@ -1,0 +1,339 @@
+{
+  "generatedBy": "scripts/agents/enrich-agent-docs.py",
+  "areas": {
+    "apps/api/src": [
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 23
+      },
+      {
+        "target": "apps/api/src/modulos/reportes",
+        "imports": 8
+      },
+      {
+        "target": "apps/api/src/modulos/automatizaciones",
+        "imports": 7
+      },
+      {
+        "target": "apps/api/src/modulos/admin",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/modulos/descargas",
+        "imports": 3
+      },
+      {
+        "target": "apps/api/src/modulos/autenticacion-qlik",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/flujos",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/google-cloud",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/setup",
+        "imports": 2
+      },
+      {
+        "target": "packages/contratos/src/autenticacion",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/admin": [
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 16
+      },
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 15
+      },
+      {
+        "target": "packages/contratos/src/admin",
+        "imports": 6
+      },
+      {
+        "target": "apps/api/src/modulos/reportes",
+        "imports": 5
+      },
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/modulos/automatizaciones",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/autenticacion-qlik": [
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 9
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 3
+      }
+    ],
+    "apps/api/src/modulos/automatizaciones": [
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 8
+      },
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 3
+      },
+      {
+        "target": "packages/contratos/src/automatizaciones",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/reportes",
+        "imports": 1
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/qlik",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/descargas": [
+      {
+        "target": "apps/api/src/modulos/reportes",
+        "imports": 8
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 8
+      },
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 3
+      },
+      {
+        "target": "packages/contratos/src/descargas",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/flujos": [
+      {
+        "target": "apps/api/src/modulos/reportes",
+        "imports": 4
+      },
+      {
+        "target": "packages/contratos/src/flujos",
+        "imports": 3
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/google-cloud": [
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 3
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 2
+      }
+    ],
+    "apps/api/src/modulos/qlik": [
+      {
+        "target": "packages/contratos/src/qlik",
+        "imports": 5
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/reportes": [
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 13
+      },
+      {
+        "target": "apps/api/src/modulos/google-cloud",
+        "imports": 6
+      },
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 5
+      },
+      {
+        "target": "apps/api/src/modulos/automatizaciones",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/modulos/flujos",
+        "imports": 4
+      },
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 4
+      },
+      {
+        "target": "packages/contratos/src",
+        "imports": 1
+      },
+      {
+        "target": "apps/api/src/modulos/descargas",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/modulos/setup": [
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 2
+      },
+      {
+        "target": "apps/api/src/plataforma",
+        "imports": 2
+      }
+    ],
+    "apps/api/src/nucleo": [
+      {
+        "target": "packages/contratos/src/comun",
+        "imports": 1
+      }
+    ],
+    "apps/api/src/plataforma": [
+      {
+        "target": "apps/api/src/nucleo",
+        "imports": 10
+      },
+      {
+        "target": "apps/api/src/modulos/qlik",
+        "imports": 1
+      }
+    ],
+    "apps/web/src": [
+      {
+        "target": "apps/web/src/app",
+        "imports": 1
+      }
+    ],
+    "apps/web/src/compartido": [
+      {
+        "target": "packages/contratos/src/comun",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/autenticacion",
+        "imports": 1
+      }
+    ],
+    "apps/web/src/modulos/admin": [
+      {
+        "target": "packages/contratos/src/admin",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/automatizaciones",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/flujos",
+        "imports": 1
+      }
+    ],
+    "apps/web/src/modulos/autenticacion": [
+      {
+        "target": "packages/contratos/src/autenticacion",
+        "imports": 1
+      }
+    ],
+    "apps/web/src/modulos/descargas": [
+      {
+        "target": "packages/contratos/src/descargas",
+        "imports": 9
+      }
+    ],
+    "apps/web/src/modulos/flujos": [
+      {
+        "target": "packages/contratos/src/flujos",
+        "imports": 3
+      },
+      {
+        "target": "packages/contratos/src/automatizaciones",
+        "imports": 1
+      }
+    ],
+    "apps/web/src/modulos/reportes": [
+      {
+        "target": "packages/contratos/src",
+        "imports": 4
+      },
+      {
+        "target": "packages/contratos/src/automatizaciones",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/flujos",
+        "imports": 1
+      }
+    ],
+    "packages/contratos/src": [
+      {
+        "target": "packages/contratos/src/admin",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/autenticacion",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/automatizaciones",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/comun",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/descargas",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/flujos",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/qlik",
+        "imports": 1
+      },
+      {
+        "target": "packages/contratos/src/reportes",
+        "imports": 1
+      }
+    ],
+    "packages/contratos/src/automatizaciones": [
+      {
+        "target": "packages/contratos/src/qlik",
+        "imports": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+FOR EACH vFile IN FileList('lib://data/*.csv')
+  [Salida]: LOAD * FROM [$(vFile)] (txt, utf8, embedded labels, delimiter is ',');
+NEXT vFile;

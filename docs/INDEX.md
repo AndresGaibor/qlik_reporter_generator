@@ -1,7 +1,7 @@
 # Qlik Developer Documentation Master Index
 
 Complete offline Qlik REST APIs and Toolkits documentation extracted for AI agent consumption.
-Target Path: `/Users/andresgaibor/code/javascript/qlik_automate_creator/docs`
+Target Path: `/Users/andresgaibor/code/javascript/qlik_reportes_creator/docs`
 
 ## .
 

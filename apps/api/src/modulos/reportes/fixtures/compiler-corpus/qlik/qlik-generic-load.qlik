@@ -1,0 +1,3 @@
+LIB CONNECT TO [Google BigQuery:Prod];
+Generic LOAD entidad, atributo, valor;
+SQL SELECT entidad, atributo, valor FROM `p.d.eav`;

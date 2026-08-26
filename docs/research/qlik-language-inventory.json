@@ -1,0 +1,4626 @@
+{
+  "generated_at": "2026-08-21",
+  "source": "Qlik Cloud Help (official, current cloud-services tree)",
+  "source_roots": {
+    "dataflow_processors": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/List-of-data-flow-processors.htm",
+    "functions": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/functions-in-scripts-chart-expressions.htm",
+    "operators": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/operators.htm"
+  },
+  "dataflow_processors": [
+    {
+      "name": "Filter",
+      "label": "Filter processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-filter.htm"
+    },
+    {
+      "name": "Select fields",
+      "label": "Select fields processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-select-columns.htm"
+    },
+    {
+      "name": "Join",
+      "label": "Join processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-join.htm"
+    },
+    {
+      "name": "Union",
+      "label": "Union processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-union.htm"
+    },
+    {
+      "name": "Fork",
+      "label": "Fork processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-fork.htm"
+    },
+    {
+      "name": "Aggregate",
+      "label": "Aggregate processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-aggregate.htm"
+    },
+    {
+      "name": "Sort",
+      "label": "Sort processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-sort.htm"
+    },
+    {
+      "name": "Remove fields",
+      "label": "Remove fields processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-remove-columns.htm"
+    },
+    {
+      "name": "Strings",
+      "label": "Strings processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-strings.htm"
+    },
+    {
+      "name": "Dates",
+      "label": "Dates processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-dates.htm"
+    },
+    {
+      "name": "Numbers",
+      "label": "Numbers processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-numbers.htm"
+    },
+    {
+      "name": "Math",
+      "label": "Math processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-math.htm"
+    },
+    {
+      "name": "Concatenate fields",
+      "label": "Concatenate fields processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-concatenate.htm"
+    },
+    {
+      "name": "Split fields",
+      "label": "Split fields processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-split.htm"
+    },
+    {
+      "name": "Cleanse",
+      "label": "Cleanse processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-cleanse.htm"
+    },
+    {
+      "name": "Hash",
+      "label": "Hash processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-hash.htm"
+    },
+    {
+      "name": "Calculate fields",
+      "label": "Calculate fields processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-calculate-fields.htm"
+    },
+    {
+      "name": "Unpivot",
+      "label": "Unpivot processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-unpivot.htm"
+    },
+    {
+      "name": "Pivot",
+      "label": "Pivot processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-pivot.htm"
+    },
+    {
+      "name": "Window",
+      "label": "Window processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-window.htm"
+    },
+    {
+      "name": "Qlik script",
+      "label": "Qlik script processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-script.htm"
+    },
+    {
+      "name": "Table recipe",
+      "label": "Table recipe processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-table-recipe.htm"
+    },
+    {
+      "name": "Sample",
+      "label": "Sample processor",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/DataFlow/data-flow-processor-sample.htm"
+    }
+  ],
+  "script_function_categories": [
+    {
+      "name": "Aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/aggregation-functions.htm"
+    },
+    {
+      "name": "Color functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/color-functions-charts.htm"
+    },
+    {
+      "name": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/conditional-functions.htm"
+    },
+    {
+      "name": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/counter-functions.htm"
+    },
+    {
+      "name": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/date-time-functions.htm"
+    },
+    {
+      "name": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm"
+    },
+    {
+      "name": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/field-functions-charts.htm"
+    },
+    {
+      "name": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/file-functions-script.htm"
+    },
+    {
+      "name": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/financial-functions.htm"
+    },
+    {
+      "name": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/formatting-functions.htm"
+    },
+    {
+      "name": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/general-numeric-functions-charts.htm"
+    },
+    {
+      "name": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/geospatial-functions.htm"
+    },
+    {
+      "name": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/interpretation-functions.htm"
+    },
+    {
+      "name": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/inter-record-functions-charts.htm"
+    },
+    {
+      "name": "Logical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm"
+    },
+    {
+      "name": "Mapping functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/mapping-functions.htm"
+    },
+    {
+      "name": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm"
+    },
+    {
+      "name": "NULL functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/null-functions.htm"
+    },
+    {
+      "name": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/RangeFunctionsInCharts.htm"
+    },
+    {
+      "name": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/relational-functions.htm"
+    },
+    {
+      "name": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/statistical-distribution-functions.htm"
+    },
+    {
+      "name": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/string-functions.htm"
+    },
+    {
+      "name": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm"
+    },
+    {
+      "name": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm"
+    },
+    {
+      "name": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm"
+    },
+    {
+      "name": "Window functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/window-functions.htm"
+    },
+    {
+      "name": "Script and chart functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/functions-in-scripts-chart-expressions.htm"
+    },
+    {
+      "name": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/basic-aggregation-functions.htm"
+    },
+    {
+      "name": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/counter-aggregation-functions.htm"
+    },
+    {
+      "name": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/financial-aggregation-functions-script.htm"
+    },
+    {
+      "name": "Statistical aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/statistical-aggregation-functions.htm"
+    },
+    {
+      "name": "Statistical test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalTestFunctions/statistical-test-functions.htm"
+    },
+    {
+      "name": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/string-aggregation-functions.htm"
+    },
+    {
+      "name": "Synthetic dimension functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/SyntheticDimensionFunctions/synthetic-dimension-functions.htm"
+    },
+    {
+      "name": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest-example.htm"
+    },
+    {
+      "name": "Chi2-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2_tests.htm"
+    },
+    {
+      "name": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/t_tests.htm"
+    },
+    {
+      "name": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/z_tests.htm"
+    }
+  ],
+  "script_functions": [
+    {
+      "name": "FirstSortedValue",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/firstsorted.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FirstSortedValue",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/firstsortedvalue.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Max",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/max.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Max",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/max.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Min",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/min.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Min",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/min.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Mode",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/mode.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Mode",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/mode.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Only",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/only.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Only",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/only.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Sum",
+      "kind": "Script function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/sum.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Sum",
+      "kind": "Chart function",
+      "category": "Basic aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/BasicAggregationFunctions/sum.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Chi2Test_chi2",
+      "kind": "Script and chart function",
+      "category": "Chi2-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_chi2.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Chi2Test_df",
+      "kind": "Script and chart function",
+      "category": "Chi2-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Chi2Test_p",
+      "kind": "Script and chart function",
+      "category": "Chi2-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_p.htm",
+      "script_capable": true,
+      "discovery": "documented-script-override"
+    },
+    {
+      "name": "ARGB",
+      "kind": "Script and chart function",
+      "category": "Color functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/ARGB.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "HSL",
+      "kind": "Script and chart function",
+      "category": "Color functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/HSL.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RGB",
+      "kind": "Script and chart function",
+      "category": "Color functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/RGB.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "alt",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/alt.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "class",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/class.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "coalesce",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/coalesce.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "if",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/if.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "match",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/match.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "mixmatch",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/mixmatch.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "pick",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/pick.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "wildmatch",
+      "kind": "Script and chart function",
+      "category": "Conditional functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/wildmatch.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Count",
+      "kind": "Script function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/count.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Count",
+      "kind": "Chart function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/CounterAggregationFunctions/count.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MissingCount",
+      "kind": "Script function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/MissingCount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MissingCount",
+      "kind": "Chart function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/CounterAggregationFunctions/missingcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NullCount",
+      "kind": "Script function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NullCount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NullCount",
+      "kind": "Chart function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/CounterAggregationFunctions/nullcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NumericCount",
+      "kind": "Script function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NumericCount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NumericCount",
+      "kind": "Chart function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/CounterAggregationFunctions/numericcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TextCount",
+      "kind": "Script function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/TextCount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TextCount",
+      "kind": "Chart function",
+      "category": "Counter aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/CounterAggregationFunctions/textcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "autonumber",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumber.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "autonumberhash128",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash128.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "autonumberhash256",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash256.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IterNo",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/IterNo.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RecNo",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/RecNo.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RowNo",
+      "kind": "Script function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/RowNo.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RowNo",
+      "kind": "Chart function",
+      "category": "Counter functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/rowno.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "addmonths",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/addmonths.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "addyears",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/addyears.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "age",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/age.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "converttolocaltime",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/converttolocaltime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "day",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/day.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "dayend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/dayend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "daylightsaving",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daylightsaving.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "dayname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/dayname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "daynumberofquarter",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daynumberofquarter.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "daynumberofyear",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daynumberofyear.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "daystart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/daystart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "firstworkdate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/firstworkdate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GMT",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/GMT.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "hour",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/hour.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inday",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inday.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "indaytotime",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/indaytotime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inlunarweek",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inlunarweek.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inlunarweektodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inlunarweektodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inmonth",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonth.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inmonths",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonths.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inmonthstodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonthstodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inmonthtodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inmonthtodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inquarter",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inquarter.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inquartertodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inquartertodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inweek",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inweek.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inweektodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inweektodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inyear",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inyear.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "inyeartodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/inyeartodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "lastworkdate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lastworkdate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "localtime",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/localtime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "lunarweekend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "lunarweekname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "lunarweekstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/lunarweekstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "makedate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/makedate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "maketime",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/maketime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "makeweekdate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/makeweekdate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "minute",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/minute.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "month",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/month.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthsend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthsname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthsstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthsstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "monthstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/monthstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "networkdays",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/networkdays.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "now",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/now.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "quarter",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarter.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "quarterend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarterend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "quartername",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quartername.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "quarterstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/quarterstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "second",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/second.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "setdateyear",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/setdateyear.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "setdateyearmonth",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/setdateyearmonth.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "timezone",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/timezone.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "today",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/today.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "UTC",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/UTC.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "week",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/week.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "weekday",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekday.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "weekend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "weekname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "weekstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "weekyear",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/weekyear.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "year",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/year.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "yearend",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearend.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "yearname",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearname.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "yearstart",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yearstart.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "yeartodate",
+      "kind": "Script and chart function",
+      "category": "Date and time functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/DateAndTimeFunctions/yeartodate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Avg",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/avg.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Avg",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/avg.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Correl",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/correl.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Correl",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/correl.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Fractile",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractile.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Fractile",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/fractile.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FractileExc",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractileexc.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FractileExc",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/fractileexc.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Kurtosis",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/kurtosis.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Kurtosis",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/kurtosis.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_B",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_b.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_B",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_b.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_DF",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_DF",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_df.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_F",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_f.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_F",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_f.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_M",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_m.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_M",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_m.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_R2",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_r2.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_R2",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_r2.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEB",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_seb.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEB",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_seb.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEM",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sem.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEM",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_sem.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEY",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sey.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SEY",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_sey.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SSREG",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssreg.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SSREG",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_ssreg.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SSRESID",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssresid.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LINEST_SSRESID",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/linest_ssresid.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Median",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/median.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Median",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/median.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MutualInfo",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/MutualInfo.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Skew",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/skew.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Skew",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/skew.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Stdev",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/stdev.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Stdev",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/stdev.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Sterr",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Sterr",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/sterr.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "STEYX",
+      "kind": "Script function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/steyx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "STEYX",
+      "kind": "Chart function",
+      "category": "Examples of how to use linest functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalAggregationFunctionsinCharts/steyx.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "exp",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#exp?id=1309",
+      "script_capable": true,
+      "discovery": "same-page-anchor"
+    },
+    {
+      "name": "log",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#log",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "log10",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#log10",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "pow",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#pow",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "sqr",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#sqr",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "sqrt",
+      "kind": "Script and chart function",
+      "category": "Exponential and logarithmic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#sqrt",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "GetAlternativeCount",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getalternativecount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetCurrentSelections",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getcurrentselections.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetExcludedCount",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getexcludedcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetFieldSelections",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getfieldselections.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetObjectDimension",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getobjectdimension.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetObjectField",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetObjectField.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetObjectMeasure",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getobjectmeasure.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetPossibleCount",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getpossiblecount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetSelectedCount",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getselectedcount.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetStateCounts",
+      "kind": "Chart function",
+      "category": "Field functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FieldFunctions/getstatecounts.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Attribute",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/Attribute.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ConnectString",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/ConnectString.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileBaseName",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileBaseName.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileDir",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileDir.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileExtension",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileExtension.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileName",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileName.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FilePath",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FilePath.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileSize",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileSize.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FileTime",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileTime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "QvdCreateTime",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdCreateTime.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "QvdFieldName",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdFieldName.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "QvdNoOfFields",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfFields.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "QvdNoOfRecords",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfRecords.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "QvdTableName",
+      "kind": "Script function",
+      "category": "File functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdTableName.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IRR",
+      "kind": "Script function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/IRR.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IRR",
+      "kind": "Chart function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FinancialAggregationFunctionsInCharts/irr.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NPV",
+      "kind": "Script function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/NPV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NPV",
+      "kind": "Chart function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FinancialAggregationFunctionsInCharts/npv.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "XIRR",
+      "kind": "Script function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/XIRR.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "XIRR",
+      "kind": "Chart function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FinancialAggregationFunctionsInCharts/xirr.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "XNPV",
+      "kind": "Script function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialAggregationFunctions/XNPV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "XNPV",
+      "kind": "Chart function",
+      "category": "Financial aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/FinancialAggregationFunctionsInCharts/xnpv.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BlackAndSchole",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Black-and-Scholes.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FV",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/FV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "nPer",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/nPer.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Pmt",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/Pmt.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "PV",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/PV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Rate",
+      "kind": "Script and chart function",
+      "category": "Financial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FinancialFunctions/Rate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ApplyCodepage",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/ApplyCodePage.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Date",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Date.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Dual",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Dual.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Interval",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Interval.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Money",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Money.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Num",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Num.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Time",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Time.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Timestamp",
+      "kind": "Script and chart function",
+      "category": "Formatting functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Timestamp.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BitCount",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/bitcount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Ceil",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/ceil.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Combin",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/combin.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Div",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/div.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Even",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/even.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Fabs",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fabs.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Fact",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fact.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Floor",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/floor.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Fmod",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fmod.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Frac",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/frac.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Mod",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/mod.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Odd",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/odd.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Permut",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/permut.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Round",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/round.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Sign",
+      "kind": "Script and chart function",
+      "category": "General numeric functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/sign.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoAggrGeometry",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoAggrGeometry.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoBoundingBox",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoBoundingBox.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoCountVertex",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoCountVertex.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoGetBoundingBox",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetBoundingBox.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoGetPolygonCenter",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetPolygonCenter.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoInvProjectGeometry",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoInvProjectGeometry.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoMakePoint",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoMakePoint.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoProject",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProject.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoProjectGeometry",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProjectGeometry.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GeoReduceGeometry",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoReduceGeometry.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MakeGeoLine",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoLine.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MakeGeoPoint",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPoint.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MakeGeoPolygon",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPolygon.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MakeGeoRegion",
+      "kind": "Script and chart function",
+      "category": "Geospatial functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoRegion.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Above",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/above.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "After",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/after.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Before",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/before.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Below",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/below.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Bottom",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/bottom.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Column",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/column.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ColumnNo",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/columnno.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Dimensionality",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/dimensionality.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Exists",
+      "kind": "Script function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Exists.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FieldIndex",
+      "kind": "Script and chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldindex.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FieldValue",
+      "kind": "Script and chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvalue.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FieldValueCount",
+      "kind": "Script and chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvaluecount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "First",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/first.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Last",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/last.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LookUp",
+      "kind": "Script function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/LookUp.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NoOfColumns",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/noofcolumns.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NoOfRows",
+      "kind": "Script and chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/noofrows.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Peek",
+      "kind": "Script function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Peek.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Previous",
+      "kind": "Script function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Previous.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "SecondaryDimensionality",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/secondarydimensionality.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Top",
+      "kind": "Chart function",
+      "category": "Inter-record functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/top.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Date#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/date_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Interval#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/interval_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Money#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/money_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Num#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/num_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Text",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/Text.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Time#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/time_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Timestamp#",
+      "kind": "Script and chart function",
+      "category": "Interpretation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/timestamp_hash.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IsNum",
+      "kind": "Script and chart function",
+      "category": "Logical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm#IsNum?id=1414",
+      "script_capable": true,
+      "discovery": "same-page-anchor"
+    },
+    {
+      "name": "IsText",
+      "kind": "Script and chart function",
+      "category": "Logical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm#IsText",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "ApplyMap",
+      "kind": "Script function",
+      "category": "Mapping functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/ApplyMap.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MapSubstring",
+      "kind": "Script function",
+      "category": "Mapping functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/MapSubstring.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "e",
+      "kind": "Script and chart function",
+      "category": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#e?id=1419",
+      "script_capable": true,
+      "discovery": "same-page-anchor"
+    },
+    {
+      "name": "false",
+      "kind": "Script and chart function",
+      "category": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#false",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "pi",
+      "kind": "Script and chart function",
+      "category": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#pi",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "rand",
+      "kind": "Script and chart function",
+      "category": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#rand",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "true",
+      "kind": "Script and chart function",
+      "category": "Mathematical functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#true",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "EmptyIsNull",
+      "kind": "Script and chart function",
+      "category": "NULL functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/EmptyIsNull.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IsNull",
+      "kind": "Script and chart function",
+      "category": "NULL functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/IsNull.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NULL",
+      "kind": "Script and chart function",
+      "category": "NULL functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/Null.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeAvg",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeavg.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeCorrel",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecorrel.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeCount",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeFractile",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangefractile.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeIRR",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeIRR.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeKurtosis",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangekurtosis.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMax",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemax.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMaxString",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemaxstring.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMin",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemin.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMinString",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeminstring.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMissingCount",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemissingcount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeMode",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemode.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeNPV",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeNPV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeNullCount",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenullcount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeNumericCount",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenumericcount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeOnly",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeonly.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeSkew",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeskew.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeStdev",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangestdev.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeSum",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangesum.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeTextCount",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangetextcount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeXIRR",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXIRR.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RangeXNPV",
+      "kind": "Script and chart function",
+      "category": "Range functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXNPV.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "HRank",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/HRank.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "KMeans2D",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/KMeans2D.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "KMeansCentroid2D",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/KMeansCentroid2D.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "KMeansCentroidND",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/KMeansCentroidND.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "KMeansND",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/KMeansND.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Rank",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/rank.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "STL_Residual",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/stl_residual.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "STL_Seasonal",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/stl_seasonal.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "STL_Trend",
+      "kind": "Chart function",
+      "category": "Relational functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RelationalFunctions/stl_trend.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MutualInfo",
+      "kind": "Script and chart function",
+      "category": "Statistical aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/statistical-aggregation-functions.htm#MutualInfo",
+      "script_capable": true,
+      "discovery": "documented-script-override"
+    },
+    {
+      "name": "BetaDensity",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaDensity.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BetaDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BetaInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BetaInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BinomDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BinomFrequency",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomFrequency.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "BinomInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/BinomInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ChiDensity",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiDensity.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ChiDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ChiInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/ChiInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FDensity",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FDensity.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/FInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GammaDensity",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaDensity.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GammaDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GammaInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/GammaInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NormDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/NormDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NormInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/NormInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "PoissonDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "PoissonFrequency",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonFrequency.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "PoissonInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/PoissonInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TDensity",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TDensity.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TDist",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TInv",
+      "kind": "Script and chart function",
+      "category": "Statistical distribution functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalDistributionFunctions/TInv.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Concat",
+      "kind": "Script function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/concat.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Concat",
+      "kind": "Chart function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StringAggregationFunctions/concat.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FirstValue",
+      "kind": "Script function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/FirstValue.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LastValue",
+      "kind": "Script function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/LastValue.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MaxString",
+      "kind": "Script function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MaxString.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MaxString",
+      "kind": "Chart function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StringAggregationFunctions/maxstring.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MinString",
+      "kind": "Script function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MinString.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MinString",
+      "kind": "Chart function",
+      "category": "String aggregation functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StringAggregationFunctions/minstring.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Capitalize",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Capitalize.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Chr",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Chr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "CountRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/CountRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "CountRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/CountRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "CountRegEx"
+    },
+    {
+      "name": "Evaluate",
+      "kind": "Script function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Evaluate.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ExtractRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ExtractRegExGroup",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ExtractRegExGroupI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "ExtractRegExGroup"
+    },
+    {
+      "name": "ExtractRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ExtractRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "ExtractRegEx"
+    },
+    {
+      "name": "FindOneOf",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/FindOneOf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Hash128",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash128.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Hash160",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash160.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Hash256",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash256.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Index",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Index.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IndexRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IndexRegExGroup",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IndexRegExGroupI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "IndexRegExGroup"
+    },
+    {
+      "name": "IndexRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IndexRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "IndexRegEx"
+    },
+    {
+      "name": "IsJson",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsJson.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IsRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IsRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "IsRegEx"
+    },
+    {
+      "name": "JsonArray",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonArray.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "JsonGet",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonGet.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "JsonObject",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonObject.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "JsonSet",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSet.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "JsonSetEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSetEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "KeepChar",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/KeepChar.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Left",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Left.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Len",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Len.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LevenshteinDist",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LevenshteinDist.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Lower",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "LTrim",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LTrim.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MatchRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/MatchRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "MatchRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/MatchRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "MatchRegEx"
+    },
+    {
+      "name": "Mid",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Mid.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Ord",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Ord.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "PurgeChar",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/PurgeChar.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Repeat",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Repeat.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Replace",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Replace.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ReplaceRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ReplaceRegExGroup",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ReplaceRegExGroupI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegExGroup.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "ReplaceRegExGroup"
+    },
+    {
+      "name": "ReplaceRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/ReplaceRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "ReplaceRegEx"
+    },
+    {
+      "name": "Right",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Right.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "RTrim",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/RTrim.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "SubField",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubField.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "SubFieldRegEx",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubFieldRegEx.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "SubFieldRegExI",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubFieldRegEx.htm",
+      "script_capable": true,
+      "discovery": "documented-case-insensitive-variant",
+      "variant_of": "SubFieldRegEx"
+    },
+    {
+      "name": "SubStringCount",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubStringCount.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TextBetween",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/TextBetween.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Trim",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Trim.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Upper",
+      "kind": "Script and chart function",
+      "category": "String functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ValueList",
+      "kind": "Chart function",
+      "category": "Synthetic dimension functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/SyntheticDimensionFunctions/valuelist.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ValueLoop",
+      "kind": "Chart function",
+      "category": "Synthetic dimension functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/SyntheticDimensionFunctions/valueloop.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "CalcDim",
+      "kind": "Chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/calcdim.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ComputerName",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#ComputerName",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "DocumentName",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentName",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "DocumentPath",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentPath",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "DocumentTitle",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentTitle",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "EngineVersion",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/EngineVersion.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetCollationLocale",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#GetCollationLocale",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "GetSysAttr",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetSysAttr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "GetUserAttr",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetUserAttr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "InObject",
+      "kind": "Chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/InObject.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "IsPartialReload",
+      "kind": "Script function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/IsPartialReload.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ObjectId",
+      "kind": "Chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/ObjectId.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "OSUser",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#OSUser",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "ProductVersion",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/ProductVersion.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ReloadTime",
+      "kind": "Script and chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#ReloadTime",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "StateName",
+      "kind": "Chart function",
+      "category": "System functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/StateName.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_conf",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_df",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_dif",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_lower",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_sig",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_sterr",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_t",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_t.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1_upper",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_conf",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_df",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_dif",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_lower",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_sig",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_sterr",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_t",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_t.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest1w_upper",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_conf",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_df",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_dif",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_lower",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_sig",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_sterr",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_t",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_t.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTest_upper",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_conf",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_df",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_df.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_dif",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_lower",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_sig",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_sterr",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_t",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_t.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "TTestw_upper",
+      "kind": "Script and chart function",
+      "category": "T-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FieldName",
+      "kind": "Script function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldName.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "FieldNumber",
+      "kind": "Script function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldNumber.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NoOfFields",
+      "kind": "Script function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfFields.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NoOfRows",
+      "kind": "Script and chart function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfRows.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "NoOfTables",
+      "kind": "Script and chart function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#NoOfTables",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "TableName",
+      "kind": "Script and chart function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#TableName",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "TableNumber",
+      "kind": "Script and chart function",
+      "category": "Table functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#TableNumber",
+      "script_capable": true,
+      "discovery": "section-script-capable"
+    },
+    {
+      "name": "acos",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#acos",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "acosh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#acosh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "asin",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#asin",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "asinh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#asinh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "atan",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atan",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "atan2",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atan2",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "atanh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atanh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "cos",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#cos",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "cosh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#cosh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "sin",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#sin",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "sinh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#sinh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "tan",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#tan",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "tanh",
+      "kind": "Script and chart function",
+      "category": "Trigonometric and hyperbolic functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#tanh",
+      "script_capable": true,
+      "discovery": "combined-page-expandable"
+    },
+    {
+      "name": "Window",
+      "kind": "Script function",
+      "category": "Window functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/Window.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "WRank",
+      "kind": "Script function",
+      "category": "Window functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/WRank.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Aggr",
+      "kind": "Chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/aggr.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "Script syntax and",
+      "kind": "Chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/LoadData/script-syntax-functions.htm",
+      "script_capable": false,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_conf",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_dif",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_lower",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_sig",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_sterr",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_upper",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTest_z",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_z.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_conf",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_conf.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_dif",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_dif.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_lower",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_lower.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_sig",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sig.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_sterr",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sterr.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_upper",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_upper.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    },
+    {
+      "name": "ZTestw_z",
+      "kind": "Script and chart function",
+      "category": "Z-test functions",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_z.htm",
+      "script_capable": true,
+      "discovery": "function-link"
+    }
+  ],
+  "script_statements": [
+    {
+      "family": "control",
+      "name": "Call",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/Call.htm"
+    },
+    {
+      "family": "control",
+      "name": "Do..loop",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/do.htm"
+    },
+    {
+      "family": "control",
+      "name": "End",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/End.htm"
+    },
+    {
+      "family": "control",
+      "name": "Exit",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/Exit.htm"
+    },
+    {
+      "family": "control",
+      "name": "Exit error",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/exit error.htm"
+    },
+    {
+      "family": "control",
+      "name": "Exit script",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/exit script.htm"
+    },
+    {
+      "family": "control",
+      "name": "For..next",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/For.htm"
+    },
+    {
+      "family": "control",
+      "name": "For each..next",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/For Each.htm"
+    },
+    {
+      "family": "control",
+      "name": "If..then..elseif..else..end if",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/If.htm"
+    },
+    {
+      "family": "control",
+      "name": "Next",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/Next.htm"
+    },
+    {
+      "family": "control",
+      "name": "Sub..end sub",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/Sub.htm"
+    },
+    {
+      "family": "control",
+      "name": "Switch..case..default..end switch",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/Switch.htm"
+    },
+    {
+      "family": "control",
+      "name": "To",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptControlStatements/To.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Add",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Add.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Concatenate",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/concatenate.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Crosstable",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/crosstable.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "First",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/First.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Generic",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Generic.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Hierarchy",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Hierarchy.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "HierarchyBelongsTo",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/HierarchyBelongsTo.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Inner",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Inner.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "IntervalMatch",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/IntervalMatch.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Join",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Join.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Keep",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Keep.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Left",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Left.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Mapping",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Mapping.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Merge",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Merge.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "NoConcatenate",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/NoConcatenate.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Outer",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Outer.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Partial reload",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/PartialReload.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Right",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Right.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Sample",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Sample.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Semantic",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Semantic.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "Unless",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/Unless.htm"
+    },
+    {
+      "family": "prefix",
+      "name": "When",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptPrefixes/When.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Alias",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Alias.htm"
+    },
+    {
+      "family": "regular",
+      "name": "AutoNumber",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Autonumber.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Binary",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Binary.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Comment field",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/comment.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Comment table",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/comment-table.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Connect",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/CONNECT.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Constrain",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Constrain.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Create relationship",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Create-Relationship.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Declare",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Declare.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Derive",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Derive.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Directory",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Directory.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Disconnect",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Disconnect.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Drop",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Drop.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Drop table",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/drop-table.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Field/Fields",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Field.htm"
+    },
+    {
+      "family": "regular",
+      "name": "FlushLog",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/FlushLog.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Force",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Force.htm"
+    },
+    {
+      "family": "regular",
+      "name": "From",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/From.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Load",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Load.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Let",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Let.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Loosen Table",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/loosen-table.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Map",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Map.htm"
+    },
+    {
+      "family": "regular",
+      "name": "NullAsNull",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/NullAsNull.htm"
+    },
+    {
+      "family": "regular",
+      "name": "NullAsValue",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/NullAsValue.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Qualify",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Qualify.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Rem",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Rem.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Rename",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Rename.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Search",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Search.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Section",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Section.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Select",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Select.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Set",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Set.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Sleep",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Sleep.htm"
+    },
+    {
+      "family": "regular",
+      "name": "SQL",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/SQL.htm"
+    },
+    {
+      "family": "regular",
+      "name": "SQLColumns",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/SQLColumns.htm"
+    },
+    {
+      "family": "regular",
+      "name": "SQLTables",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/SQLTables.htm"
+    },
+    {
+      "family": "regular",
+      "name": "SQLTypes",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/SQLTypes.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Star",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Star.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Store",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Store.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Table/Tables",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Table.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Tag",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Tag.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Trace",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Trace.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Unmap",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Unmap.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Unqualify",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Unqualify.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Untag",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Untag.htm"
+    },
+    {
+      "family": "regular",
+      "name": "Variable/Variables",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ScriptRegularStatements/Variable.htm"
+    }
+  ],
+  "operator_groups": [
+    {
+      "name": "Bit operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/BitOperators.htm"
+    },
+    {
+      "name": "Logical operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/LogicalOperators.htm"
+    },
+    {
+      "name": "Numeric operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/NumericOperators.htm"
+    },
+    {
+      "name": "Relational operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/RelationalOperators.htm"
+    },
+    {
+      "name": "String operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/StringOperators.htm"
+    },
+    {
+      "name": "Next topic Bit operators",
+      "url": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/Operators/BitOperators.htm"
+    }
+  ],
+  "operators": [
+    {
+      "family": "numeric",
+      "operator": "+"
+    },
+    {
+      "family": "numeric",
+      "operator": "-"
+    },
+    {
+      "family": "numeric",
+      "operator": "*"
+    },
+    {
+      "family": "numeric",
+      "operator": "/"
+    },
+    {
+      "family": "bit",
+      "operator": "bitnot"
+    },
+    {
+      "family": "bit",
+      "operator": "bitand"
+    },
+    {
+      "family": "bit",
+      "operator": "bitor"
+    },
+    {
+      "family": "bit",
+      "operator": "bitxor"
+    },
+    {
+      "family": "bit",
+      "operator": ">>"
+    },
+    {
+      "family": "bit",
+      "operator": "<<"
+    },
+    {
+      "family": "relational",
+      "operator": "="
+    },
+    {
+      "family": "relational",
+      "operator": "<>"
+    },
+    {
+      "family": "relational",
+      "operator": "<"
+    },
+    {
+      "family": "relational",
+      "operator": ">"
+    },
+    {
+      "family": "relational",
+      "operator": "<="
+    },
+    {
+      "family": "relational",
+      "operator": ">="
+    },
+    {
+      "family": "relational",
+      "operator": "precedes"
+    },
+    {
+      "family": "relational",
+      "operator": "follows"
+    },
+    {
+      "family": "logical",
+      "operator": "and"
+    },
+    {
+      "family": "logical",
+      "operator": "or"
+    },
+    {
+      "family": "logical",
+      "operator": "not"
+    },
+    {
+      "family": "logical",
+      "operator": "xor"
+    },
+    {
+      "family": "string",
+      "operator": "&"
+    },
+    {
+      "family": "string",
+      "operator": "like"
+    }
+  ],
+  "counts": {
+    "dataflow_processors": 23,
+    "function_category_pages": 38,
+    "functions_discovered": 475,
+    "script_capable_functions": 395,
+    "statements_and_prefixes": 80,
+    "operators_tracked": 24
+  }
+}
