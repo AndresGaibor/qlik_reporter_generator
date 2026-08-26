@@ -20,6 +20,17 @@ export function mapearTenantQlik(
     automatizacionBaseNombre: fila.automatizacionBaseNombre,
     dataflowBaseIdQlik: fila.dataflowBaseIdQlik,
     dataflowBaseNombre: fila.dataflowBaseNombre,
+    dataflowPlantillas:
+      fila.dataflowPlantillas.length > 0
+        ? fila.dataflowPlantillas
+        : fila.dataflowBaseIdQlik
+          ? [
+              {
+                id: fila.dataflowBaseIdQlik,
+                nombre: fila.dataflowBaseNombre || "Dataflow base",
+              },
+            ]
+          : [],
     creadoEn: fila.creadoEn,
   };
 }

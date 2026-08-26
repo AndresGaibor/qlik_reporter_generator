@@ -213,12 +213,11 @@ export function recrearWorkerTenant(
 export function configurarDataflowBaseTenant(
   organizacionId: string,
   tenantQlikId: string,
-  dataflowBaseIdQlik: string,
-  dataflowBaseNombre?: string,
+  plantillas: Array<{ id: string; nombre: string }>,
 ) {
   return clienteApi.put<TenantQlik>(
     `/admin/organizaciones/${encodeURIComponent(organizacionId)}/tenants-qlik/${encodeURIComponent(tenantQlikId)}/dataflow-base`,
-    { dataflowBaseIdQlik, dataflowBaseNombre },
+    { plantillas },
   );
 }
 

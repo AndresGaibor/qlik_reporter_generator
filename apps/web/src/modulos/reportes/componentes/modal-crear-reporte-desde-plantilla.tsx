@@ -5,7 +5,7 @@ import { useState } from "react";
 
 interface Props {
   abierto: boolean;
-  nombrePlantilla: string;
+  plantillas: Array<{ id: string; nombre: string }>;
   host: string;
   onCerrar: () => void;
   onCreado: () => void;
@@ -13,12 +13,17 @@ interface Props {
 
 export function ModalCrearReporteDesdePlantilla({
   abierto,
-  nombrePlantilla,
+  plantillas,
   host,
   onCerrar,
   onCreado,
 }: Props) {
-  const [nombre, setNombre] = useState(`Copia de ${nombrePlantilla}`);
+  const [plantillaId, setPlantillaId] = useState(plantillas[0]?.id ?? "");
+  const plantilla =
+    plantillas.find((item) => item.id === plantillaId) ?? plantillas[0];
+  const [nombre, setNombre] = useState(
+    `Copia de ${plantilla?.nombre ?? "plantilla"}`,
+  );
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string>();
   if (!abierto) return null;
@@ -26,7 +31,7 @@ export function ModalCrearReporteDesdePlantilla({
   const cerrar = () => {
     if (creando) return;
     setError(undefined);
-    setNombre(`Copia de ${nombrePlantilla}`);
+    setNombre(`Copia de ${plantilla?.nombre ?? "plantilla"}`);
     onCerrar();
   };
   const crear = async () => {
@@ -35,7 +40,10 @@ export function ModalCrearReporteDesdePlantilla({
     setCreando(true);
     setError(undefined);
     try {
-      const resultado = await crearReporteDesdePlantilla(nombre.trim());
+      const resultado = await crearReporteDesdePlantilla(
+        nombre.trim(),
+        plantillaId,
+      );
       const urlQlik = construirUrlVerFlujoQlik(host, resultado.id);
       if (ventanaQlik) ventanaQlik.location.href = urlQlik;
       else window.location.assign(urlQlik);
@@ -65,10 +73,31 @@ export function ModalCrearReporteDesdePlantilla({
           Crear reporte
         </h2>
         <div className="mt-4 space-y-4">
-          <p className="text-sm text-ink-600">
-            Se creará un reporte desde la plantilla{" "}
-            <strong>{nombrePlantilla}</strong>.
-          </p>
+          <div>
+            <label
+              htmlFor="plantilla-dataflow"
+              className="text-sm font-semibold text-ink-800"
+            >
+              Plantilla
+            </label>
+            <select
+              id="plantilla-dataflow"
+              value={plantillaId}
+              onChange={(evento) => {
+                const id = evento.target.value;
+                setPlantillaId(id);
+                const seleccionada = plantillas.find((item) => item.id === id);
+                if (seleccionada) setNombre(`Copia de ${seleccionada.nombre}`);
+              }}
+              className="mt-1.5 h-10 w-full rounded-md border border-line-200 px-3 text-sm"
+            >
+              {plantillas.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label
               htmlFor="nombre-copia-dataflow"

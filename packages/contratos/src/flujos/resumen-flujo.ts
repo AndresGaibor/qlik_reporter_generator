@@ -23,6 +23,7 @@ export type DataflowBaseDisponible = z.infer<
 
 export const esquemaClonarDataflowBase = z.object({
   nombre: z.string().trim().min(1).max(255),
+  plantillaId: z.string().min(1).optional(),
 });
 
 export const esquemaResultadoClonarDataflowBase = z.object({

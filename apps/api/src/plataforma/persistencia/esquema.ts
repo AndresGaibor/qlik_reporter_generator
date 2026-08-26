@@ -85,6 +85,10 @@ export const tenantsQlik = pgTable(
     automatizacionBaseNombre: text("automatizacion_base_nombre"),
     dataflowBaseIdQlik: text("dataflow_base_id_qlik"),
     dataflowBaseNombre: text("dataflow_base_nombre"),
+    dataflowPlantillas: jsonb("dataflow_plantillas")
+      .$type<Array<{ id: string; nombre: string }>>()
+      .notNull()
+      .default([]),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },

@@ -137,15 +137,13 @@ export class RepositorioAdministracionPostgres
   async configurarDataflowBase(
     organizacionId: string,
     tenantQlikId: string,
-    dataflowBaseIdQlik: string,
-    dataflowBaseNombre?: string,
+    plantillas: Array<{ id: string; nombre: string }>,
   ): Promise<TenantQlikAdministrable | null> {
     return ConsultaTenantQlik.configurarDataflowBase(
       this.db,
       organizacionId,
       tenantQlikId,
-      dataflowBaseIdQlik,
-      dataflowBaseNombre,
+      plantillas,
     );
   }
 

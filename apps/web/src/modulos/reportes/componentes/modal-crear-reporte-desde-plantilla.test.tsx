@@ -42,7 +42,7 @@ test("Crear reporte clona la plantilla y abre la copia directamente en Qlik", as
     root.render(
       <ModalCrearReporteDesdePlantilla
         abierto
-        nombrePlantilla="Base Ventas"
+        plantillas={[{ id: "base-1", nombre: "Base Ventas" }]}
         host="tenant.qlikcloud.com"
         onCerrar={onCerrar}
         onCreado={onCreado}
@@ -58,6 +58,7 @@ test("Crear reporte clona la plantilla y abre la copia directamente en Qlik", as
   expect(abrir).toHaveBeenCalledWith("about:blank", "_blank");
   expect(api.crearReporteDesdePlantilla).toHaveBeenCalledWith(
     "Copia de Base Ventas",
+    "base-1",
   );
   expect(ventana.opener).toBeNull();
   expect(ventana.location.href).toBe(
@@ -82,7 +83,7 @@ test("si falla el clonado cierra la pestaña provisional y conserva el error", a
     root.render(
       <ModalCrearReporteDesdePlantilla
         abierto
-        nombrePlantilla="Base Ventas"
+        plantillas={[{ id: "base-1", nombre: "Base Ventas" }]}
         host="tenant.qlikcloud.com"
         onCerrar={vi.fn()}
         onCreado={vi.fn()}

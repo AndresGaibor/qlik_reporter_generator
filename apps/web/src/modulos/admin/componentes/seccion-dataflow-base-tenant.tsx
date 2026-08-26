@@ -30,10 +30,10 @@ export function SeccionDataflowBaseTenant({
       <CardHeader className="border-b border-line-200 bg-app/30 pb-4">
         <CardTitle className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
           <Icon name="star" className="text-brand-600" />
-          Dataflow base
+          Plantillas de Dataflow
         </CardTitle>
         <p className="mt-1 text-xs text-ink-500">
-          Define el Dataflow que se usará como plantilla predeterminada en cada
+          Define uno o varios Dataflows disponibles para crear reportes en cada
           entorno.
         </p>
       </CardHeader>
@@ -57,14 +57,21 @@ function DataflowPorEntorno({
   organizacionId: string;
   tenantQlik: TenantQlik;
 }) {
-  const configurado = Boolean(tenantQlik.dataflowBaseIdQlik);
+  const cantidad =
+    tenantQlik.dataflowPlantillas?.length ??
+    (tenantQlik.dataflowBaseIdQlik ? 1 : 0);
+  const configurado = cantidad > 0;
   const [editando, setEditando] = useState(!configurado);
   const entorno = nombreVisibleEntornoQlik(tenantQlik);
   const host = normalizarHostQlik(tenantQlik.host);
   if (configurado && !editando) {
     return (
       <ResumenPlantillaBase
-        nombre={tenantQlik.dataflowBaseNombre || "Dataflow base"}
+        nombre={
+          cantidad === 1
+            ? tenantQlik.dataflowBaseNombre || "Dataflow base"
+            : `${cantidad} plantillas configuradas`
+        }
         entorno={entorno}
         host={host}
         onCambiar={() => setEditando(true)}

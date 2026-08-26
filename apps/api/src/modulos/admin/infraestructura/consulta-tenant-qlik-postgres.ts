@@ -113,14 +113,14 @@ export const ConsultaTenantQlik = {
     db: DbType,
     organizacionId: string,
     tenantQlikId: string,
-    dataflowBaseIdQlik: string,
-    dataflowBaseNombre?: string,
+    plantillas: Array<{ id: string; nombre: string }>,
   ) {
     const [fila] = await db
       .update(tenantsQlik)
       .set({
-        dataflowBaseIdQlik,
-        dataflowBaseNombre: dataflowBaseNombre ?? null,
+        dataflowBaseIdQlik: plantillas[0]?.id ?? null,
+        dataflowBaseNombre: plantillas[0]?.nombre ?? null,
+        dataflowPlantillas: plantillas,
         actualizadoEn: new Date(),
       })
       .where(

@@ -117,8 +117,7 @@ export function crearRutasConfiguracionTenant({
       const resultado = await repositorio.configurarDataflowBase(
         organizacionId,
         tenantQlikId,
-        entrada.dataflowBaseIdQlik,
-        entrada.dataflowBaseNombre,
+        entrada.plantillas,
       );
       if (!resultado) {
         return responderError(c, "Tenant Qlik no encontrado", 404, {

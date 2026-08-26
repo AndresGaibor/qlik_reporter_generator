@@ -258,8 +258,7 @@ describe("API", () => {
           Origin: "http://localhost:4525",
         },
         body: JSON.stringify({
-          dataflowBaseIdQlik: "flow1",
-          dataflowBaseNombre: "Base Ventas",
+          plantillas: [{ id: "flow1", nombre: "Base Ventas" }],
         }),
       },
     );

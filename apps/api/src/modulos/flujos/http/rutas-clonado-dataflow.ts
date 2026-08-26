@@ -7,6 +7,7 @@ export interface DependenciasClonadoDataflow {
   obtenerTenant(tenantId: string): Promise<{
     dataflowBaseIdQlik?: string | null;
     dataflowBaseNombre?: string | null;
+    dataflowPlantillas?: Array<{ id: string; nombre: string }>;
   } | null>;
   resolverQlik(c: Context): Promise<{
     listarFlujos(): Promise<
@@ -33,7 +34,10 @@ export function crearRutasClonadoDataflow(
 
   rutas.get("/plantilla-base", async (c) => {
     const tenant = await obtenerTenantDataflow(c, dependencias);
-    if (!tenant?.dataflowBaseIdQlik) {
+    const plantilla = tenant
+      ? obtenerPlantillasConfiguradas(tenant)[0]
+      : undefined;
+    if (!plantilla) {
       return c.json(
         {
           exito: false,
@@ -48,22 +52,46 @@ export function crearRutasClonadoDataflow(
     const plantillaDisponible = await resolverPlantillaDisponible(
       c,
       dependencias,
-      tenant.dataflowBaseIdQlik,
+      plantilla.id,
     );
     if (!plantillaDisponible) return respuestaPlantillaNoDisponible(c);
     return responderExito(c, {
-      id: tenant.dataflowBaseIdQlik,
-      nombre:
-        tenant.dataflowBaseNombre ||
-        plantillaDisponible.name ||
-        "Dataflow base",
+      id: plantilla.id,
+      nombre: plantilla.nombre || plantillaDisponible.name || "Dataflow base",
     });
+  });
+
+  rutas.get("/plantillas", async (c) => {
+    const tenant = await obtenerTenantDataflow(c, dependencias);
+    const configuradas = tenant ? obtenerPlantillasConfiguradas(tenant) : [];
+    if (configuradas.length === 0) return responderExito(c, []);
+    const qlik = await dependencias.resolverQlik(c);
+    const disponibles = await qlik.listarFlujos();
+    return responderExito(
+      c,
+      configuradas
+        .map((plantilla) => {
+          const disponible = disponibles.find(
+            (flujo) => flujo.id === plantilla.id,
+          );
+          return disponible
+            ? { id: plantilla.id, nombre: plantilla.nombre || disponible.name }
+            : null;
+        })
+        .filter((plantilla): plantilla is { id: string; nombre: string } =>
+          Boolean(plantilla),
+        ),
+    );
   });
 
   rutas.post("/desde-plantilla", async (c) => {
     const entrada = esquemaClonarDataflowBase.parse(await c.req.json());
     const tenant = await obtenerTenantDataflow(c, dependencias);
-    if (!tenant?.dataflowBaseIdQlik) {
+    const plantillas = tenant ? obtenerPlantillasConfiguradas(tenant) : [];
+    const plantilla = entrada.plantillaId
+      ? plantillas.find((item) => item.id === entrada.plantillaId)
+      : plantillas[0];
+    if (!plantilla) {
       return c.json(
         {
           exito: false,
@@ -78,7 +106,7 @@ export function crearRutasClonadoDataflow(
     const plantillaDisponible = await resolverPlantillaDisponible(
       c,
       dependencias,
-      tenant.dataflowBaseIdQlik,
+      plantilla.id,
     );
     if (!plantillaDisponible) return respuestaPlantillaNoDisponible(c);
     const qlik = await dependencias.resolverQlik(c);
@@ -97,6 +125,22 @@ export function crearRutasClonadoDataflow(
   });
 
   return rutas;
+}
+
+function obtenerPlantillasConfiguradas(tenant: {
+  dataflowBaseIdQlik?: string | null;
+  dataflowBaseNombre?: string | null;
+  dataflowPlantillas?: Array<{ id: string; nombre: string }>;
+}) {
+  if (tenant.dataflowPlantillas?.length) return tenant.dataflowPlantillas;
+  return tenant.dataflowBaseIdQlik
+    ? [
+        {
+          id: tenant.dataflowBaseIdQlik,
+          nombre: tenant.dataflowBaseNombre || "Dataflow base",
+        },
+      ]
+    : [];
 }
 
 async function resolverPlantillaDisponible(

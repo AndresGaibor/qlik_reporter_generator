@@ -56,7 +56,13 @@ describe("rutas de flujos", () => {
           }) as never,
         {
           resolverSesion: async () => ({ tenantId: "tenant-1" }),
-          obtenerTenant: async () => ({ dataflowBaseIdQlik: "item-1" }),
+          obtenerTenant: async () => ({
+            dataflowBaseIdQlik: "item-1",
+            dataflowPlantillas: [
+              { id: "otra-1", nombre: "Otra" },
+              { id: "item-1", nombre: "Base Ventas" },
+            ],
+          }),
         },
       ),
     );
@@ -64,7 +70,7 @@ describe("rutas de flujos", () => {
     const respuesta = await app.request("/api/flujos/desde-plantilla", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre: "Copia ventas" }),
+      body: JSON.stringify({ nombre: "Copia ventas", plantillaId: "item-1" }),
     });
 
     expect(respuesta.status).toBe(201);
