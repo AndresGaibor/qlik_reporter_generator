@@ -4,6 +4,7 @@ import type {
   DetalleReporte,
   PreflightDataflowReporte,
   ResumenReporte,
+  VistaPreviaReporte,
 } from "@qlik/contratos";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
 import type {
@@ -79,6 +80,10 @@ export function preflightDataflowReporte(flujoId: string) {
   return clienteApi.get<PreflightDataflowReporte>(
     `${idUrl(flujoId)}/preflight`,
   );
+}
+
+export function obtenerVistaPreviaReporte(flujoId: string) {
+  return clienteApi.get<VistaPreviaReporte>(`${idUrl(flujoId)}/preview`);
 }
 
 export type { ResumenAutomatizacion };
