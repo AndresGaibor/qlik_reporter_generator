@@ -51,8 +51,12 @@ export class ClientePreviewBigQuery implements PuertoLecturaBigQuery {
 
     const rawRows = apiResponse as Array<Record<string, unknown>>;
     const filas = rawRows.map((row) => {
-      const fields = (row as { f?: Array<{ v: unknown }> }).f ?? [];
-      return fields.map((field) => String(field.v ?? ""));
+      if (Array.isArray(row.f)) {
+        return row.f.map((field) =>
+          String((field as { v?: unknown }).v ?? ""),
+        );
+      }
+      return nombresColumnas.map((columna) => convertirValorFila(row[columna]));
     });
 
     if (opciones?.columnas && opciones.columnas.length > 0) {
@@ -80,4 +84,10 @@ export class ClientePreviewBigQuery implements PuertoLecturaBigQuery {
     }
     return { datasetId: this.dataset, tableId: partes[0] };
   }
+}
+
+function convertirValorFila(valor: unknown): string {
+  if (valor === null || valor === undefined) return "";
+  if (typeof valor === "object") return JSON.stringify(valor);
+  return String(valor);
 }
