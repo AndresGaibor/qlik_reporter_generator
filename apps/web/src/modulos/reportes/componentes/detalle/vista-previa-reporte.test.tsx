@@ -12,8 +12,8 @@ const datosEjemplo = {
   filasMuestreadas: 2,
   fuentesMuestreadas: ["proyecto.dataset.ventas"],
   contieneAgregaciones: false,
-  advertencias: [],
-  esMuestra: true,
+  advertencias: [] as string[],
+  esMuestra: true as const,
 };
 
 let root: Root | undefined;
