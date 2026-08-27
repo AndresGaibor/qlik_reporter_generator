@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "bun:test";
 import { VistaPreviaDataflow } from "./vista-previa-dataflow";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoLecturaBigQuery } from "../../google-cloud/aplicacion/puerto-lectura-bigquery.js";

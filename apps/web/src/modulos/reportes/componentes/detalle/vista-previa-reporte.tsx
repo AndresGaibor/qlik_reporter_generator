@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 interface VistaPreviaReporteProps {
   datos?: {
     columnas: string[];
@@ -15,8 +13,6 @@ interface VistaPreviaReporteProps {
 }
 
 export function VistaPreviaReporte({ datos, cargando, error }: VistaPreviaReporteProps) {
-  const [tooltip, setTooltip] = useState<{ row: number; col: number; text: string } | null>(null);
-
   if (cargando) {
     return (
       <div className="flex min-h-48 items-center justify-center rounded-lg border border-line-200 bg-surface">
@@ -94,8 +90,6 @@ export function VistaPreviaReporte({ datos, cargando, error }: VistaPreviaReport
                     key={`celda-${rowIdx}-${colIdx}`}
                     className="border-b border-line-200 px-3 py-2 font-mono text-xs text-ink-800 truncate max-w-[200px]"
                     title={celda}
-                    onMouseEnter={() => celda.length > 20 && setTooltip({ row: rowIdx, col: colIdx, text: celda })}
-                    onMouseLeave={() => setTooltip(null)}
                   >
                     {celda || <span className="text-ink-300">null</span>}
                   </td>

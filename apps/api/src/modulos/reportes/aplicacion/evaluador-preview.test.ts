@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import { EvaluadorPreview } from "./evaluador-preview";
 import type { PlanCompilacionVNext, RelacionVNext } from "./compilador-vnext/ir.js";
 
@@ -147,10 +147,10 @@ describe("EvaluadorPreview", () => {
       };
 
       const preview = new EvaluadorPreview(plan);
-      const resultado = preview.evaluarInline(
-        { left: { columnas: ["id", "nombre"], filas: [["1", "Ana"]] } },
-        { right: { columnas: ["id", "ventas"], filas: [["1", "100"]] } },
-      );
+      const resultado = preview.evaluarInline({
+        left: { columnas: ["id", "nombre"], filas: [["1", "Ana"]] },
+        right: { columnas: ["id", "ventas"], filas: [["1", "100"]] },
+      });
 
       expect(resultado.filas[0]).toContain("Ana");
       expect(resultado.filas[0]).toContain("100");
@@ -197,10 +197,10 @@ describe("EvaluadorPreview", () => {
       };
 
       const preview = new EvaluadorPreview(plan);
-      const resultado = preview.evaluarInline(
-        { left: { columnas: ["id", "nombre"], filas: [["1", "Ana"]] } },
-        { right: { columnas: ["id", "ventas"], filas: [["2", "100"]] } },
-      );
+      const resultado = preview.evaluarInline({
+        left: { columnas: ["id", "nombre"], filas: [["1", "Ana"]] },
+        right: { columnas: ["id", "ventas"], filas: [["2", "100"]] },
+      });
 
       expect(resultado.advertencias).toContainEqual(
         expect.stringContaining("coincidencias"),
