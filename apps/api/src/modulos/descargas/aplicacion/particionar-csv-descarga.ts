@@ -1,5 +1,5 @@
 import { once } from "node:events";
-import { type Readable, type Writable } from "node:stream";
+import type { Readable, Writable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type {
@@ -58,50 +58,45 @@ export async function particionarCsvDescarga(
     await escribirRegistro(destinoActual, cabecera);
   };
 
-  try {
-    for (const fuente of csv) {
-      const lectura = abrirCsvFuente(almacenamiento, fuente);
-      let primerRegistro = true;
+  for (const fuente of csv) {
+    const lectura = abrirCsvFuente(almacenamiento, fuente);
+    let primerRegistro = true;
 
-      for await (const registro of leerRegistrosCsv(lectura)) {
-        if (primerRegistro) {
-          primerRegistro = false;
-          if (!cabecera) cabecera = registro;
-          else if (!cabecera.equals(registro)) {
-            throw new ErrorAplicacion(
-              "CSV_CABECERAS_INCOMPATIBLES",
-              "Los archivos exportados no tienen la misma cabecera CSV",
-              422,
-            );
-          }
-          continue;
+    for await (const registro of leerRegistrosCsv(lectura)) {
+      if (primerRegistro) {
+        primerRegistro = false;
+        if (!cabecera) cabecera = registro;
+        else if (!cabecera.equals(registro)) {
+          throw new ErrorAplicacion(
+            "CSV_CABECERAS_INCOMPATIBLES",
+            "Los archivos exportados no tienen la misma cabecera CSV",
+            422,
+          );
         }
-
-        if (!cabecera) continue;
-        if (!destinoActual || filasParte >= maximoFilas) {
-          await abrirNuevaParte();
-        }
-        if (!destinoActual) continue;
-        await escribirRegistro(destinoActual, registro);
-        filasParte += 1;
+        continue;
       }
-    }
 
-    if (!cabecera) {
-      throw new ErrorAplicacion(
-        "CSV_SIN_CABECERA",
-        "No se pudo leer la cabecera de los CSV exportados",
-        422,
-      );
+      if (!cabecera) continue;
+      if (!destinoActual || filasParte >= maximoFilas) {
+        await abrirNuevaParte();
+      }
+      if (!destinoActual) continue;
+      await escribirRegistro(destinoActual, registro);
+      filasParte += 1;
     }
-
-    if (!destinoActual) await abrirNuevaParte();
-    if (destinoActual) await cerrarDestino(destinoActual);
-    return nombres;
-  } catch (error) {
-    destinoActual?.destroy();
-    throw error;
   }
+
+  if (!cabecera) {
+    throw new ErrorAplicacion(
+      "CSV_SIN_CABECERA",
+      "No se pudo leer la cabecera de los CSV exportados",
+      422,
+    );
+  }
+
+  if (!destinoActual) await abrirNuevaParte();
+  if (destinoActual) await cerrarDestino(destinoActual);
+  return nombres;
 }
 
 export function abrirCsvFuente(

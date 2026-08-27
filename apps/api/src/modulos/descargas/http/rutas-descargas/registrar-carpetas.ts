@@ -3,15 +3,15 @@ import { ZipArchive } from "archiver";
 import type { Hono } from "hono";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
 import {
-  abrirCsvFuente,
-  esDirectorioCacheDescargas,
-  MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
-  particionarCsvDescarga,
-} from "../../aplicacion/particionar-csv-descarga.js";
-import {
   responderError,
   responderExito,
 } from "../../../../nucleo/http/respuestas.js";
+import {
+  MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
+  abrirCsvFuente,
+  esDirectorioCacheDescargas,
+  particionarCsvDescarga,
+} from "../../aplicacion/particionar-csv-descarga.js";
 import {
   carpetaDesdeCorreo,
   esAdministrador,
@@ -61,7 +61,8 @@ export function registrarRutasCarpeta(
     try {
       const prefijoUsuario = `${configuracion.prefijo}${carpetaUsuario}/`;
       const prefijoDirectorio = `${prefijoUsuario}${subruta}`;
-      const resultado = await almacenamiento.listarDirectorio(prefijoDirectorio);
+      const resultado =
+        await almacenamiento.listarDirectorio(prefijoDirectorio);
       const ejecuciones = subruta
         ? await dependencias.repositorioReportes.listarEjecucionesDescargas(
             {
@@ -89,7 +90,10 @@ export function registrarRutasCarpeta(
         carpetasEjecucion: presentacionCarpetas.carpetasEjecucion,
         ejecucionActual: presentacionCarpetas.ejecucionActual,
         archivos: resultado.archivos.map((archivo) => {
-          const presentado = presentarArchivoFuente(archivo.nombre, archivo.formato);
+          const presentado = presentarArchivoFuente(
+            archivo.nombre,
+            archivo.formato,
+          );
           return {
             nombre: presentado.nombre,
             formato: presentado.formato,
@@ -129,7 +133,8 @@ export function registrarRutasCarpeta(
     try {
       const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
       const prefijoDirectorio = `${configuracion.prefijo}${carpetaUsuario}/${subruta}`;
-      const directorio = await almacenamiento.listarDirectorio(prefijoDirectorio);
+      const directorio =
+        await almacenamiento.listarDirectorio(prefijoDirectorio);
       if (directorio.archivos.length === 0)
         return responderError(
           c,
@@ -214,7 +219,8 @@ export function registrarRutasCarpeta(
     try {
       const subruta = normalizarSubruta(c.req.query("ruta") ?? "");
       const prefijoDirectorio = `${configuracion.prefijo}${carpetaUsuario}/${subruta}`;
-      const directorio = await almacenamiento.listarDirectorio(prefijoDirectorio);
+      const directorio =
+        await almacenamiento.listarDirectorio(prefijoDirectorio);
       const fuente =
         directorio.archivos.find((item) => item.nombre === archivo) ??
         directorio.archivos.find((item) => item.nombre === `${archivo}.gz`);
@@ -223,7 +229,9 @@ export function registrarRutasCarpeta(
           codigo: "ARCHIVO_CSV_NO_ENCONTRADO",
         });
       return new Response(
-        Readable.toWeb(abrirCsvFuente(almacenamiento, fuente)) as unknown as BodyInit,
+        Readable.toWeb(
+          abrirCsvFuente(almacenamiento, fuente),
+        ) as unknown as BodyInit,
         {
           headers: {
             "Content-Type": "text/csv; charset=utf-8",

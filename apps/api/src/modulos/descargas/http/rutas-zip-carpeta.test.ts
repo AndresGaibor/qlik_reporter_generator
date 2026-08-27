@@ -26,7 +26,9 @@ function crearAlmacenamientoMemoria() {
           nombre: ruta.split("/").at(-1) ?? ruta,
           rutaCompleta: ruta,
           tamanoBytes: contenido.length,
-          formato: ruta.endsWith(".gz") ? ("CSV.GZ" as const) : ("CSV" as const),
+          formato: ruta.endsWith(".gz")
+            ? ("CSV.GZ" as const)
+            : ("CSV" as const),
         })),
     }),
     listar: async () => [],

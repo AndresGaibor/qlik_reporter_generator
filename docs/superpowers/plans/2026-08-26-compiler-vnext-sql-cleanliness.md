@@ -22,7 +22,9 @@
 - Las optimizaciones deben ser genéricas; queda prohibido detectar nombres `BQ_Inventario`, tablas o campos del fixture para activar reglas.
 - Todo cambio de SQL debe conservar los dry-runs válidos existentes y el contrato de errores explícitos/no-silent-drop.
 
----### Task 1: Congelar baseline y métricas de limpieza
+---
+
+### Task 1: Congelar baseline y métricas de limpieza
 
 **Files:**
 - Modify: `apps/api/src/modulos/reportes/aplicacion/compilador-vnext/regresion-bq-inventario.test.ts`
@@ -249,3 +251,18 @@
 12. Task 12 verification/report.
 
 No saltar directamente a Task 10: BQ_Inventario es el caso de validación, no el diseño del optimizador.
+## Handoff para el agente ejecutor
+
+Antes de modificar código:
+
+- [ ] `cd ~/code/javascript/qlik_reportes_creator`.
+- [ ] Leer `AGENTS.md` raíz y los `AGENTS.md` de `compilador-vnext`, `emisor-bigquery`, `conformance-gates` y cualquier subdirectorio que vaya a tocar.
+- [ ] Leer este plan completo y los dos specs indicados en la cabecera.
+- [ ] Ejecutar `git status --short` y `git log -5 --oneline`.
+- [ ] No usar `git reset --hard`, `git clean`, checkout destructivo ni sobrescribir archivos con cambios ajenos.
+- [ ] Si el árbol está sucio por trabajo concurrente, usar worktree aislado desde el HEAD actual siguiendo `superpowers:using-git-worktrees`; no mover ni borrar cambios del árbol original.
+- [ ] Ejecutar cada Task en orden y hacer el ciclo RED/GREEN antes de avanzar.
+- [ ] Tras cada Task, revisar el diff únicamente de sus archivos, ejecutar su test focal y luego la suite compiler-vnext.
+- [ ] No hacer consultas BigQuery pagadas. `bq query --dry_run` está permitido; EXPORT DATA/ejecución real no.
+- [ ] Si una optimización no puede demostrar equivalencia, no aplicarla: añadir fixture negativo y conservar la capa SQL necesaria.
+- [ ] Al finalizar entregar métricas antes/después y listar cualquier construcción Qlik que siga explícitamente unsupported; cero silent drops.

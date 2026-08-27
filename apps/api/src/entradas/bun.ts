@@ -10,6 +10,9 @@ const puerto = configuracion.PORT;
 const servidor = Bun.serve({
   fetch: app.fetch,
   port: puerto,
+  // Las integraciones con Qlik/GCS pueden tardar más que el valor por defecto
+  // de Bun. Las descargas grandes responden por streaming y mantienen actividad.
+  idleTimeout: 60,
 });
 
 console.log(`\n🚀 API en http://localhost:${puerto}\n`);

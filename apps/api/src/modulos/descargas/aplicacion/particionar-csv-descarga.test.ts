@@ -1,11 +1,11 @@
+import { describe, expect, it } from "bun:test";
 import { Readable, Writable } from "node:stream";
 import { gzipSync } from "node:zlib";
-import { describe, expect, it } from "bun:test";
+import { particionarCsvDescarga } from "./particionar-csv-descarga.js";
 import type {
   ArchivoGcs,
   PuertoAlmacenamientoDescargas,
 } from "./puerto-almacenamiento-descargas.js";
-import { particionarCsvDescarga } from "./particionar-csv-descarga.js";
 
 describe("particionado CSV en streaming", () => {
   it("reparte varias fuentes sin cache GCS y conserva registros multilinea", async () => {
@@ -14,10 +14,7 @@ describe("particionado CSV en streaming", () => {
         "reportes/a.csv.gz",
         gzipSync(Buffer.from('id|texto\n1|"hola\nmundo"\n2|dos\n')),
       ],
-      [
-        "reportes/b.csv.gz",
-        gzipSync(Buffer.from("id|texto\n3|tres\n")),
-      ],
+      ["reportes/b.csv.gz", gzipSync(Buffer.from("id|texto\n3|tres\n"))],
     ]);
     const fuentes: ArchivoGcs[] = [...contenidos.entries()].map(
       ([ruta, contenido]) => ({
