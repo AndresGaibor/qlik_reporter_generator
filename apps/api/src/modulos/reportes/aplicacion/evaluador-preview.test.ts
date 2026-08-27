@@ -206,6 +206,66 @@ describe("EvaluadorPreview", () => {
         expect.stringContaining("coincidencias"),
       );
     });
+
+    it("conserva la advertencia de un join al proyectar el resultado", () => {
+      const plan: PlanCompilacionVNext = {
+        relations: [
+          {
+            id: "left",
+            op: "inline",
+            columns: ["id", "nombre"],
+            rows: [["1", "Ana"]],
+            fields: ["id", "nombre"],
+            schemaKnown: false,
+            span: { start: 1, end: 1, line: 1, column: 1, endLine: 1, endColumn: 1 },
+          },
+          {
+            id: "right",
+            op: "inline",
+            columns: ["id", "ventas"],
+            rows: [["2", "100"]],
+            fields: ["id", "ventas"],
+            schemaKnown: false,
+            span: { start: 1, end: 1, line: 1, column: 1, endLine: 1, endColumn: 1 },
+          },
+          {
+            id: "joined",
+            op: "join",
+            left: "left",
+            right: "right",
+            join: "inner",
+            keys: ["id"],
+            fields: [],
+            schemaKnown: false,
+            span: { start: 1, end: 1, line: 1, column: 1, endLine: 1, endColumn: 1 },
+          },
+          {
+            id: "projected",
+            op: "project",
+            input: "joined",
+            projections: [{ expression: "nombre", alias: "Nombre" }],
+            fields: ["Nombre"],
+            schemaKnown: false,
+            span: { start: 1, end: 1, line: 1, column: 1, endLine: 1, endColumn: 1 },
+          },
+        ],
+        effects: [],
+        tables: {},
+        mappings: {},
+        outputRelationId: "projected",
+        diagnostics: [],
+      };
+
+      const resultado = new EvaluadorPreview(plan).evaluarInline({
+        left: { columnas: ["id", "nombre"], filas: [["1", "Ana"]] },
+        right: { columnas: ["id", "ventas"], filas: [["2", "100"]] },
+      });
+
+      expect(resultado.filas).toEqual([]);
+      expect(resultado.advertencias).toContainEqual(
+        expect.stringContaining("coincidencias"),
+      );
+    });
   });
 
   describe("integridad: nunca usa createQueryJob", () => {

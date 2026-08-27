@@ -30,7 +30,8 @@ export class VistaPreviaDataflow {
     const programa = parsearProgramaQlik(script);
     const plan = analizarProgramaQlik(programa);
 
-    const { fuentes, datosDeFuentes } = await this.obtenerMuestrasDeFuentes(plan);
+    const { fuentes, datosDeFuentes, advertencias: advertenciasFuentes } =
+      await this.obtenerMuestrasDeFuentes(plan);
 
     const evaluador = new EvaluadorPreview(plan);
     const resultado = evaluador.evaluarInline(datosDeFuentes);
@@ -42,7 +43,7 @@ export class VistaPreviaDataflow {
       filasMuestreadas: resultado.filas.length,
       fuentesMuestreadas: fuentes,
       contieneAgregaciones: resultado.contieneAgregaciones,
-      advertencias: resultado.advertencias,
+      advertencias: [...advertenciasFuentes, ...resultado.advertencias],
       esMuestra: true,
     };
   }
@@ -50,9 +51,11 @@ export class VistaPreviaDataflow {
   private async obtenerMuestrasDeFuentes(plan: PlanCompilacionVNext): Promise<{
     fuentes: string[];
     datosDeFuentes: Record<string, { columnas: string[]; filas: string[][] }>;
+    advertencias: string[];
   }> {
     const datosDeFuentes: Record<string, { columnas: string[]; filas: string[][] }> = {};
     const fuentes: string[] = [];
+    const advertencias: string[] = [];
 
     const esFuenteBase = (r: RelacionVNext): boolean => {
       if (r.op === "native_sql" || r.op === "autogenerate") return true;
@@ -72,13 +75,15 @@ export class VistaPreviaDataflow {
         try {
           const data = await this.bigquery.obtenerFilasPreview(tabla, { maxFilas: 100 });
           datosDeFuentes[rel.id] = data;
-        } catch {
+        } catch (error) {
           datosDeFuentes[rel.id] = { columnas: [], filas: [] };
+          const detalle = error instanceof Error ? `: ${error.message}` : "";
+          advertencias.push(`No se pudo leer la fuente ${tabla}${detalle}`);
         }
       }
     }
 
-    return { fuentes, datosDeFuentes };
+    return { fuentes, datosDeFuentes, advertencias };
   }
 
   private extraerNombreTabla(rel: RelacionVNext & { op: "native_sql" | "autogenerate" }): string {

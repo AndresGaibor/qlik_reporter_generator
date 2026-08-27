@@ -54,12 +54,16 @@ export class EvaluadorPreview {
 
       case "project": {
         const inputRel = this.plan.relations.find((r) => r.id === relacion.input);
+        let advertencias: string[] = [];
+        let contieneAgregaciones = false;
         if (inputRel) {
           const resultInput = this.aplicarRelacion(inputRel, datosPorId);
           datosPorId.set(relacion.input, { columnas: resultInput.columnas, filas: resultInput.filas });
+          advertencias = resultInput.advertencias;
+          contieneAgregaciones = resultInput.contieneAgregaciones;
         }
         const datos = datosPorId.get(relacion.input);
-        if (!datos) return { columnas: [], filas: [], contieneAgregaciones: false, advertencias: [] };
+        if (!datos) return { columnas: [], filas: [], contieneAgregaciones, advertencias };
         const idxPorNombre = new Map(datos.columnas.map((c, i) => [c, i]));
         const indices = relacion.projections.map((p) => ({
           idx: idxPorNombre.get(p.expression) ?? -1,
@@ -73,32 +77,38 @@ export class EvaluadorPreview {
             return this.evaluarExpresion(i.expr, fila, datos.columnas);
           }),
         );
-        return { columnas: nuevasColumnas, filas: nuevasFilas, contieneAgregaciones: false, advertencias: [] };
+        return { columnas: nuevasColumnas, filas: nuevasFilas, contieneAgregaciones, advertencias };
       }
 
       case "filter": {
         const inputRel = this.plan.relations.find((r) => r.id === relacion.input);
+        let advertencias: string[] = [];
+        let contieneAgregaciones = false;
         if (inputRel) {
           const resultInput = this.aplicarRelacion(inputRel, datosPorId);
           datosPorId.set(relacion.input, { columnas: resultInput.columnas, filas: resultInput.filas });
+          advertencias = resultInput.advertencias;
+          contieneAgregaciones = resultInput.contieneAgregaciones;
         }
         const datos = datosPorId.get(relacion.input);
-        if (!datos) return { columnas: [], filas: [], contieneAgregaciones: false, advertencias: [] };
+        if (!datos) return { columnas: [], filas: [], contieneAgregaciones, advertencias };
         const idxPorNombre = new Map(datos.columnas.map((c, i) => [c, i]));
         const filasFiltradas = datos.filas.filter((fila) =>
           this.evaluarCondicion(relacion.condition, fila, datos.columnas, idxPorNombre),
         );
-        return { columnas: datos.columnas, filas: filasFiltradas, contieneAgregaciones: false, advertencias: [] };
+        return { columnas: datos.columnas, filas: filasFiltradas, contieneAgregaciones, advertencias };
       }
 
       case "aggregate": {
         const inputRel = this.plan.relations.find((r) => r.id === relacion.input);
+        let advertencias: string[] = [];
         if (inputRel) {
           const resultInput = this.aplicarRelacion(inputRel, datosPorId);
           datosPorId.set(relacion.input, { columnas: resultInput.columnas, filas: resultInput.filas });
+          advertencias = resultInput.advertencias;
         }
         const datos = datosPorId.get(relacion.input);
-        if (!datos) return { columnas: [], filas: [], contieneAgregaciones: false, advertencias: [] };
+        if (!datos) return { columnas: [], filas: [], contieneAgregaciones: true, advertencias };
         const idxPorNombre = new Map(datos.columnas.map((c, i) => [c, i]));
         const nuevasColumnas = relacion.projections.map((p) => p.alias ?? p.expression);
 
@@ -143,7 +153,7 @@ export class EvaluadorPreview {
             }
             resumen.push(aggregated);
           }
-          return { columnas: nuevasColumnas, filas: [resumen.map((v) => String(v))], contieneAgregaciones: true, advertencias: [] };
+          return { columnas: nuevasColumnas, filas: [resumen.map((v) => String(v))], contieneAgregaciones: true, advertencias };
         }
 
         const groupByIndices = relacion.groupBy.map((g) => idxPorNombre.get(g) ?? -1);
@@ -188,24 +198,30 @@ export class EvaluadorPreview {
           resultados.push(resumenFila.map((v) => String(v)));
         }
 
-        return { columnas: nuevasColumnas, filas: resultados, contieneAgregaciones: true, advertencias: [] };
+        return { columnas: nuevasColumnas, filas: resultados, contieneAgregaciones: true, advertencias };
       }
 
       case "join": {
         const leftRel = this.plan.relations.find((r) => r.id === relacion.left);
         const rightRel = this.plan.relations.find((r) => r.id === relacion.right);
+        let advertencias: string[] = [];
+        let contieneAgregaciones = false;
         if (leftRel) {
           const resultLeft = this.aplicarRelacion(leftRel, datosPorId);
           datosPorId.set(relacion.left, { columnas: resultLeft.columnas, filas: resultLeft.filas });
+          advertencias = [...advertencias, ...resultLeft.advertencias];
+          contieneAgregaciones ||= resultLeft.contieneAgregaciones;
         }
         if (rightRel) {
           const resultRight = this.aplicarRelacion(rightRel, datosPorId);
           datosPorId.set(relacion.right, { columnas: resultRight.columnas, filas: resultRight.filas });
+          advertencias = [...advertencias, ...resultRight.advertencias];
+          contieneAgregaciones ||= resultRight.contieneAgregaciones;
         }
         const datosLeft = datosPorId.get(relacion.left);
         const datosRight = datosPorId.get(relacion.right);
         if (!datosLeft || !datosRight) {
-          return { columnas: [], filas: [], contieneAgregaciones: false, advertencias: [] };
+          return { columnas: [], filas: [], contieneAgregaciones, advertencias };
         }
         const idxKeyLeft = datosLeft.columnas.indexOf(relacion.keys[0]);
         const idxKeyRight = datosRight.columnas.indexOf(relacion.keys[0]);
@@ -283,13 +299,16 @@ export class EvaluadorPreview {
           }
         }
 
-        const advertencias = hayCoincidencias
-          ? []
-          : ["La muestra no contiene suficientes coincidencias para representar completamente este join."];
+        if (!hayCoincidencias) {
+          advertencias = [
+            ...advertencias,
+            "La muestra no contiene suficientes coincidencias para representar completamente este join.",
+          ];
+        }
         return {
           columnas: [...datosLeft.columnas, ...datosRight.columnas],
           filas: filasUnidas,
-          contieneAgregaciones: false,
+          contieneAgregaciones,
           advertencias,
         };
       }

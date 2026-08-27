@@ -77,6 +77,19 @@ describe("VistaPreviaDataflow", () => {
     expect(resultado.esMuestra).toBe(true);
   });
 
+  it("informa cuando no puede leer una fuente de BigQuery", async () => {
+    mockBq.obtenerFilasPreview = vi.fn().mockRejectedValue(
+      new Error("Tabla no encontrada"),
+    );
+
+    const caso = new VistaPreviaDataflow(mockQlik, mockBq);
+    const resultado = await caso.ejecutar("flujo-1", "app-1");
+
+    expect(resultado.advertencias).toContainEqual(
+      expect.stringContaining("Tabla no encontrada"),
+    );
+  });
+
   it("devuelve advertencias de join cuando no hay coincidencias", async () => {
     mockQlik.obtenerScriptApp = vi.fn().mockResolvedValue({
       script: SCRIPT_JOIN,
