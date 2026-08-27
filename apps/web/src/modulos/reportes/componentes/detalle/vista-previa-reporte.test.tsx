@@ -9,11 +9,11 @@ const datosEjemplo = {
     ["Sucursal Norte", "2024-01-15", "1234567890"],
     ["Sucursal Sur", "2024-01-16", "0987654321"],
   ],
-  filasMuestreadas: 2,
-  fuentesMuestreadas: ["proyecto.dataset.ventas"],
+  filasReferencia: 2,
+  fuentesReferencia: ["proyecto.dataset.ventas"],
   contieneAgregaciones: false,
   advertencias: [] as string[],
-  esMuestra: true as const,
+  esAproximacion: true as const,
 };
 
 let root: Root | undefined;
@@ -26,7 +26,11 @@ afterEach(() => {
   container = undefined;
 });
 
-function montar(props: { datos?: typeof datosEjemplo | null; cargando: boolean; error: unknown }) {
+function montar(props: {
+  datos?: typeof datosEjemplo | null;
+  cargando: boolean;
+  error: unknown;
+}) {
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -47,10 +51,24 @@ describe("VistaPreviaReporte", () => {
     expect(vista.querySelector(".overflow-x-auto")).toBeTruthy();
   });
 
-  test("muestra warning si contiene agregaciones", () => {
+  test("explica que la vista previa es aproximada y mezcla valores de referencia", () => {
+    const vista = montar({ datos: datosEjemplo, cargando: false, error: null });
+    expect(vista.textContent).toMatch(/datos de referencia|representación aproximada/i);
+    expect(vista.textContent).toMatch(/resultado aproximado/i);
+    expect(vista.textContent).toMatch(/valores de referencia.*transformaciones simuladas/i);
+    expect(vista.textContent).not.toMatch(/filas leídas del resultado/i);
+    expect(vista.textContent).not.toMatch(/vista previa · datos simulados/i);
+  });
+
+  test("explica que las agregaciones son simuladas", () => {
     const conAgregaciones = { ...datosEjemplo, contieneAgregaciones: true };
-    const vista = montar({ datos: conAgregaciones, cargando: false, error: null });
-    expect(vista.textContent).toMatch(/muestra/i);
+    const vista = montar({
+      datos: conAgregaciones,
+      cargando: false,
+      error: null,
+    });
+    expect(vista.textContent).toMatch(/cálculos.*simulados/i);
+    expect(vista.textContent).not.toMatch(/se realizan sobre la muestra/i);
   });
 
   test("muestra estado de carga", () => {
@@ -59,12 +77,20 @@ describe("VistaPreviaReporte", () => {
   });
 
   test("muestra estado de error", () => {
-    const vista = montar({ datos: null, cargando: false, error: new Error("BigQuery no disponible") });
+    const vista = montar({
+      datos: null,
+      cargando: false,
+      error: new Error("BigQuery no disponible"),
+    });
     expect(vista.textContent).toMatch(/bigquery no disponible/i);
   });
 
   test("trunca celdas largas y muestra tooltip", () => {
-    const filaLarga = { ...datosEjemplo, columnas: ["Descripcion"], filas: [["Este es un texto muy largo que debería truncarse en la celda"]] };
+    const filaLarga = {
+      ...datosEjemplo,
+      columnas: ["Descripcion"],
+      filas: [["Este es un texto muy largo que debería truncarse en la celda"]],
+    };
     const vista = montar({ datos: filaLarga, cargando: false, error: null });
     const celda = vista.querySelector(".truncate");
     expect(celda).toBeTruthy();

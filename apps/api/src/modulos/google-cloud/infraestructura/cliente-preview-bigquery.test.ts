@@ -1,105 +1,166 @@
-import { describe, it, expect, vi, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "bun:test";
 import type { BigQuery, Table } from "@google-cloud/bigquery";
 import { ClientePreviewBigQuery } from "./cliente-preview-bigquery";
 
 describe("ClientePreviewBigQuery", () => {
-  let mockTable: Record<string, ReturnType<typeof vi.fn>>;
+  let mockTable: {
+    getMetadata: ReturnType<typeof vi.fn>;
+    getRows: ReturnType<typeof vi.fn>;
+  };
+  let mockBq: BigQuery;
+  let mockDataset: { table: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockTable = {
-      getRows: vi.fn().mockResolvedValue([[
-        { f: [{ v: "valor1" }, { v: "valor2" }] },
-        { f: [{ v: "valor3" }, { v: "valor4" }] },
-      ], { totalRows: "2" }]),
-      getMetadata: vi.fn().mockResolvedValue([{
-        schema: {
-          fields: [
-            { name: "col_0", type: "STRING" },
-            { name: "col_1", type: "STRING" },
-          ],
+      getMetadata: vi.fn().mockResolvedValue([
+        {
+          schema: {
+            fields: [
+              { name: "id", type: "INT64", mode: "REQUIRED" },
+              { name: "nombre", type: "STRING", mode: "NULLABLE" },
+              { name: "fecha", type: "DATE", mode: "NULLABLE" },
+            ],
+          },
         },
-      }]),
+      ]),
+      getRows: vi
+        .fn()
+        .mockRejectedValue(new Error("getRows no debe ejecutarse")),
     };
+    mockDataset = {
+      table: vi.fn(() => mockTable as unknown as Table),
+    };
+    mockBq = {
+      dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
+      query: vi.fn().mockRejectedValue(new Error("query no debe ejecutarse")),
+      createQueryJob: vi
+        .fn()
+        .mockRejectedValue(new Error("createQueryJob no debe ejecutarse")),
+    } as unknown as BigQuery;
   });
 
-  it("obtiene filas usando getRows sin crear query job", async () => {
-    const mockDataset = {
-      table: vi.fn(() => mockTable) as unknown as Table,
-    };
-    const mockBq = {
-      dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
-    } as unknown as BigQuery;
-
+  it("expone una lectura HEAD separada de metadata", () => {
     const cliente = ClientePreviewBigQuery.createConCliente(
       { projectId: "test-project", dataset: "test-dataset" },
       mockBq,
     );
-    const resultado = await cliente.obtenerFilasPreview("tabla_ejemplo", { maxFilas: 10 });
 
-    expect(resultado.columnas).toEqual(["col_0", "col_1"]);
-    expect(resultado.filas).toEqual([["valor1", "valor2"], ["valor3", "valor4"]]);
+    expect(
+      typeof (cliente as unknown as { obtenerFilasPreview?: unknown })
+        .obtenerFilasPreview,
+    ).toBe("function");
   });
 
-  it("nunca llama a createQueryJob", async () => {
-    const mockDataset = {
-      table: vi.fn(() => mockTable) as unknown as Table,
-    };
-    const mockBq = {
-      dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
-    } as unknown as BigQuery;
-
-    const cliente = ClientePreviewBigQuery.createConCliente(
-      { projectId: "p", dataset: "d" },
-      mockBq,
-    );
-    expect(typeof (cliente as unknown as { createQueryJob?: unknown }).createQueryJob).toBe("undefined");
-  });
-
-  it("filtra columnas cuando se especifica opcion columnas", async () => {
-    const mockDataset = {
-      table: vi.fn(() => mockTable) as unknown as Table,
-    };
-    const mockBq = {
-      dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
-    } as unknown as BigQuery;
-
+  it("lee HEAD con table.getRows, máximo 5, sin query jobs", async () => {
+    mockTable.getRows = vi.fn().mockResolvedValue([
+      [
+        { id: 101, nombre: "Proveedor Real", fecha: { value: "2026-07-01" } },
+        { id: 102, nombre: "Bodega Real", fecha: { value: "2026-07-02" } },
+      ],
+    ]);
     const cliente = ClientePreviewBigQuery.createConCliente(
       { projectId: "test-project", dataset: "test-dataset" },
       mockBq,
     );
-    const resultado = await cliente.obtenerFilasPreview("tabla_ejemplo", {
-      maxFilas: 10,
-      columnas: ["col_1"],
+    const lector = cliente as unknown as {
+      obtenerFilasPreview?: (
+        tabla: string,
+        opciones: { maxFilas: number; columnas?: string[] },
+      ) => Promise<{ columnas: string[]; filas: string[][] }>;
+    };
+
+    const resultado = await lector.obtenerFilasPreview?.("tabla_ejemplo", {
+      maxFilas: 5,
+      columnas: ["id", "nombre", "fecha"],
     });
 
-    expect(resultado.columnas).toEqual(["col_1"]);
-    expect(resultado.filas).toEqual([["valor2"], ["valor4"]]);
+    expect(mockTable.getRows).toHaveBeenCalledWith({
+      autoPaginate: false,
+      maxResults: 5,
+      selectedFields: "id,nombre,fecha",
+    });
+    expect(resultado).toEqual({
+      columnas: ["id", "nombre", "fecha"],
+      filas: [
+        ["101", "Proveedor Real", "2026-07-01"],
+        ["102", "Bodega Real", "2026-07-02"],
+      ],
+    });
+    expect(mockBq.query).not.toHaveBeenCalled();
+    expect(mockBq.createQueryJob).not.toHaveBeenCalled();
   });
 
-  it("normaliza las filas de getRows cuando el SDK devuelve objetos", async () => {
-    const mockDataset = {
-      table: vi.fn(() => ({
-        getMetadata: vi.fn().mockResolvedValue([{
-          schema: { fields: [{ name: "id" }, { name: "nombre" }] },
-        }]),
-        getRows: vi.fn().mockResolvedValue([
-          [{ id: "1", nombre: "Ana" }, { id: "2", nombre: "Luis" }],
-          { totalRows: "2" },
-        ]),
-      })) as unknown as Table,
-    };
-    const mockBq = {
-      dataset: vi.fn(() => mockDataset),
-    } as unknown as BigQuery;
-
+  it("obtiene exclusivamente metadata estructural de la tabla", async () => {
     const cliente = ClientePreviewBigQuery.createConCliente(
       { projectId: "test-project", dataset: "test-dataset" },
       mockBq,
     );
 
-    await expect(cliente.obtenerFilasPreview("tabla_ejemplo")).resolves.toEqual({
-      columnas: ["id", "nombre"],
-      filas: [["1", "Ana"], ["2", "Luis"]],
+    await expect(
+      cliente.obtenerMetadataTabla("tabla_ejemplo"),
+    ).resolves.toEqual({
+      columnas: [
+        { nombre: "id", tipo: "INT64", modo: "REQUIRED" },
+        { nombre: "nombre", tipo: "STRING", modo: "NULLABLE" },
+        { nombre: "fecha", tipo: "DATE", modo: "NULLABLE" },
+      ],
     });
+
+    expect(mockTable.getMetadata).toHaveBeenCalledTimes(1);
+    expect(mockTable.getRows).not.toHaveBeenCalled();
+    expect(mockBq.query).not.toHaveBeenCalled();
+    expect(mockBq.createQueryJob).not.toHaveBeenCalled();
+  });
+
+  it("filtra metadata de columnas sin leer filas", async () => {
+    const cliente = ClientePreviewBigQuery.createConCliente(
+      { projectId: "test-project", dataset: "test-dataset" },
+      mockBq,
+    );
+
+    const resultado = await cliente.obtenerMetadataTabla("tabla_ejemplo", {
+      columnas: ["fecha", "nombre"],
+    });
+
+    expect(resultado.columnas.map((columna) => columna.nombre)).toEqual([
+      "fecha",
+      "nombre",
+    ]);
+    expect(mockTable.getRows).not.toHaveBeenCalled();
+  });
+
+  it("usa el proyecto incluido en una tabla calificada", async () => {
+    const cliente = ClientePreviewBigQuery.createConCliente(
+      { projectId: "proyecto-configurado", dataset: "dataset-configurado" },
+      mockBq,
+    );
+
+    await cliente.obtenerMetadataTabla("proyecto-fuente.dataset-fuente.tabla");
+
+    expect(mockBq.dataset).toHaveBeenCalledWith("dataset-fuente", {
+      projectId: "proyecto-fuente",
+    });
+    expect(mockDataset.table).toHaveBeenCalledWith("tabla");
+  });
+
+  it("soporta dataset.tabla y tabla usando el dataset configurado", async () => {
+    const cliente = ClientePreviewBigQuery.createConCliente(
+      { projectId: "proyecto-configurado", dataset: "dataset-configurado" },
+      mockBq,
+    );
+
+    await cliente.obtenerMetadataTabla("otro_dataset.tabla_a");
+    await cliente.obtenerMetadataTabla("tabla_b");
+
+    expect(mockBq.dataset).toHaveBeenNthCalledWith(
+      1,
+      "otro_dataset",
+      undefined,
+    );
+    expect(mockBq.dataset).toHaveBeenNthCalledWith(
+      2,
+      "dataset-configurado",
+      undefined,
+    );
   });
 });

@@ -531,9 +531,7 @@ describe("fachada /api/reportes para Dataflows", () => {
         ]),
         obtenerAutomatizacion: vi.fn(async () => ({
           workspace: {
-            blocks: [
-              { snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" },
-            ],
+            blocks: [{ snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" }],
           },
         })),
       },
@@ -543,19 +541,20 @@ describe("fachada /api/reportes para Dataflows", () => {
           obtenerEjecucionPorId: vi.fn(async () => ejecucion),
           guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
           actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
-          listarJobsBigQueryPorEjecucionIds: vi.fn(async () =>
-            new Map([
-              [
-                "exec-confirmada",
+          listarJobsBigQueryPorEjecucionIds: vi.fn(
+            async () =>
+              new Map([
                 [
-                  {
-                    tipo: "principal",
-                    estado: "done",
-                    endTime: "2026-08-20T10:00:09Z",
-                  },
+                  "exec-confirmada",
+                  [
+                    {
+                      tipo: "principal",
+                      estado: "done",
+                      endTime: "2026-08-20T10:00:09Z",
+                    },
+                  ],
                 ],
-              ],
-            ]),
+              ]),
           ),
           marcarEstadoEjecucion,
         } as never,
@@ -869,12 +868,15 @@ describe("GET /reportes/:flujoId/preview", () => {
       script: SCRIPT_SIMPLE,
     }));
     const mockBq = {
+      obtenerMetadataTabla: vi.fn(async () => ({
+        columnas: [
+          { nombre: "id", tipo: "INT64", modo: "NULLABLE" },
+          { nombre: "nombre", tipo: "STRING", modo: "NULLABLE" },
+        ],
+      })),
       obtenerFilasPreview: vi.fn(async () => ({
         columnas: ["id", "nombre"],
-        filas: [
-          ["1", "Ventas"],
-          ["2", "Compras"],
-        ],
+        filas: [["101", "Proveedor Real"]],
       })),
     };
     const app = appCon(
@@ -891,10 +893,11 @@ describe("GET /reportes/:flujoId/preview", () => {
     const respuesta = await app.request("/api/reportes/df-1/preview");
     expect(respuesta.status).toBe(200);
     const datos = (await respuesta.json()).datos;
-    expect(datos.esMuestra).toBe(true);
-    expect(datos.filasMuestreadas).toBeGreaterThan(0);
+    expect(datos.esAproximacion).toBe(true);
+    expect(datos.filasReferencia).toBeGreaterThan(0);
+    expect(datos.fuentesReferencia).toEqual(["proyecto.dataset.ventas"]);
     expect(datos.filas.length).toBeLessThanOrEqual(10);
-    expect(mockBq.obtenerFilasPreview).toHaveBeenCalled();
+    expect(mockBq.obtenerMetadataTabla).toHaveBeenCalled();
   });
 
   it("devuelve advertencias cuando hay fuentes que no se pueden muestrear", async () => {
@@ -902,7 +905,7 @@ describe("GET /reportes/:flujoId/preview", () => {
       script: SCRIPT_CON_ERROR,
     }));
     const mockBq = {
-      obtenerFilasPreview: vi.fn(async () => {
+      obtenerMetadataTabla: vi.fn(async () => {
         throw new Error("Tabla no encontrada");
       }),
     };

@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "bun:test";
 import { crearAplicacion } from "./app.js";
 import type { PuertoBloqueoEjecucion } from "./modulos/automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { PuertoConsultaTenantQlik } from "./modulos/automatizaciones/aplicacion/puertos/puerto-consulta-tenant-qlik.js";
-import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { PuertoLecturaBigQuery } from "./modulos/google-cloud/aplicacion/puerto-lectura-bigquery.js";
+import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { Registrador } from "./plataforma/observabilidad/registrador.js";
 
 process.env.CIFRADO_CLAVE_PRINCIPAL ??= Buffer.alloc(32).toString("base64");
@@ -339,9 +339,12 @@ describe("API", () => {
 
   it("conecta el resolver BigQuery de preview en el composition root", async () => {
     const mockPreview: PuertoLecturaBigQuery = {
+      obtenerMetadataTabla: async () => ({
+        columnas: [{ nombre: "id", tipo: "INT64", modo: "NULLABLE" }],
+      }),
       obtenerFilasPreview: async () => ({
         columnas: ["id"],
-        filas: [["1"]],
+        filas: [["101"]],
       }),
     };
     const app = await crearAplicacion({
@@ -368,7 +371,7 @@ describe("API", () => {
     expect(respuesta.status).toBe(200);
     expect(cuerpo).toMatchObject({
       exito: true,
-      datos: { esMuestra: true },
+      datos: { esAproximacion: true },
     });
   });
 

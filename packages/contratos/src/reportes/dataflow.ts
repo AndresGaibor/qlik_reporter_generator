@@ -113,10 +113,10 @@ export type DetalleReporte = z.infer<typeof esquemaDetalleReporte>;
 export const esquemaVistaPreviaReporte = z.object({
   columnas: z.array(z.string()),
   filas: z.array(z.array(z.string())),
-  filasMuestreadas: z.number(),
-  fuentesMuestreadas: z.array(z.string()),
+  filasReferencia: z.number().int().nonnegative(),
+  fuentesReferencia: z.array(z.string()),
   contieneAgregaciones: z.boolean(),
   advertencias: z.array(z.string()),
-  esMuestra: z.literal(true),
+  esAproximacion: z.literal(true),
 });
 export type VistaPreviaReporte = z.infer<typeof esquemaVistaPreviaReporte>;
