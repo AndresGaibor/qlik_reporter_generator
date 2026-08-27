@@ -11,6 +11,14 @@ describe("ClientePreviewBigQuery", () => {
         { f: [{ v: "valor1" }, { v: "valor2" }] },
         { f: [{ v: "valor3" }, { v: "valor4" }] },
       ], { totalRows: "2" }]),
+      getMetadata: vi.fn().mockResolvedValue([{
+        schema: {
+          fields: [
+            { name: "col_0", type: "STRING" },
+            { name: "col_1", type: "STRING" },
+          ],
+        },
+      }]),
     };
   });
 
@@ -22,7 +30,7 @@ describe("ClientePreviewBigQuery", () => {
       dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
     } as unknown as BigQuery;
 
-    const cliente = new ClientePreviewBigQuery(
+    const cliente = ClientePreviewBigQuery.createConCliente(
       { projectId: "test-project", dataset: "test-dataset" },
       mockBq,
     );
@@ -40,10 +48,31 @@ describe("ClientePreviewBigQuery", () => {
       dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
     } as unknown as BigQuery;
 
-    const cliente = new ClientePreviewBigQuery(
+    const cliente = ClientePreviewBigQuery.createConCliente(
       { projectId: "p", dataset: "d" },
       mockBq,
     );
     expect(typeof (cliente as unknown as { createQueryJob?: unknown }).createQueryJob).toBe("undefined");
+  });
+
+  it("filtra columnas cuando se especifica opcion columnas", async () => {
+    const mockDataset = {
+      table: vi.fn(() => mockTable) as unknown as Table,
+    };
+    const mockBq = {
+      dataset: vi.fn(() => mockDataset) as unknown as BigQuery["dataset"],
+    } as unknown as BigQuery;
+
+    const cliente = ClientePreviewBigQuery.createConCliente(
+      { projectId: "test-project", dataset: "test-dataset" },
+      mockBq,
+    );
+    const resultado = await cliente.obtenerFilasPreview("tabla_ejemplo", {
+      maxFilas: 10,
+      columnas: ["col_1"],
+    });
+
+    expect(resultado.columnas).toEqual(["col_1"]);
+    expect(resultado.filas).toEqual([["valor2"], ["valor4"]]);
   });
 });
