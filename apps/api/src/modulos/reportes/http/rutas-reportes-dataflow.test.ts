@@ -830,3 +830,96 @@ describe("fachada /api/reportes para Dataflows", () => {
     );
   });
 });
+
+describe("GET /reportes/:flujoId/preview", () => {
+  const SCRIPT_SIMPLE = [
+    "LIB CONNECT TO [Google BigQuery:Produccion];",
+    "[ventas]: LOAD id, nombre;",
+    "SQL SELECT id, nombre FROM `proyecto.dataset.ventas`;",
+  ].join("\n");
+
+  const SCRIPT_CON_ERROR = [
+    "LIB CONNECT TO [Google BigQuery:Produccion];",
+    "[ventas]: LOAD id;",
+    "SQL SELECT id FROM `proyecto.dataset.ventas`;",
+  ].join("\n");
+
+  it("devuelve 404 cuando el dataflow no existe", async () => {
+    const app = appCon({ listarFlujos: vi.fn(async () => []) });
+    const respuesta = await app.request("/api/reportes/inexistente/preview");
+    expect(respuesta.status).toBe(404);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "DATAFLOW_NO_ENCONTRADO",
+    );
+  });
+
+  it("devuelve 500 cuando preview no está configurado", async () => {
+    const app = appCon({
+      listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+    });
+    const respuesta = await app.request("/api/reportes/df-1/preview");
+    expect(respuesta.status).toBe(500);
+    expect((await respuesta.json()).error.codigo).toBe(
+      "PREVIEW_NOT_CONFIGURED",
+    );
+  });
+
+  it("devuelve datos de preview sin llamar createQueryJob", async () => {
+    const obtenerScriptApp = vi.fn(async () => ({
+      script: SCRIPT_SIMPLE,
+    }));
+    const mockBq = {
+      obtenerFilasPreview: vi.fn(async () => ({
+        columnas: ["id", "nombre"],
+        filas: [
+          ["1", "Ventas"],
+          ["2", "Compras"],
+        ],
+      })),
+    };
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [
+          { id: "df-1", appId: "app-1", name: "Ventas", spaceId: "sp-1" },
+        ]),
+        obtenerScriptApp,
+      },
+      {
+        resolverPreviewBigQuery: async () => ({ clientePreview: mockBq }),
+      },
+    );
+    const respuesta = await app.request("/api/reportes/df-1/preview");
+    expect(respuesta.status).toBe(200);
+    const datos = (await respuesta.json()).datos;
+    expect(datos.esMuestra).toBe(true);
+    expect(datos.filasMuestreadas).toBeGreaterThan(0);
+    expect(datos.filas.length).toBeLessThanOrEqual(10);
+    expect(mockBq.obtenerFilasPreview).toHaveBeenCalled();
+  });
+
+  it("devuelve advertencias cuando hay fuentes que no se pueden muestrear", async () => {
+    const obtenerScriptApp = vi.fn(async () => ({
+      script: SCRIPT_CON_ERROR,
+    }));
+    const mockBq = {
+      obtenerFilasPreview: vi.fn(async () => {
+        throw new Error("Tabla no encontrada");
+      }),
+    };
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [
+          { id: "df-1", appId: "app-1", name: "Ventas" },
+        ]),
+        obtenerScriptApp,
+      },
+      {
+        resolverPreviewBigQuery: async () => ({ clientePreview: mockBq }),
+      },
+    );
+    const respuesta = await app.request("/api/reportes/df-1/preview");
+    expect(respuesta.status).toBe(200);
+    const datos = (await respuesta.json()).datos;
+    expect(datos.advertencias).toBeDefined();
+  });
+});

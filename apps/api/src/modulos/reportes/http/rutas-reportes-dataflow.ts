@@ -15,10 +15,12 @@ import {
 } from "../../flujos/http/rutas-clonado-dataflow.js";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import type { PuertoLecturaBigQuery } from "../../google-cloud/aplicacion/puerto-lectura-bigquery.js";
 import {
   type EntradaEjecutarReporte,
   construirCarpetaDescargasReporte,
 } from "../aplicacion/ejecutar-reporte.js";
+import { VistaPreviaDataflow } from "../aplicacion/vista-previa-dataflow.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
@@ -59,6 +61,9 @@ export interface DependenciasRutasReportesDataflow {
       carpetaDescargas: string;
     }>
   >;
+  resolverPreviewBigQuery?: (
+    c: Context,
+  ) => Promise<{ clientePreview: PuertoLecturaBigQuery }>;
   dependenciasClonado: DependenciasClonadoDataflow;
 }
 
@@ -171,6 +176,30 @@ export function crearRutasReportesDataflow(
         dataset: bigQuery.dataset,
       }).ejecutar(flujo.id, flujo.appId ?? flujo.id),
     );
+  });
+
+  rutas.get("/:flujoId/preview", async (c) => {
+    const flujo = await obtenerFlujo(c);
+    if (!flujo) return noEncontradoDataflow(c);
+    if (!dependencias.resolverPreviewBigQuery) {
+      return c.json(
+        {
+          exito: false,
+          error: {
+            codigo: "PREVIEW_NOT_CONFIGURED",
+            mensaje: "Preview no está configurado",
+          },
+        },
+        500,
+      );
+    }
+    const [qlik, { clientePreview }] = await Promise.all([
+      dependencias.resolverQlik(c),
+      dependencias.resolverPreviewBigQuery(c),
+    ]);
+    const caso = new VistaPreviaDataflow(qlik, clientePreview);
+    const resultado = await caso.ejecutar(flujo.id, flujo.appId ?? flujo.id);
+    return responderExito(c, resultado);
   });
 
   rutas.get("/:flujoId/ejecuciones", async (c) => {
