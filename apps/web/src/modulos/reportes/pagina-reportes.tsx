@@ -87,7 +87,7 @@ export function PaginaReportes() {
   }, [consulta.data]);
   const paginacion = usePaginacion(filtrados);
   const ejecutar = useMutation({
-    mutationFn: ejecutarReporte,
+    mutationFn: (id: string) => ejecutarReporte(id),
     onMutate: setIdEjecutando,
     onSuccess: (resultado) => {
       mostrarExito("Ejecución del reporte iniciada");

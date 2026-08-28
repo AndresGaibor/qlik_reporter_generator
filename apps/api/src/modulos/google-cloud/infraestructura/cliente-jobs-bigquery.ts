@@ -55,6 +55,27 @@ export class ClienteJobsBigQuery implements PuertoJobsBigQuery {
     }
   }
 
+  async cancelarJob(input: {
+    projectId: string;
+    jobId: string;
+    location?: string;
+  }): Promise<void> {
+    const job = this.cliente.job(input.jobId, {
+      location: input.location ?? undefined,
+    });
+    try {
+      await job.cancel();
+    } catch (err) {
+      const error = err as Error & {
+        code?: number;
+        errors?: Array<{ reason?: string }>;
+      };
+      const razon = error.errors?.[0]?.reason;
+      if (error.code === 404 || razon === "jobComplete") return;
+      throw error;
+    }
+  }
+
   async listarHijos(input: {
     projectId: string;
     parentJobId: string;
@@ -116,9 +137,56 @@ export class ClienteJobsBigQuery implements PuertoJobsBigQuery {
             message: String(errorResult.message ?? ""),
           }
         : null,
+      timeline: mapearTimeline(stats.timeline),
+      queryPlan: mapearQueryPlan(queryStats.queryPlan),
       parentJobId: ref.parentJobId ? String(ref.parentJobId) : null,
     };
   }
+}
+
+function mapearTimeline(valor: unknown): MetadatoJobBigQuery["timeline"] {
+  if (!Array.isArray(valor)) return [];
+  return valor.map((item) => {
+    const fila = (item ?? {}) as Record<string, unknown>;
+    return {
+      elapsedMs: texto(fila.elapsedMs),
+      totalSlotMs: texto(fila.totalSlotMs),
+      pendingUnits: texto(fila.pendingUnits),
+      completedUnits: texto(fila.completedUnits),
+      activeUnits: texto(fila.activeUnits),
+      estimatedRunnableUnits: texto(fila.estimatedRunnableUnits),
+    };
+  });
+}
+
+function mapearQueryPlan(valor: unknown): MetadatoJobBigQuery["queryPlan"] {
+  if (!Array.isArray(valor)) return [];
+  return valor.map((item, indice) => {
+    const fila = (item ?? {}) as Record<string, unknown>;
+    const pasos = Array.isArray(fila.steps)
+      ? fila.steps.flatMap((step) => {
+          const tipo = (step as Record<string, unknown>)?.kind;
+          return tipo ? [String(tipo)] : [];
+        })
+      : [];
+    return {
+      id: String(fila.id ?? indice),
+      name: texto(fila.name),
+      status: texto(fila.status),
+      recordsRead: texto(fila.recordsRead),
+      recordsWritten: texto(fila.recordsWritten),
+      slotMs: texto(fila.slotMs),
+      waitMsAvg: texto(fila.waitMsAvg),
+      readMsAvg: texto(fila.readMsAvg),
+      computeMsAvg: texto(fila.computeMsAvg),
+      writeMsAvg: texto(fila.writeMsAvg),
+      pasos,
+    };
+  });
+}
+
+function texto(valor: unknown): string | null {
+  return valor === null || valor === undefined ? null : String(valor);
 }
 
 function normalizarTimestampBigQuery(valor: unknown): string | null {

@@ -90,12 +90,24 @@ export function obtenerEjecucionesReporte(id: string) {
   return clienteApi.get<DetalleEjecucionReporte[]>(`${idUrl(id)}/ejecuciones`);
 }
 
-export function ejecutarReporte(id: string) {
+export function ejecutarReporte(
+  id: string,
+  confirmacionRiesgo?: { hashDataflowSha256: string },
+) {
   return clienteApi.post<{
     runId: string;
     ejecucionReporteId: string;
     carpetaDescargas: string;
-  }>(`${idUrl(id)}/ejecuciones`);
+  }>(
+    `${idUrl(id)}/ejecuciones`,
+    ...(confirmacionRiesgo ? [{ confirmacionRiesgo }] : []),
+  );
+}
+
+export function cancelarEjecucionReporte(flujoId: string, ejecucionId: string) {
+  return clienteApi.post<{ estado: string }>(
+    `${idUrl(flujoId)}/ejecuciones/${encodeURIComponent(ejecucionId)}/cancelar`,
+  );
 }
 
 export function preflightDataflowReporte(flujoId: string) {

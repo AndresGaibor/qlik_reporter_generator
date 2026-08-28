@@ -25,6 +25,8 @@ function metadatoJobBigQuery(
     cacheHit: false,
     statementType: "SELECT",
     errorResult: null,
+    timeline: [],
+    queryPlan: [],
     parentJobId: null,
     ...overrides,
   };

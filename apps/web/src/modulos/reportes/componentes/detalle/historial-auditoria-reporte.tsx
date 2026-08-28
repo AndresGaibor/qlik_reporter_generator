@@ -301,7 +301,7 @@ function textoFase(estado: string) {
     case "error":
       return "Ejecución fallida";
     case "detenida":
-      return "Ejecución detenida";
+      return "Cancelada por el usuario";
     default:
       return "Estado desconocido";
   }

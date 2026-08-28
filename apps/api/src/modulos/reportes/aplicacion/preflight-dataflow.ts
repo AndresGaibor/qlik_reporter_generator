@@ -4,6 +4,7 @@ import type {
   MetadataTablaBigQuery,
 } from "../../google-cloud/dominio/metadata-bigquery.js";
 import type { PlanDataflow } from "../dominio/plan-dataflow.js";
+import { analizarRiesgosEjecucion } from "./analizar-riesgos-ejecucion.js";
 import { compilarDataflowVNext } from "./compilador-vnext/index.js";
 import { ErrorCompilacionVNext } from "./compilador-vnext/modelo.js";
 import { localizarComponenteDataflow } from "./contexto-diagnostico-dataflow.js";
@@ -41,6 +42,7 @@ export interface PreparacionDataflowActual {
   sqlBigQuery: string;
   camposSalida: string[];
   resumen: PreflightDataflowReporte["resumen"];
+  riesgosEjecucion: PreflightDataflowReporte["riesgosEjecucion"];
 }
 
 export class PreflightDataflow {
@@ -75,6 +77,7 @@ export class PreflightDataflow {
             "No se ejecutó el dry-run porque el Dataflow no es compatible",
         },
         resumen: preparacion.resumen,
+        riesgosEjecucion: preparacion.riesgosEjecucion,
       };
     }
 
@@ -92,6 +95,7 @@ export class PreflightDataflow {
         costoEstimadoUsd: estimacion.costoEstimadoUsd,
         validacionBigQuery: { exitosa: true, mensajeError: null },
         resumen: preparacion.resumen,
+        riesgosEjecucion: preparacion.riesgosEjecucion,
       };
     } catch (error) {
       return {
@@ -110,6 +114,7 @@ export class PreflightDataflow {
               : "Error desconocido de BigQuery",
         },
         resumen: preparacion.resumen,
+        riesgosEjecucion: preparacion.riesgosEjecucion,
       };
     }
   }
@@ -133,6 +138,7 @@ export async function prepararDataflowActual(
   const operacionesFiltro = plan.pasos.filter(
     (paso) => paso.tipo === "filtrar",
   );
+  const riesgosEjecucion = analizarRiesgosEjecucion(plan);
   const resumen = {
     fuentes: plan.fuentes.length,
     filtros: operacionesFiltro.length,
@@ -154,6 +160,7 @@ export async function prepararDataflowActual(
       sqlBigQuery: "",
       camposSalida: plan.salida.campos,
       resumen,
+      riesgosEjecucion,
     };
   }
 
@@ -172,6 +179,7 @@ export async function prepararDataflowActual(
       sqlBigQuery: compilacion.sql,
       camposSalida: plan.salida.campos,
       resumen,
+      riesgosEjecucion,
     };
   } catch (error) {
     let detalle: string;
@@ -193,6 +201,7 @@ export async function prepararDataflowActual(
       sqlBigQuery: "",
       camposSalida: plan.salida.campos,
       resumen,
+      riesgosEjecucion,
     };
   }
 }

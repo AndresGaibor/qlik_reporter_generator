@@ -116,9 +116,8 @@ export class SincronizarEjecucionesReporte {
   ): Promise<boolean> {
     const cacheado = cache.get(automatizacionIdQlik);
     if (cacheado !== undefined) return cacheado;
-    const automatizacion = await this.qlik.obtenerAutomatizacion(
-      automatizacionIdQlik,
-    );
+    const automatizacion =
+      await this.qlik.obtenerAutomatizacion(automatizacionIdQlik);
     const esperaTalend = Array.isArray(automatizacion.workspace?.blocks)
       ? automatizacion.workspace.blocks.some(
           (bloque) =>

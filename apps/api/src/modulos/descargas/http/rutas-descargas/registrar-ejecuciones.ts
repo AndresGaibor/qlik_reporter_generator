@@ -370,7 +370,7 @@ export function registrarRutasEjecuciones(
     });
 
     const pendientes = ejecuciones.filter(
-      (e) => e.estado === "preparando" || e.estado === "iniciada",
+      (e) => e.estado === "preparando" || e.estado === "iniciada" || e.estado === "cancelando",
     );
 
     if (pendientes.length > 0) {
@@ -417,7 +417,7 @@ export function registrarRutasEjecuciones(
               .flat()
               .filter(
                 (e) =>
-                  (e.estado === "preparando" || e.estado === "iniciada") &&
+                  (e.estado === "preparando" || e.estado === "iniciada" || e.estado === "cancelando") &&
                   Boolean(e.jobIdPrincipalBigQuery) &&
                   Boolean(e.bigqueryProjectId),
               )

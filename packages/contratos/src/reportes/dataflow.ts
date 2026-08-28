@@ -6,7 +6,38 @@ export const esquemaEstadoEjecucionReporte = z.enum([
   "completada",
   "error",
   "detenida",
+  "cancelando",
 ]);
+
+export const esquemaProgresoEjecucionReporte = z.object({
+  fase: z.enum([
+    "preparando",
+    "leyendo",
+    "procesando",
+    "generando_archivos",
+    "finalizando",
+    "cancelando",
+  ]),
+  mensaje: z.string(),
+  sigueTrabajando: z.boolean(),
+  tardaMasDeLoHabitual: z.boolean(),
+  altaDemanda: z.boolean(),
+  volumenInusual: z.boolean(),
+  actualizadoEn: z.string().datetime().nullable(),
+});
+export type ProgresoEjecucionReporte = z.infer<
+  typeof esquemaProgresoEjecucionReporte
+>;
+
+export const esquemaRiesgoEjecucionReporte = z.object({
+  codigo: z.literal("JOIN_ALTO_VOLUMEN"),
+  severidad: z.literal("alta"),
+  titulo: z.literal("Este reporte puede tardar bastante"),
+  mensaje: z.string(),
+});
+export type RiesgoEjecucionReporte = z.infer<
+  typeof esquemaRiesgoEjecucionReporte
+>;
 export type EstadoEjecucionReporte = z.infer<
   typeof esquemaEstadoEjecucionReporte
 >;
@@ -32,6 +63,7 @@ export const esquemaPreflightDataflowReporte = z.object({
     mensajeError: z.string().nullable(),
   }),
   resumen: esquemaResumenDataflowReporte,
+  riesgosEjecucion: z.array(esquemaRiesgoEjecucionReporte).optional(),
 });
 export type PreflightDataflowReporte = z.infer<
   typeof esquemaPreflightDataflowReporte
@@ -64,8 +96,14 @@ export type FuenteFilasExportadasReporte =
   | "legacy";
 
 export const esquemaCostoBigQueryEjecucion = z.object({
-  tarifaUsdPorTiBAplicada: z.string().regex(/^\d+(\.\d+)?$/).nullable(),
-  costoBigQueryUsd: z.string().regex(/^\d+(\.\d+)?$/).nullable(),
+  tarifaUsdPorTiBAplicada: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .nullable(),
+  costoBigQueryUsd: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .nullable(),
   moneda: z.literal("USD").nullable(),
   versionFormula: z.number().int().positive().nullable(),
 });
@@ -107,6 +145,10 @@ export const esquemaDetalleEjecucionReporte = z
     scriptExportacion: z.string(),
     uriBaseGcs: z.string().startsWith("gs://"),
     estado: esquemaEstadoEjecucionReporte,
+    progreso: esquemaProgresoEjecucionReporte.nullable().optional(),
+    cancelacionSolicitadaEn: z.string().datetime().nullable().optional(),
+    canceladaPorUsuarioId: z.string().uuid().nullable().optional(),
+    motivoDetencion: z.literal("usuario").nullable().optional(),
     versionCompilador: z.number().int().positive(),
     etapaError: z.string().nullable(),
     mensajeError: z.string().nullable(),

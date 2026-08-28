@@ -92,6 +92,13 @@
       "when": 1787847000000,
       "tag": "0012_compartir_reportes",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787939659895,
+      "tag": "0013_fuzzy_callisto",
+      "breakpoints": true
     }
   ]
 }

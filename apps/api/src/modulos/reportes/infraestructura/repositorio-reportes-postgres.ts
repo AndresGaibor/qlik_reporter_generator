@@ -220,6 +220,37 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       .where(eq(ejecucionesReportes.id, id));
   }
 
+  async marcarCancelacionSolicitada(
+    ejecucionId: string,
+    usuarioId: string,
+    fecha: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        estado: "cancelando",
+        cancelacionSolicitadaEn: fecha,
+        canceladaPorUsuarioId: usuarioId,
+        motivoDetencion: "usuario",
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, ejecucionId));
+  }
+
+  async marcarEjecucionDetenida(
+    ejecucionId: string,
+    fecha: Date,
+  ): Promise<void> {
+    await this.db
+      .update(ejecucionesReportes)
+      .set({
+        estado: "detenida",
+        finalizadoEn: fecha,
+        actualizadoEn: new Date(),
+      })
+      .where(eq(ejecucionesReportes.id, ejecucionId));
+  }
+
   async listarEjecuciones(
     flujoIdQlik: string,
     tenantQlikId: string,
@@ -270,7 +301,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
 
   async marcarEstadoEjecucion(
     id: string,
-    estado: "completada" | "error" | "detenida",
+    estado: "completada" | "error" | "detenida" | "cancelando",
     finalizadoEn: Date,
   ): Promise<void> {
     await this.db

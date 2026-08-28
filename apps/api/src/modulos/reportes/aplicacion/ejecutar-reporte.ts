@@ -29,6 +29,7 @@ export interface EntradaEjecutarReporte {
   usuarioIdQlik: string;
   nombreUsuario?: string | null;
   correo?: string | null;
+  confirmacionRiesgo?: { hashDataflowSha256: string };
 }
 
 export type ResolverContextoWorker = (
@@ -77,6 +78,21 @@ export class EjecutarReporte {
       this.alcanceBigQuery,
       flujo.appId ?? flujo.id,
     );
+    if (
+      (preparacion.riesgosEjecucion ?? []).length > 0 &&
+      entrada.confirmacionRiesgo?.hashDataflowSha256 !==
+        preparacion.hashDataflowSha256
+    ) {
+      throw new ErrorAplicacion(
+        "EXECUTION_RISK_CONFIRMATION_REQUIRED",
+        "Se requiere confirmación para ejecutar este reporte",
+        409,
+        {
+          riesgosEjecucion: preparacion.riesgosEjecucion ?? [],
+          hashDataflowSha256: preparacion.hashDataflowSha256,
+        },
+      );
+    }
     if (!preparacion.compatible) {
       throw new ErrorAplicacion(
         "DATAFLOW_NO_COMPATIBLE",

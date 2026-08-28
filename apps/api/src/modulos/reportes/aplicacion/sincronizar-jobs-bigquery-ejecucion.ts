@@ -43,7 +43,13 @@ export class SincronizarJobsBigQueryEjecucion {
 
     await this.persistirJob(mainJob, ejecucion);
 
-    if (mainJob.errorResult) {
+    if (
+      mainJob.errorResult &&
+      !(
+        ejecucion.estado === "cancelando" &&
+        esCancelacionBigQuery(mainJob.errorResult)
+      )
+    ) {
       await this.repoReportes.marcarEjecucionError(
         ejecucion.id,
         "bigquery",
@@ -121,7 +127,11 @@ function mapearMetadatoToPersistido(
     statementType: metadata.statementType,
     errorReason: metadata.errorResult?.reason ?? null,
     errorMessage: metadata.errorResult?.message ?? null,
-    metadataJson: null,
+    metadataJson: {
+      timeline: metadata.timeline,
+      queryPlan: metadata.queryPlan,
+      observadoEn: new Date().toISOString(),
+    },
   };
 }
 
@@ -144,6 +154,10 @@ function mapearEstado(
       return "pendiente";
     }
   }
+}
+
+function esCancelacionBigQuery(error: { reason: string }): boolean {
+  return error.reason === "stopped" || error.reason === "cancelled";
 }
 
 function mensajeErrorBigQuery(error: {

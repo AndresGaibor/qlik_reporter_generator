@@ -41,6 +41,8 @@ import type {
   JobBigQueryPersistido,
   PuertoRepositorioReportes,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
+import { analizarProgresoBigQuery } from "../aplicacion/analizar-progreso-bigquery.js";
+import { CancelarEjecucionReporte } from "../aplicacion/cancelar-ejecucion-reporte.js";
 import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
 import { SincronizarJobsBigQueryEjecucion } from "../aplicacion/sincronizar-jobs-bigquery-ejecucion.js";
 
@@ -472,12 +474,47 @@ export function crearRutasReportesDataflow(
     const flujo = await obtenerFlujo(c);
     if (!flujo) return noEncontradoDataflow(c);
     const sesion = await dependencias.resolverSesion(c);
+    let cuerpo: { confirmacionRiesgo?: { hashDataflowSha256: string } } = {};
+    try {
+      cuerpo = (await c.req.json()) as typeof cuerpo;
+    } catch {
+      // Body opcional.
+    }
     try {
       const ejecutar = await dependencias.resolverEjecutarReporte(c);
       return responderExito(
         c,
-        await ejecutar({ flujoIdQlik: flujo.id, ...sesion }),
+        await ejecutar({ flujoIdQlik: flujo.id, ...sesion, ...cuerpo }),
       );
+    } catch (error) {
+      return respuestaErrorAplicacion(c, error);
+    }
+  });
+
+  rutas.post("/:flujoId/ejecuciones/:ejecucionId/cancelar", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    const jobs = dependencias.resolverJobsBigQuery
+      ? await dependencias.resolverJobsBigQuery(c)
+      : undefined;
+    try {
+      const resultado = await new CancelarEjecucionReporte(
+        dependencias.repositorioReportes,
+        await dependencias.resolverQlik(c),
+        jobs,
+      ).ejecutar({
+        ejecucionId: c.req.param("ejecucionId"),
+        flujoIdQlik: c.req.param("flujoId"),
+        tenantId: sesion.tenantId,
+        organizacionId: sesion.organizacionId,
+        usuarioId: sesion.usuarioId,
+        esAdministrador: Boolean(
+          sesion.esSuperadmin ||
+            sesion.roles?.some(
+              (rol) => rol === "admin" || rol === "administrador",
+            ),
+        ),
+      });
+      return responderExito(c, resultado);
     } catch (error) {
       return respuestaErrorAplicacion(c, error);
     }
@@ -526,7 +563,11 @@ function compararActividadReporte(
 }
 
 function esEjecucionActiva(ejecucion: { estado: string }) {
-  return ejecucion.estado === "preparando" || ejecucion.estado === "iniciada";
+  return (
+    ejecucion.estado === "preparando" ||
+    ejecucion.estado === "iniciada" ||
+    ejecucion.estado === "cancelando"
+  );
 }
 
 function noEncontradoDataflow(c: Context) {
@@ -558,6 +599,50 @@ function serializarEjecucion(
     childJobs,
   );
   const jobsBigQuery = jobs.map(mapJobBigQuery);
+  const progreso = jobPrincipal
+    ? analizarProgresoBigQuery({
+        estadoEjecucion: ejecucion.estado,
+        iniciadoEn: ejecucion.iniciadoEn ?? null,
+        job: {
+          jobId: jobPrincipal.jobId,
+          projectId: jobPrincipal.projectId,
+          location: jobPrincipal.location,
+          estado:
+            jobPrincipal.estado === "running"
+              ? "RUNNING"
+              : jobPrincipal.estado === "done" ||
+                  jobPrincipal.estado === "error"
+                ? "DONE"
+                : "PENDING",
+          creationTime: jobPrincipal.creationTime ?? "",
+          startTime: jobPrincipal.startTime,
+          endTime: jobPrincipal.endTime,
+          totalBytesProcessed: jobPrincipal.totalBytesProcessed,
+          totalBytesBilled: jobPrincipal.totalBytesBilled,
+          totalSlotMs: jobPrincipal.totalSlotMs,
+          cacheHit: jobPrincipal.cacheHit,
+          statementType: jobPrincipal.statementType,
+          errorResult:
+            jobPrincipal.errorReason && jobPrincipal.errorMessage
+              ? {
+                  reason: jobPrincipal.errorReason,
+                  message: jobPrincipal.errorMessage,
+                }
+              : null,
+          timeline: Array.isArray(jobPrincipal.metadataJson?.timeline)
+            ? (jobPrincipal.metadataJson.timeline as never)
+            : [],
+          queryPlan: Array.isArray(jobPrincipal.metadataJson?.queryPlan)
+            ? (jobPrincipal.metadataJson.queryPlan as never)
+            : [],
+          parentJobId: jobPrincipal.parentJobId,
+        },
+      })
+    : analizarProgresoBigQuery({
+        estadoEjecucion: ejecucion.estado,
+        iniciadoEn: ejecucion.iniciadoEn ?? null,
+        job: null,
+      });
 
   return {
     ...ejecucion,
@@ -565,6 +650,7 @@ function serializarEjecucion(
     bigQueryProjectId: ejecucion.bigqueryProjectId ?? null,
     bigQueryLocation: ejecucion.bigqueryLocation ?? null,
     metricas,
+    progreso,
     jobsBigQuery,
     ejecutadoPorUsuarioId: ejecucion.ejecutadoPorUsuarioId ?? null,
     automatizacionPersonalId: ejecucion.automatizacionPersonalId ?? null,

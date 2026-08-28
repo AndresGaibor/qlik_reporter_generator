@@ -8,6 +8,7 @@ import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { PestanaMetadataFlujo } from "@/modulos/flujos/componentes/detalle/pestana-metadata-flujo";
 import {
+  cancelarEjecucionReporte,
   ejecutarReporte,
   obtenerEjecucionesReporte,
   obtenerReporte,
@@ -15,6 +16,7 @@ import {
   obtenerVistaPreviaReporte,
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
+import { EstadoEjecucionEnVivo } from "@/modulos/reportes/componentes/detalle/estado-ejecucion-en-vivo";
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
 import { ResumenAuditableReporte } from "@/modulos/reportes/componentes/detalle/resumen-auditable-reporte";
 import { VistaPreviaReporte } from "@/modulos/reportes/componentes/detalle/vista-previa-reporte";
@@ -44,6 +46,8 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const [pestana, setPestana] = useState<Pestana>(leerHashPestana);
   const [mostrarPreview, setMostrarPreview] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [mostrarConfirmacionCancelacion, setMostrarConfirmacionCancelacion] =
+    useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   const referenciasTabs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -92,10 +96,24 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     refetchInterval: (consulta) =>
       consulta.state.data?.some(
         (ejecucion) =>
-          ejecucion.estado === "preparando" || ejecucion.estado === "iniciada",
+          ejecucion.estado === "preparando" ||
+          ejecucion.estado === "iniciada" ||
+          ejecucion.estado === "cancelando",
       )
         ? 2_000
         : false,
+  });
+
+  const cancelar = useMutation({
+    mutationFn: (ejecucionId: string) =>
+      cancelarEjecucionReporte(id, ejecucionId),
+    onSuccess: () => {
+      setMostrarConfirmacionCancelacion(false);
+      void client.invalidateQueries({
+        queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
+      });
+    },
+    onError: (error: Error) => mostrarError(error.message),
   });
 
   const ejecutar = useMutation({
@@ -126,9 +144,13 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
 
   const dataflow = reporte.data;
   const ejecucionesActuales = ejecuciones.data ?? [];
-  const procesando = ejecucionesActuales.some(
-    (item) => item.estado === "preparando" || item.estado === "iniciada",
+  const ejecucionActiva = ejecucionesActuales.find(
+    (item) =>
+      item.estado === "preparando" ||
+      item.estado === "iniciada" ||
+      item.estado === "cancelando",
   );
+  const procesando = Boolean(ejecucionActiva);
   const urlQlik = tenantActivo?.host
     ? construirUrlVerFlujoQlik(tenantActivo.host, id, dataflow.espacioId ?? "")
     : null;
@@ -270,16 +292,36 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         ))}
       </div>
 
-      {procesando && (
-        <output className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <span className="mt-0.5 h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-amber-200 border-t-amber-700" />
-          <span>
-            <strong className="block font-semibold">
-              Preparando el reporte…
-            </strong>
-            Los archivos aparecerán en Descargas cuando el proceso finalice.
-          </span>
-        </output>
+      {ejecucionActiva && (
+        <EstadoEjecucionEnVivo
+          ejecucion={ejecucionActiva}
+          cancelando={cancelar.isPending}
+          onCancelar={() => setMostrarConfirmacionCancelacion(true)}
+        />
+      )}
+
+      {mostrarConfirmacionCancelacion && ejecucionActiva && (
+        <dialog open className="rounded-lg border border-red-200 bg-red-50 p-5">
+          <h2 className="font-semibold text-ink-900">
+            ¿Cancelar esta ejecución?
+          </h2>
+          <p className="mt-2 text-sm text-ink-700">
+            Se solicitará detener el procesamiento del reporte. El trabajo
+            realizado hasta ahora puede haber utilizado recursos y podrían
+            existir archivos incompletos.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setMostrarConfirmacionCancelacion(false)}
+            >
+              Seguir esperando
+            </Button>
+            <Button onClick={() => cancelar.mutate(ejecucionActiva.id)}>
+              Sí, cancelar ejecución
+            </Button>
+          </div>
+        </dialog>
       )}
 
       {pestana === "resumen" && (
@@ -340,7 +382,9 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
           className="space-y-5"
         >
           <section className="rounded-lg border border-line-200 bg-blue-50/60 p-4 text-sm text-ink-600">
-            Información de trazabilidad para soporte, auditoría avanzada y validación técnica. No es necesaria para consultar o ejecutar el reporte.
+            Información de trazabilidad para soporte, auditoría avanzada y
+            validación técnica. No es necesaria para consultar o ejecutar el
+            reporte.
           </section>
           <PestanaMetadataFlujo flujo={flujo} />
           <section className="rounded-lg border border-line-200 bg-surface p-5">

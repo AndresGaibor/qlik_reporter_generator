@@ -3,7 +3,8 @@ export type EstadoEjecucionReportePersistida =
   | "iniciada"
   | "completada"
   | "error"
-  | "detenida";
+  | "detenida"
+  | "cancelando";
 
 export type TipoJobBigQueryPersistido =
   | "principal"
@@ -158,6 +159,12 @@ export interface PuertoRepositorioReportes {
     runIdQlik?: string,
   ): Promise<void>;
   marcarEjecucionCompletada(id: string, finalizadoEn: Date): Promise<void>;
+  marcarCancelacionSolicitada(
+    ejecucionId: string,
+    usuarioId: string,
+    fecha: Date,
+  ): Promise<void>;
+  marcarEjecucionDetenida(ejecucionId: string, fecha: Date): Promise<void>;
   listarEjecuciones(
     flujoIdQlik: string,
     tenantQlikId: string,

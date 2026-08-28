@@ -121,6 +121,8 @@ describe("ClienteJobsBigQuery", () => {
         cacheHit: false,
         statementType: "SELECT",
         errorResult: null,
+        timeline: [],
+        queryPlan: [],
         parentJobId: null,
       });
     });
@@ -136,8 +138,12 @@ describe("ClienteJobsBigQuery", () => {
         },
         status: { state: "DONE" },
       });
-      const cliente = new (await import("./cliente-jobs-bigquery.js"))
-        .ClienteJobsBigQuery({ projectId: "project-1" }, crearClienteMock(jobMock));
+      const cliente = new (
+        await import("./cliente-jobs-bigquery.js")
+      ).ClienteJobsBigQuery(
+        { projectId: "project-1" },
+        crearClienteMock(jobMock),
+      );
 
       const resultado = await cliente.obtenerJob({
         projectId: "project-1",

@@ -291,6 +291,12 @@ export const ejecucionesReportes = pgTable(
     scriptExportacion: text("script_exportacion").notNull(),
     uriBaseGcs: text("uri_base_gcs").notNull(),
     estado: text("estado").notNull().default("preparando"),
+    cancelacionSolicitadaEn: timestamp("cancelacion_solicitada_en"),
+    canceladaPorUsuarioId: uuid("cancelada_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    motivoDetencion: text("motivo_detencion"),
     versionCompilador: integer("version_compilador").notNull().default(1),
     etapaError: text("etapa_error"),
     mensajeError: text("mensaje_error"),
@@ -311,7 +317,10 @@ export const ejecucionesReportes = pgTable(
       "tarifa_consulta_usd_por_tib_aplicada",
       { precision: 20, scale: 8 },
     ),
-    costoBigqueryUsd: numeric("costo_bigquery_usd", { precision: 30, scale: 12 }),
+    costoBigqueryUsd: numeric("costo_bigquery_usd", {
+      precision: 30,
+      scale: 12,
+    }),
     monedaCosto: text("moneda_costo"),
     versionFormulaCosto: integer("version_formula_costo"),
     metricasCalculadasEn: timestamp("metricas_calculadas_en"),
@@ -331,7 +340,7 @@ export const ejecucionesReportes = pgTable(
     ),
     ckEstado: check(
       "ejecuciones_reportes_estado_check",
-      sql`${t.estado} IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')`,
+      sql`${t.estado} IN ('preparando', 'iniciada', 'completada', 'error', 'detenida', 'cancelando')`,
     ),
     ckFuenteFilasExportadas: check(
       "ejecuciones_reportes_fuente_filas_check",
@@ -359,13 +368,14 @@ export const resultadosEjecucionesReportes = pgTable(
       .primaryKey()
       .references(() => ejecucionesReportes.id, { onDelete: "cascade" }),
     estado: text("estado").notNull().default("pendiente"),
-    tamanoAlmacenadoBytes: bigint("tamano_almacenado_bytes", { mode: "bigint" }),
+    tamanoAlmacenadoBytes: bigint("tamano_almacenado_bytes", {
+      mode: "bigint",
+    }),
     objetosFuente: bigint("objetos_fuente", { mode: "bigint" }),
     partesDescarga: integer("partes_descarga"),
-    maximoFilasPorArchivoAplicado: bigint(
-      "maximo_filas_por_archivo_aplicado",
-      { mode: "bigint" },
-    ),
+    maximoFilasPorArchivoAplicado: bigint("maximo_filas_por_archivo_aplicado", {
+      mode: "bigint",
+    }),
     disponibleEn: timestamp("disponible_en"),
     eliminadoEn: timestamp("eliminado_en"),
     eliminadoPorUsuarioId: uuid("eliminado_por_usuario_id").references(
