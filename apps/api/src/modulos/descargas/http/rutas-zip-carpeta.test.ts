@@ -161,11 +161,13 @@ describe("ZIP de carpeta privada", () => {
       {
         numero: 1,
         nombre: "parte-001.csv",
+        tamano: 21,
         url: "/api/descargas/test/partes/1",
       },
       {
         numero: 2,
         nombre: "parte-002.csv",
+        tamano: 16,
         url: "/api/descargas/test/partes/2",
       },
     ]);
@@ -191,6 +193,7 @@ describe("ZIP de carpeta privada", () => {
         {
           numero: 1,
           nombre: "parte-001.csv",
+          tamano: 21,
           url: "/api/descargas/test/partes/1",
         },
       ],

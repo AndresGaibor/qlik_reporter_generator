@@ -34,6 +34,7 @@ export function urlZipEjecucion(id: string) {
 export interface ParteCsvNormalizada {
   numero: number;
   nombre: string;
+  tamano: number;
   url: string;
 }
 
