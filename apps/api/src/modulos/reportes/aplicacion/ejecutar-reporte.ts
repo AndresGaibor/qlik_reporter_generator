@@ -27,6 +27,7 @@ export interface EntradaEjecutarReporte {
   flujoIdQlik: string;
   usuarioId: string;
   usuarioIdQlik: string;
+  nombreUsuario?: string | null;
   correo?: string | null;
 }
 
@@ -167,6 +168,9 @@ export class EjecutarReporte {
         organizacionId: entrada.organizacionId,
         tenantQlikId: entrada.tenantId,
         ejecutadoPorUsuarioId: entrada.usuarioId,
+        ejecutadoPorNombre: entrada.nombreUsuario ?? null,
+        ejecutadoPorCorreo: entrada.correo ?? null,
+        origenEjecucion: "manual",
         automatizacionPersonalId: worker.id,
         flujoIdQlik: flujo.id,
         flujoNombreSnapshot: flujo.name,

@@ -20,6 +20,7 @@ function crearRepoMock() {
           mensajeError: string | null;
           uriBaseGcs: string;
           creadoEn: Date;
+          iniciadoEn?: Date | null;
           finalizadoEn: Date | null;
         }>,
     ),
@@ -236,6 +237,33 @@ describe("ServicioDescargas", () => {
       },
       10,
     );
+  });
+
+  it("calcula la duración desde el inicio real y no desde la creación", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-inicio-real",
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs:
+          "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-inicio-real/",
+        creadoEn: new Date("2026-08-26T12:04:00Z"),
+        iniciadoEn: new Date("2026-08-26T17:04:00Z"),
+        finalizadoEn: new Date("2026-08-26T17:04:15Z"),
+      },
+    ]);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      crearAlmacenamientoMock(),
+      15,
+    );
+
+    const resultado = await servicio.listarEjecuciones(CONTEXTO);
+
+    expect(resultado[0]?.duracionTotalMs).toBe(15_000);
   });
 
   it("listarEjecuciones refleja completada cuando GCS ya tiene el marcador final", async () => {

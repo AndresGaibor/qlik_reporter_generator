@@ -1,6 +1,6 @@
 import { Icon } from "@/compartido/componentes/ui/icon";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { useState } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import type { preflightDataflowReporte } from "../api";
 
 const bigqueryStyle = {
@@ -181,11 +181,20 @@ function DetalleTecnico({ preflight }: { preflight: Preflight }) {
       </div>
       <div className="grid gap-2 sm:grid-cols-4">
         <Metrica valor={preflight.resumen.fuentes} etiqueta="fuente" />
-        <Metrica valor={preflight.resumen.filtros} etiqueta="filtro" />
+        <Metrica
+          valor={preflight.resumen.filtros}
+          etiqueta="operación de filtrado"
+          plural="operaciones de filtrado"
+        />
+        <Metrica
+          valor={preflight.resumen.condicionesFiltro ?? 0}
+          etiqueta="condición"
+          plural="condiciones"
+        />
         <Metrica
           valor={preflight.resumen.joins}
-          etiqueta="join"
-          plural="joins"
+          etiqueta="combinación"
+          plural="combinaciones"
         />
         <Metrica
           valor={preflight.resumen.camposSalida}
@@ -209,7 +218,10 @@ function DetalleTecnico({ preflight }: { preflight: Preflight }) {
           SQL generado
         </button>
         {sqlAbierto && (
-          <div id="sql-generado" className="border-t border-line-200 bg-app/40 p-3 sm:p-4">
+          <div
+            id="sql-generado"
+            className="border-t border-line-200 bg-app/40 p-3 sm:p-4"
+          >
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-500">
                 <Icon name="file-text" size="sm" />

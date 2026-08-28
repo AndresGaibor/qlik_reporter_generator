@@ -1,0 +1,2397 @@
+{
+  "id": "a8cdf427-2fcd-4deb-a104-7eb2de241747",
+  "prevId": "adee56ca-5bde-4bc5-9e16-ef779969c5df",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.app_config": {
+      "name": "app_config",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "clave": {
+          "name": "clave",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "app_config_clave_unique": {
+          "name": "app_config_clave_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "clave"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.auditoria_eventos": {
+      "name": "auditoria_eventos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accion": {
+          "name": "accion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entidad_tipo": {
+          "name": "entidad_tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entidad_id": {
+          "name": "entidad_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resultado": {
+          "name": "resultado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "datos_anteriores": {
+          "name": "datos_anteriores",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "datos_nuevos": {
+          "name": "datos_nuevos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codigo_error": {
+          "name": "codigo_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mensaje_error": {
+          "name": "mensaje_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agente_usuario": {
+          "name": "agente_usuario",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_solicitud": {
+          "name": "id_solicitud",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_auditoria_org_fecha": {
+          "name": "idx_auditoria_org_fecha",
+          "columns": [
+            {
+              "expression": "organizacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creado_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_auditoria_usuario_fecha": {
+          "name": "idx_auditoria_usuario_fecha",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creado_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auditoria_eventos_organizacion_id_organizaciones_id_fk": {
+          "name": "auditoria_eventos_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "auditoria_eventos",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "auditoria_eventos_usuario_id_usuarios_id_fk": {
+          "name": "auditoria_eventos_usuario_id_usuarios_id_fk",
+          "tableFrom": "auditoria_eventos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "auditoria_resultado_check": {
+          "name": "auditoria_resultado_check",
+          "value": "\"auditoria_eventos\".\"resultado\" IN ('exito', 'error', 'denegado')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.automatizaciones_personales_qlik": {
+      "name": "automatizaciones_personales_qlik",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_qlik_id": {
+          "name": "tenant_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "automatizacion_id_qlik": {
+          "name": "automatizacion_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "automatizacion_nombre_snapshot": {
+          "name": "automatizacion_nombre_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "mensaje_error": {
+          "name": "mensaje_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_automatizaciones_personales_tenant": {
+          "name": "idx_automatizaciones_personales_tenant",
+          "columns": [
+            {
+              "expression": "tenant_qlik_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "automatizaciones_personales_qlik_organizacion_id_organizaciones_id_fk": {
+          "name": "automatizaciones_personales_qlik_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "automatizaciones_personales_qlik",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "automatizaciones_personales_qlik_tenant_qlik_id_tenants_qlik_id_fk": {
+          "name": "automatizaciones_personales_qlik_tenant_qlik_id_tenants_qlik_id_fk",
+          "tableFrom": "automatizaciones_personales_qlik",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "automatizaciones_personales_qlik_usuario_id_usuarios_id_fk": {
+          "name": "automatizaciones_personales_qlik_usuario_id_usuarios_id_fk",
+          "tableFrom": "automatizaciones_personales_qlik",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "automatizaciones_personales_usuario_tenant_unique": {
+          "name": "automatizaciones_personales_usuario_tenant_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "usuario_id",
+            "tenant_qlik_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "automatizaciones_personales_estado_check": {
+          "name": "automatizaciones_personales_estado_check",
+          "value": "\"automatizaciones_personales_qlik\".\"estado\" IN ('activo', 'error', 'desactivado')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.conexiones_destino": {
+      "name": "conexiones_destino",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_qlik_id": {
+          "name": "tenant_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "secreto_refs": {
+          "name": "secreto_refs",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "es_predeterminada": {
+          "name": "es_predeterminada",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "mensaje_error": {
+          "name": "mensaje_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_conexiones_tipo": {
+          "name": "idx_conexiones_tipo",
+          "columns": [
+            {
+              "expression": "tipo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conexiones_estado": {
+          "name": "idx_conexiones_estado",
+          "columns": [
+            {
+              "expression": "estado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conexiones_tenant": {
+          "name": "idx_conexiones_tenant",
+          "columns": [
+            {
+              "expression": "tenant_qlik_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"conexiones_destino\".\"tenant_qlik_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "uq_conexion_bigquery_predeterminada_tenant": {
+          "name": "uq_conexion_bigquery_predeterminada_tenant",
+          "columns": [
+            {
+              "expression": "tenant_qlik_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tipo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"conexiones_destino\".\"es_predeterminada\" = true AND \"conexiones_destino\".\"tenant_qlik_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "conexiones_destino_organizacion_id_organizaciones_id_fk": {
+          "name": "conexiones_destino_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "conexiones_destino",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "conexiones_destino_tenant_qlik_id_tenants_qlik_id_fk": {
+          "name": "conexiones_destino_tenant_qlik_id_tenants_qlik_id_fk",
+          "tableFrom": "conexiones_destino",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_conexion_por_org_nombre": {
+          "name": "uq_conexion_por_org_nombre",
+          "nullsNotDistinct": false,
+          "columns": [
+            "organizacion_id",
+            "tipo",
+            "nombre"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "conexiones_destino_tipo_check": {
+          "name": "conexiones_destino_tipo_check",
+          "value": "\"conexiones_destino\".\"tipo\" = 'bigquery'"
+        },
+        "conexiones_destino_estado_check": {
+          "name": "conexiones_destino_estado_check",
+          "value": "\"conexiones_destino\".\"estado\" IN ('activo', 'error', 'desconectado')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.configuraciones_oauth_qlik": {
+      "name": "configuraciones_oauth_qlik",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_qlik_id": {
+          "name": "tenant_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cliente_secreto_cifrado": {
+          "name": "cliente_secreto_cifrado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "secreto_sufijo": {
+          "name": "secreto_sufijo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendiente'"
+        },
+        "verificada_en": {
+          "name": "verificada_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ultimo_error": {
+          "name": "ultimo_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_por_usuario_id": {
+          "name": "creado_por_usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actualizado_por_usuario_id": {
+          "name": "actualizado_por_usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "uq_configuracion_oauth_por_tenant": {
+          "name": "uq_configuracion_oauth_por_tenant",
+          "columns": [
+            {
+              "expression": "tenant_qlik_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "configuraciones_oauth_qlik_tenant_qlik_id_tenants_qlik_id_fk": {
+          "name": "configuraciones_oauth_qlik_tenant_qlik_id_tenants_qlik_id_fk",
+          "tableFrom": "configuraciones_oauth_qlik",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "configuraciones_oauth_qlik_creado_por_usuario_id_usuarios_id_fk": {
+          "name": "configuraciones_oauth_qlik_creado_por_usuario_id_usuarios_id_fk",
+          "tableFrom": "configuraciones_oauth_qlik",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por_usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "configuraciones_oauth_qlik_actualizado_por_usuario_id_usuarios_id_fk": {
+          "name": "configuraciones_oauth_qlik_actualizado_por_usuario_id_usuarios_id_fk",
+          "tableFrom": "configuraciones_oauth_qlik",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "actualizado_por_usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "configuraciones_oauth_estado_check": {
+          "name": "configuraciones_oauth_estado_check",
+          "value": "\"configuraciones_oauth_qlik\".\"estado\" IN ('pendiente', 'verificada', 'error', 'desactivada')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.credenciales_qlik": {
+      "name": "credenciales_qlik",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "identidad_qlik_id": {
+          "name": "identidad_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_acceso_cifrado": {
+          "name": "token_acceso_cifrado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_refresco_cifrado": {
+          "name": "token_refresco_cifrado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "token_expira_en": {
+          "name": "token_expira_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activa'"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "credenciales_qlik_identidad_qlik_id_identidades_qlik_id_fk": {
+          "name": "credenciales_qlik_identidad_qlik_id_identidades_qlik_id_fk",
+          "tableFrom": "credenciales_qlik",
+          "tableTo": "identidades_qlik",
+          "columnsFrom": [
+            "identidad_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "credenciales_qlik_identidad_qlik_id_unique": {
+          "name": "credenciales_qlik_identidad_qlik_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "identidad_qlik_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "credenciales_estado_check": {
+          "name": "credenciales_estado_check",
+          "value": "\"credenciales_qlik\".\"estado\" IN ('activa', 'expirada', 'revocada', 'requiere_reconexion')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ejecuciones_reportes": {
+      "name": "ejecuciones_reportes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_qlik_id": {
+          "name": "tenant_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ejecutado_por_usuario_id": {
+          "name": "ejecutado_por_usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ejecutado_por_nombre": {
+          "name": "ejecutado_por_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ejecutado_por_correo": {
+          "name": "ejecutado_por_correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origen_ejecucion": {
+          "name": "origen_ejecucion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "automatizacion_personal_id": {
+          "name": "automatizacion_personal_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flujo_id_qlik": {
+          "name": "flujo_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "flujo_nombre_snapshot": {
+          "name": "flujo_nombre_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "flujo_espacio_id_qlik": {
+          "name": "flujo_espacio_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "automatizacion_id_qlik": {
+          "name": "automatizacion_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "run_id_qlik": {
+          "name": "run_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hash_dataflow_sha256": {
+          "name": "hash_dataflow_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "script_dataflow": {
+          "name": "script_dataflow",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sql_bigquery_compilado": {
+          "name": "sql_bigquery_compilado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "script_exportacion": {
+          "name": "script_exportacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uri_base_gcs": {
+          "name": "uri_base_gcs",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparando'"
+        },
+        "version_compilador": {
+          "name": "version_compilador",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "etapa_error": {
+          "name": "etapa_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mensaje_error": {
+          "name": "mensaje_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_id_principal_bigquery": {
+          "name": "job_id_principal_bigquery",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bigquery_project_id": {
+          "name": "bigquery_project_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bigquery_location": {
+          "name": "bigquery_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qlik_iniciado_en": {
+          "name": "qlik_iniciado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bigquery_iniciado_en": {
+          "name": "bigquery_iniciado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bigquery_finalizado_en": {
+          "name": "bigquery_finalizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gcs_finalizado_en": {
+          "name": "gcs_finalizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filas_exportadas": {
+          "name": "filas_exportadas",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fuente_filas_exportadas": {
+          "name": "fuente_filas_exportadas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_bytes_processed": {
+          "name": "total_bytes_processed",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_bytes_billed": {
+          "name": "total_bytes_billed",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_slot_ms": {
+          "name": "total_slot_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duracion_bigquery_ms": {
+          "name": "duracion_bigquery_ms",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tarifa_consulta_usd_por_tib_aplicada": {
+          "name": "tarifa_consulta_usd_por_tib_aplicada",
+          "type": "numeric(20, 8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "costo_bigquery_usd": {
+          "name": "costo_bigquery_usd",
+          "type": "numeric(30, 12)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "moneda_costo": {
+          "name": "moneda_costo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_formula_costo": {
+          "name": "version_formula_costo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metricas_calculadas_en": {
+          "name": "metricas_calculadas_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "iniciado_en": {
+          "name": "iniciado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finalizado_en": {
+          "name": "finalizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_ejecuciones_reportes_scope_fecha": {
+          "name": "idx_ejecuciones_reportes_scope_fecha",
+          "columns": [
+            {
+              "expression": "organizacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tenant_qlik_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "flujo_id_qlik",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creado_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_ejecuciones_reportes_run_qlik": {
+          "name": "idx_ejecuciones_reportes_run_qlik",
+          "columns": [
+            {
+              "expression": "run_id_qlik",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_ejecuciones_reportes_ejecutor_fecha": {
+          "name": "idx_ejecuciones_reportes_ejecutor_fecha",
+          "columns": [
+            {
+              "expression": "ejecutado_por_usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "creado_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ejecuciones_reportes_organizacion_id_organizaciones_id_fk": {
+          "name": "ejecuciones_reportes_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "ejecuciones_reportes",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ejecuciones_reportes_tenant_qlik_id_tenants_qlik_id_fk": {
+          "name": "ejecuciones_reportes_tenant_qlik_id_tenants_qlik_id_fk",
+          "tableFrom": "ejecuciones_reportes",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ejecuciones_reportes_ejecutado_por_usuario_id_usuarios_id_fk": {
+          "name": "ejecuciones_reportes_ejecutado_por_usuario_id_usuarios_id_fk",
+          "tableFrom": "ejecuciones_reportes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "ejecutado_por_usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "ejecuciones_reportes_automatizacion_personal_id_automatizaciones_personales_qlik_id_fk": {
+          "name": "ejecuciones_reportes_automatizacion_personal_id_automatizaciones_personales_qlik_id_fk",
+          "tableFrom": "ejecuciones_reportes",
+          "tableTo": "automatizaciones_personales_qlik",
+          "columnsFrom": [
+            "automatizacion_personal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ejecuciones_reportes_estado_check": {
+          "name": "ejecuciones_reportes_estado_check",
+          "value": "\"ejecuciones_reportes\".\"estado\" IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')"
+        },
+        "ejecuciones_reportes_fuente_filas_check": {
+          "name": "ejecuciones_reportes_fuente_filas_check",
+          "value": "\"ejecuciones_reportes\".\"fuente_filas_exportadas\" IS NULL OR \"ejecuciones_reportes\".\"fuente_filas_exportadas\" IN ('pipeline', 'procesamiento_resultado', 'legacy')"
+        },
+        "ejecuciones_reportes_metricas_check": {
+          "name": "ejecuciones_reportes_metricas_check",
+          "value": "\"ejecuciones_reportes\".\"filas_exportadas\" IS NULL OR \"ejecuciones_reportes\".\"filas_exportadas\" >= 0"
+        },
+        "ejecuciones_reportes_moneda_costo_check": {
+          "name": "ejecuciones_reportes_moneda_costo_check",
+          "value": "\"ejecuciones_reportes\".\"moneda_costo\" IS NULL OR \"ejecuciones_reportes\".\"moneda_costo\" = 'USD'"
+        },
+        "ejecuciones_reportes_version_formula_costo_check": {
+          "name": "ejecuciones_reportes_version_formula_costo_check",
+          "value": "\"ejecuciones_reportes\".\"version_formula_costo\" IS NULL OR \"ejecuciones_reportes\".\"version_formula_costo\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.identidades_qlik": {
+      "name": "identidades_qlik",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_qlik_id": {
+          "name": "tenant_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id_qlik": {
+          "name": "usuario_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sujeto_qlik": {
+          "name": "sujeto_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nombre_qlik": {
+          "name": "nombre_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo_qlik": {
+          "name": "correo_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_qlik": {
+          "name": "avatar_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado_qlik": {
+          "name": "estado_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sincronizado_en": {
+          "name": "sincronizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "identidades_qlik_usuario_id_usuarios_id_fk": {
+          "name": "identidades_qlik_usuario_id_usuarios_id_fk",
+          "tableFrom": "identidades_qlik",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "identidades_qlik_tenant_qlik_id_tenants_qlik_id_fk": {
+          "name": "identidades_qlik_tenant_qlik_id_tenants_qlik_id_fk",
+          "tableFrom": "identidades_qlik",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "identidades_unique": {
+          "name": "identidades_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_qlik_id",
+            "usuario_id_qlik"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.jobs_bigquery_ejecucion": {
+      "name": "jobs_bigquery_ejecucion",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "ejecucion_reporte_id": {
+          "name": "ejecucion_reporte_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_job_id": {
+          "name": "parent_job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "project_id": {
+          "name": "project_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'US'"
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creation_time": {
+          "name": "creation_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duracion_ms": {
+          "name": "duracion_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_bytes_processed": {
+          "name": "total_bytes_processed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_bytes_billed": {
+          "name": "total_bytes_billed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_slot_ms": {
+          "name": "total_slot_ms",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cache_hit": {
+          "name": "cache_hit",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "statement_type": {
+          "name": "statement_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_reason": {
+          "name": "error_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata_json": {
+          "name": "metadata_json",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_jobs_ejecucion_reportes": {
+          "name": "idx_jobs_ejecucion_reportes",
+          "columns": [
+            {
+              "expression": "ejecucion_reporte_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_jobs_job_id": {
+          "name": "idx_jobs_job_id",
+          "columns": [
+            {
+              "expression": "job_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_jobs_estado": {
+          "name": "idx_jobs_estado",
+          "columns": [
+            {
+              "expression": "estado",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "jobs_bigquery_ejecucion_ejecucion_reporte_id_ejecuciones_reportes_id_fk": {
+          "name": "jobs_bigquery_ejecucion_ejecucion_reporte_id_ejecuciones_reportes_id_fk",
+          "tableFrom": "jobs_bigquery_ejecucion",
+          "tableTo": "ejecuciones_reportes",
+          "columnsFrom": [
+            "ejecucion_reporte_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_job_project_location": {
+          "name": "uq_job_project_location",
+          "nullsNotDistinct": false,
+          "columns": [
+            "project_id",
+            "location",
+            "job_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "jobs_bigquery_tipo_check": {
+          "name": "jobs_bigquery_tipo_check",
+          "value": "\"jobs_bigquery_ejecucion\".\"tipo\" IN ('principal', 'script', 'query', 'export', 'conteo', 'child', 'desconocido')"
+        },
+        "jobs_bigquery_estado_check": {
+          "name": "jobs_bigquery_estado_check",
+          "value": "\"jobs_bigquery_ejecucion\".\"estado\" IN ('pendiente', 'running', 'done', 'error')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.membresias_organizacion": {
+      "name": "membresias_organizacion",
+      "schema": "",
+      "columns": {
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'usuario'"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "membresias_organizacion_organizacion_id_organizaciones_id_fk": {
+          "name": "membresias_organizacion_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "membresias_organizacion",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "membresias_organizacion_usuario_id_usuarios_id_fk": {
+          "name": "membresias_organizacion_usuario_id_usuarios_id_fk",
+          "tableFrom": "membresias_organizacion",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "membresias_pk": {
+          "name": "membresias_pk",
+          "nullsNotDistinct": false,
+          "columns": [
+            "organizacion_id",
+            "usuario_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "membresias_rol_check": {
+          "name": "membresias_rol_check",
+          "value": "\"membresias_organizacion\".\"rol\" IN ('admin', 'usuario')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.organizaciones": {
+      "name": "organizaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activa'"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "organizaciones_estado_check": {
+          "name": "organizaciones_estado_check",
+          "value": "\"organizaciones\".\"estado\" IN ('activa', 'suspendida')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.resultados_ejecuciones_reportes": {
+      "name": "resultados_ejecuciones_reportes",
+      "schema": "",
+      "columns": {
+        "ejecucion_reporte_id": {
+          "name": "ejecucion_reporte_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendiente'"
+        },
+        "tamano_almacenado_bytes": {
+          "name": "tamano_almacenado_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "objetos_fuente": {
+          "name": "objetos_fuente",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partes_descarga": {
+          "name": "partes_descarga",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maximo_filas_por_archivo_aplicado": {
+          "name": "maximo_filas_por_archivo_aplicado",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disponible_en": {
+          "name": "disponible_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eliminado_en": {
+          "name": "eliminado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "eliminado_por_usuario_id": {
+          "name": "eliminado_por_usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo_eliminacion": {
+          "name": "motivo_eliminacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "resultados_ejecuciones_reportes_ejecucion_reporte_id_ejecuciones_reportes_id_fk": {
+          "name": "resultados_ejecuciones_reportes_ejecucion_reporte_id_ejecuciones_reportes_id_fk",
+          "tableFrom": "resultados_ejecuciones_reportes",
+          "tableTo": "ejecuciones_reportes",
+          "columnsFrom": [
+            "ejecucion_reporte_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "resultados_ejecuciones_reportes_eliminado_por_usuario_id_usuarios_id_fk": {
+          "name": "resultados_ejecuciones_reportes_eliminado_por_usuario_id_usuarios_id_fk",
+          "tableFrom": "resultados_ejecuciones_reportes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "eliminado_por_usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "resultados_ejecuciones_reportes_estado_check": {
+          "name": "resultados_ejecuciones_reportes_estado_check",
+          "value": "\"resultados_ejecuciones_reportes\".\"estado\" IN ('pendiente', 'disponible', 'sin_archivos', 'eliminado', 'error_parcial')"
+        },
+        "resultados_ejecuciones_reportes_metricas_check": {
+          "name": "resultados_ejecuciones_reportes_metricas_check",
+          "value": "\"resultados_ejecuciones_reportes\".\"tamano_almacenado_bytes\" IS NULL OR \"resultados_ejecuciones_reportes\".\"tamano_almacenado_bytes\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.sesiones_usuario": {
+      "name": "sesiones_usuario",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "identidad_qlik_id": {
+          "name": "identidad_qlik_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_qlik_activo_id": {
+          "name": "tenant_qlik_activo_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_sesion_hash": {
+          "name": "token_sesion_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip_creacion": {
+          "name": "ip_creacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agente_usuario": {
+          "name": "agente_usuario",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expira_en": {
+          "name": "expira_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revocada_en": {
+          "name": "revocada_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_sesiones_usuario_usuario": {
+          "name": "idx_sesiones_usuario_usuario",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_sesiones_usuario_expira": {
+          "name": "idx_sesiones_usuario_expira",
+          "columns": [
+            {
+              "expression": "expira_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sesiones_usuario_usuario_id_usuarios_id_fk": {
+          "name": "sesiones_usuario_usuario_id_usuarios_id_fk",
+          "tableFrom": "sesiones_usuario",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sesiones_usuario_identidad_qlik_id_identidades_qlik_id_fk": {
+          "name": "sesiones_usuario_identidad_qlik_id_identidades_qlik_id_fk",
+          "tableFrom": "sesiones_usuario",
+          "tableTo": "identidades_qlik",
+          "columnsFrom": [
+            "identidad_qlik_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "sesiones_usuario_tenant_qlik_activo_id_tenants_qlik_id_fk": {
+          "name": "sesiones_usuario_tenant_qlik_activo_id_tenants_qlik_id_fk",
+          "tableFrom": "sesiones_usuario",
+          "tableTo": "tenants_qlik",
+          "columnsFrom": [
+            "tenant_qlik_activo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sesiones_usuario_token_sesion_hash_unique": {
+          "name": "sesiones_usuario_token_sesion_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_sesion_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.solicitudes_idempotentes": {
+      "name": "solicitudes_idempotentes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "alcance": {
+          "name": "alcance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clave": {
+          "name": "clave",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hash_solicitud": {
+          "name": "hash_solicitud",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'procesando'"
+        },
+        "estado_http": {
+          "name": "estado_http",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "respuesta": {
+          "name": "respuesta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expira_en": {
+          "name": "expira_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_solicitudes_idempotentes_expira": {
+          "name": "idx_solicitudes_idempotentes_expira",
+          "columns": [
+            {
+              "expression": "expira_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "solicitudes_idempotentes_organizacion_id_organizaciones_id_fk": {
+          "name": "solicitudes_idempotentes_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "solicitudes_idempotentes",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "solicitudes_idempotentes_unique": {
+          "name": "solicitudes_idempotentes_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "organizacion_id",
+            "alcance",
+            "clave"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "solicitudes_idempotentes_estado_check": {
+          "name": "solicitudes_idempotentes_estado_check",
+          "value": "\"solicitudes_idempotentes\".\"estado\" IN ('procesando', 'completada', 'fallida')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tenants_qlik": {
+      "name": "tenants_qlik",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "organizacion_id": {
+          "name": "organizacion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tenant_id_qlik": {
+          "name": "tenant_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "host": {
+          "name": "host",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "es_principal": {
+          "name": "es_principal",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "automatizacion_base_id_qlik": {
+          "name": "automatizacion_base_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "automatizacion_base_nombre": {
+          "name": "automatizacion_base_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dataflow_base_id_qlik": {
+          "name": "dataflow_base_id_qlik",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dataflow_base_nombre": {
+          "name": "dataflow_base_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dataflow_plantillas": {
+          "name": "dataflow_plantillas",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "uq_tenant_principal_por_organizacion": {
+          "name": "uq_tenant_principal_por_organizacion",
+          "columns": [
+            {
+              "expression": "organizacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"tenants_qlik\".\"es_principal\" = true",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tenants_qlik_organizacion_id_organizaciones_id_fk": {
+          "name": "tenants_qlik_organizacion_id_organizaciones_id_fk",
+          "tableFrom": "tenants_qlik",
+          "tableTo": "organizaciones",
+          "columnsFrom": [
+            "organizacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tenants_tenant_id_unique": {
+          "name": "tenants_tenant_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id_qlik"
+          ]
+        },
+        "tenants_host_unique": {
+          "name": "tenants_host_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "host"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tenants_estado_check": {
+          "name": "tenants_estado_check",
+          "value": "\"tenants_qlik\".\"estado\" IN ('activo', 'desconectado', 'suspendido')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.usuarios": {
+      "name": "usuarios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "es_superadmin": {
+          "name": "es_superadmin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ultimo_acceso_en": {
+          "name": "ultimo_acceso_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "usuarios_estado_check": {
+          "name": "usuarios_estado_check",
+          "value": "\"usuarios\".\"estado\" IN ('activo', 'suspendido')"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

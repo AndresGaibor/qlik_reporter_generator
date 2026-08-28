@@ -110,7 +110,7 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(
     client.getQueryData(["ejecuciones-reporte", "tenant-1", "df-1"]),
   ).toBeDefined();
-  expect(container?.textContent).toContain("Detalles técnicos");
+  expect(container?.textContent).toContain("Evidencia técnica");
   expect(container?.textContent).not.toContain("Diseño y validación");
   expect(container?.textContent).not.toContain("Dataflow de Qlik ·");
   expect(container?.textContent).not.toContain("Clonar");
@@ -153,9 +153,7 @@ test("abre Resumen por defecto cuando el hash es desconocido", async () => {
       </QueryClientProvider>,
     ),
   );
-  await vi.waitFor(() =>
-    expect(container?.textContent).toContain("Resumen"),
-  );
+  await vi.waitFor(() => expect(container?.textContent).toContain("Resumen"));
   expect(container?.textContent).not.toContain("Historial de ejecuciones");
   window.location.hash = "";
 });
@@ -175,12 +173,10 @@ test("al cambiar de pestaña actualiza el hash de la URL", async () => {
       </QueryClientProvider>,
     ),
   );
-  await vi.waitFor(() =>
-    expect(container?.textContent).toContain("Resumen"),
-  );
-  const botonHistorial = [...(container?.querySelectorAll("button") ?? [])].find(
-    (item) => item.textContent?.includes("Historial"),
-  );
+  await vi.waitFor(() => expect(container?.textContent).toContain("Resumen"));
+  const botonHistorial = [
+    ...(container?.querySelectorAll("button") ?? []),
+  ].find((item) => item.textContent?.includes("Auditoría de ejecuciones"));
   expect(botonHistorial).toBeTruthy();
   await act(async () =>
     botonHistorial?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
@@ -241,6 +237,15 @@ test("al ejecutar redirige a la carpeta de descargas devuelta por el servidor", 
   );
   await act(async () =>
     boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() =>
+    expect(container?.querySelector("dialog")).toBeTruthy(),
+  );
+  const confirmar = [
+    ...(container?.querySelector("dialog")?.querySelectorAll("button") ?? []),
+  ].find((item) => item.textContent?.trim() === "Ejecutar reporte");
+  await act(async () =>
+    confirmar?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
   );
   await vi.waitFor(() =>
     expect(navegacion.navegar).toHaveBeenCalledWith({

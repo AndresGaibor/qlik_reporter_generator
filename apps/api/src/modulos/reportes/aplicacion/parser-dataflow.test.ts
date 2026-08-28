@@ -22,6 +22,17 @@ describe("parsearDataflow", () => {
     expect(plan.operacionesNoSoportadas).toEqual([]);
   });
 
+  it("conserva proyecto, dataset y tabla cuando los identificadores vienen mezclados", () => {
+    const plan = parsearDataflow(`
+      LIB CONNECT TO [Google BigQuery:Produccion];
+      [fechas]: LOAD id;
+      SELECT id FROM \`lafavorita-182519\`.EDWH.\`DIM_FECHA\`;
+    `);
+
+    expect(plan.fuentes).toHaveLength(1);
+    expect(plan.fuentes[0]?.tabla).toBe("lafavorita-182519.EDWH.DIM_FECHA");
+  });
+
   it("representa RESIDENT y LEFT JOIN con sus tablas", async () => {
     const plan = parsearDataflow(await Bun.file(fixture).text());
     const filtroResident = plan.pasos.find(
@@ -76,17 +87,21 @@ describe("parsearDataflow", () => {
   });
 
   it("acepta num case-insensitive y compone preceding LOAD sobre RESIDENT", () => {
-    const plan = parsearDataflow(`
+    const plan = parsearDataflow(
+      `
       SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
       LIB CONNECT TO [Google BigQuery:Prod];
       [Base]: LOAD Fecha, Cantidad;
-      SELECT Fecha, Cantidad FROM ` + "`p.d.ventas`" + `;
+      SELECT Fecha, Cantidad FROM ` +
+        "`p.d.ventas`" +
+        `;
       [Fechas]: LOAD num(Month(Fecha)) AS Mes, Cantidad RESIDENT [Base];
       [Salida]: LOAD Mes, Total;
       LOAD Mes, Count(Cantidad) AS Total RESIDENT [Fechas] GROUP BY Mes;
       STORE [Salida] INTO [lib://x/out.csv] (txt);
       DROP TABLE [Salida];
-    `);
+    `,
+    );
 
     expect(plan.operacionesNoSoportadas).toEqual([]);
     expect(plan.salida.tablaLogica).toBe("Salida");

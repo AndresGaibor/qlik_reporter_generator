@@ -52,6 +52,7 @@ interface SesionReportes {
   organizacionId: string;
   usuarioId: string;
   usuarioIdQlik: string;
+  nombreUsuario?: string | null;
   correo?: string | null;
   roles?: Array<"admin" | "administrador" | "usuario">;
   esSuperadmin?: boolean;

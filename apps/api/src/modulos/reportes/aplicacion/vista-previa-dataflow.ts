@@ -18,6 +18,7 @@ export interface RespuestaVistaPrevia {
   contieneAgregaciones: boolean;
   advertencias: string[];
   esAproximacion: true;
+  origenMuestra: "referencia" | "hibrida" | "sintetica";
 }
 const FILAS_POR_FUENTE = 5;
 const MAX_FILAS_RESULTADO = 10;
@@ -45,6 +46,7 @@ export class VistaPreviaDataflow {
       fuentesReferencia,
       datosDeFuentes,
       advertencias: advertenciasFuentes,
+      contieneValoresSinteticos,
     } = await this.obtenerDatosDeFuentes(plan);
 
     const resultado = new EvaluadorPreview(plan).evaluarInline(datosDeFuentes);
@@ -70,16 +72,21 @@ export class VistaPreviaDataflow {
       contieneAgregaciones: resultado.contieneAgregaciones,
       advertencias: [...advertenciasFuentes, ...resultado.advertencias],
       esAproximacion: true,
+      origenMuestra:
+        filasReferencia === 0
+          ? "sintetica"
+          : contieneValoresSinteticos
+            ? "hibrida"
+            : "referencia",
     };
   }
 
-  private async obtenerDatosDeFuentes(
-    plan: PlanCompilacionVNext,
-  ): Promise<{
+  private async obtenerDatosDeFuentes(plan: PlanCompilacionVNext): Promise<{
     filasReferencia: number;
     fuentesReferencia: string[];
     datosDeFuentes: Record<string, { columnas: string[]; filas: string[][] }>;
     advertencias: string[];
+    contieneValoresSinteticos: boolean;
   }> {
     const datosDeFuentes: Record<
       string,
@@ -88,6 +95,7 @@ export class VistaPreviaDataflow {
     let filasReferencia = 0;
     const fuentesReferencia: string[] = [];
     const advertencias: string[] = [];
+    let contieneValoresSinteticos = false;
     const clavesJoin = this.obtenerClavesJoin(plan);
 
     for (const relacion of plan.relations) {
@@ -123,6 +131,7 @@ export class VistaPreviaDataflow {
         });
 
         if (!metadataDisponible) {
+          contieneValoresSinteticos = true;
           datosDeFuentes[relacion.id] = fallback;
           continue;
         }
@@ -136,21 +145,27 @@ export class VistaPreviaDataflow {
             filasReferencia += Math.min(FILAS_POR_FUENTE, head.filas.length);
             fuentesReferencia.push(tabla);
           }
-          datosDeFuentes[relacion.id] = this.combinarHeadConFallback(
+          const combinado = this.combinarHeadConFallback(
             head,
             fallback,
             clavesJoin,
           );
+          if (this.seNecesitaFallback(head, fallback.columnas, clavesJoin)) {
+            contieneValoresSinteticos = true;
+          }
+          datosDeFuentes[relacion.id] = combinado;
         } catch (error) {
           const detalle = error instanceof Error ? `: ${error.message}` : "";
           advertencias.push(
             `No se pudo obtener HEAD de la fuente ${tabla}${detalle}. Se usaron valores sintéticos de respaldo.`,
           );
+          contieneValoresSinteticos = true;
           datosDeFuentes[relacion.id] = fallback;
         }
         continue;
       }
 
+      contieneValoresSinteticos = true;
       datosDeFuentes[relacion.id] = generarDatosPreview({
         columnas: this.inferirColumnasRelacion(relacion),
         cantidadFilas: FILAS_POR_FUENTE,
@@ -164,6 +179,7 @@ export class VistaPreviaDataflow {
       fuentesReferencia,
       datosDeFuentes,
       advertencias,
+      contieneValoresSinteticos,
     };
   }
 
@@ -204,6 +220,24 @@ export class VistaPreviaDataflow {
         });
       }),
     };
+  }
+
+  private seNecesitaFallback(
+    head: { columnas: string[]; filas: string[][] },
+    columnasSalida: string[],
+    clavesJoin: string[],
+  ): boolean {
+    if (clavesJoin.length > 0 || head.filas.length === 0) return true;
+    const indices = new Map(
+      head.columnas.map((columna, indice) => [
+        this.normalizarNombreCampo(columna),
+        indice,
+      ]),
+    );
+    return columnasSalida.some((columna) => {
+      const indice = indices.get(this.normalizarNombreCampo(columna));
+      return indice === undefined || !head.filas[0]?.[indice]?.trim();
+    });
   }
 
   private normalizarNombreCampo(nombre: string): string {

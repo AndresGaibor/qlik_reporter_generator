@@ -66,6 +66,7 @@ describe("VistaPreviaDataflow", () => {
     expect(resultado.esAproximacion).toBe(true);
     expect(resultado.filasReferencia).toBe(1);
     expect(resultado.fuentesReferencia).toEqual(["proyecto.dataset.fuente1"]);
+    expect(resultado.origenMuestra).toBe("referencia");
   });
 
   it("devuelve máximo 10 filas", async () => {
@@ -173,8 +174,11 @@ describe("VistaPreviaDataflow", () => {
   });
 
   it("usa fallback sintético cuando HEAD está vacío", async () => {
-    (mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }).obtenerFilasPreview =
-      vi.fn().mockResolvedValue({ columnas: ["nombre", "edad"], filas: [] });
+    (
+      mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }
+    ).obtenerFilasPreview = vi
+      .fn()
+      .mockResolvedValue({ columnas: ["nombre", "edad"], filas: [] });
 
     const resultado = await new VistaPreviaDataflow(mockQlik, mockBq).ejecutar(
       "flujo-1",
@@ -186,8 +190,11 @@ describe("VistaPreviaDataflow", () => {
   });
 
   it("usa fallback sintético cuando HEAD falla", async () => {
-    (mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }).obtenerFilasPreview =
-      vi.fn().mockRejectedValue(new Error("HEAD no disponible"));
+    (
+      mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }
+    ).obtenerFilasPreview = vi
+      .fn()
+      .mockRejectedValue(new Error("HEAD no disponible"));
 
     const resultado = await new VistaPreviaDataflow(mockQlik, mockBq).ejecutar(
       "flujo-1",
@@ -199,11 +206,12 @@ describe("VistaPreviaDataflow", () => {
   });
 
   it("rellena columnas ausentes o vacías del HEAD con valores sintéticos", async () => {
-    (mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }).obtenerFilasPreview =
-      vi.fn().mockResolvedValue({
-        columnas: ["nombre"],
-        filas: [["PROVEEDOR REAL"]],
-      });
+    (
+      mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }
+    ).obtenerFilasPreview = vi.fn().mockResolvedValue({
+      columnas: ["nombre"],
+      filas: [["PROVEEDOR REAL"]],
+    });
 
     const resultado = await new VistaPreviaDataflow(mockQlik, mockBq).ejecutar(
       "flujo-1",
@@ -232,7 +240,9 @@ describe("VistaPreviaDataflow", () => {
           { nombre: "ventas", tipo: "NUMERIC", modo: "NULLABLE" },
         ],
       });
-    (mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }).obtenerFilasPreview = vi
+    (
+      mockBq as unknown as { obtenerFilasPreview: ReturnType<typeof vi.fn> }
+    ).obtenerFilasPreview = vi
       .fn()
       .mockResolvedValueOnce({
         columnas: ["id", "nombre"],

@@ -128,5 +128,34 @@ describe("contratos de descargas", () => {
       });
       expect(resultado.success).toBe(true);
     });
+
+    it("acepta un resultado semántico con filas grandes y tamaño como string", () => {
+      const resultado = esquemaResumenDescargaEjecucion.safeParse({
+        ...descargaBaseValida,
+        filasExportadas: "2458729",
+        fuenteFilasExportadas: "pipeline",
+        resultado: {
+          estado: "disponible",
+          filasExportadas: "2458729",
+          fuenteFilasExportadas: "pipeline",
+          partesDescarga: 3,
+          tamanoBytes: "56900000",
+        },
+      });
+      expect(resultado.success).toBe(true);
+    });
+
+    it("distingue filas no disponibles de cero filas", () => {
+      const sinDato = esquemaResumenDescargaEjecucion.safeParse({
+        ...descargaBaseValida,
+        filasExportadas: null,
+      });
+      const cero = esquemaResumenDescargaEjecucion.safeParse({
+        ...descargaBaseValida,
+        filasExportadas: "0",
+      });
+      expect(sinDato.success).toBe(true);
+      expect(cero.success).toBe(true);
+    });
   });
 });

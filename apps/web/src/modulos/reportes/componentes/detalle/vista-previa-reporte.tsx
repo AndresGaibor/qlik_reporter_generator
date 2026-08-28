@@ -7,6 +7,7 @@ interface VistaPreviaReporteProps {
     contieneAgregaciones: boolean;
     advertencias: string[];
     esAproximacion: true;
+    origenMuestra?: "referencia" | "hibrida" | "sintetica";
   } | null;
   cargando: boolean;
   error: unknown;
@@ -57,24 +58,28 @@ export function VistaPreviaReporte({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-ink-900">
-            Vista previa del resultado
+            Muestra orientativa del formato
           </h3>
           <p className="text-xs text-ink-500">
-            {Math.min(10, datos.filas.length)} filas de vista previa · resultado aproximado
+            {Math.min(10, datos.filas.length)} filas de muestra
           </p>
         </div>
-        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-          Vista previa · datos de referencia
+        <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+          {etiquetaOrigen(datos.origenMuestra ?? "hibrida")}
         </span>
       </div>
 
       <p className="text-xs text-ink-500">
-        La vista previa combina valores de referencia de las fuentes con transformaciones simuladas. No representa el resultado completo del reporte.
+        Esta muestra permite revisar la estructura esperada del archivo. Puede
+        contener valores de referencia y valores generados para representar
+        transformaciones. No debe utilizarse para validar cifras, totales ni
+        registros individuales.
       </p>
 
       {datos.contieneAgregaciones && (
         <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          Los cálculos mostrados son simulados localmente sobre los datos disponibles y solo ilustran la forma del resultado final.
+          Los cálculos mostrados son simulados localmente sobre los datos
+          disponibles y solo ilustran la forma del resultado final.
         </div>
       )}
 
@@ -123,8 +128,17 @@ export function VistaPreviaReporte({
       </div>
 
       <p className="text-xs text-ink-400">
-        {datos.columnas.length} columnas · representación aproximada generada localmente
+        {datos.columnas.length} columnas · representación aproximada generada
+        localmente
       </p>
     </div>
   );
+}
+
+function etiquetaOrigen(
+  origen: "referencia" | "hibrida" | "sintetica",
+): string {
+  if (origen === "referencia") return "Datos de referencia";
+  if (origen === "hibrida") return "Referencia + valores generados";
+  return "Ejemplo generado";
 }

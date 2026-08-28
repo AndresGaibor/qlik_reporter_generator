@@ -32,6 +32,16 @@ export const esquemaResumenReporteDataflow = z.object({
       dataset: z.string().optional(),
     })
     .optional(),
+  fuentes: z
+    .array(
+      z.object({
+        nombre: z.string(),
+        tabla: z.string(),
+        dataset: z.string().optional(),
+        principal: z.boolean(),
+      }),
+    )
+    .optional(),
   tablaDestino: z.string().optional(),
   campos: z.array(esquemaCampoResumenDataflow),
   filtros: z.array(esquemaFiltroResumenDataflow),

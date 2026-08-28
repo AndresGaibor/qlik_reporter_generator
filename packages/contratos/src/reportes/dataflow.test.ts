@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  esquemaCostoBigQueryEjecucion,
   esquemaDetalleEjecucionReporte,
   esquemaResumenReporte,
 } from "./dataflow.js";
@@ -57,6 +58,42 @@ describe("contratos de reportes Dataflow", () => {
         reporteId: crypto.randomUUID(),
       }).success,
     ).toBe(false);
+  });
+
+  describe("snapshots semánticos de ejecución", () => {
+    it("acepta cero filas y conserva null como dato no disponible", () => {
+      const cero = esquemaDetalleEjecucionReporte.safeParse({
+        ...baseEjecucionValida,
+        filasExportadas: "0",
+        costo: {
+          tarifaUsdPorTiBAplicada: "6.25000000",
+          costoBigQueryUsd: "0.000000000000",
+          moneda: "USD",
+          versionFormula: 1,
+        },
+        resultado: {
+          estado: "sin_archivos",
+          partesDescarga: 0,
+          tamanoBytes: null,
+        },
+      });
+      expect(cero.success).toBe(true);
+      expect(esquemaCostoBigQueryEjecucion.parse({
+        tarifaUsdPorTiBAplicada: null,
+        costoBigQueryUsd: null,
+        moneda: null,
+        versionFormula: null,
+      }).costoBigQueryUsd).toBeNull();
+    });
+
+    it("rechaza moneda distinta de USD y métricas numéricas", () => {
+      expect(esquemaCostoBigQueryEjecucion.safeParse({
+        tarifaUsdPorTiBAplicada: 6.25,
+        costoBigQueryUsd: "1.00",
+        moneda: "EUR",
+        versionFormula: 1,
+      }).success).toBe(false);
+    });
   });
 
   describe("campos de trazabilidad BigQuery", () => {

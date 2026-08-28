@@ -1,10 +1,12 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -271,6 +273,9 @@ export const ejecucionesReportes = pgTable(
       () => usuarios.id,
       { onDelete: "set null" },
     ),
+    ejecutadoPorNombre: text("ejecutado_por_nombre"),
+    ejecutadoPorCorreo: text("ejecutado_por_correo"),
+    origenEjecucion: text("origen_ejecucion"),
     automatizacionPersonalId: uuid("automatizacion_personal_id").references(
       () => automatizacionesPersonalesQlik.id,
       { onDelete: "set null" },
@@ -296,6 +301,20 @@ export const ejecucionesReportes = pgTable(
     bigqueryIniciadoEn: timestamp("bigquery_iniciado_en"),
     bigqueryFinalizadoEn: timestamp("bigquery_finalizado_en"),
     gcsFinalizadoEn: timestamp("gcs_finalizado_en"),
+    filasExportadas: bigint("filas_exportadas", { mode: "bigint" }),
+    fuenteFilasExportadas: text("fuente_filas_exportadas"),
+    totalBytesProcessed: bigint("total_bytes_processed", { mode: "bigint" }),
+    totalBytesBilled: bigint("total_bytes_billed", { mode: "bigint" }),
+    totalSlotMs: bigint("total_slot_ms", { mode: "bigint" }),
+    duracionBigQueryMs: bigint("duracion_bigquery_ms", { mode: "bigint" }),
+    tarifaConsultaUsdPorTibAplicada: numeric(
+      "tarifa_consulta_usd_por_tib_aplicada",
+      { precision: 20, scale: 8 },
+    ),
+    costoBigqueryUsd: numeric("costo_bigquery_usd", { precision: 30, scale: 12 }),
+    monedaCosto: text("moneda_costo"),
+    versionFormulaCosto: integer("version_formula_costo"),
+    metricasCalculadasEn: timestamp("metricas_calculadas_en"),
     iniciadoEn: timestamp("iniciado_en"),
     finalizadoEn: timestamp("finalizado_en"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
@@ -313,6 +332,57 @@ export const ejecucionesReportes = pgTable(
     ckEstado: check(
       "ejecuciones_reportes_estado_check",
       sql`${t.estado} IN ('preparando', 'iniciada', 'completada', 'error', 'detenida')`,
+    ),
+    ckFuenteFilasExportadas: check(
+      "ejecuciones_reportes_fuente_filas_check",
+      sql`${t.fuenteFilasExportadas} IS NULL OR ${t.fuenteFilasExportadas} IN ('pipeline', 'procesamiento_resultado', 'legacy')`,
+    ),
+    ckMetricasNoNegativas: check(
+      "ejecuciones_reportes_metricas_check",
+      sql`${t.filasExportadas} IS NULL OR ${t.filasExportadas} >= 0`,
+    ),
+    ckMonedaCosto: check(
+      "ejecuciones_reportes_moneda_costo_check",
+      sql`${t.monedaCosto} IS NULL OR ${t.monedaCosto} = 'USD'`,
+    ),
+    ckVersionFormulaCosto: check(
+      "ejecuciones_reportes_version_formula_costo_check",
+      sql`${t.versionFormulaCosto} IS NULL OR ${t.versionFormulaCosto} >= 1`,
+    ),
+  }),
+);
+
+export const resultadosEjecucionesReportes = pgTable(
+  "resultados_ejecuciones_reportes",
+  {
+    ejecucionReporteId: uuid("ejecucion_reporte_id")
+      .primaryKey()
+      .references(() => ejecucionesReportes.id, { onDelete: "cascade" }),
+    estado: text("estado").notNull().default("pendiente"),
+    tamanoAlmacenadoBytes: bigint("tamano_almacenado_bytes", { mode: "bigint" }),
+    objetosFuente: bigint("objetos_fuente", { mode: "bigint" }),
+    partesDescarga: integer("partes_descarga"),
+    maximoFilasPorArchivoAplicado: bigint(
+      "maximo_filas_por_archivo_aplicado",
+      { mode: "bigint" },
+    ),
+    disponibleEn: timestamp("disponible_en"),
+    eliminadoEn: timestamp("eliminado_en"),
+    eliminadoPorUsuarioId: uuid("eliminado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    motivoEliminacion: text("motivo_eliminacion"),
+    actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    ckEstado: check(
+      "resultados_ejecuciones_reportes_estado_check",
+      sql`${t.estado} IN ('pendiente', 'disponible', 'sin_archivos', 'eliminado', 'error_parcial')`,
+    ),
+    ckMetricasNoNegativas: check(
+      "resultados_ejecuciones_reportes_metricas_check",
+      sql`${t.tamanoAlmacenadoBytes} IS NULL OR ${t.tamanoAlmacenadoBytes} >= 0`,
     ),
   }),
 );

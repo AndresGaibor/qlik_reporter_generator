@@ -14,6 +14,7 @@ export type EstadoEjecucionReporte = z.infer<
 export const esquemaResumenDataflowReporte = z.object({
   fuentes: z.number().int().nonnegative(),
   filtros: z.number().int().nonnegative(),
+  condicionesFiltro: z.number().int().nonnegative().optional(),
   joins: z.number().int().nonnegative(),
   camposSalida: z.number().int().nonnegative(),
 });
@@ -57,6 +58,29 @@ export const esquemaMetricasEjecucion = z.object({
   totalBytesBilled: z.string().nullable(),
   totalSlotMs: z.string().nullable(),
 });
+export type FuenteFilasExportadasReporte =
+  | "pipeline"
+  | "procesamiento_resultado"
+  | "legacy";
+
+export const esquemaCostoBigQueryEjecucion = z.object({
+  tarifaUsdPorTiBAplicada: z.string().regex(/^\d+(\.\d+)?$/).nullable(),
+  costoBigQueryUsd: z.string().regex(/^\d+(\.\d+)?$/).nullable(),
+  moneda: z.literal("USD").nullable(),
+  versionFormula: z.number().int().positive().nullable(),
+});
+
+export const esquemaResultadoReporteEjecucion = z.object({
+  estado: z.enum([
+    "pendiente",
+    "disponible",
+    "sin_archivos",
+    "eliminado",
+    "error_parcial",
+  ]),
+  partesDescarga: z.number().int().nonnegative().nullable(),
+  tamanoBytes: z.string().regex(/^\d+$/).nullable(),
+});
 export type MetricasEjecucion = z.infer<typeof esquemaMetricasEjecucion>;
 
 export const esquemaDetalleEjecucionReporte = z
@@ -70,6 +94,12 @@ export const esquemaDetalleEjecucionReporte = z
     automatizacionIdQlik: z.string(),
     runIdQlik: z.string().nullable(),
     ejecutadoPorUsuarioId: z.string().uuid().nullable(),
+    ejecutadoPorNombre: z.string().nullable().optional(),
+    ejecutadoPorCorreo: z.string().nullable().optional(),
+    origenEjecucion: z
+      .enum(["manual", "programada", "api", "legacy"])
+      .nullable()
+      .optional(),
     automatizacionPersonalId: z.string().uuid().nullable(),
     hashDataflowSha256: z.string().regex(/^[a-f0-9]{64}$/),
     scriptDataflow: z.string(),
@@ -80,6 +110,13 @@ export const esquemaDetalleEjecucionReporte = z
     versionCompilador: z.number().int().positive(),
     etapaError: z.string().nullable(),
     mensajeError: z.string().nullable(),
+    filasExportadas: z.string().regex(/^\d+$/).nullable().optional(),
+    fuenteFilasExportadas: z
+      .enum(["pipeline", "procesamiento_resultado", "legacy"])
+      .nullable()
+      .optional(),
+    costo: esquemaCostoBigQueryEjecucion.nullable().optional(),
+    resultado: esquemaResultadoReporteEjecucion.nullable().optional(),
     iniciadoEn: z.string().datetime().nullable(),
     finalizadoEn: z.string().datetime().nullable(),
     creadoEn: z.string().datetime(),
@@ -120,6 +157,13 @@ export const esquemaCompartirReporte = z.object({
 });
 export type CompartirReporte = z.infer<typeof esquemaCompartirReporte>;
 
+export const esquemaOrigenMuestra = z.enum([
+  "referencia",
+  "hibrida",
+  "sintetica",
+]);
+export type OrigenMuestra = z.infer<typeof esquemaOrigenMuestra>;
+
 export const esquemaVistaPreviaReporte = z.object({
   columnas: z.array(z.string()),
   filas: z.array(z.array(z.string())),
@@ -128,5 +172,6 @@ export const esquemaVistaPreviaReporte = z.object({
   contieneAgregaciones: z.boolean(),
   advertencias: z.array(z.string()),
   esAproximacion: z.literal(true),
+  origenMuestra: esquemaOrigenMuestra,
 });
 export type VistaPreviaReporte = z.infer<typeof esquemaVistaPreviaReporte>;

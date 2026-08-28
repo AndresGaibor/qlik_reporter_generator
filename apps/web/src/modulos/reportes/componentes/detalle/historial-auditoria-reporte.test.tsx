@@ -1,7 +1,13 @@
 import type { DetalleEjecucionReporte } from "@qlik/contratos";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
+
+const navegar = vi.fn();
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => navegar,
+}));
+
 import { HistorialAuditoriaReporte } from "./historial-auditoria-reporte";
 
 const ejecucionBase: DetalleEjecucionReporte = {
@@ -42,6 +48,7 @@ afterEach(() => {
 function montar(
   mostrarDetallesTecnicos: boolean,
   ejecucion: DetalleEjecucionReporte = ejecucionBase,
+  reporteId?: string,
 ) {
   container = document.createElement("div");
   document.body.append(container);
@@ -51,6 +58,7 @@ function montar(
       <HistorialAuditoriaReporte
         ejecuciones={[ejecucion]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
+        reporteId={reporteId}
       />,
     );
   });
@@ -66,6 +74,21 @@ test("oculta la auditoría técnica y la huella SHA al usuario final sin ocultar
   expect(vista.textContent).not.toContain("Ver auditoría técnica");
   expect(vista.textContent).not.toContain("Script Dataflow utilizado");
   expect(vista.textContent).toContain("Tiempo transcurrido: 1 min 30 s");
+});
+
+test("Ver archivos abre el reporte y la ejecución seleccionada", () => {
+  navegar.mockClear();
+  const vista = montar(false, ejecucionBase, "reporte-25");
+  const boton = [...vista.querySelectorAll("button")].find((item) =>
+    item.textContent?.includes("Ver archivos"),
+  );
+
+  expect(boton).toBeTruthy();
+  act(() => boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+  expect(navegar).toHaveBeenCalledWith({
+    to: "/descargas",
+    search: { reporte: "reporte-25", ejecucion: "e-1" },
+  });
 });
 
 test("muestra el Job ID de BigQuery en el historial normal con acción de copia", () => {

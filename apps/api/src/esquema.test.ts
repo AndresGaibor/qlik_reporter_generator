@@ -11,6 +11,7 @@ import {
   credencialesQlik,
   ejecucionesReportes,
   identidadesQlik,
+  resultadosEjecucionesReportes,
   jobsBigQueryEjecucion,
   membresiasOrganizacion,
   organizaciones,
@@ -214,7 +215,7 @@ describe("Esquema Drizzle", () => {
     const migraciones = readMigrationFiles({
       migrationsFolder: fileURLToPath(new URL("../drizzle/", import.meta.url)),
     });
-    expect(migraciones).toHaveLength(11);
+    expect(migraciones).toHaveLength(13);
     const journal = JSON.parse(
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
@@ -230,8 +231,10 @@ describe("Esquema Drizzle", () => {
       "0006_persistir_ejecuciones_dataflow",
       "0007_trazabilidad_bigquery_jobs",
       "0008_optimal_prism",
-      "0009_compartir_descargas",
-      "0010_compartir_reportes",
+      "0009_perpetual_deathstrike",
+      "0010_young_thaddeus_ross",
+      "0011_compartir_descargas",
+      "0012_compartir_reportes"
     ]);
   });
 
@@ -242,6 +245,9 @@ describe("Esquema Drizzle", () => {
       "organizacion_id",
       "tenant_qlik_id",
       "ejecutado_por_usuario_id",
+      "ejecutado_por_nombre",
+      "ejecutado_por_correo",
+      "origen_ejecucion",
       "automatizacion_personal_id",
       "flujo_id_qlik",
       "flujo_nombre_snapshot",
@@ -264,6 +270,17 @@ describe("Esquema Drizzle", () => {
       "bigquery_iniciado_en",
       "bigquery_finalizado_en",
       "gcs_finalizado_en",
+      "filas_exportadas",
+      "fuente_filas_exportadas",
+      "total_bytes_processed",
+      "total_bytes_billed",
+      "total_slot_ms",
+      "duracion_bigquery_ms",
+      "tarifa_consulta_usd_por_tib_aplicada",
+      "costo_bigquery_usd",
+      "moneda_costo",
+      "version_formula_costo",
+      "metricas_calculadas_en",
       "iniciado_en",
       "finalizado_en",
       "creado_en",
@@ -271,6 +288,30 @@ describe("Esquema Drizzle", () => {
     ]);
     expect(cols).not.toContain("configuracion_id");
     expect(cols).not.toContain("tipo_ejecucion");
+  });
+
+  it("resultadosEjecucionesReportes conserva el snapshot semántico del resultado", () => {
+    const config = getTableConfig(resultadosEjecucionesReportes);
+    expect(colNames(config)).toEqual([
+      "ejecucion_reporte_id",
+      "estado",
+      "tamano_almacenado_bytes",
+      "objetos_fuente",
+      "partes_descarga",
+      "maximo_filas_por_archivo_aplicado",
+      "disponible_en",
+      "eliminado_en",
+      "eliminado_por_usuario_id",
+      "motivo_eliminacion",
+      "actualizado_en",
+    ]);
+    const checks = config.checks as unknown as Array<{ name: string }>;
+    expect(checks.map(({ name }) => name)).toEqual(
+      expect.arrayContaining([
+        "resultados_ejecuciones_reportes_estado_check",
+        "resultados_ejecuciones_reportes_metricas_check",
+      ]),
+    );
   });
 
   it("auditoriaEventos tiene columnas de auditoria", () => {

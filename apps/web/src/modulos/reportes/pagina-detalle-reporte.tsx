@@ -7,7 +7,6 @@ import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { PestanaMetadataFlujo } from "@/modulos/flujos/componentes/detalle/pestana-metadata-flujo";
-import { PestanaScriptFlujo } from "@/modulos/flujos/componentes/detalle/pestana-script-flujo";
 import {
   ejecutarReporte,
   obtenerEjecucionesReporte,
@@ -17,11 +16,12 @@ import {
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
-import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
+import { ResumenAuditableReporte } from "@/modulos/reportes/componentes/detalle/resumen-auditable-reporte";
 import { VistaPreviaReporte } from "@/modulos/reportes/componentes/detalle/vista-previa-reporte";
+import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Pestana = "resumen" | "tecnico" | "historial";
 
@@ -43,6 +43,18 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const navegar = useNavigate();
   const [pestana, setPestana] = useState<Pestana>(leerHashPestana);
   const [mostrarPreview, setMostrarPreview] = useState(false);
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
+  const referenciasTabs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    if (!mostrarConfirmacion) return;
+    const cerrarConEscape = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") setMostrarConfirmacion(false);
+    };
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => window.removeEventListener("keydown", cerrarConEscape);
+  }, [mostrarConfirmacion]);
 
   useEffect(() => {
     function onHashChange() {
@@ -120,6 +132,21 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const urlQlik = tenantActivo?.host
     ? construirUrlVerFlujoQlik(tenantActivo.host, id, dataflow.espacioId ?? "")
     : null;
+  const sincronizar = async () => {
+    setSincronizando(true);
+    try {
+      await Promise.all([
+        reporte.refetch(),
+        resumen.refetch(),
+        preflight.refetch(),
+        ejecuciones.refetch(),
+        ...(mostrarPreview ? [preview.refetch()] : []),
+      ]);
+      mostrarExito("Reporte sincronizado con Qlik");
+    } finally {
+      setSincronizando(false);
+    }
+  };
   const flujo = {
     id,
     nombre: dataflow.nombre,
@@ -140,9 +167,17 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
 
       <PageHeader
         title={dataflow.nombre}
-        description={`Espacio: ${dataflow.espacioNombre ?? "Personal"}`}
+        description={`Espacio: ${dataflow.espacioNombre ?? "Personal"}${procesando ? " · ⟳ Reporte en procesamiento" : ejecucionesActuales[0] ? ` · Última ejecución: ${formatearFechaCorta(ejecucionesActuales[0].creadoEn)} · ${ejecucionesActuales[0].estado === "completada" ? "Completada" : ejecucionesActuales[0].estado}` : ""}`}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={sincronizando}
+              onClick={() => void sincronizar()}
+            >
+              {sincronizando ? "Sincronizando…" : "Sincronizar con Qlik"}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -165,7 +200,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             <Button
               size="sm"
               disabled={ejecutar.isPending || procesando}
-              onClick={() => ejecutar.mutate()}
+              onClick={() => setMostrarConfirmacion(true)}
             >
               <Icon name="play" size="sm" />
               {procesando
@@ -178,17 +213,48 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         }
       />
 
-      <div className="flex w-fit gap-1 border-b border-line-200 text-sm">
+      <div
+        role="tablist"
+        aria-label="Secciones del reporte"
+        className="flex w-fit gap-1 border-b border-line-200 text-sm"
+      >
         {(
           [
             ["resumen", "Resumen"],
-            ["tecnico", "Detalles técnicos"],
-            ["historial", "Historial"],
+            ["historial", "Auditoría de ejecuciones"],
+            ["tecnico", "Evidencia técnica"],
           ] as const
-        ).map(([key, label]) => (
+        ).map(([key, label], indice) => (
           <button
             key={key}
+            ref={(element) => {
+              referenciasTabs.current[indice] = element;
+            }}
+            id={`tab-${key}`}
+            role="tab"
+            aria-selected={pestana === key}
+            aria-controls={`panel-${key}`}
+            tabIndex={pestana === key ? 0 : -1}
             type="button"
+            onKeyDown={(evento) => {
+              if (
+                !["ArrowRight", "ArrowLeft", "Home", "End"].includes(evento.key)
+              )
+                return;
+              evento.preventDefault();
+              const siguiente =
+                evento.key === "Home"
+                  ? 0
+                  : evento.key === "End"
+                    ? 2
+                    : (indice + (evento.key === "ArrowRight" ? 1 : -1) + 3) % 3;
+              const siguienteKey = (
+                ["resumen", "historial", "tecnico"] as const
+              )[siguiente];
+              setPestana(siguienteKey);
+              window.location.hash = siguienteKey;
+              referenciasTabs.current[siguiente]?.focus();
+            }}
             onClick={() => {
               setPestana(key);
               window.location.hash = key;
@@ -217,11 +283,15 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
       )}
 
       {pestana === "resumen" && (
-        <div className="space-y-5">
-          <PestanaScriptFlujo
+        <div
+          id="panel-resumen"
+          role="tabpanel"
+          aria-labelledby="tab-resumen"
+          className="space-y-5"
+        >
+          <ResumenAuditableReporte
             resumen={resumen.data}
             cargando={resumen.isLoading}
-            actualizando={resumen.isFetching}
             error={resumen.error}
             onActualizar={() => void resumen.refetch()}
           />
@@ -263,11 +333,19 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
       )}
 
       {pestana === "tecnico" && (
-        <div className="space-y-5">
+        <div
+          id="panel-tecnico"
+          role="tabpanel"
+          aria-labelledby="tab-tecnico"
+          className="space-y-5"
+        >
+          <section className="rounded-lg border border-line-200 bg-blue-50/60 p-4 text-sm text-ink-600">
+            Información de trazabilidad para soporte, auditoría avanzada y validación técnica. No es necesaria para consultar o ejecutar el reporte.
+          </section>
           <PestanaMetadataFlujo flujo={flujo} />
           <section className="rounded-lg border border-line-200 bg-surface p-5">
             <h2 className="mb-4 text-sm font-semibold text-ink-900">
-              Validación y SQL
+              Evidencia técnica
             </h2>
             <EstadoPreflight
               preflight={preflight.data}
@@ -280,11 +358,111 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
       )}
 
       {pestana === "historial" && (
-        <HistorialAuditoriaReporte
-          ejecuciones={ejecucionesActuales}
-          mostrarDetallesTecnicos={false}
-        />
+        <div
+          id="panel-historial"
+          role="tabpanel"
+          aria-labelledby="tab-historial"
+        >
+          {ejecuciones.isError ? (
+            <EstadoError
+              mensaje="No se pudo cargar la auditoría de ejecuciones. Intenta nuevamente."
+              onReintentar={() => void ejecuciones.refetch()}
+            />
+          ) : (
+            <HistorialAuditoriaReporte
+              ejecuciones={ejecucionesActuales}
+              hashConfiguracionActual={preflight.data?.hashDataflowSha256}
+              reporteId={id}
+            />
+          )}
+        </div>
+      )}
+
+      {mostrarConfirmacion && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-ink-900/40 p-4"
+          role="presentation"
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget)
+              setMostrarConfirmacion(false);
+          }}
+        >
+          <dialog
+            open
+            aria-labelledby="confirmar-ejecucion"
+            className="w-full max-w-md rounded-xl border border-line-200 bg-surface p-6 shadow-xl"
+          >
+            <h2
+              id="confirmar-ejecucion"
+              className="text-lg font-semibold text-ink-900"
+            >
+              Ejecutar {dataflow.nombre}
+            </h2>
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-ink-500">Periodo</dt>
+                <dd className="font-semibold text-ink-800">
+                  {resumen.data?.rangoTemporal?.fechaInicial ??
+                    "Según selección"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-500">Contenido</dt>
+                <dd className="font-semibold text-ink-800">
+                  {resumen.data?.campos.length ?? "—"} campos
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-500">Volumen estimado</dt>
+                <dd className="font-semibold text-ink-800">
+                  {preflight.data?.validacionBigQuery.exitosa
+                    ? `${(preflight.data.bytesProcesados / 1_000_000_000).toFixed(1)} GB`
+                    : "No disponible"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-ink-500">Costo estimado</dt>
+                <dd className="font-semibold text-ink-800">
+                  {preflight.data?.validacionBigQuery.exitosa
+                    ? `$${preflight.data.costoEstimadoUsd.toFixed(2)} USD`
+                    : "No disponible"}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-4 text-sm text-ink-600">
+              Los archivos generados se guardarán en tu carpeta privada.
+            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMostrarConfirmacion(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                disabled={ejecutar.isPending}
+                onClick={() => {
+                  setMostrarConfirmacion(false);
+                  ejecutar.mutate();
+                }}
+              >
+                {ejecutar.isPending ? "Iniciando…" : "Ejecutar reporte"}
+              </Button>
+            </div>
+          </dialog>
+        </div>
       )}
     </PageLayout>
   );
+}
+
+function formatearFechaCorta(valor: string): string {
+  const fecha = new Date(valor);
+  if (Number.isNaN(fecha.getTime())) return valor;
+  return new Intl.DateTimeFormat("es-EC", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(fecha);
 }

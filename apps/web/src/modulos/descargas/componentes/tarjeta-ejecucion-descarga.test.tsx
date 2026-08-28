@@ -82,9 +82,12 @@ test("ejecución activa informa que aún no hay archivos y no ofrece descarga", 
   expect(html).not.toContain("Descargar archivos");
 });
 
-test("ejecución completada resume archivos, tamaño total y duración", () => {
+test("ejecución completada resume archivos, tamaño total y duración real", () => {
   const html = renderizarStatic({
     ...base,
+    creadoEn: "2026-08-19T05:00:00.000Z",
+    finalizadoEn: "2026-08-19T10:01:30.000Z",
+    duracionTotalMs: 90000,
     archivos: [
       { nombre: "a.csv", formato: "CSV", tamano: 1024, fecha: null },
       { nombre: "b.csv", formato: "CSV", tamano: 2048, fecha: null },
@@ -93,6 +96,7 @@ test("ejecución completada resume archivos, tamaño total y duración", () => {
   expect(html).toContain("2 archivos");
   expect(html).toContain("3 KB");
   expect(html).toContain("1 min 30 s");
+  expect(html).not.toContain("300 min");
   expect(html).toContain("Descargar archivos");
 });
 

@@ -23,6 +23,14 @@ describe("resumirDataflowParaUsuario", () => {
       nombre: "Facturas",
       dataset: "ventas",
     });
+    expect(resumen.fuentes).toEqual([
+      {
+        nombre: "Facturas",
+        tabla: "proyecto.ventas.facturas",
+        dataset: "ventas",
+        principal: true,
+      },
+    ]);
     expect(resumen.campos).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

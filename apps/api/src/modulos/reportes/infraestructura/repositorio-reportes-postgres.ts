@@ -306,6 +306,7 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         mensajeError: ejecucionesReportes.mensajeError,
         uriBaseGcs: ejecucionesReportes.uriBaseGcs,
         creadoEn: ejecucionesReportes.creadoEn,
+        iniciadoEn: ejecucionesReportes.iniciadoEn,
         finalizadoEn: ejecucionesReportes.finalizadoEn,
         runIdQlik: ejecucionesReportes.runIdQlik,
         jobIdBigQuery: ejecucionesReportes.jobIdPrincipalBigQuery,
@@ -539,6 +540,8 @@ function mapearEjecucion(
     ...fila,
     ejecutadoPorUsuarioId: fila.ejecutadoPorUsuarioId,
     automatizacionPersonalId: fila.automatizacionPersonalId,
+    origenEjecucion: (fila.origenEjecucion ??
+      "legacy") as EjecucionReportePersistida["origenEjecucion"],
     estado: fila.estado as EjecucionReportePersistida["estado"],
   };
 }

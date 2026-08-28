@@ -19,7 +19,12 @@ const workspace = JSON.parse(
 function caso(opciones: { estimarError?: Error } = {}) {
   const qlik = {
     listarFlujos: vi.fn(async () => [
-      { id: "df-1", appId: "app-real-1", name: "Ventas Diarias", spaceId: "sp-1" },
+      {
+        id: "df-1",
+        appId: "app-real-1",
+        name: "Ventas Diarias",
+        spaceId: "sp-1",
+      },
     ]),
     obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
     obtenerAutomatizacion: vi.fn(async () => ({
@@ -99,6 +104,10 @@ describe("EjecutarReporte", () => {
         tenantQlikId: "tenant-1",
         flujoIdQlik: "df-1",
         flujoNombreSnapshot: "Ventas Diarias",
+        ejecutadoPorUsuarioId: "user-1",
+        ejecutadoPorNombre: null,
+        ejecutadoPorCorreo: "Andres.Gaibor+reportes@correo.com",
+        origenEjecucion: "manual",
         flujoEspacioIdQlik: "sp-1",
         automatizacionIdQlik: "worker-1",
         uriBaseGcs:

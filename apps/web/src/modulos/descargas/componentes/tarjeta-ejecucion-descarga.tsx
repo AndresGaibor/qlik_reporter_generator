@@ -59,10 +59,10 @@ export function TarjetaEjecucionDescarga({
     (total, archivo) => total + archivo.tamano,
     0,
   );
-  const duracion = formatearDuracion(
-    ejecucion.creadoEn,
-    ejecucion.finalizadoEn,
-  );
+  const duracion =
+    ejecucion.duracionTotalMs != null
+      ? formatearDuracionMs(ejecucion.duracionTotalMs)
+      : formatearDuracion(ejecucion.creadoEn, ejecucion.finalizadoEn);
   const disponible = presentacion.tipo === "completada" && archivos.length > 0;
   const tieneBigQuery =
     ejecucion.duracionBigQueryMs != null ||

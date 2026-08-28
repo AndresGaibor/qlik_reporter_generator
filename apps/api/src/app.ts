@@ -172,6 +172,7 @@ export async function crearAplicacion(
       return {
         tenantId: contexto.tenantQlikId,
         usuarioId: contexto.usuarioId,
+        nombreUsuario: contexto.nombreUsuario,
         correo: contexto.correo,
         organizacionId: contexto.organizacionId,
         usuarioIdQlik: contexto.usuarioIdQlik,

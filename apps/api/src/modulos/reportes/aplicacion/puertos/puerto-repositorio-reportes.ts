@@ -48,6 +48,9 @@ export interface CrearEjecucionReportePersistida {
   organizacionId: string;
   tenantQlikId: string;
   ejecutadoPorUsuarioId?: string | null;
+  ejecutadoPorNombre?: string | null;
+  ejecutadoPorCorreo?: string | null;
+  origenEjecucion?: "manual" | "programada" | "api" | "legacy" | null;
   automatizacionPersonalId?: string | null;
   flujoIdQlik: string;
   flujoNombreSnapshot: string;
@@ -69,6 +72,9 @@ export interface EjecucionReportePersistida
   extends Omit<CrearEjecucionReportePersistida, "estado"> {
   estado: EstadoEjecucionReportePersistida;
   ejecutadoPorUsuarioId?: string | null;
+  ejecutadoPorNombre?: string | null;
+  ejecutadoPorCorreo?: string | null;
+  origenEjecucion?: "manual" | "programada" | "api" | "legacy" | null;
   automatizacionPersonalId?: string | null;
   runIdQlik?: string | null;
   etapaError?: string | null;
@@ -96,6 +102,7 @@ export interface ResumenEjecucionDescarga {
   mensajeError: string | null;
   uriBaseGcs: string;
   creadoEn: Date;
+  iniciadoEn?: Date | null;
   finalizadoEn: Date | null;
   runIdQlik?: string | null;
   jobIdBigQuery?: string | null;

@@ -27,6 +27,7 @@ export function resumirDataflowParaUsuario(
       nombre: entrada.nombre,
       descripcion:
         "Qlik Cloud no pudo generar el reporte porque el diseño del Dataflow contiene errores.",
+      fuentes: [],
       campos: [],
       filtros: [],
       estado: "script_no_compatible",
@@ -52,6 +53,15 @@ export function resumirDataflowParaUsuario(
     ].map(limpiarDetalleTecnico),
   );
   const fuente = plan.fuentes[0];
+  const fuentes = plan.fuentes.map((item, indice) => {
+    const partes = item.tabla.split(".");
+    return {
+      nombre: humanizar(partes.at(-1) ?? item.tabla),
+      tabla: item.tabla,
+      ...(partes.length >= 2 ? { dataset: partes.at(-2) } : {}),
+      principal: indice === 0,
+    };
+  });
   const partesTabla = fuente?.tabla.split(".") ?? [];
   const estado =
     (entrada.erroresQlik?.length ?? 0) > 0 || !compatibilidad.compatible
@@ -73,6 +83,7 @@ export function resumirDataflowParaUsuario(
           },
         }
       : {}),
+    fuentes,
     ...(plan.salida.tablaLogica
       ? { tablaDestino: plan.salida.tablaLogica }
       : {}),
@@ -230,6 +241,7 @@ export function resumenScriptNoDisponible(
   return {
     flujoId,
     nombre,
+    fuentes: [],
     campos: [],
     filtros: [],
     estado: "script_no_disponible",

@@ -32,6 +32,33 @@ export type ArchivoResumenDescarga = z.infer<
   typeof esquemaArchivoResumenDescarga
 >;
 
+export const esquemaFuenteFilasExportadas = z.enum([
+  "pipeline",
+  "procesamiento_resultado",
+  "legacy",
+]);
+export type FuenteFilasExportadas = z.infer<typeof esquemaFuenteFilasExportadas>;
+
+export const esquemaEstadoResultadoEjecucion = z.enum([
+  "pendiente",
+  "disponible",
+  "sin_archivos",
+  "eliminado",
+  "error_parcial",
+]);
+export type EstadoResultadoEjecucion = z.infer<
+  typeof esquemaEstadoResultadoEjecucion
+>;
+
+export const esquemaResultadoEjecucion = z.object({
+  estado: esquemaEstadoResultadoEjecucion,
+  filasExportadas: z.string().regex(/^\d+$/).nullable().optional(),
+  fuenteFilasExportadas: esquemaFuenteFilasExportadas.nullable().optional(),
+  partesDescarga: z.number().int().nonnegative().nullable().optional(),
+  tamanoBytes: z.string().regex(/^\d+$/).nullable().optional(),
+});
+export type ResultadoEjecucion = z.infer<typeof esquemaResultadoEjecucion>;
+
 export const esquemaResumenDescargaEjecucion = z
   .object({
     id: z.string().uuid(),
@@ -53,6 +80,9 @@ export const esquemaResumenDescargaEjecucion = z
     totalBytesProcessed: z.string().nullable().optional(),
     totalBytesBilled: z.string().nullable().optional(),
     totalSlotMs: z.string().nullable().optional(),
+    filasExportadas: z.string().regex(/^\d+$/).nullable().optional(),
+    fuenteFilasExportadas: esquemaFuenteFilasExportadas.nullable().optional(),
+    resultado: esquemaResultadoEjecucion.nullable().optional(),
     archivosExistentes: z.boolean().nullable().optional(),
   })
   .strict();

@@ -192,8 +192,9 @@ export class ServicioDescargas implements IServicioDescargas {
         const jobPrincipal = jobs.find((j) => j.jobId === e.jobIdBigQuery);
 
         const duracionTotalMs =
-          e.finalizadoEn && e.creadoEn
-            ? e.finalizadoEn.getTime() - e.creadoEn.getTime()
+          e.finalizadoEn && (e.iniciadoEn ?? e.creadoEn)
+            ? e.finalizadoEn.getTime() -
+              (e.iniciadoEn ?? e.creadoEn).getTime()
             : null;
 
         let duracionBigQueryMs: number | null = null;

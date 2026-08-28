@@ -130,9 +130,16 @@ export async function prepararDataflowActual(
   const plan = parsearDataflow(script);
   const problemasFuentes = normalizarFuentesBigQuery(plan, alcance);
   const operacionesNoSoportadas = [...problemasFuentes];
+  const operacionesFiltro = plan.pasos.filter(
+    (paso) => paso.tipo === "filtrar",
+  );
   const resumen = {
     fuentes: plan.fuentes.length,
-    filtros: plan.pasos.filter((paso) => paso.tipo === "filtrar").length,
+    filtros: operacionesFiltro.length,
+    condicionesFiltro: operacionesFiltro.reduce(
+      (total, paso) => total + contarCondicionesFiltro(paso.condicion),
+      0,
+    ),
     joins: plan.pasos.filter((paso) => paso.tipo === "join").length,
     camposSalida: plan.salida.campos.length,
   };
@@ -188,6 +195,13 @@ export async function prepararDataflowActual(
       resumen,
     };
   }
+}
+
+function contarCondicionesFiltro(condicion: string): number {
+  return condicion
+    .split(/\s+AND\s+/i)
+    .map((parte) => parte.trim())
+    .filter(Boolean).length;
 }
 
 async function obtenerMetadataCamposBigQuery(

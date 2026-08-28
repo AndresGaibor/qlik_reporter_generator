@@ -9,27 +9,29 @@ import type {
 } from "../dominio/plan-dataflow.js";
 import { obtenerFuncionQlik } from "./compilador-vnext/registro-funciones.js";
 
-const FUNCIONES_QLIK_SOPORTADAS = new Set([
-  "Upper",
-  "Lower",
-  "Trim",
-  "Len",
-  "Year",
-  "Month",
-  "If",
-  "Num",
-  "Date",
-  "Timestamp",
-  "Sum",
-  "Count",
-  "Min",
-  "Max",
-  "Avg",
-  "IsNull",
-  "Round",
-  "Floor",
-  "Ceil",
-].map((nombre) => nombre.toLowerCase()));
+const FUNCIONES_QLIK_SOPORTADAS = new Set(
+  [
+    "Upper",
+    "Lower",
+    "Trim",
+    "Len",
+    "Year",
+    "Month",
+    "If",
+    "Num",
+    "Date",
+    "Timestamp",
+    "Sum",
+    "Count",
+    "Min",
+    "Max",
+    "Avg",
+    "IsNull",
+    "Round",
+    "Floor",
+    "Ceil",
+  ].map((nombre) => nombre.toLowerCase()),
+);
 
 interface CargaPendiente {
   etiqueta?: string;
@@ -238,7 +240,8 @@ export function parsearDataflow(script: string): PlanDataflow {
             registrarTabla(carga.etiqueta, camposPorTabla.get(ordenada) ?? []);
           salida = ordenada;
         }
-        if (cargasPendientes.length > 0) salida = aplicarCargasPendientes(salida);
+        if (cargasPendientes.length > 0)
+          salida = aplicarCargasPendientes(salida);
       } else {
         cargasPendientes.push({
           etiqueta: carga.etiqueta,
@@ -422,7 +425,7 @@ function parsearCarga(sentencia: string, noSoportadas: OperacionNoSoportada[]) {
 
 function parsearSelectSql(sentencia: string): SelectSql | undefined {
   const match = sentencia.match(
-    /^(?:SQL\s+)?SELECT\s+([\s\S]+?)\s+FROM\s+(`[^`]+`(?:\s*\.\s*`[^`]+`){0,2}|\[[^\]]+\]|(?:"[^"]+"\s*\.\s*){1,2}"[^"]+"|[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){1,2})([\s\S]*)$/i,
+    /^(?:SQL\s+)?SELECT\s+([\s\S]+?)\s+FROM\s+((?:`[^`]+`|[A-Za-z0-9_-]+)(?:\s*\.\s*(?:`[^`]+`|[A-Za-z0-9_-]+)){1,2}|`[^`]+`(?:\s*\.\s*`[^`]+`){0,2}|\[[^\]]+\]|(?:"[^"]+"\s*\.\s*){1,2}"[^"]+")([\s\S]*)$/i,
   );
   if (!match) return undefined;
   let lista = match[1]?.trim() ?? "";
@@ -493,7 +496,9 @@ function detectarFuncionesNoSoportadas(
       if (
         !FUNCIONES_QLIK_SOPORTADAS.has(funcion.toLowerCase()) &&
         registrada?.runtimeStatus !== "implemented" &&
-        !salida.some((item) => item.operacion.toLowerCase() === funcion.toLowerCase())
+        !salida.some(
+          (item) => item.operacion.toLowerCase() === funcion.toLowerCase(),
+        )
       ) {
         salida.push({
           operacion: funcion,
