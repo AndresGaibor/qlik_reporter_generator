@@ -60,6 +60,19 @@ export type ResumenDescargaEjecucion = z.infer<
   typeof esquemaResumenDescargaEjecucion
 >;
 
+export const esquemaCompartirDescarga = z.object({
+  todaOrganizacion: z.boolean(),
+  usuarios: z.array(z.string().uuid()),
+});
+export type CompartirDescarga = z.infer<typeof esquemaCompartirDescarga>;
+
+export const esquemaUsuarioCompartible = z.object({
+  id: z.string().uuid(),
+  nombre: z.string(),
+  correo: z.string().nullable(),
+});
+export type UsuarioCompartible = z.infer<typeof esquemaUsuarioCompartible>;
+
 export interface ServicioDescargas {
   crearManifiesto(
     ejecucionId: string,

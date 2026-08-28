@@ -34,10 +34,10 @@ import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
-import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
-import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteJobsBigQuery } from "./modulos/google-cloud/infraestructura/cliente-jobs-bigquery.js";
 import { ClientePreviewBigQuery } from "./modulos/google-cloud/infraestructura/cliente-preview-bigquery.js";
+import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
+import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
 import {
   type ServicioQlik,
@@ -394,6 +394,14 @@ export async function crearAplicacion(
       resolverBigQuery: resolverBigQueryReporte,
       resolverPreviewBigQuery: resolverPreviewBigQueryReporte,
       resolverSesion,
+      resolverUsuariosOrganizacion: async (organizacionId) =>
+        (await repositorioAdministracion.listarUsuarios(organizacionId)).map(
+          (usuario) => ({
+            id: usuario.id,
+            nombre: usuario.nombre,
+            correo: usuario.correo,
+          }),
+        ),
       resolverJobsBigQuery: async (c) => {
         const sesion = await resolverSesion(c);
         const google = await resolverGoogle.resolver(
@@ -417,6 +425,12 @@ export async function crearAplicacion(
           credencialesJson: google.credencialesJson,
           bucket,
         });
+      },
+      resolverMaximoFilasDescarga: async (c) => {
+        const sesion = await resolverSesion(c);
+        return (
+          await resolverGoogle.resolver(sesion.organizacionId, sesion.tenantId)
+        ).maximoFilasPorArchivo;
       },
       dependenciasClonado: {
         resolverSesion,
@@ -537,6 +551,7 @@ export async function crearAplicacion(
         (await repositorioAdministracion.listarUsuarios(organizacionId)).map(
           (usuario) => ({
             id: usuario.id,
+            nombre: usuario.nombre,
             correo: usuario.correo,
           }),
         ),

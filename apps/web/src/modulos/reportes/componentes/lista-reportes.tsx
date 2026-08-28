@@ -6,6 +6,7 @@ interface Props {
   reportes: ResumenReporte[];
   idEjecutando: string | null;
   onEjecutar: (id: string) => void;
+  onCompartir?: (reporte: ResumenReporte) => void;
   hayFiltros: boolean;
 }
 
@@ -13,6 +14,7 @@ export function ListaReportes({
   reportes,
   idEjecutando,
   onEjecutar,
+  onCompartir,
   hayFiltros,
 }: Props) {
   if (reportes.length === 0) {
@@ -53,13 +55,26 @@ export function ListaReportes({
               className="grid gap-4 px-4 py-4 transition-colors hover:bg-hover/60 sm:px-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(220px,0.85fr)_230px_240px] lg:items-center lg:gap-5"
             >
               <div className="min-w-0">
-                <a
-                  href={detalleUrl}
-                  title={reporte.nombre}
-                  className="block truncate font-display text-base font-semibold text-ink-900 hover:text-brand-700"
-                >
-                  {reporte.nombre}
-                </a>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <a
+                    href={detalleUrl}
+                    title={reporte.nombre}
+                    className="min-w-0 truncate font-display text-base font-semibold text-ink-900 hover:text-brand-700"
+                  >
+                    {reporte.nombre}
+                  </a>
+                  {reporte.compartidoConmigo && (
+                    <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                      Compartido contigo
+                    </span>
+                  )}
+                  {!reporte.compartidoConmigo &&
+                    reporte.compartidoTodaOrganizacion && (
+                      <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                        Compartido con la organización
+                      </span>
+                    )}
+                </div>
               </div>
               <p className="truncate text-sm font-medium text-ink-700">
                 {reporte.espacioNombre ?? "Personal"}
@@ -75,6 +90,14 @@ export function ListaReportes({
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCompartir?.(reporte)}
+                  className="gap-1.5 text-xs"
+                >
+                  Compartir
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"

@@ -214,7 +214,7 @@ describe("Esquema Drizzle", () => {
     const migraciones = readMigrationFiles({
       migrationsFolder: fileURLToPath(new URL("../drizzle/", import.meta.url)),
     });
-    expect(migraciones).toHaveLength(8);
+    expect(migraciones).toHaveLength(11);
     const journal = JSON.parse(
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
@@ -229,6 +229,9 @@ describe("Esquema Drizzle", () => {
       "0005_separar_reportes_workers",
       "0006_persistir_ejecuciones_dataflow",
       "0007_trazabilidad_bigquery_jobs",
+      "0008_optimal_prism",
+      "0009_compartir_descargas",
+      "0010_compartir_reportes",
     ]);
   });
 
@@ -351,7 +354,11 @@ describe("Esquema Drizzle", () => {
 
   it("jobsBigQueryEjecucion tiene métricas como TEXT para evitar pérdida de precisión > Number.MAX_SAFE_INTEGER", () => {
     const config = getTableConfig(jobsBigQueryEjecucion);
-    for (const name of ["total_bytes_processed", "total_bytes_billed", "total_slot_ms"]) {
+    for (const name of [
+      "total_bytes_processed",
+      "total_bytes_billed",
+      "total_slot_ms",
+    ]) {
       const col = config.columns.find((c) => c.name === name);
       expect(col).toBeDefined();
       const colDataType = col?.dataType as string | undefined;

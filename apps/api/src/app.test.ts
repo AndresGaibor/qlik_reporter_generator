@@ -565,7 +565,12 @@ describe("API", () => {
 
   it("usa Qlik para listado y detalle, sin catálogo local de reportes", async () => {
     const listarFlujos = vi.fn(async () => [
-      { id: "flujo-1", name: "Ventas", spaceId: "espacio-1" },
+      {
+        id: "flujo-1",
+        name: "Ventas",
+        spaceId: "espacio-1",
+        ownerId: "usuario-qlik-1",
+      },
     ]);
     const resolverQlik = vi.fn(
       async () => ({ listarFlujos, listarEspacios: async () => [] }) as never,

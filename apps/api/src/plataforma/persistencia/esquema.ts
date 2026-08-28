@@ -317,6 +317,79 @@ export const ejecucionesReportes = pgTable(
   }),
 );
 
+export const descargasCompartidas = pgTable(
+  "descargas_compartidas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ejecucionReporteId: uuid("ejecucion_reporte_id")
+      .notNull()
+      .references(() => ejecucionesReportes.id, { onDelete: "cascade" }),
+    organizacionId: uuid("organizacion_id")
+      .notNull()
+      .references(() => organizaciones.id, { onDelete: "cascade" }),
+    usuarioId: uuid("usuario_id").references(() => usuarios.id, {
+      onDelete: "cascade",
+    }),
+    alcance: text("alcance").notNull(),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    idxEjecucion: index("idx_descargas_compartidas_ejecucion").on(
+      t.ejecucionReporteId,
+    ),
+    ckAlcance: check(
+      "descargas_compartidas_alcance_check",
+      sql`${t.alcance} IN ('usuario', 'organizacion')`,
+    ),
+    ckDestinatario: check(
+      "descargas_compartidas_destinatario_check",
+      sql`(${t.alcance} = 'usuario' AND ${t.usuarioId} IS NOT NULL) OR (${t.alcance} = 'organizacion' AND ${t.usuarioId} IS NULL)`,
+    ),
+  }),
+);
+
+export const reportesCompartidos = pgTable(
+  "reportes_compartidos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizacionId: uuid("organizacion_id")
+      .notNull()
+      .references(() => organizaciones.id, { onDelete: "cascade" }),
+    tenantQlikId: uuid("tenant_qlik_id")
+      .notNull()
+      .references(() => tenantsQlik.id, { onDelete: "cascade" }),
+    flujoIdQlik: text("flujo_id_qlik").notNull(),
+    usuarioId: uuid("usuario_id").references(() => usuarios.id, {
+      onDelete: "cascade",
+    }),
+    alcance: text("alcance").notNull(),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id").references(
+      () => usuarios.id,
+      { onDelete: "set null" },
+    ),
+    creadoEn: timestamp("creado_en").notNull().defaultNow(),
+  },
+  (t) => ({
+    idxFlujo: index("idx_reportes_compartidos_flujo").on(
+      t.organizacionId,
+      t.tenantQlikId,
+      t.flujoIdQlik,
+    ),
+    ckAlcance: check(
+      "reportes_compartidos_alcance_check",
+      sql`${t.alcance} IN ('usuario', 'organizacion')`,
+    ),
+    ckDestinatario: check(
+      "reportes_compartidos_destinatario_check",
+      sql`(${t.alcance} = 'usuario' AND ${t.usuarioId} IS NOT NULL) OR (${t.alcance} = 'organizacion' AND ${t.usuarioId} IS NULL)`,
+    ),
+  }),
+);
+
 export const auditoriaEventos = pgTable(
   "auditoria_eventos",
   {

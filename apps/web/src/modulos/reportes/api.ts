@@ -1,5 +1,6 @@
 import { clienteApi } from "@/compartido/api/cliente";
 import type {
+  CompartirReporte,
   DetalleEjecucionReporte,
   DetalleReporte,
   PreflightDataflowReporte,
@@ -7,6 +8,7 @@ import type {
   VistaPreviaReporte,
 } from "@qlik/contratos";
 import type { ResumenAutomatizacion } from "@qlik/contratos/automatizaciones";
+import type { UsuarioCompartible } from "@qlik/contratos/descargas";
 import type {
   DataflowBaseDisponible,
   ResultadoClonarDataflowBase,
@@ -27,19 +29,39 @@ function idUrl(id: string) {
   return `${RUTA}/${encodeURIComponent(id)}`;
 }
 
-export function obtenerReportes(espacioId?: string, busqueda?: string) {
-  if (!espacioId && !busqueda)
+export function obtenerReportes(
+  espacioId?: string,
+  busqueda?: string,
+  vistaUsuarioFinal = false,
+) {
+  if (!espacioId && !busqueda && !vistaUsuarioFinal)
     return clienteApi.get<ResumenReporteConDescargas[]>(RUTA);
   return clienteApi.get<ResumenReporteConDescargas[]>(RUTA, {
     parametros: {
       ...(espacioId ? { espacioId } : {}),
       ...(busqueda ? { q: busqueda } : {}),
+      ...(vistaUsuarioFinal ? { vistaUsuarioFinal: true } : {}),
     },
   });
 }
 
 export function obtenerReporte(id: string) {
   return clienteApi.get<DetalleReporteConDescargas>(idUrl(id));
+}
+
+export function listarUsuariosCompartiblesReporte() {
+  return clienteApi.get<UsuarioCompartible[]>(`${RUTA}/usuarios-compartibles`);
+}
+
+export function obtenerCompartidoReporte(id: string) {
+  return clienteApi.get<CompartirReporte>(`${idUrl(id)}/compartido`);
+}
+
+export function guardarCompartidoReporte(
+  id: string,
+  entrada: CompartirReporte,
+) {
+  return clienteApi.put<CompartirReporte>(`${idUrl(id)}/compartido`, entrada);
 }
 
 export function obtenerResumenReporte(flujoId: string) {

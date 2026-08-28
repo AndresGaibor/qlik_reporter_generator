@@ -1,5 +1,6 @@
 import { useContextoVista } from "@/app/contexto-vista";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
+import { Button } from "@/compartido/componentes/ui/button";
 import { ConfirmDialog } from "@/compartido/componentes/ui/confirm-dialog";
 import { Icon } from "@/compartido/componentes/ui/icon";
 import { PageHeader } from "@/compartido/componentes/ui/page-header";
@@ -14,16 +15,26 @@ import {
   eliminarDirectorioCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   firmarArchivoExploradorGcs,
+  guardarCompartidoDescarga,
   listarCarpetaUsuarioGcs,
   listarCarpetasUsuariosGcs,
+  listarDescargas,
   listarExploradorGcs,
+  listarPartesNormalizadas,
+  listarUsuariosCompartibles,
+  obtenerCompartidoDescarga,
   urlCsvParteCarpetaUsuarioGcs,
   urlZipCarpetaUsuarioGcs,
+  urlZipEjecucion,
 } from "@/modulos/descargas/api";
 import {
   formatearFechaISO,
   formatearTamano,
 } from "@/modulos/descargas/presentacion-ejecucion";
+import type {
+  ResumenDescargaEjecucion,
+  UsuarioCompartible,
+} from "@qlik/contratos/descargas";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
@@ -45,6 +56,13 @@ export function PaginaDescargas() {
     queryFn: () => listarCarpetaUsuarioGcs(rutaCarpeta),
     retry: false,
   });
+  const descargas = useQuery({
+    queryKey: ["descargas-compartidas"],
+    queryFn: listarDescargas,
+    retry: false,
+  });
+  const [compartiendo, setCompartiendo] =
+    useState<ResumenDescargaEjecucion | null>(null);
 
   const carpetasUsuarios = useQuery({
     queryKey: ["carpetas-usuarios-gcs"],
@@ -111,12 +129,12 @@ export function PaginaDescargas() {
                 </h2>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-2.5 py-1 text-[11px] font-semibold text-success-700">
                   <Icon name="shield" size="sm" />
-                  Espacio privado
+                  Acceso controlado
                 </span>
               </div>
               <p className="mt-1 max-w-2xl text-sm text-ink-500">
-                Aquí se guardan únicamente tus ejecuciones y archivos generados.
-                Nadie fuera de tu cuenta puede acceder a esta carpeta.
+                Aquí se integran tus ejecuciones y las que compartieron contigo.
+                Solo acceden las personas seleccionadas o tu organización.
               </p>
               {correoUsuario && (
                 <p className="mt-2 truncate text-xs text-ink-400">
@@ -142,6 +160,8 @@ export function PaginaDescargas() {
         mostrarBucket={false}
         mostrarRutaTecnica={false}
         mostrarEjecucionesAmigables
+        ejecucionesAccesibles={descargas.data ?? []}
+        usuarioId={sesion?.usuario?.id ?? null}
         datos={carpetaUsuario.data ?? null}
         cargando={carpetaUsuario.isLoading}
         error={
@@ -151,6 +171,7 @@ export function PaginaDescargas() {
         }
         onNavegarRuta={setRutaCarpeta}
         onAbrirCarpeta={(carpeta) => setRutaCarpeta(`${rutaCarpeta}${carpeta}`)}
+        onCompartirEjecucion={setCompartiendo}
         onSubir={() => {
           setRutaCarpeta(rutaPadre(rutaCarpeta));
         }}
@@ -241,7 +262,258 @@ export function PaginaDescargas() {
         onCancel={() => setEliminacion(null)}
         onConfirm={() => void confirmarEliminacion()}
       />
+      {compartiendo && (
+        <ModalCompartirDescarga
+          descarga={compartiendo}
+          onCerrar={() => setCompartiendo(null)}
+          onGuardado={() => {
+            setCompartiendo(null);
+            mostrarExito("Acceso actualizado.");
+            void descargas.refetch();
+          }}
+          onError={manejar}
+        />
+      )}
     </PageLayout>
+  );
+}
+
+function ModalCompartirDescarga({
+  descarga,
+  onCerrar,
+  onGuardado,
+  onError,
+}: {
+  descarga: ResumenDescargaEjecucion;
+  onCerrar: () => void;
+  onGuardado: () => void;
+  onError: (error: Error) => void;
+}) {
+  const usuarios = useQuery({
+    queryKey: ["usuarios-compartibles"],
+    queryFn: listarUsuariosCompartibles,
+  });
+  const compartido = useQuery({
+    queryKey: ["descarga-compartida", descarga.id],
+    queryFn: () => obtenerCompartidoDescarga(descarga.id),
+  });
+  const [seleccion, setSeleccion] = useState<string[] | null>(null);
+  const [todaOrganizacion, setTodaOrganizacion] = useState<boolean | null>(
+    null,
+  );
+  const [guardando, setGuardando] = useState(false);
+  const seleccionActual = seleccion ?? compartido.data?.usuarios ?? [];
+  const todaActual =
+    todaOrganizacion ?? compartido.data?.todaOrganizacion ?? false;
+
+  async function guardar() {
+    setGuardando(true);
+    try {
+      await guardarCompartidoDescarga(descarga.id, {
+        todaOrganizacion: todaActual,
+        usuarios: todaActual ? [] : seleccionActual,
+      });
+      onGuardado();
+    } catch (error) {
+      onError(
+        error instanceof Error ? error : new Error("No se pudo compartir"),
+      );
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <dialog
+      open
+      className="fixed inset-0 z-50 m-0 h-full max-h-none w-full max-w-none place-items-center border-0 bg-black/40 p-4 open:grid"
+      aria-labelledby="titulo-compartir-descarga"
+    >
+      <div className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-xl bg-surface p-5 shadow-xl">
+        <h2
+          id="titulo-compartir-descarga"
+          className="font-display text-lg font-semibold text-ink-900"
+        >
+          Compartir {descarga.reporteNombre}
+        </h2>
+        <label className="mt-4 flex items-center gap-3 rounded-lg border border-line-200 p-3">
+          <input
+            type="checkbox"
+            checked={todaActual}
+            onChange={(evento) => setTodaOrganizacion(evento.target.checked)}
+          />
+          <span>Todas las personas de la organización</span>
+        </label>
+        {!todaActual && (
+          <div className="mt-3 space-y-2">
+            {(usuarios.data ?? []).map((usuario: UsuarioCompartible) => (
+              <label
+                key={usuario.id}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-hover"
+              >
+                <input
+                  type="checkbox"
+                  checked={seleccionActual.includes(usuario.id)}
+                  onChange={(evento) =>
+                    setSeleccion(
+                      evento.target.checked
+                        ? [...seleccionActual, usuario.id]
+                        : seleccionActual.filter((id) => id !== usuario.id),
+                    )
+                  }
+                />
+                <span>
+                  <span className="block text-sm font-medium text-ink-800">
+                    {usuario.nombre}
+                  </span>
+                  <span className="block text-xs text-ink-400">
+                    {usuario.correo}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void guardar()}
+            disabled={guardando || compartido.isLoading || usuarios.isLoading}
+          >
+            {guardando ? "Guardando…" : "Guardar"}
+          </Button>
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
+function CarpetaCompartida({
+  descarga,
+}: {
+  descarga: ResumenDescargaEjecucion;
+}) {
+  const [abierta, setAbierta] = useState(false);
+  const partes = useQuery({
+    queryKey: ["archivos-descarga-compartida", descarga.id],
+    queryFn: () => listarPartesNormalizadas(descarga.id),
+    enabled: abierta,
+    retry: false,
+  });
+  useEffect(() => {
+    if (!abierta || partes.data?.estado !== "preparando") return;
+    const temporizador = window.setTimeout(() => void partes.refetch(), 2_000);
+    return () => window.clearTimeout(temporizador);
+  }, [abierta, partes.data?.estado, partes.refetch]);
+
+  return (
+    <div className="rounded-lg border border-line-200 bg-surface">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
+            <Icon name="folder" size="sm" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-ink-800">
+              {descarga.reporteNombre}
+            </p>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Compartida por {descarga.propietarioCorreo ?? "otro usuario"}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setAbierta(!abierta)}
+        >
+          {abierta ? "Ocultar archivos" : "Ver archivos"}
+        </Button>
+      </div>
+      {abierta && (
+        <div className="divide-y divide-line-200 border-t border-line-200 bg-surface-subtle/40 px-4">
+          {(partes.isLoading || partes.data?.estado === "preparando") && (
+            <p className="py-3 text-sm text-ink-500">Consultando archivos…</p>
+          )}
+          {partes.isError && (
+            <p className="py-3 text-sm text-danger-600">
+              {partes.error.message}
+            </p>
+          )}
+          {(partes.data?.partes ?? []).map((parte) => (
+            <div
+              key={parte.nombre}
+              className="flex flex-wrap items-center justify-between gap-3 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-ink-800">
+                  {parte.nombre}
+                </p>
+                <p className="text-xs text-ink-500">CSV normalizado</p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <a href={parte.url}>
+                  <Icon name="download" size="sm" /> Descargar
+                </a>
+              </Button>
+            </div>
+          ))}
+          {partes.data?.estado === "lista" && (
+            <div className="flex justify-end py-3">
+              <Button asChild>
+                <a href={urlZipEjecucion(descarga.id)}>
+                  <Icon name="download" size="sm" /> Descargar ZIP normalizado
+                </a>
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
+  const partes = useQuery({
+    queryKey: ["partes-normalizadas", ejecucionId],
+    queryFn: () => listarPartesNormalizadas(ejecucionId),
+    retry: false,
+  });
+  useEffect(() => {
+    if (partes.data?.estado !== "preparando") return;
+    const temporizador = window.setTimeout(() => void partes.refetch(), 2_000);
+    return () => window.clearTimeout(temporizador);
+  }, [partes.data?.estado, partes.refetch]);
+  if (partes.isLoading)
+    return <p className="text-sm text-ink-500">Preparando archivos...</p>;
+  if (partes.isError)
+    return <p className="text-sm text-danger-600">{partes.error.message}</p>;
+  return (
+    <>
+      {partes.data?.estado === "preparando" && (
+        <p className="text-sm text-ink-500">
+          Preparando archivos; los terminados ya se pueden descargar.
+        </p>
+      )}
+      {(partes.data?.partes ?? []).map((parte) => (
+        <div
+          key={parte.nombre}
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-200 px-4 py-3"
+        >
+          <div>
+            <p className="text-sm font-semibold text-ink-800">{parte.nombre}</p>
+            <p className="text-xs text-ink-500">CSV normalizado</p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <a href={parte.url}>
+              <Icon name="download" size="sm" /> Descargar
+            </a>
+          </Button>
+        </div>
+      ))}
+    </>
   );
 }
 
@@ -390,10 +662,13 @@ function SeccionExploradorGcs({
   mostrarBucket = true,
   mostrarRutaTecnica = false,
   mostrarEjecucionesAmigables = false,
+  ejecucionesAccesibles = [],
+  usuarioId,
   datos,
   cargando,
   error,
   onAbrirCarpeta,
+  onCompartirEjecucion,
   onSubir,
   onDescargar,
   onNavegarRuta,
@@ -408,10 +683,13 @@ function SeccionExploradorGcs({
   mostrarBucket?: boolean;
   mostrarRutaTecnica?: boolean;
   mostrarEjecucionesAmigables?: boolean;
+  ejecucionesAccesibles?: ResumenDescargaEjecucion[];
+  usuarioId?: string | null;
   datos: ExploradorGcs | CarpetaUsuarioGcs | null;
   cargando: boolean;
   error: string | null;
   onAbrirCarpeta: (carpeta: string) => void;
+  onCompartirEjecucion?: (ejecucion: ResumenDescargaEjecucion) => void;
   onSubir: () => void;
   onDescargar: (nombre: string) => Promise<void>;
   onNavegarRuta?: (ruta: string) => void;
@@ -429,6 +707,19 @@ function SeccionExploradorGcs({
   const ejecucionPorCarpeta = new Map(
     (datosUsuario?.carpetasEjecucion ?? []).map((item) => [item.carpeta, item]),
   );
+  const descargaPorId = new Map(
+    ejecucionesAccesibles.map((ejecucion) => [ejecucion.id, ejecucion]),
+  );
+  const compartidasAjenas =
+    segmentos.length === 0
+      ? ejecucionesAccesibles.filter(
+          (ejecucion) =>
+            Boolean(ejecucion.creadoPorUsuarioId) &&
+            ejecucion.creadoPorUsuarioId !== usuarioId,
+        )
+      : [];
+  const esCarpetaEjecucion =
+    mostrarEjecucionesAmigables && segmentos.some(esUuid);
   return (
     <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -543,6 +834,7 @@ function SeccionExploradorGcs({
             const ejecucion = ejecucionPorCarpeta.get(carpeta);
             const nombreCarpeta = carpeta.replace(/\/$/, "");
             const pareceEjecucion = esUuid(nombreCarpeta);
+            const descarga = descargaPorId.get(nombreCarpeta);
             return (
               <div
                 key={carpeta}
@@ -596,68 +888,93 @@ function SeccionExploradorGcs({
                     <Icon name="trash" size="sm" /> Eliminar
                   </button>
                 )}
-              </div>
-            );
-          })}
-          {datos.archivos.map((archivo) => (
-            <div
-              key={archivo.nombre}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-200 px-4 py-3"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-subtle text-ink-500">
-                  <Icon name="file-text" size="sm" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-ink-800">
-                    {archivo.nombre}
-                  </p>
-                  <p className="mt-0.5 text-xs text-ink-500">
-                    {archivo.formato} · {formatearTamano(archivo.tamano)}
-                    {archivo.fecha
-                      ? ` · ${formatearFechaISO(archivo.fecha)}`
-                      : ""}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-                  onClick={() => void onDescargar(archivo.nombre)}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Icon name="download" size="sm" /> Descargar
-                  </span>
-                </button>
-                {puedeEliminar && (
+                {descarga?.creadoPorUsuarioId === usuarioId && (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-danger-600 hover:bg-danger-50"
-                    onClick={() => onEliminarArchivo?.(archivo.nombre)}
+                    onClick={() => descarga && onCompartirEjecucion?.(descarga)}
+                    className="shrink-0 rounded-md px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
                   >
-                    <Icon name="trash" size="sm" /> Eliminar
+                    Compartir
                   </button>
                 )}
               </div>
-            </div>
+            );
+          })}
+          {compartidasAjenas.map((descarga) => (
+            <CarpetaCompartida
+              key={`compartida-${descarga.id}`}
+              descarga={descarga}
+            />
           ))}
-          {datos.carpetas.length === 0 && datos.archivos.length === 0 && (
-            <div className="rounded-lg border border-dashed border-line-300 p-6 text-center">
-              {mostrarEjecucionesAmigables && segmentos.length === 1 ? (
-                <>
-                  <p className="text-sm font-semibold text-ink-800">
-                    Aún no hay descargas para este reporte
-                  </p>
-                  <p className="mt-1 text-sm text-ink-500">
-                    Ejecuta el reporte para generar la primera.
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-ink-500">Esta carpeta está vacía.</p>
-              )}
-            </div>
+          {!esCarpetaEjecucion &&
+            datos.archivos.map((archivo) => (
+              <div
+                key={archivo.nombre}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-200 px-4 py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-subtle text-ink-500">
+                    <Icon name="file-text" size="sm" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink-800">
+                      {archivo.nombre}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-500">
+                      {archivo.formato} · {formatearTamano(archivo.tamano)}
+                      {archivo.fecha
+                        ? ` · ${formatearFechaISO(archivo.fecha)}`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="rounded-md px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+                    onClick={() => void onDescargar(archivo.nombre)}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="download" size="sm" /> Descargar
+                    </span>
+                  </button>
+                  {puedeEliminar && (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-danger-600 hover:bg-danger-50"
+                      onClick={() => onEliminarArchivo?.(archivo.nombre)}
+                    >
+                      <Icon name="trash" size="sm" /> Eliminar
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          {esCarpetaEjecucion && datosUsuario?.ejecucionActual && (
+            <PartesNormalizadas
+              ejecucionId={datosUsuario.ejecucionActual.ejecucionId}
+            />
           )}
+          {!esCarpetaEjecucion &&
+            datos.carpetas.length === 0 &&
+            datos.archivos.length === 0 && (
+              <div className="rounded-lg border border-dashed border-line-300 p-6 text-center">
+                {mostrarEjecucionesAmigables && segmentos.length === 1 ? (
+                  <>
+                    <p className="text-sm font-semibold text-ink-800">
+                      Aún no hay descargas para este reporte
+                    </p>
+                    <p className="mt-1 text-sm text-ink-500">
+                      Ejecuta el reporte para generar la primera.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-ink-500">
+                    Esta carpeta está vacía.
+                  </p>
+                )}
+              </div>
+            )}
         </div>
       )}
     </section>

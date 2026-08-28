@@ -17,6 +17,13 @@ const archivos: ArchivoDescarga[] = [
     fecha: null,
     url: "https://storage/2",
   },
+  {
+    nombre: "parte-003.csv.gz",
+    tamano: 30,
+    formato: "CSV.GZ",
+    fecha: null,
+    url: "https://storage/3",
+  },
 ];
 
 afterEach(() => vi.restoreAllMocks());
@@ -34,7 +41,7 @@ describe("iniciarDescargasNavegador", () => {
 
     await iniciarDescargasNavegador(archivos, { pausaMs: 0 });
 
-    expect(click).toHaveBeenCalledTimes(2);
+    expect(click).toHaveBeenCalledTimes(3);
     expect(picker).not.toHaveBeenCalled();
   });
 });

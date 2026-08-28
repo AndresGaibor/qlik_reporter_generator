@@ -1,6 +1,8 @@
+import { useContextoVista } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
+import { ModalCompartir } from "@/compartido/componentes/ui/modal-compartir";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useBusqueda } from "@/compartido/hooks/use-busqueda";
 import { useFiltroEspacioConPersistencia } from "@/compartido/hooks/use-filtro-espacio-con-persistencia";
@@ -8,6 +10,9 @@ import { usePaginacion } from "@/compartido/hooks/use-paginacion";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import {
   ejecutarReporte,
+  guardarCompartidoReporte,
+  listarUsuariosCompartiblesReporte,
+  obtenerCompartidoReporte,
   obtenerPlantillasDataflowReporte,
   obtenerReportes,
 } from "@/modulos/reportes/api";
@@ -41,15 +46,18 @@ export function PaginaReportes() {
   const queryClient = useQueryClient();
   const navegar = useNavigate();
   const { tenant: tenantActivo } = useTenantActivo();
+  const { modoUsuarioFinal } = useContextoVista();
   const { espacioId, establecerEspacioId } = useFiltroEspacioConPersistencia(
     tenantActivo?.id,
   );
   const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
     useBusqueda();
   const [idEjecutando, setIdEjecutando] = useState<string | null>(null);
+  const [reporteCompartiendo, setReporteCompartiendo] =
+    useState<ResumenReporte | null>(null);
   const consulta = useQuery({
-    queryKey: ["reportes", tenantActivo?.id],
-    queryFn: () => obtenerReportes(),
+    queryKey: ["reportes", tenantActivo?.id, modoUsuarioFinal],
+    queryFn: () => obtenerReportes(undefined, undefined, modoUsuarioFinal),
     retry: false,
   });
   const plantilla = useQuery({
@@ -119,6 +127,7 @@ export function PaginaReportes() {
           reportes={paginacion.elementosPagina}
           idEjecutando={idEjecutando}
           onEjecutar={(id) => ejecutar.mutate(id)}
+          onCompartir={setReporteCompartiendo}
           hayFiltros={Boolean(busquedaActiva || espacioId)}
         />
         {filtrados.length > 10 ? (
@@ -141,7 +150,75 @@ export function PaginaReportes() {
             }
           />
         ) : null}
+        {reporteCompartiendo && (
+          <CompartirReporte
+            reporte={reporteCompartiendo}
+            onCerrar={() => setReporteCompartiendo(null)}
+            onGuardado={() => {
+              setReporteCompartiendo(null);
+              mostrarExito("Acceso al reporte actualizado");
+              void queryClient.invalidateQueries({ queryKey: ["reportes"] });
+            }}
+            onError={mostrarError}
+          />
+        )}
       </div>
     </PageLayout>
+  );
+}
+
+function CompartirReporte({
+  reporte,
+  onCerrar,
+  onGuardado,
+  onError,
+}: {
+  reporte: ResumenReporte;
+  onCerrar: () => void;
+  onGuardado: () => void;
+  onError: (mensaje: string) => void;
+}) {
+  const usuarios = useQuery({
+    queryKey: ["usuarios-compartibles-reportes"],
+    queryFn: listarUsuariosCompartiblesReporte,
+  });
+  const compartido = useQuery({
+    queryKey: ["reporte-compartido", reporte.id],
+    queryFn: () => obtenerCompartidoReporte(reporte.id),
+  });
+  const [seleccionados, setSeleccionados] = useState<string[] | null>(null);
+  const [todos, setTodos] = useState<boolean | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const seleccionActual = seleccionados ?? compartido.data?.usuarios ?? [];
+  const todosActual = todos ?? compartido.data?.todaOrganizacion ?? false;
+
+  async function guardar() {
+    setGuardando(true);
+    try {
+      await guardarCompartidoReporte(reporte.id, {
+        todaOrganizacion: todosActual,
+        usuarios: todosActual ? [] : seleccionActual,
+      });
+      onGuardado();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "No se pudo compartir");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <ModalCompartir
+      titulo={`Compartir ${reporte.nombre}`}
+      usuarios={usuarios.data ?? []}
+      todaOrganizacion={todosActual}
+      seleccionados={seleccionActual}
+      cargando={usuarios.isLoading || compartido.isLoading}
+      guardando={guardando}
+      onTodaOrganizacion={setTodos}
+      onSeleccionados={setSeleccionados}
+      onCerrar={onCerrar}
+      onGuardar={() => void guardar()}
+    />
   );
 }
