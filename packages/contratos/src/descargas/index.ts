@@ -5,7 +5,14 @@ export const esquemaArchivoDescarga = z.object({
   formato: z.enum(["CSV", "CSV.GZ", "PARQUET"]),
   tamano: z.number().nonnegative(),
   fecha: z.string().datetime().nullable(),
-  url: z.string().url(),
+  url: z
+    .string()
+    .refine(
+      (url) =>
+        URL.canParse(url) ||
+        /^\/api\/descargas\/[^/]+\/archivo\?nombre=.+$/.test(url),
+      "URL de descarga inválida",
+    ),
 });
 export type ArchivoDescarga = z.infer<typeof esquemaArchivoDescarga>;
 
@@ -37,7 +44,9 @@ export const esquemaFuenteFilasExportadas = z.enum([
   "procesamiento_resultado",
   "legacy",
 ]);
-export type FuenteFilasExportadas = z.infer<typeof esquemaFuenteFilasExportadas>;
+export type FuenteFilasExportadas = z.infer<
+  typeof esquemaFuenteFilasExportadas
+>;
 
 export const esquemaEstadoResultadoEjecucion = z.enum([
   "pendiente",

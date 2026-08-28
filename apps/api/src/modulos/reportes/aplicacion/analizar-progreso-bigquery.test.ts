@@ -81,4 +81,85 @@ describe("analizarProgresoBigQuery", () => {
       fase: "leyendo",
     });
   });
+
+  it.each([
+    [1000, 10000, true],
+    [999, 99900, false],
+    [1000, 9999, false],
+  ])(
+    "detecta volumen inusual con umbral (%s, %s)",
+    (read, written, esperado) => {
+      const resultado = analizarProgresoBigQuery({
+        estadoEjecucion: "iniciada",
+        iniciadoEn: new Date(),
+        job: job({
+          queryPlan: [
+            {
+              id: "1",
+              name: null,
+              status: "RUNNING",
+              recordsRead: String(read),
+              recordsWritten: String(written),
+              slotMs: null,
+              waitMsAvg: null,
+              readMsAvg: null,
+              computeMsAvg: null,
+              writeMsAvg: null,
+              pasos: [],
+            },
+          ],
+        }),
+      });
+      expect(resultado?.volumenInusual).toBe(esperado);
+    },
+  );
+
+  it("no detecta volumen con valores nulos", () => {
+    const resultado = analizarProgresoBigQuery({
+      estadoEjecucion: "iniciada",
+      iniciadoEn: new Date(),
+      job: job({
+        queryPlan: [
+          {
+            id: "1",
+            name: null,
+            status: "RUNNING",
+            recordsRead: null,
+            recordsWritten: null,
+            slotMs: null,
+            waitMsAvg: null,
+            readMsAvg: null,
+            computeMsAvg: null,
+            writeMsAvg: null,
+            pasos: [],
+          },
+        ],
+      }),
+    });
+    expect(resultado?.volumenInusual).toBe(false);
+  });
+
+  it("usa el último muestreo observado y mantiene actividad con un timeline corto", () => {
+    const resultado = analizarProgresoBigQuery({
+      estadoEjecucion: "iniciada",
+      iniciadoEn: new Date(),
+      observadoEn: "2026-08-28T12:00:00.000Z",
+      job: job({
+        timeline: [
+          {
+            elapsedMs: "1",
+            completedUnits: "1",
+            totalSlotMs: "2",
+            estimatedRunnableUnits: "0",
+            pendingUnits: null,
+            activeUnits: null,
+          },
+        ],
+      }),
+    });
+    expect(resultado).toMatchObject({
+      actualizadoEn: "2026-08-28T12:00:00.000Z",
+      sigueTrabajando: true,
+    });
+  });
 });

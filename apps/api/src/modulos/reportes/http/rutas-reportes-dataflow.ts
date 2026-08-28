@@ -25,13 +25,14 @@ import {
   crearRutasClonadoDataflow,
 } from "../../flujos/http/rutas-clonado-dataflow.js";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
-import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoLecturaBigQuery } from "../../google-cloud/aplicacion/puerto-lectura-bigquery.js";
+import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
+import { analizarProgresoBigQuery } from "../aplicacion/analizar-progreso-bigquery.js";
+import { CancelarEjecucionReporte } from "../aplicacion/cancelar-ejecucion-reporte.js";
 import {
   type EntradaEjecutarReporte,
   construirCarpetaDescargasReporte,
 } from "../aplicacion/ejecutar-reporte.js";
-import { VistaPreviaDataflow } from "../aplicacion/vista-previa-dataflow.js";
 import {
   type AlcanceBigQueryReporte,
   type EstimadorBigQueryReporte,
@@ -41,10 +42,9 @@ import type {
   JobBigQueryPersistido,
   PuertoRepositorioReportes,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
-import { analizarProgresoBigQuery } from "../aplicacion/analizar-progreso-bigquery.js";
-import { CancelarEjecucionReporte } from "../aplicacion/cancelar-ejecucion-reporte.js";
 import { SincronizarEjecucionesReporte } from "../aplicacion/sincronizar-ejecuciones-reporte.js";
 import { SincronizarJobsBigQueryEjecucion } from "../aplicacion/sincronizar-jobs-bigquery-ejecucion.js";
+import { VistaPreviaDataflow } from "../aplicacion/vista-previa-dataflow.js";
 
 export type ResolucionBigQueryReporte = AlcanceBigQueryReporte & {
   estimador: EstimadorBigQueryReporte;
@@ -335,9 +335,11 @@ export function crearRutasReportesDataflow(
         !ejecucion.bigqueryFinalizadoEn,
     );
     if (hayActivas || hayPendientesBigQuery) {
+      let jobsBigQueryParaSincronizar: PuertoJobsBigQuery | undefined;
       if (dependencias.resolverJobsBigQuery) {
         try {
           const jobsBigQuery = await dependencias.resolverJobsBigQuery(c);
+          jobsBigQueryParaSincronizar = jobsBigQuery;
           const sincronizadorBq = new SincronizarJobsBigQueryEjecucion(
             dependencias.repositorioReportes,
             jobsBigQuery,
@@ -365,6 +367,7 @@ export function crearRutasReportesDataflow(
           const finalizadasTrasTalend = await new SincronizarEjecucionesReporte(
             qlik,
             dependencias.repositorioReportes,
+            jobsBigQueryParaSincronizar,
           ).ejecutar(flujo.id, sesion.tenantId, sesion.organizacionId);
           if (finalizadasTrasTalend.size > 0) {
             const jobsPorEjecucion =
@@ -603,6 +606,10 @@ function serializarEjecucion(
     ? analizarProgresoBigQuery({
         estadoEjecucion: ejecucion.estado,
         iniciadoEn: ejecucion.iniciadoEn ?? null,
+        observadoEn:
+          typeof jobPrincipal.metadataJson?.observadoEn === "string"
+            ? jobPrincipal.metadataJson.observadoEn
+            : null,
         job: {
           jobId: jobPrincipal.jobId,
           projectId: jobPrincipal.projectId,

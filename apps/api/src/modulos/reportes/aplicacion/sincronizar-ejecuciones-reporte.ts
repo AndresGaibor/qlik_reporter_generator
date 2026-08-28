@@ -1,3 +1,4 @@
+import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { EjecucionQlik } from "../../qlik/dominio/modelos-qlik.js";
 import { esNoEncontradoQlik } from "../../qlik/infraestructura/error-api-qlik.js";
@@ -14,6 +15,7 @@ export class SincronizarEjecucionesReporte {
   constructor(
     private readonly qlik: PuertoQlik,
     private readonly repositorio: PuertoRepositorioReportes,
+    private readonly jobsBigQuery?: PuertoJobsBigQuery,
   ) {}
 
   async ejecutar(
@@ -64,11 +66,21 @@ export class SincronizarEjecucionesReporte {
     for (const local of pendientes) {
       if (!local.runIdQlik) continue;
       if (automatesEliminados.has(local.automatizacionIdQlik)) {
-        await this.repositorio.marcarEstadoEjecucion(
-          local.id,
-          "detenida",
-          new Date(),
-        );
+        if (local.estado === "cancelando") {
+          const estado = await this.reconciliarCancelacion(local);
+          if (estado === "detenida") {
+            await this.repositorio.marcarEjecucionDetenida(
+              local.id,
+              new Date(),
+            );
+          }
+        } else {
+          await this.repositorio.marcarEstadoEjecucion(
+            local.id,
+            "detenida",
+            new Date(),
+          );
+        }
         continue;
       }
       const remota = porAutomate
@@ -105,9 +117,36 @@ export class SincronizarEjecucionesReporte {
         continue;
       }
 
+      if (estado === "detenida" && local.estado === "cancelando") {
+        const reconciliado = await this.reconciliarCancelacion(local);
+        if (reconciliado === "detenida") {
+          await this.repositorio.marcarEjecucionDetenida(local.id, fecha);
+        }
+        continue;
+      }
+
       await this.repositorio.marcarEstadoEjecucion(local.id, estado, fecha);
     }
     return finalizadasTrasTalend;
+  }
+
+  private async reconciliarCancelacion(local: { id: string }): Promise<
+    "cancelando" | "detenida"
+  > {
+    const ejecucion = await this.repositorio.obtenerEjecucionPorId(local.id);
+    if (!ejecucion?.jobIdPrincipalBigQuery) return "detenida";
+    if (!ejecucion.bigqueryProjectId || !this.jobsBigQuery) return "cancelando";
+
+    const job = await this.jobsBigQuery.obtenerJob({
+      projectId: ejecucion.bigqueryProjectId,
+      jobId: ejecucion.jobIdPrincipalBigQuery,
+      location: ejecucion.bigqueryLocation ?? undefined,
+    });
+    if (!job) return "cancelando";
+    if (job.estado === "RUNNING" || job.estado === "PENDING") {
+      return "cancelando";
+    }
+    return esCancelacionBigQuery(job.errorResult) ? "detenida" : "cancelando";
   }
 
   private async terminoDespuesDeEsperarTalend(
@@ -207,6 +246,12 @@ function comoRegistro(valor: unknown): Record<string, unknown> | null {
 
 function textoNoVacio(valor: unknown): string | null {
   return typeof valor === "string" && valor.trim() ? valor.trim() : null;
+}
+
+function esCancelacionBigQuery(
+  error: { reason: string; message: string } | null,
+): boolean {
+  return error?.reason === "stopped" || error?.reason === "cancelled";
 }
 
 function fechaTerminal(stopTime?: string, updatedAt?: string): Date {

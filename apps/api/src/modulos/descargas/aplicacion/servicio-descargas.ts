@@ -22,6 +22,10 @@ export class ServicioDescargas implements IServicioDescargas {
   async crearManifiesto(
     ejecucionId: string,
     contexto: ContextoDescarga,
+    crearUrlArchivo?: (archivo: {
+      nombre: string;
+      rutaCompleta: string;
+    }) => string | Promise<string>,
   ): Promise<ManifiestoDescarga> {
     const ejecucion = await this.repositorio.obtenerEjecucionDescarga({
       id: ejecucionId,
@@ -92,10 +96,13 @@ export class ServicioDescargas implements IServicioDescargas {
               : "CSV"),
         tamano: obj.tamanoBytes,
         fecha: obj.fecha ?? null,
-        url: await ejecutarOperacionGcs(
-          () => this.almacenamiento.firmar(obj.rutaCompleta, this.minutosFirma),
-          "firmar",
-        ),
+        url: crearUrlArchivo
+          ? await crearUrlArchivo(obj)
+          : await ejecutarOperacionGcs(
+              () =>
+                this.almacenamiento.firmar(obj.rutaCompleta, this.minutosFirma),
+              "firmar",
+            ),
       }));
 
     const resueltos = await Promise.all(archivos);
@@ -193,8 +200,7 @@ export class ServicioDescargas implements IServicioDescargas {
 
         const duracionTotalMs =
           e.finalizadoEn && (e.iniciadoEn ?? e.creadoEn)
-            ? e.finalizadoEn.getTime() -
-              (e.iniciadoEn ?? e.creadoEn).getTime()
+            ? e.finalizadoEn.getTime() - (e.iniciadoEn ?? e.creadoEn).getTime()
             : null;
 
         let duracionBigQueryMs: number | null = null;

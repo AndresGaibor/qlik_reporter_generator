@@ -65,14 +65,12 @@ function montar(
   return container;
 }
 
-test("oculta la auditoría técnica y la huella SHA al usuario final sin ocultar el historial", () => {
+test("mantiene la evidencia técnica dentro del acordeón sin mostrarla fuera", () => {
   const vista = montar(false);
   expect(vista.textContent).toContain("Auditoría de ejecuciones");
-  expect(vista.textContent).toContain("gs://bkt/reporte/e-1/");
-  expect(vista.textContent).not.toContain("SHA-256");
-  expect(vista.textContent).not.toContain("aaaaaaaaaaaaaaaa…");
-  expect(vista.textContent).not.toContain("Ver auditoría técnica");
-  expect(vista.textContent).not.toContain("Script Dataflow utilizado");
+  expect(vista.textContent).toContain("Ver auditoría técnica");
+  expect(vista.textContent).toContain("SHA-256 completo");
+  expect(vista.querySelector("details")?.open).toBe(false);
   expect(vista.textContent).toContain("Tiempo transcurrido: 1 min 30 s");
 });
 
@@ -91,16 +89,16 @@ test("Ver archivos abre el reporte y la ejecución seleccionada", () => {
   });
 });
 
-test("muestra el Job ID de BigQuery en el historial normal con acción de copia", () => {
+test("mantiene el Job ID de BigQuery dentro de la auditoría técnica con acción de copia", () => {
   const vista = montar(false, {
     ...ejecucionBase,
     jobIdBigQuery: "bquxjob_1234567890_abcdef",
   });
 
-  expect(vista.textContent).toContain("Job ID");
+  expect(vista.textContent).toContain("Job BQ");
   expect(vista.textContent).toContain("bquxjob_1234567890_abcdef");
-  expect(vista.querySelector('[aria-label="Copiar Job ID"]')).toBeTruthy();
-  expect(vista.textContent).not.toContain("Ver auditoría técnica");
+  expect(vista.querySelector('[aria-label="Copiar Job BQ"]')).toBeTruthy();
+  expect(vista.querySelector("details")?.open).toBe(false);
 });
 
 test("muestra los scripts técnicos sobre fondo claro al administrador", () => {
@@ -156,7 +154,8 @@ test("prioriza la duración verificada y presenta errores duplicados de Talend d
     iniciadoEn: "2026-08-26T17:04:51Z",
     finalizadoEn: "2026-08-26T17:05:14Z",
     etapaError: "talend",
-    mensajeError: "Talend terminó con HTTP 409 duplicate para el job_id por defecto.",
+    mensajeError:
+      "Talend terminó con HTTP 409 duplicate para el job_id por defecto.",
     metricas: {
       duracionTotalMs: 22578,
       duracionBigQueryMs: 17676,

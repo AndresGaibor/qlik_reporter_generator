@@ -1,3 +1,4 @@
+import { ErrorClienteApi } from "@/compartido/api/cliente";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type React from "react";
 import { act } from "react";
@@ -108,7 +109,8 @@ vi.mock("@/compartido/hooks/use-tenant-activo", () => ({
   useTenantActivo: () => ({ tenant: undefined }),
 }));
 
-import { PaginaReportes, filtrarReportes } from "./pagina-reportes";
+import { filtrarReportes } from "./filtrar-reportes";
+import { PaginaReportes } from "./pagina-reportes";
 
 let root: Root | undefined;
 let container: HTMLDivElement | undefined;
@@ -180,6 +182,64 @@ test("filtra filas locales por nombre/Dataflow y espacio sin consultar Automates
 
   expect(filtrarReportes(filas, "ventas", "sp-2")).toEqual([filas[1]]);
   expect(reportes).toBeDefined();
+});
+
+test("ejecutar desde la lista exige confirmación de riesgo y reintenta con H1", async () => {
+  const h1 = "b".repeat(64);
+  api.ejecutarReporte
+    .mockRejectedValueOnce(
+      new ErrorClienteApi(
+        "Riesgo",
+        409,
+        "EXECUTION_RISK_CONFIRMATION_REQUIRED",
+        { hashDataflowSha256: h1 },
+      ),
+    )
+    .mockResolvedValueOnce({
+      runId: "run-1",
+      ejecucionReporteId: "exec-1",
+      carpetaDescargas: "reporte-ventas/",
+    });
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaReportes />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Reporte Ventas"),
+  );
+  const boton = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar"),
+  );
+  await act(async () =>
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain(
+      "Este reporte puede tardar bastante",
+    ),
+  );
+  expect(api.ejecutarReporte).toHaveBeenCalledTimes(1);
+  const confirmar = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar de todas formas"),
+  );
+  await act(async () =>
+    confirmar?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() => expect(api.ejecutarReporte).toHaveBeenCalledTimes(2));
+  expect(api.ejecutarReporte).toHaveBeenNthCalledWith(
+    2,
+    "11111111-1111-4111-8111-111111111111",
+    { hashDataflowSha256: h1 },
+  );
 });
 
 test("ejecutar desde la lista abre la carpeta de descargas del reporte", async () => {

@@ -28,7 +28,7 @@ export function registrarRutasEjecuciones(
   rutas: Hono,
   dependencias: DependenciasRutasDescargas,
 ): void {
-  const prepararParticionado = async (c: Context, id: string) => {
+  const prepararDescarga = async (c: Context, id: string) => {
     const sesion = await dependencias.resolverSesion(c);
     const ejecucion =
       await dependencias.repositorioReportes.obtenerEjecucionDescarga({
@@ -54,7 +54,7 @@ export function registrarRutasEjecuciones(
     if (!almacenamiento.abrirLectura)
       throw new ErrorAplicacion(
         "GCS_LECTURA_NO_DISPONIBLE",
-        "El almacenamiento no permite preparar CSV",
+        "El almacenamiento no permite transmitir archivos",
         501,
       );
     const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
@@ -64,24 +64,75 @@ export function registrarRutasEjecuciones(
         "La ruta de resultados no es válida",
         422,
       );
-    const fuentes = (await almacenamiento.listar(prefijo)).filter(
+    return { ejecucion, prefijo, almacenamiento };
+  };
+
+  const prepararParticionado = async (c: Context, id: string) => {
+    const base = await prepararDescarga(c, id);
+    const fuentes = (await base.almacenamiento.listar(base.prefijo)).filter(
       (archivo) =>
         /\.csv(?:\.gz)?$/i.test(archivo.nombre) &&
-        !archivo.rutaCompleta.startsWith(prefijoPartesNormalizadas(prefijo)),
+        !archivo.rutaCompleta.startsWith(
+          prefijoPartesNormalizadas(base.prefijo),
+        ),
     );
     const configuracion = dependencias.resolverConfiguracionGcs
       ? await dependencias.resolverConfiguracionGcs(c)
       : undefined;
     return {
-      ejecucion,
-      prefijo,
-      almacenamiento,
+      ...base,
       fuentes,
       maximoFilas:
         configuracion?.maximoFilasPorArchivo ??
         MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
     };
   };
+
+  rutas.get("/:id/archivo", async (c) => {
+    try {
+      const nombre = c.req.query("nombre")?.trim();
+      if (!nombre || nombre.includes("/") || nombre.includes("\\"))
+        return responderError(c, "Nombre de archivo inválido", 422, {
+          codigo: "ARCHIVO_INVALIDO",
+        });
+
+      const { almacenamiento, prefijo } = await prepararDescarga(
+        c,
+        c.req.param("id"),
+      );
+      const archivo = (await almacenamiento.listar(prefijo)).find(
+        (candidato) =>
+          candidato.nombre === nombre && esArchivoDescargable(candidato.nombre),
+      );
+      if (!archivo)
+        return responderError(c, "El archivo ya no está disponible", 404, {
+          codigo: "ARCHIVO_NO_ENCONTRADO",
+        });
+
+      return new Response(
+        Readable.toWeb(
+          almacenamiento.abrirLectura?.(archivo.rutaCompleta) as Readable,
+        ) as unknown as BodyInit,
+        {
+          headers: {
+            "Content-Type": tipoContenidoArchivo(archivo.nombre),
+            "Content-Length": String(archivo.tamanoBytes),
+            "Content-Disposition": disposicionArchivo(archivo.nombre),
+            "Cache-Control": "private, no-store",
+          },
+        },
+      );
+    } catch (error) {
+      if (error instanceof ErrorAplicacion)
+        return responderError(
+          c,
+          error.message,
+          error.estadoHttp as Parameters<typeof responderError>[2],
+          { codigo: error.codigo },
+        );
+      throw error;
+    }
+  });
 
   rutas.get("/:id/partes", async (c) => {
     try {
@@ -370,7 +421,10 @@ export function registrarRutasEjecuciones(
     });
 
     const pendientes = ejecuciones.filter(
-      (e) => e.estado === "preparando" || e.estado === "iniciada" || e.estado === "cancelando",
+      (e) =>
+        e.estado === "preparando" ||
+        e.estado === "iniciada" ||
+        e.estado === "cancelando",
     );
 
     if (pendientes.length > 0) {
@@ -417,7 +471,9 @@ export function registrarRutasEjecuciones(
               .flat()
               .filter(
                 (e) =>
-                  (e.estado === "preparando" || e.estado === "iniciada" || e.estado === "cancelando") &&
+                  (e.estado === "preparando" ||
+                    e.estado === "iniciada" ||
+                    e.estado === "cancelando") &&
                   Boolean(e.jobIdPrincipalBigQuery) &&
                   Boolean(e.bigqueryProjectId),
               )
@@ -475,12 +531,17 @@ export function registrarRutasEjecuciones(
     );
 
     try {
-      const manifiesto = await servicio.crearManifiesto(ejecucionId, {
-        tenantQlikId: sesion.tenantId,
-        organizacionId: sesion.organizacionId,
-        usuarioId: sesion.usuarioId,
-        esAdministrador: esAdministrador(sesion),
-      });
+      const manifiesto = await servicio.crearManifiesto(
+        ejecucionId,
+        {
+          tenantQlikId: sesion.tenantId,
+          organizacionId: sesion.organizacionId,
+          usuarioId: sesion.usuarioId,
+          esAdministrador: esAdministrador(sesion),
+        },
+        (archivo) =>
+          `/api/descargas/${encodeURIComponent(ejecucionId)}/archivo?nombre=${encodeURIComponent(archivo.nombre)}`,
+      );
 
       return responderExito(c, manifiesto);
     } catch (error) {
@@ -498,4 +559,23 @@ export function registrarRutasEjecuciones(
       throw error;
     }
   });
+}
+
+function esArchivoDescargable(nombre: string): boolean {
+  return (
+    /\.(csv|csv\.gz|parquet)$/i.test(nombre) &&
+    !nombre.toLowerCase().startsWith("__finalizado__-")
+  );
+}
+
+function tipoContenidoArchivo(nombre: string): string {
+  const normalizado = nombre.toLowerCase();
+  if (normalizado.endsWith(".parquet")) return "application/vnd.apache.parquet";
+  if (normalizado.endsWith(".gz")) return "application/gzip";
+  return "text/csv; charset=utf-8";
+}
+
+function disposicionArchivo(nombre: string): string {
+  const nombreSeguro = nombre.replace(/[^a-zA-Z0-9._-]/g, "_");
+  return `attachment; filename="${nombreSeguro || "descarga"}"; filename*=UTF-8''${encodeURIComponent(nombre)}`;
 }

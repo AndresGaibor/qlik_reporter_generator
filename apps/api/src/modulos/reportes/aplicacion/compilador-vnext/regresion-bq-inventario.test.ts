@@ -36,5 +36,17 @@ describe("regresión BQ_Inventario", () => {
     expect(result.sql).toContain("FULL JOIN");
     expect(result.sql).toContain("TIENE VENTAS ULTIMOS 5 DÍAS");
     expect(result.sql).not.toContain("If(");
+
+    const sqlNormalizado = result.sql.replace(/\s+/g, " ").trim();
+    expect(sqlNormalizado).toContain("FULL JOIN");
+    expect(sqlNormalizado).not.toContain("INNER JOIN");
+    expect(sqlNormalizado).not.toContain("LEFT JOIN");
+    expect(sqlNormalizado).not.toContain("DISTINCT");
+    expect(sqlNormalizado).not.toMatch(/GROUP BY|ARRAY_AGG|QUALIFY/);
+
+    const joinSql = sqlNormalizado.slice(sqlNormalizado.indexOf("FULL JOIN"));
+    expect(joinSql).toContain("ON l.`ID_UOP` = r.`ID_UOP`");
+    expect(joinSql).not.toContain(" AND ");
+    expect(joinSql).not.toContain("ON l.`ID_UOP` = r.`ID_UOP` AND");
   });
 });

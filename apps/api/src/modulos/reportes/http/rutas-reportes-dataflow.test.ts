@@ -659,6 +659,87 @@ describe("fachada /api/reportes para Dataflows", () => {
     );
   });
 
+  it("reconcilia una cancelación que terminó normalmente como completada", async () => {
+    const ejecucion = {
+      id: "exec-carrera",
+      estado: "cancelando",
+      runIdQlik: "run-1",
+      automatizacionIdQlik: "auto-1",
+      uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/exec-carrera/",
+      jobIdPrincipalBigQuery: "job-carrera",
+      bigqueryProjectId: "project-bq-1",
+      bigqueryLocation: "US",
+      creadoEn: new Date("2026-08-20T10:00:00Z"),
+    };
+    const marcarEstadoEjecucion = vi.fn(async () => undefined);
+    const ejecuciones = vi.fn(async () => [ejecucion]);
+    const app = appCon(
+      {
+        listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "finished" },
+        ]),
+        obtenerAutomatizacion: vi.fn(async () => ({
+          workspace: {
+            blocks: [{ snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" }],
+          },
+        })),
+      },
+      {
+        repositorioReportes: {
+          listarEjecuciones: ejecuciones,
+          obtenerEjecucionPorId: vi.fn(async () => ejecucion),
+          guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
+          actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+          listarJobsBigQueryPorEjecucionIds: vi.fn(
+            async () =>
+              new Map([
+                [
+                  "exec-carrera",
+                  [
+                    {
+                      tipo: "principal",
+                      estado: "done",
+                      endTime: "2026-08-20T10:00:09Z",
+                    },
+                  ],
+                ],
+              ]),
+          ),
+          marcarEstadoEjecucion,
+        } as never,
+        resolverJobsBigQuery: async () =>
+          ({
+            obtenerJob: vi.fn(async () => ({
+              jobId: "job-carrera",
+              projectId: "project-bq-1",
+              location: "US",
+              estado: "DONE",
+              creationTime: "2026-08-20T10:00:00Z",
+              startTime: "2026-08-20T10:00:01Z",
+              endTime: "2026-08-20T10:00:09Z",
+              totalBytesProcessed: "1",
+              totalBytesBilled: "1",
+              totalSlotMs: "1",
+              cacheHit: false,
+              statementType: "EXPORT_DATA",
+              errorResult: null,
+              parentJobId: null,
+            })),
+            listarHijos: vi.fn(async () => []),
+          }) as never,
+      },
+    );
+
+    await app.request("/api/reportes/df-1/ejecuciones");
+
+    expect(marcarEstadoEjecucion).toHaveBeenCalledWith(
+      "exec-carrera",
+      "completada",
+      expect.any(Date),
+    );
+  });
+
   it("calcula la duración total desde el inicio y no desde creadoEn", async () => {
     const ejecucion = {
       id: "exec-duracion",

@@ -268,7 +268,10 @@ export function HistorialAuditoriaReporte({
 function useRelojEjecuciones(ejecuciones: DetalleEjecucionReporte[]) {
   const [ahora, setAhora] = useState(() => Date.now());
   const hayActivas = ejecuciones.some(
-    (item) => item.estado === "preparando" || item.estado === "iniciada",
+    (item) =>
+      item.estado === "preparando" ||
+      item.estado === "iniciada" ||
+      item.estado === "cancelando",
   );
 
   useEffect(() => {
@@ -300,6 +303,8 @@ function textoFase(estado: string) {
       return "Archivos generados";
     case "error":
       return "Ejecución fallida";
+    case "cancelando":
+      return "Cancelación solicitada";
     case "detenida":
       return "Cancelada por el usuario";
     default:

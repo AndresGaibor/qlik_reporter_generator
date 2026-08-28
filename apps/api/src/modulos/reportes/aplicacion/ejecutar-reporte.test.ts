@@ -7,6 +7,10 @@ import {
 const SCRIPT =
   "LIB CONNECT TO [Google BigQuery:Prod]; SQL SELECT id FROM `p.d.t`;";
 const worker = { id: "worker-db-1", automatizacionIdQlik: "worker-1" };
+const fixture = new URL(
+  "../fixtures/compiler-corpus/qlik/regression-bq-inventario-if-outer-join.qlik",
+  import.meta.url,
+);
 const workspace = JSON.parse(
   await Bun.file(
     new URL(
@@ -16,7 +20,7 @@ const workspace = JSON.parse(
   ).text(),
 );
 
-function caso(opciones: { estimarError?: Error } = {}) {
+function caso(opciones: { estimarError?: Error; script?: string } = {}) {
   const qlik = {
     listarFlujos: vi.fn(async () => [
       {
@@ -26,7 +30,9 @@ function caso(opciones: { estimarError?: Error } = {}) {
         spaceId: "sp-1",
       },
     ]),
-    obtenerScriptApp: vi.fn(async () => ({ script: SCRIPT })),
+    obtenerScriptApp: vi.fn(async () => ({
+      script: opciones.script ?? SCRIPT,
+    })),
     obtenerAutomatizacion: vi.fn(async () => ({
       id: "worker-1",
       name: "Worker",
@@ -161,6 +167,59 @@ describe("EjecutarReporte", () => {
     ).rejects.toThrow("Access Denied");
     expect(workers.ejecutar).not.toHaveBeenCalled();
     expect(qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
+  });
+
+  it("exige confirmar el hash del riesgo y vuelve a validarlo si cambia el Dataflow", async () => {
+    const scriptRiesgoso = (await Bun.file(fixture).text())
+      .replace("OUTER JOIN", "FULL JOIN")
+      .replaceAll("ID_UOP", "FECHA");
+    const contexto = caso({ script: scriptRiesgoso });
+    const entrada = {
+      flujoIdQlik: "df-1",
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+      usuarioIdQlik: "qlik-1",
+    };
+
+    const primerError = await contexto.ejecutar
+      .ejecutar(entrada)
+      .catch((error) => error);
+    expect(primerError).toMatchObject({
+      codigo: "EXECUTION_RISK_CONFIRMATION_REQUIRED",
+    });
+    const h1 = primerError.detalles.hashDataflowSha256;
+    expect(h1).toMatch(/^[a-f0-9]{64}$/);
+    expect(contexto.workers.ejecutar).not.toHaveBeenCalled();
+    expect(contexto.qlik.ejecutarAutomatizacion).not.toHaveBeenCalled();
+
+    await contexto.ejecutar.ejecutar({
+      ...entrada,
+      confirmacionRiesgo: { hashDataflowSha256: h1 },
+    });
+    expect(contexto.qlik.ejecutarAutomatizacion).toHaveBeenCalledTimes(1);
+
+    contexto.qlik.obtenerScriptApp.mockResolvedValueOnce({
+      script: `${scriptRiesgoso}\n// cambio`,
+    });
+    const segundoError = await contexto.ejecutar
+      .ejecutar({ ...entrada, confirmacionRiesgo: { hashDataflowSha256: h1 } })
+      .catch((error) => error);
+    expect(segundoError).toMatchObject({
+      codigo: "EXECUTION_RISK_CONFIRMATION_REQUIRED",
+    });
+    const h2 = segundoError.detalles.hashDataflowSha256;
+    expect(h2).not.toBe(h1);
+    expect(contexto.qlik.ejecutarAutomatizacion).toHaveBeenCalledTimes(1);
+    contexto.qlik.obtenerScriptApp.mockResolvedValue({
+      script: `${scriptRiesgoso}\n// cambio`,
+    });
+
+    await contexto.ejecutar.ejecutar({
+      ...entrada,
+      confirmacionRiesgo: { hashDataflowSha256: h2 },
+    });
+    expect(contexto.qlik.ejecutarAutomatizacion).toHaveBeenCalledTimes(2);
   });
 
   it("falla si el Dataflow no pertenece al tenant visible", async () => {

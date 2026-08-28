@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  esquemaArchivoDescarga,
   esquemaCompartirDescarga,
   esquemaResumenDescargaEjecucion,
 } from "./index.js";
@@ -19,6 +20,30 @@ const descargaBaseValida = {
 };
 
 describe("contratos de descargas", () => {
+  it("acepta URLs autenticadas del API para descargar sin CORS de GCS", () => {
+    const resultado = esquemaArchivoDescarga.safeParse({
+      nombre: "parte-001.csv.gz",
+      formato: "CSV.GZ",
+      tamano: 1024,
+      fecha: null,
+      url: "/api/descargas/11111111-1111-4111-8111-111111111111/archivo?nombre=parte-001.csv.gz",
+    });
+
+    expect(resultado.success).toBe(true);
+  });
+
+  it("rechaza rutas relativas que no sean endpoints de descarga", () => {
+    const resultado = esquemaArchivoDescarga.safeParse({
+      nombre: "parte-001.csv.gz",
+      formato: "CSV.GZ",
+      tamano: 1024,
+      fecha: null,
+      url: "/archivo-local.csv.gz",
+    });
+
+    expect(resultado.success).toBe(false);
+  });
+
   it("valida los destinatarios del compartido", () => {
     expect(
       esquemaCompartirDescarga.safeParse({

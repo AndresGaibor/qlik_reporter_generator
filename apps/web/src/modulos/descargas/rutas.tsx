@@ -1,13 +1,13 @@
 import { type AnyRoute, createRoute } from "@tanstack/react-router";
 import { PaginaAdministracionDescargas } from "./pagina-administracion-descargas";
-import { PaginaDescargasSemantica } from "./pagina-descargas-semantica";
+import { PaginaDescargas } from "./pagina-descargas";
 
 export function crearRutasDescargas(rutaRaiz: AnyRoute) {
   return [
     createRoute({
       getParentRoute: () => rutaRaiz,
       path: "/descargas",
-      component: PaginaDescargasSemantica,
+      component: PaginaDescargas,
     }),
     createRoute({
       getParentRoute: () => rutaRaiz,

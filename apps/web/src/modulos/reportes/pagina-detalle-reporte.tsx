@@ -21,6 +21,8 @@ import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detall
 import { ResumenAuditableReporte } from "@/modulos/reportes/componentes/detalle/resumen-auditable-reporte";
 import { VistaPreviaReporte } from "@/modulos/reportes/componentes/detalle/vista-previa-reporte";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
+import { ModalConfirmacionRiesgo } from "@/modulos/reportes/componentes/modal-confirmacion-riesgo";
+import { hashRiesgoDevuelto } from "@/modulos/reportes/utiles-riesgo-ejecucion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -46,6 +48,9 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const [pestana, setPestana] = useState<Pestana>(leerHashPestana);
   const [mostrarPreview, setMostrarPreview] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [hashRiesgoPendiente, setHashRiesgoPendiente] = useState<string | null>(
+    null,
+  );
   const [mostrarConfirmacionCancelacion, setMostrarConfirmacionCancelacion] =
     useState(false);
   const [sincronizando, setSincronizando] = useState(false);
@@ -117,8 +122,10 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   });
 
   const ejecutar = useMutation({
-    mutationFn: () => ejecutarReporte(id),
+    mutationFn: (confirmacionRiesgo?: { hashDataflowSha256: string }) =>
+      ejecutarReporte(id, confirmacionRiesgo),
     onSuccess: (resultado) => {
+      setHashRiesgoPendiente(null);
       mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
@@ -128,7 +135,11 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         search: { carpeta: resultado.carpetaDescargas },
       });
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error) => {
+      const hash = hashRiesgoDevuelto(error);
+      if (hash) setHashRiesgoPendiente(hash);
+      else mostrarError(error.message);
+    },
   });
 
   if (reporte.isLoading)
@@ -489,7 +500,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
                 disabled={ejecutar.isPending}
                 onClick={() => {
                   setMostrarConfirmacion(false);
-                  ejecutar.mutate();
+                  ejecutar.mutate(undefined);
                 }}
               >
                 {ejecutar.isPending ? "Iniciando…" : "Ejecutar reporte"}
@@ -498,6 +509,14 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
           </dialog>
         </div>
       )}
+      <ModalConfirmacionRiesgo
+        abierto={hashRiesgoPendiente !== null}
+        onVolver={() => setHashRiesgoPendiente(null)}
+        onConfirmar={() => {
+          if (hashRiesgoPendiente)
+            ejecutar.mutate({ hashDataflowSha256: hashRiesgoPendiente });
+        }}
+      />
     </PageLayout>
   );
 }

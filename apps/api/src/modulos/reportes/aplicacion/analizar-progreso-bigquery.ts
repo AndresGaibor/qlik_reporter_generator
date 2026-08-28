@@ -20,6 +20,7 @@ export function analizarProgresoBigQuery(input: {
   estadoEjecucion: string;
   job: MetadatoJobBigQuery | null;
   iniciadoEn: Date | null;
+  observadoEn?: string | null;
   ahora?: Date;
 }): ProgresoEjecucionAmigable | null {
   const ahora = input.ahora ?? new Date();
@@ -82,7 +83,7 @@ export function analizarProgresoBigQuery(input: {
     tarda,
     altaDemanda,
     volumenInusual,
-    input.job.endTime ?? null,
+    input.observadoEn ?? input.job.endTime ?? null,
     sigue,
   );
 }

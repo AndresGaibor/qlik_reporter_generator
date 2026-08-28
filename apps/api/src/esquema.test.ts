@@ -11,10 +11,10 @@ import {
   credencialesQlik,
   ejecucionesReportes,
   identidadesQlik,
-  resultadosEjecucionesReportes,
   jobsBigQueryEjecucion,
   membresiasOrganizacion,
   organizaciones,
+  resultadosEjecucionesReportes,
   sesionesUsuario,
   solicitudesIdempotentes,
   tenantsQlik,
@@ -215,12 +215,12 @@ describe("Esquema Drizzle", () => {
     const migraciones = readMigrationFiles({
       migrationsFolder: fileURLToPath(new URL("../drizzle/", import.meta.url)),
     });
-    expect(migraciones).toHaveLength(13);
     const journal = JSON.parse(
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
       ).text(),
     ) as { entries: Array<{ tag: string }> };
+    expect(migraciones).toHaveLength(journal.entries.length);
     expect(journal.entries.map(({ tag }) => tag)).toEqual([
       "0000_tan_zeigeist",
       "0001_spooky_marvel_apes",
@@ -234,7 +234,9 @@ describe("Esquema Drizzle", () => {
       "0009_perpetual_deathstrike",
       "0010_young_thaddeus_ross",
       "0011_compartir_descargas",
-      "0012_compartir_reportes"
+      "0012_compartir_reportes",
+      "0013_fuzzy_callisto",
+      "0014_reconciliar_compartir_joseph",
     ]);
   });
 
@@ -260,6 +262,9 @@ describe("Esquema Drizzle", () => {
       "script_exportacion",
       "uri_base_gcs",
       "estado",
+      "cancelacion_solicitada_en",
+      "cancelada_por_usuario_id",
+      "motivo_detencion",
       "version_compilador",
       "etapa_error",
       "mensaje_error",

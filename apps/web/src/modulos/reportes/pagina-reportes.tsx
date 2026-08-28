@@ -22,24 +22,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { BarraFiltrosReportes } from "./componentes/barra-filtros-reportes";
 import { ListaReportes } from "./componentes/lista-reportes";
+import { ModalConfirmacionRiesgo } from "./componentes/modal-confirmacion-riesgo";
 import { ModalCrearReporteDesdePlantilla } from "./componentes/modal-crear-reporte-desde-plantilla";
 import { PaginacionLista } from "./componentes/paginacion-lista";
-
-export function filtrarReportes(
-  reportes: ResumenReporte[],
-  busqueda: string,
-  espacioId: string,
-) {
-  const termino = busqueda.trim().toLocaleLowerCase();
-  return reportes.filter((reporte) => {
-    const coincideBusqueda =
-      !termino ||
-      [reporte.nombre, reporte.espacioNombre ?? ""].some((valor) =>
-        valor.toLocaleLowerCase().includes(termino),
-      );
-    return coincideBusqueda && (!espacioId || reporte.espacioId === espacioId);
-  });
-}
+import { filtrarReportes } from "./filtrar-reportes";
+import { hashRiesgoDevuelto } from "./utiles-riesgo-ejecucion";
 
 export function PaginaReportes() {
   const { mostrarError, mostrarExito } = useNotificaciones();
@@ -53,6 +40,10 @@ export function PaginaReportes() {
   const { busquedaTemp, setBusquedaTemp, busquedaActiva, buscar, limpiar } =
     useBusqueda();
   const [idEjecutando, setIdEjecutando] = useState<string | null>(null);
+  const [riesgoPendiente, setRiesgoPendiente] = useState<{
+    id: string;
+    hash: string;
+  } | null>(null);
   const [reporteCompartiendo, setReporteCompartiendo] =
     useState<ResumenReporte | null>(null);
   const consulta = useQuery({
@@ -87,8 +78,12 @@ export function PaginaReportes() {
   }, [consulta.data]);
   const paginacion = usePaginacion(filtrados);
   const ejecutar = useMutation({
-    mutationFn: (id: string) => ejecutarReporte(id),
-    onMutate: setIdEjecutando,
+    mutationFn: (entrada: { id: string; hash?: string }) =>
+      ejecutarReporte(
+        entrada.id,
+        entrada.hash ? { hashDataflowSha256: entrada.hash } : undefined,
+      ),
+    onMutate: (entrada) => setIdEjecutando(entrada.id),
     onSuccess: (resultado) => {
       mostrarExito("Ejecución del reporte iniciada");
       void queryClient.invalidateQueries({ queryKey: ["reportes"] });
@@ -97,7 +92,11 @@ export function PaginaReportes() {
         search: { carpeta: resultado.carpetaDescargas },
       });
     },
-    onError: (error: Error) => mostrarError(error.message),
+    onError: (error: Error, entrada) => {
+      const hash = hashRiesgoDevuelto(error);
+      if (hash) setRiesgoPendiente({ id: entrada.id, hash });
+      else mostrarError(error.message);
+    },
     onSettled: () => setIdEjecutando(null),
   });
   if (consulta.isLoading) return <EstadoCarga mensaje="Cargando reportes..." />;
@@ -126,7 +125,7 @@ export function PaginaReportes() {
         <ListaReportes
           reportes={paginacion.elementosPagina}
           idEjecutando={idEjecutando}
-          onEjecutar={(id) => ejecutar.mutate(id)}
+          onEjecutar={(id) => ejecutar.mutate({ id })}
           onCompartir={setReporteCompartiendo}
           hayFiltros={Boolean(busquedaActiva || espacioId)}
         />
@@ -150,6 +149,13 @@ export function PaginaReportes() {
             }
           />
         ) : null}
+        <ModalConfirmacionRiesgo
+          abierto={riesgoPendiente !== null}
+          onVolver={() => setRiesgoPendiente(null)}
+          onConfirmar={() => {
+            if (riesgoPendiente) ejecutar.mutate(riesgoPendiente);
+          }}
+        />
         {reporteCompartiendo && (
           <CompartirReporte
             reporte={reporteCompartiendo}

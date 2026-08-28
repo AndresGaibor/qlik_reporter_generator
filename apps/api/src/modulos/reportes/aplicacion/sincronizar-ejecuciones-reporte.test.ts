@@ -221,9 +221,7 @@ describe("SincronizarEjecucionesReporte", () => {
       ]),
       obtenerAutomatizacion: vi.fn(async () => ({
         workspace: {
-          blocks: [
-            { snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" },
-          ],
+          blocks: [{ snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" }],
         },
       })),
     } as unknown as ServicioQlik);
@@ -251,5 +249,142 @@ describe("SincronizarEjecucionesReporte", () => {
       ]),
     } as unknown as ServicioQlik);
     expect(marcar).toHaveBeenCalledWith("e-1", "detenida", expect.any(Date));
+  });
+
+  it("mantiene cancelando si Qlik está detenido pero BigQuery sigue RUNNING", async () => {
+    const detenida = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "cancelando",
+        },
+      ]),
+      obtenerEjecucionPorId: vi.fn(async () => ({
+        id: "e-1",
+        estado: "cancelando",
+        jobIdPrincipalBigQuery: "job-1",
+        bigqueryProjectId: "p",
+      })),
+      marcarEjecucionDetenida: detenida,
+    };
+    const jobs = {
+      obtenerJob: vi.fn(async () => ({ estado: "RUNNING", errorResult: null })),
+    };
+    await new SincronizarEjecucionesReporte(
+      {
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "stopped" },
+        ]),
+      } as never,
+      repo as never,
+      jobs as never,
+    ).ejecutar("flujo-1", "tenant-1", "organizacion-1");
+    expect(detenida).not.toHaveBeenCalled();
+  });
+
+  it("mantiene cancelando si Qlik sigue running aunque BigQuery esté cancelado", async () => {
+    const detenida = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "cancelando",
+        },
+      ]),
+      obtenerEjecucionPorId: vi.fn(async () => ({
+        id: "e-1",
+        estado: "cancelando",
+        jobIdPrincipalBigQuery: "job-1",
+        bigqueryProjectId: "p",
+      })),
+      marcarEjecucionDetenida: detenida,
+    };
+    const jobs = {
+      obtenerJob: vi.fn(async () => ({
+        estado: "DONE",
+        errorResult: { reason: "cancelled", message: "cancelled" },
+      })),
+    };
+    await new SincronizarEjecucionesReporte(
+      {
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "running" },
+        ]),
+      } as never,
+      repo as never,
+      jobs as never,
+    ).ejecutar("flujo-1", "tenant-1", "organizacion-1");
+    expect(detenida).not.toHaveBeenCalled();
+  });
+
+  it("marca detenida solo cuando Qlik stopped y BigQuery confirma cancelación", async () => {
+    const detenida = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "cancelando",
+        },
+      ]),
+      obtenerEjecucionPorId: vi.fn(async () => ({
+        id: "e-1",
+        estado: "cancelando",
+        jobIdPrincipalBigQuery: "job-1",
+        bigqueryProjectId: "p",
+      })),
+      marcarEjecucionDetenida: detenida,
+    };
+    const jobs = {
+      obtenerJob: vi.fn(async () => ({
+        estado: "DONE",
+        errorResult: { reason: "stopped", message: "cancelled" },
+      })),
+    };
+    await new SincronizarEjecucionesReporte(
+      {
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "stopped" },
+        ]),
+      } as never,
+      repo as never,
+      jobs as never,
+    ).ejecutar("flujo-1", "tenant-1", "organizacion-1");
+    expect(detenida).toHaveBeenCalledWith("e-1", expect.any(Date));
+  });
+
+  it("cierra prudentemente como detenida si nunca hubo job BigQuery", async () => {
+    const detenida = vi.fn(async () => undefined);
+    const repo = {
+      listarEjecuciones: vi.fn(async () => [
+        {
+          id: "e-1",
+          runIdQlik: "run-1",
+          automatizacionIdQlik: "auto-1",
+          estado: "cancelando",
+        },
+      ]),
+      obtenerEjecucionPorId: vi.fn(async () => ({
+        id: "e-1",
+        estado: "cancelando",
+        jobIdPrincipalBigQuery: null,
+      })),
+      marcarEjecucionDetenida: detenida,
+    };
+    await new SincronizarEjecucionesReporte(
+      {
+        listarEjecuciones: vi.fn(async () => [
+          { id: "run-1", status: "stopped" },
+        ]),
+      } as never,
+      repo as never,
+    ).ejecutar("flujo-1", "tenant-1", "organizacion-1");
+    expect(detenida).toHaveBeenCalledWith("e-1", expect.any(Date));
   });
 });

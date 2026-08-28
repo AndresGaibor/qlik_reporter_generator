@@ -83,6 +83,14 @@ describe("ClienteJobsBigQuery", () => {
             totalBytesBilled: "1000000",
             cacheHit: false,
             statementType: "SELECT",
+            timeline: [
+              {
+                elapsedMs: "30000",
+                totalSlotMs: "200",
+                completedUnits: "10",
+                estimatedRunnableUnits: "4",
+              },
+            ],
           },
           totalSlotMs: "50000000000",
         },
@@ -121,7 +129,16 @@ describe("ClienteJobsBigQuery", () => {
         cacheHit: false,
         statementType: "SELECT",
         errorResult: null,
-        timeline: [],
+        timeline: [
+          {
+            elapsedMs: "30000",
+            totalSlotMs: "200",
+            pendingUnits: null,
+            completedUnits: "10",
+            activeUnits: null,
+            estimatedRunnableUnits: "4",
+          },
+        ],
         queryPlan: [],
         parentJobId: null,
       });

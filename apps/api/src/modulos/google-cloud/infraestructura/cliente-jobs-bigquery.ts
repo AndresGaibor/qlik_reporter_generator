@@ -137,7 +137,7 @@ export class ClienteJobsBigQuery implements PuertoJobsBigQuery {
             message: String(errorResult.message ?? ""),
           }
         : null,
-      timeline: mapearTimeline(stats.timeline),
+      timeline: mapearTimeline(queryStats.timeline),
       queryPlan: mapearQueryPlan(queryStats.queryPlan),
       parentJobId: ref.parentJobId ? String(ref.parentJobId) : null,
     };

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
+import { Readable } from "node:stream";
 import { Hono } from "hono";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
 import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
@@ -320,6 +321,82 @@ describe("GET /api/descargas/administracion", () => {
   });
 });
 
+describe("GET /api/descargas/:id/archivo", () => {
+  it("transmite un archivo autorizado desde GCS sin requerir CORS", async () => {
+    const sesion = {
+      tenantId: "tenant-1",
+      organizacionId: "org-1",
+      usuarioId: "user-1",
+    };
+    const abrirLectura = vi.fn(() => Readable.from(["contenido,csv\n1,2\n"]));
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => sesion,
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {
+        obtenerEjecucionDescarga: async () => ({
+          id: "e-1",
+          estado: "completada",
+          uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-1/",
+        }),
+      } as unknown as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () =>
+        ({
+          listar: async () => [
+            {
+              nombre: "parte-001.csv",
+              rutaCompleta: "POCs/TalendDescargados/ventas/e-1/parte-001.csv",
+              tamanoBytes: 18,
+            },
+          ],
+          abrirLectura,
+        }) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono().route("/api/descargas", rutas);
+
+    const respuesta = await app.request(
+      "/api/descargas/e-1/archivo?nombre=parte-001.csv",
+      { headers: crearSesionHeaders(sesion) },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.headers.get("content-type")).toBe(
+      "text/csv; charset=utf-8",
+    );
+    expect(respuesta.headers.get("content-disposition")).toContain(
+      "parte-001.csv",
+    );
+    expect(await respuesta.text()).toBe("contenido,csv\n1,2\n");
+    expect(abrirLectura).toHaveBeenCalledWith(
+      "POCs/TalendDescargados/ventas/e-1/parte-001.csv",
+    );
+  });
+
+  it("no abre archivos cuando la ejecución no pertenece al usuario", async () => {
+    const abrirLectura = vi.fn(() => Readable.from(["secreto"]));
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId: "user-1",
+      }),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {
+        obtenerEjecucionDescarga: async () => null,
+      } as unknown as PuertoRepositorioReportes,
+      resolverAlmacenamiento: async () =>
+        ({ abrirLectura }) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono().route("/api/descargas", rutas);
+
+    const respuesta = await app.request(
+      "/api/descargas/e-ajena/archivo?nombre=parte-001.csv",
+    );
+
+    expect(respuesta.status).toBe(404);
+    expect(abrirLectura).not.toHaveBeenCalled();
+  });
+});
+
 describe("POST /api/descargas/:id/manifiesto", () => {
   it("retorna 200 para ejecución completada con archivos", async () => {
     const sesion = {
@@ -350,7 +427,7 @@ describe("POST /api/descargas/:id/manifiesto", () => {
           tamanoBytes: 1024,
         },
       ],
-      firmar: async () => "https://storage.example.com/signed",
+      firmar: vi.fn(async () => "https://storage.example.com/signed"),
     };
     const rutas = crearRutasDescargas({
       resolverSesion: async () => sesion,
@@ -370,7 +447,13 @@ describe("POST /api/descargas/:id/manifiesto", () => {
     const json = await respuesta.json();
     expect(json.exito).toBe(true);
     expect(json.datos.descargaId).toBe("e-1");
-    expect(Array.isArray(json.datos.archivos)).toBe(true);
+    expect(json.datos.archivos).toEqual([
+      expect.objectContaining({
+        nombre: "parte-001-000000000000.csv.gz",
+        url: "/api/descargas/e-1/archivo?nombre=parte-001-000000000000.csv.gz",
+      }),
+    ]);
+    expect(alm.firmar).not.toHaveBeenCalled();
   });
 
   it("retorna 404 para ejecución ajena (otro tenant)", async () => {
