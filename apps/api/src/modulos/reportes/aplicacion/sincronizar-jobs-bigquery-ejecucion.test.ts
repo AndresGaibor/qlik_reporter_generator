@@ -115,6 +115,35 @@ describe("SincronizarJobsBigQueryEjecucion", () => {
       expect(call.estado).toBe("error");
       expect(call.errorReason).toBe("rateLimitExceeded");
       expect(call.errorMessage).toBe("Rate limit exceeded");
+      expect(repoReportes.marcarEjecucionError).toHaveBeenCalledWith(
+        "exec-1",
+        "bigquery",
+        "Rate limit exceeded",
+        new Date("2026-08-25T10:00:05.000Z"),
+      );
+    });
+
+    it("marca la ejecución como error cuando BigQuery cancela el job", async () => {
+      const { sincronizar, jobsBigQuery, repoReportes } = setup();
+      jobsBigQuery.obtenerJob.mockResolvedValue(
+        metadatoJobBigQuery({
+          estado: "DONE",
+          errorResult: {
+            reason: "stopped",
+            message: "Job cancelled",
+          },
+        }),
+      );
+      jobsBigQuery.listarHijos.mockResolvedValue([]);
+
+      await sincronizar.sincronizar("exec-1");
+
+      expect(repoReportes.marcarEjecucionError).toHaveBeenCalledWith(
+        "exec-1",
+        "bigquery",
+        "El job de BigQuery fue cancelado.",
+        new Date("2026-08-25T10:00:05.000Z"),
+      );
     });
 
     it("no marca error ni cambia estado si el job no existe (404/null)", async () => {
@@ -283,12 +312,14 @@ function setup() {
     guardarJobBigQueryEjecucion: vi.fn<() => Promise<void>>(),
     listarJobsBigQueryPorEjecucion: vi.fn<() => Promise<unknown[]>>(),
     actualizarTimestampsEjecucionBigQuery: vi.fn<() => Promise<void>>(),
+    marcarEjecucionError: vi.fn<() => Promise<void>>(),
   } as unknown as PuertoRepositorioReportes & {
     obtenerEjecucionPorJobId: ReturnType<typeof vi.fn>;
     obtenerEjecucionPorId: ReturnType<typeof vi.fn>;
     guardarJobBigQueryEjecucion: ReturnType<typeof vi.fn>;
     listarJobsBigQueryPorEjecucion: ReturnType<typeof vi.fn>;
     actualizarTimestampsEjecucionBigQuery: ReturnType<typeof vi.fn>;
+    marcarEjecucionError: ReturnType<typeof vi.fn>;
   };
 
   repoReportes.obtenerEjecucionPorId.mockResolvedValue(ejecucionPersistida());

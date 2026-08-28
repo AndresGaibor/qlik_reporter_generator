@@ -43,6 +43,15 @@ export class SincronizarJobsBigQueryEjecucion {
 
     await this.persistirJob(mainJob, ejecucion);
 
+    if (mainJob.errorResult) {
+      await this.repoReportes.marcarEjecucionError(
+        ejecucion.id,
+        "bigquery",
+        mensajeErrorBigQuery(mainJob.errorResult),
+        mainJob.endTime ? new Date(mainJob.endTime) : new Date(),
+      );
+    }
+
     const hijos = await this.jobsBigQuery.listarHijos({
       projectId,
       parentJobId: jobId,
@@ -135,6 +144,18 @@ function mapearEstado(
       return "pendiente";
     }
   }
+}
+
+function mensajeErrorBigQuery(error: {
+  reason: string;
+  message: string;
+}): string {
+  if (error.reason === "stopped" || error.reason === "cancelled") {
+    return "El job de BigQuery fue cancelado.";
+  }
+  return (
+    error.message || `El job de BigQuery terminó con error: ${error.reason}`
+  );
 }
 
 function calcularDuracionMs(
