@@ -12,7 +12,11 @@ describe("migración de trazabilidad BigQuery", () => {
       ).text(),
     ) as { entries: Array<{ tag: string }> };
 
-    expect(migrations).toHaveLength(8);
-    expect(journal.entries.at(-1)?.tag).toBe("0007_trazabilidad_bigquery_jobs");
+    expect(migrations.length).toBe(journal.entries.length);
+    expect(
+      journal.entries.some(
+        ({ tag }) => tag === "0007_trazabilidad_bigquery_jobs",
+      ),
+    ).toBe(true);
   });
 });

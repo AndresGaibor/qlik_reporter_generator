@@ -103,9 +103,19 @@ export const esquemaResumenReporte = z
     modificadoEn: z.string().datetime().nullable(),
     creadoEn: z.string().datetime().nullable().optional(),
     ultimaEjecucionEn: z.string().datetime().nullable().optional(),
+    propietarioIdQlik: z.string().nullable().optional(),
+    esPropietario: z.boolean().optional(),
+    compartidoConmigo: z.boolean().optional(),
+    compartidoTodaOrganizacion: z.boolean().optional(),
   })
   .strict();
 export type ResumenReporte = z.infer<typeof esquemaResumenReporte>;
 
 export const esquemaDetalleReporte = esquemaResumenReporte;
 export type DetalleReporte = z.infer<typeof esquemaDetalleReporte>;
+
+export const esquemaCompartirReporte = z.object({
+  todaOrganizacion: z.boolean(),
+  usuarios: z.array(z.string().uuid()),
+});
+export type CompartirReporte = z.infer<typeof esquemaCompartirReporte>;

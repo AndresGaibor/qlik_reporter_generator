@@ -1,7 +1,9 @@
 import { ErrorClienteApi, clienteApi } from "@/compartido/api/cliente";
 import type {
+  CompartirDescarga,
   ManifiestoDescarga,
   ResumenDescargaEjecucion,
+  UsuarioCompartible,
 } from "@qlik/contratos/descargas";
 
 export type { ResumenDescargaEjecucion };
@@ -22,6 +24,45 @@ export function listarDescargasAdministracion(): Promise<
 export function solicitarManifiesto(id: string): Promise<ManifiestoDescarga> {
   return clienteApi.post<ManifiestoDescarga>(
     `/descargas/${encodeURIComponent(id)}/manifiesto`,
+  );
+}
+
+export function urlZipEjecucion(id: string) {
+  return `/api/descargas/${encodeURIComponent(id)}/zip`;
+}
+
+export interface ParteCsvNormalizada {
+  numero: number;
+  nombre: string;
+  url: string;
+}
+
+export function listarPartesNormalizadas(id: string) {
+  return clienteApi.get<{
+    estado: "preparando" | "lista";
+    partes: ParteCsvNormalizada[];
+  }>(`/descargas/${encodeURIComponent(id)}/partes`);
+}
+
+export function listarUsuariosCompartibles() {
+  return clienteApi.get<UsuarioCompartible[]>(
+    "/descargas/usuarios-compartibles",
+  );
+}
+
+export function obtenerCompartidoDescarga(id: string) {
+  return clienteApi.get<CompartirDescarga>(
+    `/descargas/${encodeURIComponent(id)}/compartido`,
+  );
+}
+
+export function guardarCompartidoDescarga(
+  id: string,
+  entrada: CompartirDescarga,
+) {
+  return clienteApi.put<CompartirDescarga>(
+    `/descargas/${encodeURIComponent(id)}/compartido`,
+    entrada,
   );
 }
 

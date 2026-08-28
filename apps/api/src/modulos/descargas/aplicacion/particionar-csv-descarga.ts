@@ -9,6 +9,8 @@ import type {
 
 export const MAXIMO_FILAS_DESCARGA_PREDETERMINADO = 1_000_000;
 const DIRECTORIO_CACHE_ANTERIOR = "__download_cache__/";
+const NUEVA_LINEA = Buffer.from("\n");
+const TAMANO_LOTE_ESCRITURA = 1024 * 1024;
 
 /**
  * Reparte uno o varios CSV fuente en partes con un máximo de filas sin
@@ -45,17 +47,31 @@ export async function particionarCsvDescarga(
   let destinoActual: Writable | null = null;
   let filasParte = 0;
   let indiceParte = 0;
+  let lote: Buffer[] = [];
+  let bytesLote = 0;
   const nombres: string[] = [];
+
+  const vaciarLote = async () => {
+    if (!destinoActual || lote.length === 0) return;
+    const contenido = Buffer.concat(lote, bytesLote);
+    lote = [];
+    bytesLote = 0;
+    if (!destinoActual.write(contenido)) await once(destinoActual, "drain");
+  };
 
   const abrirNuevaParte = async () => {
     if (!cabecera) return;
-    if (destinoActual) await cerrarDestino(destinoActual);
+    if (destinoActual) {
+      await vaciarLote();
+      await cerrarDestino(destinoActual);
+    }
     indiceParte += 1;
     filasParte = 0;
     const nombre = `parte-${String(indiceParte).padStart(3, "0")}.csv`;
     destinoActual = abrirDestinoParte(nombre);
     nombres.push(nombre);
-    await escribirRegistro(destinoActual, cabecera);
+    const encabezado = Buffer.concat([cabecera, NUEVA_LINEA]);
+    if (!destinoActual.write(encabezado)) await once(destinoActual, "drain");
   };
 
   for (const fuente of csv) {
@@ -81,8 +97,10 @@ export async function particionarCsvDescarga(
         await abrirNuevaParte();
       }
       if (!destinoActual) continue;
-      await escribirRegistro(destinoActual, registro);
+      lote.push(registro, NUEVA_LINEA);
+      bytesLote += registro.length + 1;
       filasParte += 1;
+      if (bytesLote >= TAMANO_LOTE_ESCRITURA) await vaciarLote();
     }
   }
 
@@ -95,7 +113,10 @@ export async function particionarCsvDescarga(
   }
 
   if (!destinoActual) await abrirNuevaParte();
-  if (destinoActual) await cerrarDestino(destinoActual);
+  if (destinoActual) {
+    await vaciarLote();
+    await cerrarDestino(destinoActual);
+  }
   return nombres;
 }
 
@@ -131,11 +152,6 @@ async function cerrarDestino(destino: Writable): Promise<void> {
   await terminado;
 }
 
-async function escribirRegistro(destino: Writable, registro: Buffer) {
-  if (!destino.write(registro)) await once(destino, "drain");
-  if (!destino.write(Buffer.from("\n"))) await once(destino, "drain");
-}
-
 async function* leerRegistrosCsv(lectura: Readable): AsyncGenerator<Buffer> {
   let dentroComillas = false;
   let partes: Buffer[] = [];
@@ -145,22 +161,36 @@ async function* leerRegistrosCsv(lectura: Readable): AsyncGenerator<Buffer> {
     const chunk = Buffer.isBuffer(chunkRaw) ? chunkRaw : Buffer.from(chunkRaw);
     let inicio = 0;
 
-    for (let i = 0; i < chunk.length; i += 1) {
-      const byte = chunk[i];
-      if (byte === 0x22) dentroComillas = !dentroComillas;
-      if (byte !== 0x0a || dentroComillas) continue;
-
-      if (i > inicio) {
-        const fragmento = chunk.subarray(inicio, i);
-        partes.push(fragmento);
-        longitud += fragmento.length;
+    const extraerRegistro = (fin: number) => {
+      let registro: Buffer;
+      if (partes.length === 0) registro = chunk.subarray(inicio, fin);
+      else {
+        if (fin > inicio) {
+          const fragmento = chunk.subarray(inicio, fin);
+          partes.push(fragmento);
+          longitud += fragmento.length;
+        }
+        registro = Buffer.concat(partes, longitud);
       }
-      let registro = Buffer.concat(partes, longitud);
       if (registro.at(-1) === 0x0d) registro = registro.subarray(0, -1);
-      yield registro;
       partes = [];
       longitud = 0;
-      inicio = i + 1;
+      inicio = fin + 1;
+      return registro;
+    };
+
+    if (!dentroComillas && !chunk.includes(0x22)) {
+      let salto = chunk.indexOf(0x0a, inicio);
+      while (salto >= 0) {
+        yield extraerRegistro(salto);
+        salto = chunk.indexOf(0x0a, inicio);
+      }
+    } else {
+      for (let i = 0; i < chunk.length; i += 1) {
+        const byte = chunk[i];
+        if (byte === 0x22) dentroComillas = !dentroComillas;
+        if (byte === 0x0a && !dentroComillas) yield extraerRegistro(i);
+      }
     }
 
     if (inicio < chunk.length) {

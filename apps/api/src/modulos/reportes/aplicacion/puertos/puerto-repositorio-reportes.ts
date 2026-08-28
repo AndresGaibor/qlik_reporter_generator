@@ -106,6 +106,35 @@ export interface ResumenEjecucionDescarga {
 }
 
 export interface PuertoRepositorioReportes {
+  obtenerCompartidoReporte(contexto: {
+    flujoIdQlik: string;
+    organizacionId: string;
+    tenantQlikId: string;
+  }): Promise<{ todaOrganizacion: boolean; usuarios: string[] }>;
+  listarReportesCompartidosParaUsuario(contexto: {
+    organizacionId: string;
+    tenantQlikId: string;
+    usuarioId: string;
+  }): Promise<Map<string, { directo: boolean; todaOrganizacion: boolean }>>;
+  guardarCompartidoReporte(entrada: {
+    flujoIdQlik: string;
+    organizacionId: string;
+    tenantQlikId: string;
+    creadoPorUsuarioId: string;
+    todaOrganizacion: boolean;
+    usuarios: string[];
+  }): Promise<void>;
+  obtenerCompartidoDescarga(ejecucionId: string): Promise<{
+    todaOrganizacion: boolean;
+    usuarios: string[];
+  }>;
+  guardarCompartidoDescarga(entrada: {
+    ejecucionId: string;
+    organizacionId: string;
+    creadoPorUsuarioId: string;
+    todaOrganizacion: boolean;
+    usuarios: string[];
+  }): Promise<void>;
   crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
   ): Promise<EjecucionReportePersistida>;

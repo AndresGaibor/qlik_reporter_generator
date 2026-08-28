@@ -1,6 +1,16 @@
+import { esquemaCompartirReporte } from "@qlik/contratos";
 import { type Context, Hono } from "hono";
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
-import { responderExito } from "../../../nucleo/http/respuestas.js";
+import {
+  responderError,
+  responderExito,
+} from "../../../nucleo/http/respuestas.js";
+import { MAXIMO_FILAS_DESCARGA_PREDETERMINADO } from "../../descargas/aplicacion/particionar-csv-descarga.js";
+import {
+  iniciarPreparacionPartesNormalizadas,
+  obtenerPartesNormalizadas,
+  prefijoPartesNormalizadas,
+} from "../../descargas/aplicacion/preparar-partes-normalizadas.js";
 import type { PuertoAlmacenamientoDescargas } from "../../descargas/aplicacion/puerto-almacenamiento-descargas.js";
 import { parsearUriGcsPermitida } from "../../descargas/aplicacion/puerto-almacenamiento-descargas.js";
 import { ListarFlujos } from "../../flujos/aplicacion/casos-de-uso/listar-flujos.js";
@@ -9,6 +19,7 @@ import {
   resumenScriptNoDisponible,
   resumirDataflowParaUsuario,
 } from "../../flujos/aplicacion/resumir-dataflow.js";
+import type { Flujo } from "../../flujos/dominio/flujo.js";
 import {
   type DependenciasClonadoDataflow,
   crearRutasClonadoDataflow,
@@ -40,6 +51,8 @@ interface SesionReportes {
   usuarioId: string;
   usuarioIdQlik: string;
   correo?: string | null;
+  roles?: Array<"admin" | "administrador" | "usuario">;
+  esSuperadmin?: boolean;
 }
 
 export interface DependenciasRutasReportesDataflow {
@@ -47,10 +60,14 @@ export interface DependenciasRutasReportesDataflow {
   resolverConsultaFlujos(c: Context): Promise<PuertoConsultaFlujos>;
   resolverBigQuery(c: Context): Promise<ResolucionBigQueryReporte>;
   resolverSesion(c: Context): Promise<SesionReportes>;
+  resolverUsuariosOrganizacion?: (
+    organizacionId: string,
+  ) => Promise<Array<{ id: string; nombre?: string; correo: string | null }>>;
   repositorioReportes: PuertoRepositorioReportes;
   resolverAlmacenamiento?: (
     c: Context,
   ) => Promise<PuertoAlmacenamientoDescargas>;
+  resolverMaximoFilasDescarga?: (c: Context) => Promise<number>;
   resolverJobsBigQuery?: (c: Context) => Promise<PuertoJobsBigQuery>;
   resolverEjecutarReporte?: (c: Context) => Promise<
     (entrada: EntradaEjecutarReporte) => Promise<{
@@ -75,6 +92,71 @@ export function crearRutasReportesDataflow(
     return flujos.find((flujo) => flujo.id === flujoId);
   };
 
+  rutas.get("/usuarios-compartibles", async (c) => {
+    const sesion = await dependencias.resolverSesion(c);
+    if (!dependencias.resolverUsuariosOrganizacion)
+      return responderError(c, "No se pudo consultar los usuarios", 501);
+    const usuarios = await dependencias.resolverUsuariosOrganizacion(
+      sesion.organizacionId,
+    );
+    return responderExito(
+      c,
+      usuarios
+        .filter((usuario) => usuario.id !== sesion.usuarioId)
+        .map((usuario) => ({
+          ...usuario,
+          nombre: usuario.nombre ?? usuario.correo ?? "Usuario",
+        })),
+    );
+  });
+
+  rutas.get("/:flujoId/compartido", async (c) => {
+    const [sesion, flujo] = await Promise.all([
+      dependencias.resolverSesion(c),
+      obtenerFlujo(c),
+    ]);
+    if (!flujo) return responderError(c, "Reporte no encontrado", 404);
+    return responderExito(
+      c,
+      await dependencias.repositorioReportes.obtenerCompartidoReporte({
+        flujoIdQlik: flujo.id,
+        organizacionId: sesion.organizacionId,
+        tenantQlikId: sesion.tenantId,
+      }),
+    );
+  });
+
+  rutas.put("/:flujoId/compartido", async (c) => {
+    const [sesion, flujo] = await Promise.all([
+      dependencias.resolverSesion(c),
+      obtenerFlujo(c),
+    ]);
+    if (!flujo) return responderError(c, "Reporte no encontrado", 404);
+    const entrada = esquemaCompartirReporte.safeParse(await c.req.json());
+    if (!entrada.success)
+      return responderError(c, "Datos de compartido inválidos", 422, {
+        detalles: entrada.error.flatten(),
+      });
+    const usuarios = dependencias.resolverUsuariosOrganizacion
+      ? await dependencias.resolverUsuariosOrganizacion(sesion.organizacionId)
+      : [];
+    const permitidos = new Set(usuarios.map((usuario) => usuario.id));
+    if (entrada.data.usuarios.some((id) => !permitidos.has(id)))
+      return responderError(
+        c,
+        "Uno de los usuarios no pertenece a la organización",
+        422,
+      );
+    await dependencias.repositorioReportes.guardarCompartidoReporte({
+      flujoIdQlik: flujo.id,
+      organizacionId: sesion.organizacionId,
+      tenantQlikId: sesion.tenantId,
+      creadoPorUsuarioId: sesion.usuarioId,
+      ...entrada.data,
+    });
+    return responderExito(c, entrada.data);
+  });
+
   rutas.get("/", async (c) => {
     const espacioId = c.req.query("espacioId")?.trim() || undefined;
     const q = (c.req.query("q") ?? c.req.query("busqueda"))
@@ -87,6 +169,17 @@ export function crearRutasReportesDataflow(
       flujos = flujos.filter((flujo) => flujo.nombre.toLowerCase().includes(q));
 
     const sesion = await dependencias.resolverSesion(c);
+    const compartidos =
+      typeof dependencias.repositorioReportes
+        .listarReportesCompartidosParaUsuario === "function"
+        ? await dependencias.repositorioReportes.listarReportesCompartidosParaUsuario(
+            {
+              organizacionId: sesion.organizacionId,
+              tenantQlikId: sesion.tenantId,
+              usuarioId: sesion.usuarioId,
+            },
+          )
+        : new Map();
     const ultimasEjecuciones =
       await dependencias.repositorioReportes.listarUltimasEjecucionesPorFlujo(
         sesion.tenantId,
@@ -98,7 +191,20 @@ export function crearRutasReportesDataflow(
         ejecucion.ultimaEjecucionEn,
       ]),
     );
-    const reportes = flujos
+    const vistaUsuarioFinal = c.req.query("vistaUsuarioFinal") === "true";
+    const esAdministrador =
+      !vistaUsuarioFinal &&
+      (sesion.esSuperadmin ||
+        sesion.roles?.some(
+          (rol) => rol === "admin" || rol === "administrador",
+        ));
+    const flujosVisibles = filtrarFlujosVisibles(
+      flujos,
+      sesion.usuarioIdQlik,
+      compartidos,
+      Boolean(esAdministrador),
+    );
+    const reportes = flujosVisibles
       .map((flujo) => ({
         id: flujo.id,
         nombre: flujo.nombre,
@@ -108,6 +214,11 @@ export function crearRutasReportesDataflow(
         creadoEn: flujo.creadoEn ?? null,
         ultimaEjecucionEn:
           ultimaEjecucionPorFlujo.get(flujo.id)?.toISOString() ?? null,
+        propietarioIdQlik: flujo.propietarioId ?? null,
+        esPropietario: flujo.propietarioId === sesion.usuarioIdQlik,
+        compartidoConmigo: compartidos.get(flujo.id)?.directo ?? false,
+        compartidoTodaOrganizacion:
+          compartidos.get(flujo.id)?.todaOrganizacion ?? false,
         carpetaDescargas: construirCarpetaDescargasReporte(flujo.nombre),
       }))
       .sort(compararActividadReporte);
@@ -262,6 +373,9 @@ export function crearRutasReportesDataflow(
       if (dependencias.resolverAlmacenamiento) {
         try {
           const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+          const maximoFilas = dependencias.resolverMaximoFilasDescarga
+            ? await dependencias.resolverMaximoFilasDescarga(c)
+            : MAXIMO_FILAS_DESCARGA_PREDETERMINADO;
           await Promise.all(
             ejecuciones.filter(esEjecucionActiva).map(async (ejecucion) => {
               const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
@@ -270,6 +384,25 @@ export function crearRutasReportesDataflow(
               await dependencias.repositorioReportes.marcarGcsFinalizada(
                 ejecucion.id,
                 new Date(),
+              );
+              if (
+                !almacenamiento.abrirLectura ||
+                !almacenamiento.abrirEscritura ||
+                (await obtenerPartesNormalizadas(almacenamiento, prefijo))
+              )
+                return;
+              const fuentes = (await almacenamiento.listar(prefijo)).filter(
+                (archivo) =>
+                  /\.csv(?:\.gz)?$/i.test(archivo.nombre) &&
+                  !archivo.rutaCompleta.startsWith(
+                    prefijoPartesNormalizadas(prefijo),
+                  ),
+              );
+              iniciarPreparacionPartesNormalizadas(
+                almacenamiento,
+                prefijo,
+                fuentes,
+                maximoFilas,
               );
             }),
           );
@@ -320,6 +453,20 @@ export function crearRutasReportesDataflow(
     }
   });
   return rutas;
+}
+
+export function filtrarFlujosVisibles(
+  flujos: Flujo[],
+  usuarioIdQlik: string,
+  compartidos: Map<string, unknown>,
+  esAdministrador: boolean,
+) {
+  return esAdministrador
+    ? flujos
+    : flujos.filter(
+        (flujo) =>
+          flujo.propietarioId === usuarioIdQlik || compartidos.has(flujo.id),
+      );
 }
 
 function compararActividadReporte(
@@ -423,8 +570,7 @@ function calcularMetricasEjecucion(
   let duracionTotalMs: number | null = null;
   const inicioTotal = ejecucion.iniciadoEn ?? ejecucion.creadoEn;
   if (ejecucion.finalizadoEn && inicioTotal) {
-    duracionTotalMs =
-      ejecucion.finalizadoEn.getTime() - inicioTotal.getTime();
+    duracionTotalMs = ejecucion.finalizadoEn.getTime() - inicioTotal.getTime();
   }
 
   let duracionBigQueryMs: number | null = null;

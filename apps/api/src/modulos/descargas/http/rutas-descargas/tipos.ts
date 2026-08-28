@@ -19,15 +19,13 @@ export interface DependenciasRutasDescargas {
   repositorioReportes: PuertoRepositorioReportes;
   resolverAlmacenamiento(c: Context): Promise<PuertoAlmacenamientoDescargas>;
   resolverJobsBigQuery?: (c: Context) => Promise<PuertoJobsBigQuery>;
-  resolverConfiguracionGcs?: (
-    c: Context,
-  ) => Promise<{
+  resolverConfiguracionGcs?: (c: Context) => Promise<{
     bucket: string;
     prefijo: string;
     maximoFilasPorArchivo?: number;
   }>;
   resolverUsuariosOrganizacion?: (
     organizacionId: string,
-  ) => Promise<Array<{ id: string; correo: string | null }>>;
+  ) => Promise<Array<{ id: string; nombre?: string; correo: string | null }>>;
   minutosFirma?: number;
 }

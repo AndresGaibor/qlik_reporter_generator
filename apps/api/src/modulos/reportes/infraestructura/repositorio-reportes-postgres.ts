@@ -1,8 +1,10 @@
-import { and, desc, eq, inArray, max } from "drizzle-orm";
+import { and, desc, eq, inArray, max, or, sql } from "drizzle-orm";
 import type { ConexionDb } from "../../../plataforma/persistencia/conexion.js";
 import {
+  descargasCompartidas,
   ejecucionesReportes,
   jobsBigQueryEjecucion,
+  reportesCompartidos,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
@@ -15,6 +17,151 @@ import type {
 
 export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
   constructor(private readonly db: ConexionDb) {}
+
+  async obtenerCompartidoReporte(contexto: {
+    flujoIdQlik: string;
+    organizacionId: string;
+    tenantQlikId: string;
+  }) {
+    const filas = await this.db
+      .select({
+        alcance: reportesCompartidos.alcance,
+        usuarioId: reportesCompartidos.usuarioId,
+      })
+      .from(reportesCompartidos)
+      .where(
+        and(
+          eq(reportesCompartidos.flujoIdQlik, contexto.flujoIdQlik),
+          eq(reportesCompartidos.organizacionId, contexto.organizacionId),
+          eq(reportesCompartidos.tenantQlikId, contexto.tenantQlikId),
+        ),
+      );
+    return {
+      todaOrganizacion: filas.some((fila) => fila.alcance === "organizacion"),
+      usuarios: filas.flatMap((fila) =>
+        fila.usuarioId ? [fila.usuarioId] : [],
+      ),
+    };
+  }
+
+  async listarReportesCompartidosParaUsuario(contexto: {
+    organizacionId: string;
+    tenantQlikId: string;
+    usuarioId: string;
+  }) {
+    const filas = await this.db
+      .select({
+        flujoIdQlik: reportesCompartidos.flujoIdQlik,
+        alcance: reportesCompartidos.alcance,
+        usuarioId: reportesCompartidos.usuarioId,
+      })
+      .from(reportesCompartidos)
+      .where(
+        and(
+          eq(reportesCompartidos.organizacionId, contexto.organizacionId),
+          eq(reportesCompartidos.tenantQlikId, contexto.tenantQlikId),
+          or(
+            eq(reportesCompartidos.alcance, "organizacion"),
+            eq(reportesCompartidos.usuarioId, contexto.usuarioId),
+          ),
+        ),
+      );
+    const resultado = new Map<
+      string,
+      { directo: boolean; todaOrganizacion: boolean }
+    >();
+    for (const fila of filas) {
+      const actual = resultado.get(fila.flujoIdQlik) ?? {
+        directo: false,
+        todaOrganizacion: false,
+      };
+      if (fila.alcance === "organizacion") actual.todaOrganizacion = true;
+      if (fila.usuarioId === contexto.usuarioId) actual.directo = true;
+      resultado.set(fila.flujoIdQlik, actual);
+    }
+    return resultado;
+  }
+
+  async guardarCompartidoReporte(entrada: {
+    flujoIdQlik: string;
+    organizacionId: string;
+    tenantQlikId: string;
+    creadoPorUsuarioId: string;
+    todaOrganizacion: boolean;
+    usuarios: string[];
+  }): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const alcance = and(
+        eq(reportesCompartidos.flujoIdQlik, entrada.flujoIdQlik),
+        eq(reportesCompartidos.organizacionId, entrada.organizacionId),
+        eq(reportesCompartidos.tenantQlikId, entrada.tenantQlikId),
+      );
+      await tx.delete(reportesCompartidos).where(alcance);
+      const base = {
+        flujoIdQlik: entrada.flujoIdQlik,
+        organizacionId: entrada.organizacionId,
+        tenantQlikId: entrada.tenantQlikId,
+        creadoPorUsuarioId: entrada.creadoPorUsuarioId,
+      };
+      const valores = entrada.todaOrganizacion
+        ? [{ ...base, alcance: "organizacion" }]
+        : [...new Set(entrada.usuarios)].map((usuarioId) => ({
+            ...base,
+            usuarioId,
+            alcance: "usuario",
+          }));
+      if (valores.length) await tx.insert(reportesCompartidos).values(valores);
+    });
+  }
+
+  async obtenerCompartidoDescarga(ejecucionId: string) {
+    const filas = await this.db
+      .select({
+        alcance: descargasCompartidas.alcance,
+        usuarioId: descargasCompartidas.usuarioId,
+      })
+      .from(descargasCompartidas)
+      .where(eq(descargasCompartidas.ejecucionReporteId, ejecucionId));
+    return {
+      todaOrganizacion: filas.some((fila) => fila.alcance === "organizacion"),
+      usuarios: filas.flatMap((fila) =>
+        fila.usuarioId ? [fila.usuarioId] : [],
+      ),
+    };
+  }
+
+  async guardarCompartidoDescarga(entrada: {
+    ejecucionId: string;
+    organizacionId: string;
+    creadoPorUsuarioId: string;
+    todaOrganizacion: boolean;
+    usuarios: string[];
+  }): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(descargasCompartidas)
+        .where(
+          eq(descargasCompartidas.ejecucionReporteId, entrada.ejecucionId),
+        );
+      const valores = entrada.todaOrganizacion
+        ? [
+            {
+              ejecucionReporteId: entrada.ejecucionId,
+              organizacionId: entrada.organizacionId,
+              creadoPorUsuarioId: entrada.creadoPorUsuarioId,
+              alcance: "organizacion",
+            },
+          ]
+        : [...new Set(entrada.usuarios)].map((usuarioId) => ({
+            ejecucionReporteId: entrada.ejecucionId,
+            organizacionId: entrada.organizacionId,
+            creadoPorUsuarioId: entrada.creadoPorUsuarioId,
+            usuarioId,
+            alcance: "usuario",
+          }));
+      if (valores.length) await tx.insert(descargasCompartidas).values(valores);
+    });
+  }
 
   async crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
@@ -177,7 +324,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
           eq(ejecucionesReportes.tenantQlikId, contexto.tenantQlikId),
           eq(ejecucionesReportes.organizacionId, contexto.organizacionId),
           ...(usuarioId
-            ? [eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId)]
+            ? [
+                or(
+                  eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId),
+                  sql`exists (select 1 from ${descargasCompartidas} dc where dc.ejecucion_reporte_id = ${ejecucionesReportes.id} and dc.organizacion_id = ${contexto.organizacionId} and (dc.alcance = 'organizacion' or dc.usuario_id = ${usuarioId}))`,
+                ),
+              ]
             : []),
         ),
       )
@@ -230,7 +382,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
           eq(ejecucionesReportes.tenantQlikId, contexto.tenantQlikId),
           eq(ejecucionesReportes.organizacionId, contexto.organizacionId),
           ...(usuarioId
-            ? [eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId)]
+            ? [
+                or(
+                  eq(ejecucionesReportes.ejecutadoPorUsuarioId, usuarioId),
+                  sql`exists (select 1 from ${descargasCompartidas} dc where dc.ejecucion_reporte_id = ${ejecucionesReportes.id} and dc.organizacion_id = ${contexto.organizacionId} and (dc.alcance = 'organizacion' or dc.usuario_id = ${usuarioId}))`,
+                ),
+              ]
             : []),
         ),
       )

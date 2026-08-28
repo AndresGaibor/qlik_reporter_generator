@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
-import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
+import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { PuertoAlmacenamientoDescargas } from "../aplicacion/puerto-almacenamiento-descargas.js";
 import { crearRutasDescargas } from "./rutas-descargas.js";
@@ -215,6 +215,59 @@ describe("GET /api/descargas", () => {
       limit: 100,
       sort: "desc",
     });
+  });
+});
+
+describe("PUT /api/descargas/:id/compartido", () => {
+  it("guarda destinatarios de la misma organización", async () => {
+    const usuarioId = "11111111-1111-4111-8111-111111111111";
+    const destinatarioId = "22222222-2222-4222-8222-222222222222";
+    const guardarCompartidoDescarga = vi.fn(async () => undefined);
+    const rutas = crearRutasDescargas({
+      resolverSesion: async () => ({
+        tenantId: "tenant-1",
+        organizacionId: "org-1",
+        usuarioId,
+      }),
+      resolverQlik: async () => ({}) as unknown as ServicioQlik,
+      repositorioReportes: {
+        obtenerEjecucionPorId: async () => ({
+          id: "33333333-3333-4333-8333-333333333333",
+          tenantQlikId: "tenant-1",
+          organizacionId: "org-1",
+          ejecutadoPorUsuarioId: usuarioId,
+        }),
+        guardarCompartidoDescarga,
+      } as unknown as PuertoRepositorioReportes,
+      resolverUsuariosOrganizacion: async () => [
+        { id: usuarioId, nombre: "Origen", correo: "origen@example.com" },
+        {
+          id: destinatarioId,
+          nombre: "Destino",
+          correo: "destino@example.com",
+        },
+      ],
+      resolverAlmacenamiento: async () =>
+        ({}) as unknown as PuertoAlmacenamientoDescargas,
+    });
+    const app = new Hono().route("/api/descargas", rutas);
+
+    const respuesta = await app.request(
+      "/api/descargas/33333333-3333-4333-8333-333333333333/compartido",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          todaOrganizacion: false,
+          usuarios: [destinatarioId],
+        }),
+      },
+    );
+
+    expect(respuesta.status).toBe(200);
+    expect(guardarCompartidoDescarga).toHaveBeenCalledWith(
+      expect.objectContaining({ usuarios: [destinatarioId] }),
+    );
   });
 });
 

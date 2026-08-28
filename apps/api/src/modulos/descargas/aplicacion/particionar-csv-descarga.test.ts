@@ -56,6 +56,8 @@ describe("particionado CSV en streaming", () => {
     expect(Buffer.concat(salidas.get("parte-002.csv") ?? []).toString()).toBe(
       "id|texto\n3|tres\n",
     );
+    expect(salidas.get("parte-001.csv")).toHaveLength(2);
+    expect(salidas.get("parte-002.csv")).toHaveLength(2);
   });
 
   it("rechaza cabeceras distintas entre archivos fuente", async () => {

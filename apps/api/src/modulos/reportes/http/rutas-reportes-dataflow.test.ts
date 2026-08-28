@@ -1,13 +1,49 @@
 import { describe, expect, it, vi } from "bun:test";
+import { Readable, Writable } from "node:stream";
 import { Hono } from "hono";
-import { crearRutasReportesDataflow } from "./rutas-reportes-dataflow.js";
+import {
+  crearRutasReportesDataflow,
+  filtrarFlujosVisibles,
+} from "./rutas-reportes-dataflow.js";
 
 const sesion = {
   tenantId: "tenant-1",
   organizacionId: "org-1",
   usuarioId: "user-1",
   usuarioIdQlik: "qlik-1",
+  roles: ["admin" as const],
 };
+
+it("usuario final solo ve Dataflows propios o compartidos", () => {
+  const flujos = [
+    {
+      id: "propio",
+      nombre: "Propio",
+      espacioNombre: "Ventas",
+      propietarioId: "qlik-1",
+    },
+    {
+      id: "compartido",
+      nombre: "Compartido",
+      espacioNombre: "Ventas",
+      propietarioId: "qlik-2",
+    },
+    {
+      id: "ajeno",
+      nombre: "Ajeno",
+      espacioNombre: "Ventas",
+      propietarioId: "qlik-3",
+    },
+  ];
+  expect(
+    filtrarFlujosVisibles(
+      flujos,
+      "qlik-1",
+      new Map([["compartido", true]]),
+      false,
+    ).map((flujo) => flujo.id),
+  ).toEqual(["propio", "compartido"]);
+});
 
 function appCon(qlik: Record<string, unknown>, extras = {}) {
   return new Hono().route(
@@ -369,6 +405,25 @@ describe("fachada /api/reportes para Dataflows", () => {
       .mockResolvedValueOnce([completada]);
     const marcarGcsFinalizada = vi.fn(async () => undefined);
     const estaFinalizada = vi.fn(async () => true);
+    const abrirEscritura = vi.fn(
+      () =>
+        new Writable({
+          write(_fragmento, _codificacion, terminar) {
+            terminar();
+          },
+        }),
+    );
+    const listar = vi.fn(async (prefijo: string) =>
+      prefijo.endsWith("__download_cache__/")
+        ? []
+        : [
+            {
+              nombre: "fuente.csv",
+              rutaCompleta: `${prefijo}fuente.csv`,
+              tamanoBytes: 20,
+            },
+          ],
+    );
     const app = appCon(
       {
         listarFlujos: vi.fn(async () => [{ id: "df-1", name: "Ventas" }]),
@@ -378,7 +433,14 @@ describe("fachada /api/reportes para Dataflows", () => {
           listarEjecuciones,
           marcarGcsFinalizada,
         } as never,
-        resolverAlmacenamiento: async () => ({ estaFinalizada }) as never,
+        resolverAlmacenamiento: async () =>
+          ({
+            estaFinalizada,
+            listar,
+            abrirLectura: () => Readable.from(["id\n1\n2\n"]),
+            abrirEscritura,
+          }) as never,
+        resolverMaximoFilasDescarga: async () => 1,
       },
     );
 
@@ -392,6 +454,13 @@ describe("fachada /api/reportes para Dataflows", () => {
       "exec-1",
       expect.any(Date),
     );
+    for (
+      let intento = 0;
+      intento < 20 && abrirEscritura.mock.calls.length < 3;
+      intento++
+    )
+      await new Promise((resolver) => setTimeout(resolver, 5));
+    expect(abrirEscritura).toHaveBeenCalledTimes(3);
     expect((await respuesta.json()).datos[0].estado).toBe("completada");
   });
 
@@ -531,9 +600,7 @@ describe("fachada /api/reportes para Dataflows", () => {
         ]),
         obtenerAutomatizacion: vi.fn(async () => ({
           workspace: {
-            blocks: [
-              { snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" },
-            ],
+            blocks: [{ snippet_guid: "087a1ce0-037c-11ee-9163-4dcbc6412d48" }],
           },
         })),
       },
@@ -543,19 +610,20 @@ describe("fachada /api/reportes para Dataflows", () => {
           obtenerEjecucionPorId: vi.fn(async () => ejecucion),
           guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
           actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
-          listarJobsBigQueryPorEjecucionIds: vi.fn(async () =>
-            new Map([
-              [
-                "exec-confirmada",
+          listarJobsBigQueryPorEjecucionIds: vi.fn(
+            async () =>
+              new Map([
                 [
-                  {
-                    tipo: "principal",
-                    estado: "done",
-                    endTime: "2026-08-20T10:00:09Z",
-                  },
+                  "exec-confirmada",
+                  [
+                    {
+                      tipo: "principal",
+                      estado: "done",
+                      endTime: "2026-08-20T10:00:09Z",
+                    },
+                  ],
                 ],
-              ],
-            ]),
+              ]),
           ),
           marcarEstadoEjecucion,
         } as never,

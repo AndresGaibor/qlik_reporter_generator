@@ -12,9 +12,31 @@ vi.mock("@/modulos/descargas/api", () => ({
     (ruta = "") =>
       `/api/descargas/carpeta/zip?ruta=${encodeURIComponent(ruta)}`,
   ),
+  urlZipEjecucion: vi.fn(
+    (id: string) => `/api/descargas/${encodeURIComponent(id)}/zip`,
+  ),
+  listarPartesNormalizadas: vi.fn((id: string) =>
+    Promise.resolve({
+      estado: "lista",
+      partes: [
+        {
+          numero: 1,
+          nombre: "parte-001.csv",
+          url: `/api/descargas/${id}/partes/1`,
+        },
+        {
+          numero: 2,
+          nombre: "parte-002.csv",
+          url: `/api/descargas/${id}/partes/2`,
+        },
+      ],
+    }),
+  ),
   listarDescargas: vi.fn().mockResolvedValue([
     {
       id: "e-1",
+      creadoPorUsuarioId: "44444444-4444-4444-8444-444444444444",
+      propietarioCorreo: "compartido@example.com",
       reporteNombre: "Ventas Comercial",
       automatizacionIdQlik: "auto-1",
       estado: "completada",
@@ -189,8 +211,9 @@ import {
   eliminarArchivoCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   listarCarpetaUsuarioGcs,
-  urlCsvParteCarpetaUsuarioGcs,
   listarExploradorGcs,
+  listarPartesNormalizadas,
+  urlCsvParteCarpetaUsuarioGcs,
 } from "@/modulos/descargas/api";
 import { PaginaDescargas } from "./pagina-descargas";
 
@@ -389,4 +412,49 @@ test("ofrece descargar todos los archivos de la carpeta actual como ZIP", async 
   expect(enlace?.getAttribute("href")).toContain("carpeta/zip");
   expect(enlace?.getAttribute("href")).toContain("test-bq-sftp");
   expect(vista.textContent).toContain("1 archivo");
+});
+
+test("expande una descarga compartida y muestra sus archivos", async () => {
+  const vista = await montar();
+  const boton = [...vista.querySelectorAll("button")].find((elemento) =>
+    elemento.textContent?.includes("Ver archivos"),
+  );
+  expect(boton).toBeTruthy();
+  await act(async () => {
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"));
+  expect(
+    [...vista.querySelectorAll("a")].some(
+      (enlace) => enlace.getAttribute("href") === "/api/descargas/e-1/partes/1",
+    ),
+  ).toBe(true);
+  expect(vista.textContent).toContain("compartido@example.com");
+});
+
+test("actualiza las partes terminadas sin recargar la pÃ¡gina", async () => {
+  vi.mocked(listarPartesNormalizadas).mockResolvedValueOnce({
+    estado: "preparando",
+    partes: [
+      {
+        numero: 1,
+        nombre: "parte-parcial.csv",
+        url: "/api/descargas/e-1/partes/1",
+      },
+    ],
+  });
+  const vista = await montar();
+  const boton = [...vista.querySelectorAll("button")].find((elemento) =>
+    elemento.textContent?.includes("Ver archivos"),
+  );
+  await act(async () =>
+    boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() =>
+    expect(vista.textContent).toContain("parte-parcial.csv"),
+  );
+  await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"), {
+    timeout: 3_500,
+  });
+  expect(listarPartesNormalizadas).toHaveBeenCalledTimes(2);
 });

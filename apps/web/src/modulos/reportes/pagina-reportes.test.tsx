@@ -83,7 +83,10 @@ vi.mock("@/compartido/hooks/use-paginacion", () => ({
 vi.mock("@/modulos/reportes/hooks/use-busqueda-diferida", () => ({
   useBusquedaDiferida: vi.fn(),
 }));
-vi.mock("@/app/contexto-vista", () => ({ useVistaUsuarioFinal: () => true }));
+vi.mock("@/app/contexto-vista", () => ({
+  useVistaUsuarioFinal: () => true,
+  useContextoVista: () => ({ modoUsuarioFinal: true, esAdmin: true }),
+}));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => navegacion.navegar,
 }));
@@ -133,7 +136,7 @@ test("muestra reportes locales y no consulta ni ofrece Automates de Qlik", async
     expect(container?.textContent).toContain("Reporte Ventas"),
   );
   expect(container?.textContent).not.toContain("Automate manual Qlik");
-  expect(api.obtenerReportes).toHaveBeenCalled();
+  expect(api.obtenerReportes).toHaveBeenCalledWith(undefined, undefined, true);
 });
 
 test("muestra un solo encabezado principal de Reportes", async () => {

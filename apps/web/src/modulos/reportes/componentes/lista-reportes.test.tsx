@@ -70,3 +70,24 @@ test("usa la fecha de creación cuando el reporte nunca se ha ejecutado", () => 
   expect(html).toContain("19 ago 2026");
   expect(html).not.toContain("20 ago 2026");
 });
+
+test("identifica visualmente un Dataflow compartido", () => {
+  const html = renderToStaticMarkup(
+    ListaReportes({
+      reportes: [
+        {
+          id: "44444444-4444-4444-8444-444444444444",
+          nombre: "Inventario compartido",
+          espacioId: "sp-1",
+          espacioNombre: "Comercial",
+          modificadoEn: null,
+          compartidoConmigo: true,
+        },
+      ],
+      idEjecutando: null,
+      onEjecutar: () => {},
+      hayFiltros: false,
+    }),
+  );
+  expect(html).toContain("Compartido contigo");
+});

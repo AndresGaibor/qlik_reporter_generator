@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { esquemaResumenDescargaEjecucion } from "./index.js";
+import {
+  esquemaCompartirDescarga,
+  esquemaResumenDescargaEjecucion,
+} from "./index.js";
 
 const descargaBaseValida = {
   id: "d5f3a111-1111-1111-1111-111111111111",
@@ -16,6 +19,21 @@ const descargaBaseValida = {
 };
 
 describe("contratos de descargas", () => {
+  it("valida los destinatarios del compartido", () => {
+    expect(
+      esquemaCompartirDescarga.safeParse({
+        todaOrganizacion: false,
+        usuarios: ["33333333-3333-4333-8333-333333333333"],
+      }).success,
+    ).toBe(true);
+    expect(
+      esquemaCompartirDescarga.safeParse({
+        todaOrganizacion: false,
+        usuarios: ["no-es-uuid"],
+      }).success,
+    ).toBe(false);
+  });
+
   describe("campos de trazabilidad en resumen descarga", () => {
     it("acepta ejecucionId adicional como campo propio", () => {
       const resultado = esquemaResumenDescargaEjecucion.safeParse({

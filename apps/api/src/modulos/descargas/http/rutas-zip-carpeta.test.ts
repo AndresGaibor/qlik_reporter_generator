@@ -1,4 +1,4 @@
-import { Readable } from "node:stream";
+import { Readable, Writable } from "node:stream";
 import { gzipSync } from "node:zlib";
 import { Hono } from "hono";
 import { describe, expect, it } from "vitest";
@@ -15,6 +15,7 @@ function crearAlmacenamientoMemoria() {
     ],
   ]);
   let lecturas = 0;
+  const lecturasPorRuta = new Map<string, number>();
   const almacenamiento = {
     listarDirectorio: async (prefijo: string) => ({
       carpetas: [],
@@ -31,15 +32,43 @@ function crearAlmacenamientoMemoria() {
             : ("CSV" as const),
         })),
     }),
-    listar: async () => [],
+    listar: async (prefijo: string) =>
+      [...objetos.entries()]
+        .filter(([ruta]) => ruta.startsWith(prefijo))
+        .map(([ruta, contenido]) => ({
+          nombre: ruta.split("/").at(-1) ?? ruta,
+          rutaCompleta: ruta,
+          tamanoBytes: contenido.length,
+          formato: "CSV.GZ" as const,
+        })),
     estaFinalizada: async () => true,
     abrirLectura: (ruta: string) => {
       lecturas += 1;
+      lecturasPorRuta.set(ruta, (lecturasPorRuta.get(ruta) ?? 0) + 1);
       return Readable.from([objetos.get(ruta) ?? Buffer.alloc(0)]);
+    },
+    abrirEscritura: (ruta: string) => {
+      const fragmentos: Buffer[] = [];
+      return new Writable({
+        write(fragmento, _codificacion, terminar) {
+          fragmentos.push(Buffer.from(fragmento));
+          terminar();
+        },
+        final(terminar) {
+          objetos.set(ruta, Buffer.concat(fragmentos));
+          terminar();
+        },
+      });
     },
     firmar: async () => "",
   } satisfies PuertoAlmacenamientoDescargas;
-  return { almacenamiento, getLecturas: () => lecturas };
+  return {
+    almacenamiento,
+    agregarObjeto: (ruta: string, contenido: string) =>
+      objetos.set(ruta, Buffer.from(contenido)),
+    getLecturas: () => lecturas,
+    getLecturasRuta: (ruta: string) => lecturasPorRuta.get(ruta) ?? 0,
+  };
 }
 
 function crearApp() {
@@ -55,6 +84,12 @@ function crearApp() {
     resolverQlik: async () => ({}) as never,
     repositorioReportes: {
       listarEjecucionesDescargas: async () => [],
+      obtenerEjecucionDescarga: async () => ({
+        id: "test",
+        estado: "completada",
+        uriBaseGcs: `gs://bkt_dwh/${PREFIJO}`,
+        flujoNombreSnapshot: "Ventas",
+      }),
     } as never,
     resolverAlmacenamiento: async () => memoria.almacenamiento,
     resolverConfiguracionGcs: async () => ({
@@ -106,5 +141,97 @@ describe("ZIP de carpeta privada", () => {
     expect(texto).not.toContain("parte-000.csv.gz");
     expect(texto).toContain("id|texto\n1|uno\n2|dos\n");
     expect(texto).toContain("id|texto\n3|tres\n");
+  });
+
+  it("lista y descarga cada parte normalizada", async () => {
+    const { app } = crearApp();
+    const preparacion = await app.request("/api/descargas/test/partes");
+    expect(preparacion.status).toBe(202);
+    expect((await preparacion.json()).datos.estado).toBe("preparando");
+    let datos: { estado: string; partes: unknown[] } = {
+      estado: "preparando",
+      partes: [],
+    };
+    for (let intento = 0; intento < 20 && datos.estado !== "lista"; intento++) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+      const catalogo = await app.request("/api/descargas/test/partes");
+      datos = (await catalogo.json()).datos;
+    }
+    expect(datos.partes).toEqual([
+      {
+        numero: 1,
+        nombre: "parte-001.csv",
+        url: "/api/descargas/test/partes/1",
+      },
+      {
+        numero: 2,
+        nombre: "parte-002.csv",
+        url: "/api/descargas/test/partes/2",
+      },
+    ]);
+
+    const primera = await app.request("/api/descargas/test/partes/1");
+    const segunda = await app.request("/api/descargas/test/partes/2");
+    expect(await primera.text()).toBe("id|texto\n1|uno\n2|dos\n");
+    expect(await segunda.text()).toBe("id|texto\n3|tres\n");
+  });
+
+  it("publica las partes terminadas mientras prepara las restantes", async () => {
+    const { app, agregarObjeto } = crearApp();
+    agregarObjeto(
+      `${PREFIJO}__download_cache__/parte-001.csv`,
+      "id|texto\n1|uno\n2|dos\n",
+    );
+
+    const respuesta = await app.request("/api/descargas/test/partes");
+    expect(respuesta.status).toBe(202);
+    expect((await respuesta.json()).datos).toEqual({
+      estado: "preparando",
+      partes: [
+        {
+          numero: 1,
+          nombre: "parte-001.csv",
+          url: "/api/descargas/test/partes/1",
+        },
+      ],
+    });
+  });
+});
+
+describe("ZIP de ejecución compartida", () => {
+  it("une los shards y respeta el máximo configurado", async () => {
+    const { app } = crearApp();
+    const res = await app.request("/api/descargas/test/zip");
+    expect(res.status).toBe(200);
+    const texto = new TextDecoder().decode(await res.arrayBuffer());
+    expect(texto).toContain("parte-001.csv");
+    expect(texto).toContain("parte-002.csv");
+    expect(texto).not.toContain("parte-000.csv.gz");
+    expect(texto).toContain("id|texto\n1|uno\n2|dos\n");
+    expect(texto).toContain("id|texto\n3|tres\n");
+  });
+
+  it("reutiliza las partes preparadas sin volver a leer el GZIP fuente", async () => {
+    const { app, getLecturasRuta } = crearApp();
+    let estado = "preparando";
+    await app.request("/api/descargas/test/partes");
+    for (let intento = 0; intento < 20 && estado !== "lista"; intento++) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+      const catalogo = await app.request("/api/descargas/test/partes");
+      estado = (await catalogo.json()).datos.estado;
+    }
+    const lecturasFuente = getLecturasRuta(`${PREFIJO}parte-000.csv.gz`);
+
+    const res = await app.request("/api/descargas/test/zip");
+    expect(res.status).toBe(200);
+    await res.arrayBuffer();
+
+    expect(getLecturasRuta(`${PREFIJO}parte-000.csv.gz`)).toBe(lecturasFuente);
+    expect(getLecturasRuta(`${PREFIJO}__download_cache__/parte-001.csv`)).toBe(
+      1,
+    );
+    expect(getLecturasRuta(`${PREFIJO}__download_cache__/parte-002.csv`)).toBe(
+      1,
+    );
   });
 });
