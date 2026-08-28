@@ -13,10 +13,12 @@ import {
   obtenerEjecucionesReporte,
   obtenerReporte,
   obtenerResumenReporte,
+  obtenerVistaPreviaReporte,
   preflightDataflowReporte,
 } from "@/modulos/reportes/api";
 import { HistorialAuditoriaReporte } from "@/modulos/reportes/componentes/detalle/historial-auditoria-reporte";
 import { EstadoPreflight } from "@/modulos/reportes/componentes/estado-preflight";
+import { VistaPreviaReporte } from "@/modulos/reportes/componentes/detalle/vista-previa-reporte";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -40,6 +42,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const client = useQueryClient();
   const navegar = useNavigate();
   const [pestana, setPestana] = useState<Pestana>(leerHashPestana);
+  const [mostrarPreview, setMostrarPreview] = useState(false);
 
   useEffect(() => {
     function onHashChange() {
@@ -63,6 +66,12 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
     queryKey: ["preflight-reporte", tenantActivo?.id, id],
     queryFn: () => preflightDataflowReporte(id),
     retry: false,
+  });
+  const preview = useQuery({
+    queryKey: ["reportes", id, "preview"],
+    queryFn: () => obtenerVistaPreviaReporte(id),
+    retry: false,
+    enabled: mostrarPreview,
   });
   const ejecuciones = useQuery({
     queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
@@ -216,6 +225,25 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             error={resumen.error}
             onActualizar={() => void resumen.refetch()}
           />
+          {!mostrarPreview ? (
+            <div className="rounded-lg border border-line-200 bg-surface p-5 text-center">
+              <Button size="sm" onClick={() => setMostrarPreview(true)}>
+                <Icon name="rows" size="sm" /> Vista previa
+              </Button>
+            </div>
+          ) : preview.data !== undefined ? (
+            <VistaPreviaReporte
+              datos={preview.data}
+              cargando={preview.isLoading}
+              error={preview.error}
+            />
+          ) : preview.isLoading ? (
+            <VistaPreviaReporte
+              datos={undefined}
+              cargando={preview.isLoading}
+              error={preview.error}
+            />
+          ) : null}
           <section className="rounded-lg border border-line-200 bg-surface p-5">
             <div className="mb-4">
               <h2 className="text-sm font-semibold text-ink-900">

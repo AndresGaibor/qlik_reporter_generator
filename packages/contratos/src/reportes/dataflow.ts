@@ -119,3 +119,14 @@ export const esquemaCompartirReporte = z.object({
   usuarios: z.array(z.string().uuid()),
 });
 export type CompartirReporte = z.infer<typeof esquemaCompartirReporte>;
+
+export const esquemaVistaPreviaReporte = z.object({
+  columnas: z.array(z.string()),
+  filas: z.array(z.array(z.string())),
+  filasMuestreadas: z.number(),
+  fuentesMuestreadas: z.array(z.string()),
+  contieneAgregaciones: z.boolean(),
+  advertencias: z.array(z.string()),
+  esMuestra: z.literal(true),
+});
+export type VistaPreviaReporte = z.infer<typeof esquemaVistaPreviaReporte>;

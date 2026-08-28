@@ -3,6 +3,7 @@ import { crearAplicacion } from "./app.js";
 import type { PuertoBloqueoEjecucion } from "./modulos/automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { PuertoConsultaTenantQlik } from "./modulos/automatizaciones/aplicacion/puertos/puerto-consulta-tenant-qlik.js";
 import type { PuertoRepositorioAutomatizacionesPersonales } from "./modulos/reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
+import type { PuertoLecturaBigQuery } from "./modulos/google-cloud/aplicacion/puerto-lectura-bigquery.js";
 import type { Registrador } from "./plataforma/observabilidad/registrador.js";
 
 process.env.CIFRADO_CLAVE_PRINCIPAL ??= Buffer.alloc(32).toString("base64");
@@ -336,6 +337,41 @@ describe("API", () => {
     });
   });
 
+  it("conecta el resolver BigQuery de preview en el composition root", async () => {
+    const mockPreview: PuertoLecturaBigQuery = {
+      obtenerFilasPreview: async () => ({
+        columnas: ["id"],
+        filas: [["1"]],
+      }),
+    };
+    const app = await crearAplicacion({
+      registrador: crearRegistradorPrueba(),
+      resolverQlik: async () =>
+        ({
+          listarFlujos: async () => [
+            { id: "flujo-1", name: "Ventas", spaceId: "espacio-1" },
+          ],
+          listarEspacios: async () => [],
+          obtenerScriptApp: async () => ({
+            script:
+              "LIB CONNECT TO [Google BigQuery:Prod]; [x]: LOAD [id]; SQL SELECT id FROM `p.d.t`;",
+          }),
+        }) as never,
+      resolverPreviewBigQueryReporte: async () => ({
+        clientePreview: mockPreview,
+      }),
+    } as Parameters<typeof crearAplicacion>[0] & Record<string, unknown>);
+
+    const respuesta = await app.request("/api/reportes/flujo-1/preview");
+    const cuerpo = await respuesta.json();
+
+    expect(respuesta.status).toBe(200);
+    expect(cuerpo).toMatchObject({
+      exito: true,
+      datos: { esMuestra: true },
+    });
+  });
+
   it("no expone una ruta de clonado local de reportes", async () => {
     const app = await crearAplicacion({
       registrador: crearRegistradorPrueba(),
@@ -526,7 +562,12 @@ describe("API", () => {
 
   it("usa Qlik para listado y detalle, sin catálogo local de reportes", async () => {
     const listarFlujos = vi.fn(async () => [
-      { id: "flujo-1", name: "Ventas", spaceId: "espacio-1" },
+      {
+        id: "flujo-1",
+        name: "Ventas",
+        spaceId: "espacio-1",
+        ownerId: "usuario-qlik-1",
+      },
     ]);
     const resolverQlik = vi.fn(
       async () => ({ listarFlujos, listarEspacios: async () => [] }) as never,

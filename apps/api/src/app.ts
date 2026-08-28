@@ -35,6 +35,7 @@ import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
 import { ClienteJobsBigQuery } from "./modulos/google-cloud/infraestructura/cliente-jobs-bigquery.js";
+import { ClientePreviewBigQuery } from "./modulos/google-cloud/infraestructura/cliente-preview-bigquery.js";
 import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
 import { ResolverConfiguracionGoogleCloudPostgres } from "./modulos/google-cloud/infraestructura/resolver-configuracion-google-cloud-postgres.js";
 import { ClienteHttpQlik } from "./modulos/qlik/infraestructura/publico.js";
@@ -99,6 +100,9 @@ export interface DependenciasAplicacion {
   servicioAutenticacion?: ServicioAutenticacionQlik;
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
   resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
+  resolverPreviewBigQueryReporte?: (c: Context) => Promise<{
+    clientePreview: import("./modulos/google-cloud/aplicacion/puerto-lectura-bigquery.js").PuertoLecturaBigQuery;
+  }>;
   repositorioReportes?: PuertoRepositorioReportes;
   consultaTenantQlik?: PuertoConsultaTenantQlik;
   repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
@@ -242,6 +246,19 @@ export async function crearAplicacion(
       };
     });
 
+  const resolverPreviewBigQueryReporte =
+    dependencias.resolverPreviewBigQueryReporte ??
+    (async (c: Context) => {
+      const bigQuery = await resolverBigQueryReporte(c);
+      return {
+        clientePreview: new ClientePreviewBigQuery({
+          projectId: bigQuery.projectId,
+          dataset: bigQuery.dataset,
+          credencialesJson: bigQuery.credencialesJson || undefined,
+        }),
+      };
+    });
+
   const idempotencia = dependencias.idempotencia ?? new IdempotenciaPostgres();
   const auditoria = dependencias.auditoria ?? new AuditoriaPostgres();
   const repositorioAdministracion =
@@ -375,6 +392,7 @@ export async function crearAplicacion(
       resolverConsultaFlujos: async (c) =>
         new ConsultaFlujosQlik(await resolverQlik(c)),
       resolverBigQuery: resolverBigQueryReporte,
+      resolverPreviewBigQuery: resolverPreviewBigQueryReporte,
       resolverSesion,
       resolverUsuariosOrganizacion: async (organizacionId) =>
         (await repositorioAdministracion.listarUsuarios(organizacionId)).map(
