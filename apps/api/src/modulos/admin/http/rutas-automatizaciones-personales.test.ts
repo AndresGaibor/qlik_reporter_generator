@@ -282,9 +282,7 @@ describe("administración de automatizaciones personales", () => {
       "old-broken-auto",
       expect.anything(),
     );
-    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
-      "old-broken-auto",
-    );
+    expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("old-broken-auto");
   });
 
   it("no actualiza la asociación cuando la nueva copia es incompatible y limpia solo esa copia", async () => {
@@ -384,8 +382,12 @@ describe("administración de automatizaciones personales", () => {
         { method: "POST" },
       );
 
-      expect(respuesta.status).toBe(500);
-      expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
+      expect(respuesta.status).toBe(422);
+      if (_nombre === "GET") {
+        expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
+      } else {
+        expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
+      }
       expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
         "old-broken-auto",
       );
@@ -432,7 +434,7 @@ describe("administración de automatizaciones personales", () => {
       { method: "POST" },
     );
 
-    expect(respuesta.status).toBe(500);
+    expect(respuesta.status).toBe(422);
     expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("new-auto");
     expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalledWith(
       "old-broken-auto",

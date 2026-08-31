@@ -242,6 +242,7 @@ export const automatizacionesPersonalesQlik = pgTable(
     ).notNull(),
     estado: text("estado").notNull().default("activo"),
     mensajeError: text("mensaje_error"),
+    contratoVersion: integer("contrato_version"),
     creadoEn: timestamp("creado_en").notNull().defaultNow(),
     actualizadoEn: timestamp("actualizado_en").notNull().defaultNow(),
   },

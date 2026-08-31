@@ -54,6 +54,7 @@ export interface ResultadoCopiaAutomatizacion {
   error?: unknown;
   incompatible?: boolean;
   tipoError?: "incompatible" | "integracion";
+  etapaError?: "obtener" | "propietario" | "actualizar";
 }
 
 export interface EntradaCopiaAutomatizacionPersonal {
@@ -84,6 +85,7 @@ export async function copiarAutomatizacionPersonal(
       error,
       incompatible: false,
       tipoError: "integracion",
+      etapaError: "obtener",
     };
   }
 
@@ -104,6 +106,7 @@ export async function copiarAutomatizacionPersonal(
         error,
         incompatible: false,
         tipoError: "integracion",
+        etapaError: "propietario",
       };
     }
   }
@@ -148,6 +151,7 @@ export async function copiarAutomatizacionPersonal(
       error,
       incompatible: false,
       tipoError: "integracion",
+      etapaError: "actualizar",
     };
   }
 }

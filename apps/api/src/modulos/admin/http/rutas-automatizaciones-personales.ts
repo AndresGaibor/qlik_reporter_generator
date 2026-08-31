@@ -4,13 +4,17 @@ import {
   responderError,
   responderExito,
 } from "../../../nucleo/http/respuestas.js";
-import { copiarAutomatizacionPersonal } from "../../automatizaciones/aplicacion/servicios/servicio-copia-automatizacion.js";
+import type { Registrador } from "../../../plataforma/observabilidad/registrador.js";
+import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
 import type {
   AutomatizacionPersonalPersistida,
   PuertoRepositorioAutomatizacionesPersonales,
 } from "../../reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
-import { validarContratoTalend } from "../../reportes/aplicacion/servicio-contexto-talend.js";
+import {
+  type ContextoAutomatizacionPersonal,
+  ReemplazarAutomatizacionPersonal,
+} from "../../reportes/aplicacion/reemplazar-automatizacion-personal.js";
 import type {
   PuertoConsultaIdentidadQlikAdmin,
   RepositorioAdministracion,
@@ -29,6 +33,9 @@ export interface DependenciasRutasAutomatizacionesPersonales {
   resolverIdentidadQlik: PuertoConsultaIdentidadQlikAdmin;
   resolverContexto: ResolverContextoAdmin;
   resolverQlik: (c: Context) => Promise<ServicioQlik>;
+  bloqueoEjecucion?: PuertoBloqueoEjecucion;
+  registrador?: Registrador;
+  hayEjecucionesActivas?: (automatizacionIdQlik: string) => Promise<boolean>;
 }
 
 export function crearRutasAutomatizacionesPersonales(
@@ -118,68 +125,29 @@ export function crearRutasAutomatizacionesPersonales(
         }
 
         const qlik = await dependencias.resolverQlik(c);
-        const base = await qlik.obtenerAutomatizacion(
-          tenant.automatizacionBaseIdQlik,
+        const bloqueo = dependencias.bloqueoEjecucion ?? {
+          ejecutarExclusivo: async <T>(
+            _clave: string,
+            tarea: () => Promise<T>,
+          ) => tarea(),
+        };
+        const servicio = new ReemplazarAutomatizacionPersonal(
+          qlik,
+          dependencias.repositorioAutomatizacionesPersonales,
+          bloqueo,
+          dependencias.registrador,
+          dependencias.hayEjecucionesActivas,
         );
-        try {
-          validarContratoTalend(base.workspace ?? {});
-        } catch (error) {
-          throw new ErrorAplicacion(
-            "PLANTILLA_INCOMPATIBLE",
-            "La plantilla actual no cumple el contrato Talend requerido",
-            422,
-            {
-              tipo: "estructura",
-              razon:
-                error instanceof Error ? error.message : "Contrato inválido",
-            },
-          );
-        }
-
-        const nombre = "Automatización personal";
-        let copiaId: string | undefined;
-        try {
-          const copia = await copiarAutomatizacionPersonal(qlik, {
-            nombre,
-            plantillaIdQlik: tenant.automatizacionBaseIdQlik,
-            propietarioIdQlik: identidad.usuarioIdQlik,
-          });
-          copiaId = copia.id;
-          if (copia.incompatible) {
-            throw new ErrorAplicacion(
-              "PLANTILLA_INCOMPATIBLE",
-              "La nueva copia no cumple el contrato Talend requerido",
-              422,
-              {
-                tipo: "estructura",
-                razon:
-                  copia.error instanceof Error
-                    ? copia.error.message
-                    : "Contrato inválido",
-              },
-            );
-          }
-          if (copia.error) throw copia.error;
-          return responderExito(
-            c,
-            await dependencias.repositorioAutomatizacionesPersonales.actualizarScoped(
-              worker.id,
-              organizacionId,
-              tenantQlikId,
-              {
-                automatizacionIdQlik: copia.id,
-                automatizacionNombreSnapshot: copia.nombre,
-                estado: "activo",
-                mensajeError: null,
-              },
-            ),
-          );
-        } catch (error) {
-          if (copiaId) {
-            await qlik.eliminarAutomatizacion(copiaId).catch(() => undefined);
-          }
-          throw error;
-        }
+        const contexto: ContextoAutomatizacionPersonal = {
+          organizacionId,
+          tenantQlikId,
+          usuarioId: worker.usuarioId,
+          usuarioIdQlik: identidad.usuarioIdQlik,
+          plantillaIdQlik: tenant.automatizacionBaseIdQlik,
+          plantillaNombre:
+            tenant.automatizacionBaseNombre ?? "Automatización base",
+        };
+        return responderExito(c, await servicio.recrear(contexto, worker));
       } catch (error) {
         return responderErrorAdmin(c, error);
       }

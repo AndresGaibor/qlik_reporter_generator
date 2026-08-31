@@ -198,6 +198,7 @@ describe("Esquema Drizzle", () => {
         "usuario_id",
         "tenant_qlik_id",
         "automatizacion_id_qlik",
+        "contrato_version",
       ]),
     );
     const constraint = config.uniqueConstraints.find(
@@ -209,6 +210,17 @@ describe("Esquema Drizzle", () => {
       "usuario_id",
       "tenant_qlik_id",
     ]);
+  });
+
+  it("añade contrato_version nullable sin backfill histórico", async () => {
+    const migracion = await Bun.file(
+      new URL(
+        "../drizzle/0015_versionar_workers_personales.sql",
+        import.meta.url,
+      ),
+    ).text();
+    expect(migracion).toContain('ADD COLUMN "contrato_version" integer');
+    expect(migracion).not.toMatch(/UPDATE|SET\s+contrato_version/i);
   });
 
   it("mantiene la cadena de migraciones sin entradas huérfanas", async () => {
@@ -237,6 +249,7 @@ describe("Esquema Drizzle", () => {
       "0012_compartir_reportes",
       "0013_fuzzy_callisto",
       "0014_reconciliar_compartir_joseph",
+      "0015_versionar_workers_personales",
     ]);
   });
 

@@ -1,5 +1,7 @@
 import type { ConsultasTalendBigQuery } from "./consultas-talend-bigquery.js";
 
+export const VERSION_CONTRATO_TALEND = 1;
+
 const CONTEXTOS_TALEND = {
   credenciales: { bloque: "Credenciales" },
   sql: { bloque: "sql" },

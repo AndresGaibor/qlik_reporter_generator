@@ -7,6 +7,7 @@ import type {
   AutomatizacionPersonalPersistida,
   PuertoRepositorioAutomatizacionesPersonales,
 } from "./puertos/puerto-repositorio-automatizaciones-personales.js";
+import { VERSION_CONTRATO_TALEND } from "./servicio-contexto-talend.js";
 
 const ctx = {
   organizacionId: "org-1",
@@ -25,7 +26,11 @@ async function workspaceValido() {
   return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
 }
 
-function persistida(id = "row-1", automatizacionIdQlik = "worker-1") {
+function persistida(
+  id = "row-1",
+  automatizacionIdQlik = "worker-1",
+  contratoVersion: number | null = VERSION_CONTRATO_TALEND,
+) {
   return {
     id,
     organizacionId: ctx.organizacionId,
@@ -34,6 +39,7 @@ function persistida(id = "row-1", automatizacionIdQlik = "worker-1") {
     automatizacionIdQlik,
     automatizacionNombreSnapshot: "Worker personal",
     estado: "activo" as const,
+    contratoVersion,
   };
 }
 
@@ -90,6 +96,25 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     expect(repo.actualizar).not.toHaveBeenCalled();
   });
 
+  it.each([null, VERSION_CONTRATO_TALEND - 1])(
+    "repara un worker con contratoVersion %s",
+    async (contratoVersion) => {
+      const existente = persistida("row-1", "worker-old", contratoVersion);
+      const { caso, repo, qlik } = construir({
+        repo: { obtener: vi.fn(async () => existente) },
+      });
+
+      const resultado = await caso.ejecutar(ctx);
+
+      expect(resultado.automatizacionIdQlik).toBe("worker-new");
+      expect(repo.actualizar).toHaveBeenCalledWith(
+        "row-1",
+        expect.objectContaining({ contratoVersion: VERSION_CONTRATO_TALEND }),
+      );
+      expect(qlik.copiarAutomatizacion).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("crea el worker una sola vez y lo reutiliza sin cambiar propietario", async () => {
     let actual: AutomatizacionPersonalPersistida | null = null;
     const { caso, qlik } = construir({
@@ -112,7 +137,10 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     expect(primero.automatizacionIdQlik).toBe("worker-new");
     expect(segundo.automatizacionIdQlik).toBe("worker-new");
     expect(qlik.copiarAutomatizacion).toHaveBeenCalledTimes(1);
-    expect(qlik.cambiarPropietarioAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.cambiarPropietarioAutomatizacion).toHaveBeenCalledWith(
+      "worker-new",
+      "qlik-user-1",
+    );
   });
 
   it("hace double-check bajo lock y copia una sola vez en concurrencia", async () => {
@@ -165,8 +193,7 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
       qlik: qlik as unknown as Partial<ServicioQlik>,
     });
     await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
-      codigo: "WORKER_TEMPLATE_INCOMPATIBLE",
-      message: expect.stringContaining('Falta el bloque "sql"'),
+      codigo: "WORKER_REPAIR_FAILED",
     });
     expect(qlik.copiarAutomatizacion).not.toHaveBeenCalled();
   });
@@ -186,7 +213,7 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
       qlik: qlik as unknown as Partial<ServicioQlik>,
     });
     await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
-      codigo: "WORKER_COPY_INCOMPATIBLE",
+      codigo: "WORKER_REPAIR_FAILED",
     });
     expect(
       qlik.eliminarAutomatizacion as ReturnType<typeof vi.fn>,
@@ -221,19 +248,40 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     );
   });
 
-  it("rechaza un worker existente incompatible sin mutarlo", async () => {
+  it("reemplaza un worker existente incompatible en la misma fila", async () => {
     const { caso, repo, qlik } = construir({
       repo: { obtener: vi.fn(async () => persistida()) },
       qlik: {
-        obtenerAutomatizacion: vi.fn(async () => ({ workspace: {} })),
+        obtenerAutomatizacion: vi
+          .fn()
+          .mockResolvedValueOnce({ id: "worker-1", workspace: {} })
+          .mockResolvedValueOnce({
+            id: "template-1",
+            workspace: await workspaceValido(),
+          })
+          .mockResolvedValueOnce({
+            id: "worker-new",
+            name: "Worker nuevo",
+            workspace: await workspaceValido(),
+          }),
+        copiarAutomatizacion: vi.fn(async () => ({ id: "worker-new" })),
+        cambiarPropietarioAutomatizacion: vi.fn(async () => undefined),
+        actualizarAutomatizacion: vi.fn(async () => ({ id: "worker-new" })),
       } as unknown as Partial<ServicioQlik>,
     });
-    await expect(caso.ejecutar(ctx)).rejects.toMatchObject({
-      codigo: "WORKER_INCOMPATIBLE",
-    });
-    expect(repo.actualizar).not.toHaveBeenCalled();
-    expect(qlik.actualizarAutomatizacion).not.toHaveBeenCalled();
-    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
+    const resultado = await caso.ejecutar(ctx);
+    expect(resultado.automatizacionIdQlik).toBe("worker-new");
+    expect(repo.actualizar).toHaveBeenCalledWith(
+      "row-1",
+      expect.objectContaining({
+        automatizacionIdQlik: "worker-new",
+        contratoVersion: VERSION_CONTRATO_TALEND,
+      }),
+    );
+    expect(qlik.cambiarPropietarioAutomatizacion).toHaveBeenCalledWith(
+      "worker-new",
+      "qlik-user-1",
+    );
   });
 
   it("si el lock está ocupado reutiliza una fila compatible sin mutarla", async () => {
@@ -343,7 +391,7 @@ describe("ObtenerOCrearAutomatizacionPersonal", () => {
     });
 
     await expect(caso.ejecutar(ctx)).rejects.toBe(error);
-    expect(qlik.eliminarAutomatizacion).not.toHaveBeenCalled();
+    expect(qlik.eliminarAutomatizacion).toHaveBeenCalledWith("worker-new");
     expect(repo.crear).not.toHaveBeenCalled();
   });
 });

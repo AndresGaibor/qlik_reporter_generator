@@ -174,6 +174,23 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
     return mapearEjecucion(fila);
   }
 
+  async tieneEjecucionesActivasPorAutomatizacion(
+    automatizacionIdQlik: string,
+  ): Promise<boolean> {
+    const fila = await this.db.query.ejecucionesReportes.findFirst({
+      columns: { id: true },
+      where: and(
+        eq(ejecucionesReportes.automatizacionIdQlik, automatizacionIdQlik),
+        inArray(ejecucionesReportes.estado, [
+          "preparando",
+          "iniciada",
+          "cancelando",
+        ]),
+      ),
+    });
+    return Boolean(fila);
+  }
+
   async marcarEjecucionIniciada(
     id: string,
     runIdQlik: string,

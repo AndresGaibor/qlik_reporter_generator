@@ -464,12 +464,29 @@ describe("API", () => {
     const lock = vi.fn(async (_clave: string, tarea: () => Promise<unknown>) =>
       tarea(),
     ) as unknown as PuertoBloqueoEjecucion["ejecutarExclusivo"];
+    const workerPersistido = {
+      id: "66666666-6666-4666-8666-666666666666",
+      organizacionId: "org-1",
+      tenantQlikId: "tenant-1",
+      usuarioId: "11111111-1111-4111-8111-111111111111",
+      automatizacionIdQlik: "worker-old",
+      automatizacionNombreSnapshot: "Worker antiguo",
+      estado: "error" as const,
+      mensajeError: "estructura antigua",
+      contratoVersion: 1,
+    };
     const workerRepo = {
-      obtener: vi.fn(async () => null),
+      obtener: vi.fn(async () => workerPersistido),
       crear: vi.fn(async (entrada: Record<string, unknown>) => ({
         id: "66666666-6666-4666-8666-666666666666",
         ...entrada,
       })),
+      actualizar: vi.fn(
+        async (_id: string, cambios: Record<string, unknown>) => ({
+          ...workerPersistido,
+          ...cambios,
+        }),
+      ),
     };
     const copiar = vi.fn(async (id: string) => {
       expect(id).toBe("base-from-tenant");
@@ -478,7 +495,7 @@ describe("API", () => {
     const obtenerAutomatizacion = vi.fn(async (id: string) => ({
       id,
       name: id === "base-from-tenant" ? "Base Talend" : "Worker personal",
-      workspace,
+      workspace: id === "worker-old" ? {} : workspace,
       schedules: [],
     }));
     const qlik = {
@@ -547,6 +564,10 @@ describe("API", () => {
     expect(copiar).toHaveBeenCalledWith(
       "base-from-tenant",
       "Base Talend - Worker personal",
+    );
+    expect(qlik.cambiarPropietarioAutomatizacion).toHaveBeenCalledWith(
+      "77777777-7777-4777-8777-777777777777",
+      "usuario-qlik-1",
     );
     expect(workerRepo.obtener).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",

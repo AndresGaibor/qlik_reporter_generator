@@ -73,7 +73,7 @@ El nombre visible del Automate será estable y ajeno a cualquier reporte, por ej
 
 Si PostgreSQL referencia un worker que fue eliminado manualmente en Qlik y Qlik responde `404`, la plataforma puede recrearlo automáticamente desde una plantilla válida y actualizar la asociación.
 
-Si el worker todavía existe pero su workspace fue modificado y ya no cumple el contrato Talend, la plataforma falla con `WORKER_INCOMPATIBLE`; no sobrescribe silenciosamente posibles cambios manuales. Un administrador podrá recrearlo explícitamente desde la plantilla base.
+Si el worker todavía existe pero su workspace fue modificado y ya no cumple el contrato Talend, la plataforma lo reemplaza desde la plantilla validada; nunca sobrescribe silenciosamente cambios manuales. Un administrador puede forzar el mismo reemplazo desde la plantilla base.
 
 ## 3. Concurrencia
 
@@ -267,7 +267,7 @@ Los errores deben ser accionables y no exponer detalles técnicos innecesarios a
 - `DATAFLOW_NO_COMPATIBLE`: mostrar operación/paso no soportado cuando sea seguro.
 - `SIN_AUTOMATIZACION_BASE`: indicar que el entorno no está preparado y que un admin debe configurar la plantilla.
 - `PLANTILLA_INCOMPATIBLE`: bloquear creación de workers y mostrar detalles estructurales solo a administradores.
-- `WORKER_INCOMPATIBLE`: no iniciar Talend; permitir recreación explícita por admin.
+- `WORKER_REPAIR_FAILED`: no iniciar Talend ni cambiar la asociación; mostrar un mensaje genérico y conservar el diagnóstico técnico.
 - fallo creando worker: no iniciar Talend y conservar auditoría del intento.
 - fallo actualizando workspace o creando run: marcar ejecución en error con etapa correspondiente.
 - fallo posterior de Talend/GCS: mantener la ejecución y sus snapshots; `/descargas` no la considera completada sin marcador final.

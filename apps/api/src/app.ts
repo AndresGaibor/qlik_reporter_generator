@@ -34,6 +34,7 @@ import { crearRutasDescargas } from "./modulos/descargas/http/rutas-descargas.js
 import { ClienteGcs } from "./modulos/descargas/infraestructura/cliente-gcs.js";
 import { ConsultaFlujosQlik } from "./modulos/flujos/infraestructura/consulta-flujos-qlik.js";
 import { crearRutasFlujos } from "./modulos/flujos/publico.js";
+import type { PuertoLecturaBigQuery } from "./modulos/google-cloud/aplicacion/puerto-lectura-bigquery.js";
 import { ClienteJobsBigQuery } from "./modulos/google-cloud/infraestructura/cliente-jobs-bigquery.js";
 import { ClientePreviewBigQuery } from "./modulos/google-cloud/infraestructura/cliente-preview-bigquery.js";
 import { EstimadorBigQuery } from "./modulos/google-cloud/infraestructura/estimador-bigquery.js";
@@ -101,7 +102,7 @@ export interface DependenciasAplicacion {
   resolverQlik?: (c: Context) => Promise<ServicioQlik>;
   resolverBigQueryReporte?: (c: Context) => Promise<ResolucionBigQueryReporte>;
   resolverPreviewBigQueryReporte?: (c: Context) => Promise<{
-    clientePreview: import("./modulos/google-cloud/aplicacion/puerto-lectura-bigquery.js").PuertoLecturaBigQuery;
+    clientePreview: PuertoLecturaBigQuery;
   }>;
   repositorioReportes?: PuertoRepositorioReportes;
   consultaTenantQlik?: PuertoConsultaTenantQlik;
@@ -460,6 +461,8 @@ export async function crearAplicacion(
           qlik,
           repositorioWorkers,
           bloqueosEjecucion,
+          registrador,
+          repositorioReportes,
         );
         const caso = new EjecutarReporte(
           qlik,
@@ -507,6 +510,12 @@ export async function crearAplicacion(
       resolverContexto: resolverContextoAdmin,
       resolverQlik,
       repositorioAutomatizacionesPersonales: repositorioWorkers,
+      bloqueoEjecucion: bloqueosEjecucion,
+      registrador,
+      hayEjecucionesActivas: repositorioReportes
+        ? (id) =>
+            repositorioReportes.tieneEjecucionesActivasPorAutomatizacion(id)
+        : undefined,
       resolverIdentidadQlik: resolverIdentidadQlikAdmin,
       obtenerBigQuery: servicioBigQueryAdmin.obtenerBigQuery.bind(
         servicioBigQueryAdmin,

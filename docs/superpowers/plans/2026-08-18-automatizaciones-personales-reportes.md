@@ -245,7 +245,7 @@ await caso.ejecutar(ctx);
 expect(qlik.copiarAutomatizacion).toHaveBeenCalledTimes(1);
 ```
 
-Añadir caso donde `validarContratoTalend(workspace)` falla para un worker existente y esperar `WORKER_INCOMPATIBLE`, sin `actualizarAutomatizacion` ni reparación in-place.
+Añadir caso donde `validarContratoTalend(workspace)` falla para un worker existente y esperar reemplazo desde plantilla, sin `actualizarAutomatizacion` ni reparación in-place.
 
 - [ ] **Step 3: Implementar lock de creación y double-check**
 
@@ -428,7 +428,7 @@ rutas.get("/organizaciones/:id/tenants-qlik/:tenantQlikId/workers", listarWorker
 rutas.post("/organizaciones/:id/tenants-qlik/:tenantQlikId/workers/:workerId/recrear", recrearWorker);
 ```
 
-`recrear` valida la plantilla actual, crea copia nueva, actualiza asociación y no modifica/borrar automáticamente el Automate roto.
+`recrear` valida la plantilla actual, crea copia nueva, actualiza asociación y elimina best-effort el Automate anterior después del swap, sin modificarlo in-place.
 
 - [ ] **Step 4: Actualizar copy de administración**
 

@@ -167,9 +167,9 @@ El modelo `automatizaciones_personales_qlik` se conserva. Sigue existiendo como 
 
 Abrir el catálogo, abrir un detalle, consultar metadata o ejecutar preflight no crea workers. El worker se crea únicamente al primer `Ejecutar` del usuario en ese tenant y se reutiliza para cualquier Dataflow posterior.
 
-La plantilla base sigue validándose estrictamente contra `Credenciales`, `BqSelectData`, `BqNumberCsv`, `BqExportData`, `BqDrop` y `executeTask`. No se auto-repara una plantilla o worker modificado manualmente.
+La plantilla base sigue validándose estrictamente contra `Credenciales`, `BqSelectData`, `BqNumberCsv`, `BqExportData`, `BqDrop` y `executeTask`. Un worker modificado manualmente se reemplaza desde una plantilla válida, pero nunca se repara in-place.
 
-Un worker referenciado que devuelve Qlik `404` puede recrearse desde una plantilla válida bajo el lock de creación. Un worker existente pero estructuralmente incompatible falla cerrado con `WORKER_INCOMPATIBLE` y requiere recreación administrativa explícita.
+Un worker referenciado que devuelve Qlik `404`, tiene contrato obsoleto o es estructuralmente incompatible se reemplaza desde una plantilla válida bajo el lock de creación. La recreación administrativa fuerza el mismo reemplazo como fallback.
 
 El lock de ejecución sigue cubriendo únicamente `GET/validar workspace → PUT workspace → POST run`. Se libera inmediatamente después de crear el run; Talend puede continuar mientras se lanza otra ejecución posterior.
 
@@ -330,7 +330,7 @@ Los contratos de ejecución aceptan `flujoIdQlik` como identidad del recurso. ID
 - BigQuery no configurado/inválido: bloquear ejecución con mensaje accionable de entorno.
 - `SIN_AUTOMATIZACION_BASE`: indicar que el entorno no está preparado; no usar la plantilla directamente como worker.
 - `PLANTILLA_INCOMPATIBLE`: bloquear creación de workers y reservar detalles estructurales para administración.
-- `WORKER_INCOMPATIBLE`: no sobrescribir silenciosamente; permitir recreación administrativa desde plantilla.
+- `WORKER_REPAIR_FAILED`: no cambiar la asociación ni iniciar Talend; mostrar un mensaje genérico y conservar el diagnóstico técnico en detalles/logs.
 - fallo antes de `POST run`: la ejecución queda en error con etapa; el usuario no debe creer que Talend inició.
 - fallo posterior de Talend/GCS: preservar snapshots y mantener `/descargas` incompleta hasta marcador final.
 

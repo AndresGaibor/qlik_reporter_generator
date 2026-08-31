@@ -8,6 +8,7 @@ export interface CrearAutomatizacionPersonalPersistida {
   automatizacionNombreSnapshot: string;
   estado: EstadoAutomatizacionPersonal;
   mensajeError?: string | null;
+  contratoVersion?: number | null;
 }
 
 export interface AutomatizacionPersonalPersistida
@@ -22,6 +23,7 @@ export interface ActualizarAutomatizacionPersonalPersistida {
   automatizacionNombreSnapshot?: string;
   estado?: EstadoAutomatizacionPersonal;
   mensajeError?: string | null;
+  contratoVersion?: number | null;
 }
 
 export interface PuertoRepositorioAutomatizacionesPersonales {

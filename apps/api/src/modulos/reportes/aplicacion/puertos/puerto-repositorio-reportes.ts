@@ -146,6 +146,9 @@ export interface PuertoRepositorioReportes {
   crearEjecucion(
     entrada: CrearEjecucionReportePersistida,
   ): Promise<EjecucionReportePersistida>;
+  tieneEjecucionesActivasPorAutomatizacion(
+    automatizacionIdQlik: string,
+  ): Promise<boolean>;
   marcarEjecucionIniciada(
     id: string,
     runIdQlik: string,

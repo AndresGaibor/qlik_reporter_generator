@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import type { PuertoAuditoria } from "../../../nucleo/auditoria/puerto-auditoria.js";
+import type { Registrador } from "../../../plataforma/observabilidad/registrador.js";
+import type { PuertoBloqueoEjecucion } from "../../automatizaciones/aplicacion/puertos/puerto-bloqueo-ejecucion.js";
 import type { ServicioQlik } from "../../qlik/publico.js";
 import type { PuertoRepositorioAutomatizacionesPersonales } from "../../reportes/aplicacion/puertos/puerto-repositorio-automatizaciones-personales.js";
 import type { RepositorioAdministracion } from "../aplicacion/puertos/repositorio-administracion.js";
@@ -34,6 +36,9 @@ export interface DependenciasRutasAdmin extends OpcionesConfiguracionOAuth {
   resolverQlik: (c: import("hono").Context) => Promise<ServicioQlik>;
   repositorioAutomatizacionesPersonales?: PuertoRepositorioAutomatizacionesPersonales;
   resolverIdentidadQlik?: PuertoConsultaIdentidadQlikAdmin;
+  bloqueoEjecucion?: PuertoBloqueoEjecucion;
+  registrador?: Registrador;
+  hayEjecucionesActivas?: (automatizacionIdQlik: string) => Promise<boolean>;
 }
 
 export function crearRutasAdmin({
@@ -46,6 +51,9 @@ export function crearRutasAdmin({
   guardarBigQuery,
   probarBigQuery,
   resolverQlik,
+  bloqueoEjecucion,
+  registrador,
+  hayEjecucionesActivas,
   repositorioAutomatizacionesPersonales,
   resolverIdentidadQlik,
 }: DependenciasRutasAdmin) {
@@ -74,6 +82,9 @@ export function crearRutasAdmin({
         resolverIdentidadQlik,
         resolverContexto,
         resolverQlik,
+        bloqueoEjecucion,
+        registrador,
+        hayEjecucionesActivas,
       }),
     );
   }
