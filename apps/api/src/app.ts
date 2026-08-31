@@ -345,12 +345,9 @@ export async function crearAplicacion(
         db: "connected",
       });
     } catch (error) {
-      return responderError(
-        c,
-        "Base de datos no disponible",
-        503,
-        { codigo: "DB_NOT_READY" },
-      );
+      return responderError(c, "Base de datos no disponible", 503, {
+        codigo: "DB_NOT_READY",
+      });
     }
   });
 

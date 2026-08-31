@@ -28,7 +28,11 @@ describe("construirConsultasTalendBigQuery", () => {
   it("expone únicamente el contrato moderno", () => {
     const consultas = construirConsultasTalendBigQuery(entrada);
 
-    expect(Object.keys(consultas).sort()).toEqual(["jobId", "projectId", "sql"]);
+    expect(Object.keys(consultas).sort()).toEqual([
+      "jobId",
+      "projectId",
+      "sql",
+    ]);
   });
 
   it("rechaza entradas inseguras", () => {

@@ -10,11 +10,15 @@ async function parseFixture(name: string) {
 
 describe("parsearProgramaQlik", () => {
   it("reconoce SELECT BigQuery generado por Qlik aunque no lleve prefijo SQL", () => {
-    const program = parsearProgramaQlik(`
+    const program = parsearProgramaQlik(
+      `
       LIB CONNECT TO [Bancolombia prueba:Google_BigQuery_lafavorita-182519];
       [Ventas]: LOAD [Fecha], [Cantidad];
-      SELECT Fecha, Cantidad FROM ` + "`lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`" + `;
-    `);
+      SELECT Fecha, Cantidad FROM ` +
+        "`lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`" +
+        `;
+    `,
+    );
 
     expect(program.statements.map((item) => item.type)).toEqual([
       "connect",
@@ -23,7 +27,8 @@ describe("parsearProgramaQlik", () => {
     ]);
     const sql = program.statements[2];
     expect(sql?.type).toBe("native_sql");
-    if (!sql || sql.type !== "native_sql") throw new Error("native_sql esperado");
+    if (!sql || sql.type !== "native_sql")
+      throw new Error("native_sql esperado");
     expect(sql.sql.text).toBe(
       "SELECT Fecha, Cantidad FROM `lafavorita-182519`.`EDWH_REP`.`VENTAS_MENSUALES_A`",
     );

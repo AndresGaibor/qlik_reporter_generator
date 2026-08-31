@@ -58,12 +58,6 @@ export class CancelarEjecucionReporte {
       );
     }
     await Promise.allSettled([
-      ejecucion.runIdQlik
-        ? this.qlik.detenerEjecucion(
-            ejecucion.automatizacionIdQlik,
-            ejecucion.runIdQlik,
-          )
-        : Promise.resolve(),
       ejecucion.jobIdPrincipalBigQuery &&
       ejecucion.bigqueryProjectId &&
       this.jobsBigQuery

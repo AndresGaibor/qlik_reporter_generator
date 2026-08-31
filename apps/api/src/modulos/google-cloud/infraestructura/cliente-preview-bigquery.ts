@@ -101,9 +101,11 @@ export class ClientePreviewBigQuery implements PuertoLecturaBigQuery {
 
     return {
       columnas,
-      filas: filasObjetos.slice(0, maxResults).map((fila) =>
-        columnas.map((columna) => this.serializarValorPreview(fila[columna])),
-      ),
+      filas: filasObjetos
+        .slice(0, maxResults)
+        .map((fila) =>
+          columnas.map((columna) => this.serializarValorPreview(fila[columna])),
+        ),
     };
   }
 
@@ -122,7 +124,8 @@ export class ClientePreviewBigQuery implements PuertoLecturaBigQuery {
     }
     if (typeof valor === "object") {
       const conValue = valor as { value?: unknown };
-      if ("value" in conValue) return this.serializarValorPreview(conValue.value);
+      if ("value" in conValue)
+        return this.serializarValorPreview(conValue.value);
       try {
         return JSON.stringify(valor);
       } catch {

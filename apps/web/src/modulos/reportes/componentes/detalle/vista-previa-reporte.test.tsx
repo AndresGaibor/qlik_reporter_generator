@@ -53,9 +53,13 @@ describe("VistaPreviaReporte", () => {
 
   test("explica que la vista previa es aproximada y mezcla valores de referencia", () => {
     const vista = montar({ datos: datosEjemplo, cargando: false, error: null });
-    expect(vista.textContent).toMatch(/datos de referencia|representación aproximada/i);
+    expect(vista.textContent).toMatch(
+      /datos de referencia|representación aproximada/i,
+    );
     expect(vista.textContent).toMatch(/resultado aproximado/i);
-    expect(vista.textContent).toMatch(/valores de referencia.*transformaciones simuladas/i);
+    expect(vista.textContent).toMatch(
+      /valores de referencia.*transformaciones simuladas/i,
+    );
     expect(vista.textContent).not.toMatch(/filas leídas del resultado/i);
     expect(vista.textContent).not.toMatch(/vista previa · datos simulados/i);
   });

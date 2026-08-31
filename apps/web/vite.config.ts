@@ -18,9 +18,7 @@ export default defineConfig({
     host: production ? "127.0.0.1" : "localhost",
     port: 4525,
     strictPort: true,
-    hmr: production
-      ? { host: "localhost", port: 4525 }
-      : { host: "localhost" },
+    hmr: production ? { host: "localhost", port: 4525 } : { host: "localhost" },
     proxy: production
       ? {
           "/api": {

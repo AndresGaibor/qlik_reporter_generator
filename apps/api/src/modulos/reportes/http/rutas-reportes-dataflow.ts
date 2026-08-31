@@ -202,10 +202,7 @@ export function crearRutasReportesDataflow(
     const vistaUsuarioFinal = c.req.query("vistaUsuarioFinal") === "true";
     const esAdministrador =
       !vistaUsuarioFinal &&
-      (sesion.esSuperadmin ||
-        sesion.roles?.some(
-          (rol) => rol === "admin" || rol === "administrador",
-        ));
+      (sesion.esSuperadmin || sesion.roles?.some((rol) => rol === "admin"));
     const flujosVisibles = filtrarFlujosVisibles(
       flujos,
       sesion.usuarioIdQlik,
@@ -511,10 +508,7 @@ export function crearRutasReportesDataflow(
         organizacionId: sesion.organizacionId,
         usuarioId: sesion.usuarioId,
         esAdministrador: Boolean(
-          sesion.esSuperadmin ||
-            sesion.roles?.some(
-              (rol) => rol === "admin" || rol === "administrador",
-            ),
+          sesion.esSuperadmin || sesion.roles?.some((rol) => rol === "admin"),
         ),
       });
       return responderExito(c, resultado);

@@ -60,12 +60,12 @@ describe("copiarAutomatizacionPersonal", () => {
     expect(JSON.stringify(definicion.workspace)).not.toContain("dataflow");
     expect(JSON.stringify(definicion.workspace)).not.toContain("Appid");
     expect(JSON.stringify(definicion.workspace)).not.toContain("autor");
-    const blocks = (definicion.workspace as { blocks: Array<Record<string, unknown>> })
-      .blocks;
+    const blocks = (
+      definicion.workspace as { blocks: Array<Record<string, unknown>> }
+    ).blocks;
     const executeTask = blocks.find((block) => block.name === "executeTask");
     const espera = blocks.find(
-      (block) =>
-        block.snippet_guid === "087a1ce0-037c-11ee-9163-4dcbc6412d48",
+      (block) => block.snippet_guid === "087a1ce0-037c-11ee-9163-4dcbc6412d48",
     );
     expect(espera).toBeDefined();
     expect(executeTask?.childId).toBe(espera?.id as string);

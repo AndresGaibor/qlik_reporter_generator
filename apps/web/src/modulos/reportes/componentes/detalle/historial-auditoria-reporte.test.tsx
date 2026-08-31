@@ -48,7 +48,7 @@ afterEach(() => {
 function montar(
   mostrarDetallesTecnicos: boolean,
   ejecucion: DetalleEjecucionReporte = ejecucionBase,
-  reporteId?: string,
+  id?: string,
 ) {
   container = document.createElement("div");
   document.body.append(container);
@@ -58,7 +58,7 @@ function montar(
       <HistorialAuditoriaReporte
         ejecuciones={[ejecucion]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
-        reporteId={reporteId}
+        id={id}
       />,
     );
   });

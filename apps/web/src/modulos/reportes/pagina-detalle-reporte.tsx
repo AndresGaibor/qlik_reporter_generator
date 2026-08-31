@@ -423,7 +423,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             <HistorialAuditoriaReporte
               ejecuciones={ejecucionesActuales}
               hashConfiguracionActual={preflight.data?.hashDataflowSha256}
-              reporteId={id}
+              id={id}
             />
           )}
         </div>
