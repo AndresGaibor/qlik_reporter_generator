@@ -56,7 +56,7 @@ interface SesionReportes {
   usuarioIdQlik: string;
   nombreUsuario?: string | null;
   correo?: string | null;
-  roles?: Array<"admin" | "administrador" | "usuario">;
+  roles?: Array<"admin" | "usuario">;
   esSuperadmin?: boolean;
 }
 
@@ -202,10 +202,7 @@ export function crearRutasReportesDataflow(
     const vistaUsuarioFinal = c.req.query("vistaUsuarioFinal") === "true";
     const esAdministrador =
       !vistaUsuarioFinal &&
-      (sesion.esSuperadmin ||
-        sesion.roles?.some(
-          (rol) => rol === "admin" || rol === "administrador",
-        ));
+      (sesion.esSuperadmin || sesion.roles?.includes("admin"));
     const flujosVisibles = filtrarFlujosVisibles(
       flujos,
       sesion.usuarioIdQlik,
@@ -502,7 +499,6 @@ export function crearRutasReportesDataflow(
     try {
       const resultado = await new CancelarEjecucionReporte(
         dependencias.repositorioReportes,
-        await dependencias.resolverQlik(c),
         jobs,
       ).ejecutar({
         ejecucionId: c.req.param("ejecucionId"),
@@ -511,10 +507,7 @@ export function crearRutasReportesDataflow(
         organizacionId: sesion.organizacionId,
         usuarioId: sesion.usuarioId,
         esAdministrador: Boolean(
-          sesion.esSuperadmin ||
-            sesion.roles?.some(
-              (rol) => rol === "admin" || rol === "administrador",
-            ),
+          sesion.esSuperadmin || sesion.roles?.includes("admin"),
         ),
       });
       return responderExito(c, resultado);

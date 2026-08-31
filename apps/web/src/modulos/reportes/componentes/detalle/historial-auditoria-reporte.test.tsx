@@ -58,7 +58,7 @@ function montar(
       <HistorialAuditoriaReporte
         ejecuciones={[ejecucion]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
-        reporteId={reporteId}
+        flujoId={reporteId}
       />,
     );
   });

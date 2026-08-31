@@ -58,7 +58,7 @@ export function VistaPreviaReporte({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-ink-900">
-            Muestra orientativa del formato
+            Vista previa: muestra orientativa del formato
           </h3>
           <p className="text-xs text-ink-500">
             {Math.min(10, datos.filas.length)} filas de muestra
@@ -70,10 +70,10 @@ export function VistaPreviaReporte({
       </div>
 
       <p className="text-xs text-ink-500">
-        Esta muestra permite revisar la estructura esperada del archivo. Puede
-        contener valores de referencia y valores generados para representar
-        transformaciones. No debe utilizarse para validar cifras, totales ni
-        registros individuales.
+        Esta vista previa es un resultado aproximado para revisar la estructura
+        esperada del archivo. Puede contener valores de referencia y
+        transformaciones simuladas. No debe utilizarse para validar cifras,
+        totales ni registros individuales.
       </p>
 
       {datos.contieneAgregaciones && (

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
-import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import { CancelarEjecucionReporte } from "./cancelar-ejecucion-reporte.js";
 import type {
   EjecucionReportePersistida,
@@ -36,13 +35,10 @@ function setup(estado: EjecucionReportePersistida["estado"] = "iniciada") {
     marcarCancelacionSolicitada: vi.fn(async () => undefined),
   } as unknown as PuertoRepositorioReportes &
     Record<string, ReturnType<typeof vi.fn>>;
-  const qlik = {
-    detenerEjecucion: vi.fn(async () => undefined),
-  } as unknown as PuertoQlik & Record<string, ReturnType<typeof vi.fn>>;
   const jobs = {
     cancelarJob: vi.fn(async () => undefined),
   } as unknown as PuertoJobsBigQuery & Record<string, ReturnType<typeof vi.fn>>;
-  const caso = new CancelarEjecucionReporte(repositorio, qlik, jobs);
+  const caso = new CancelarEjecucionReporte(repositorio, jobs);
   const entrada = {
     ejecucionId: "exec-1",
     flujoIdQlik: "flow-1",
@@ -51,17 +47,16 @@ function setup(estado: EjecucionReportePersistida["estado"] = "iniciada") {
     usuarioId: "user-1",
     esAdministrador: false,
   };
-  return { caso, entrada, repositorio, qlik, jobs };
+  return { caso, entrada, repositorio, jobs };
 }
 
 describe("CancelarEjecucionReporte", () => {
-  it("solicita Qlik y BigQuery y deja la ejecución cancelando", async () => {
-    const { caso, entrada, repositorio, qlik, jobs } = setup();
+  it("solicita BigQuery y deja la ejecución cancelando", async () => {
+    const { caso, entrada, repositorio, jobs } = setup();
     await expect(caso.ejecutar(entrada)).resolves.toEqual({
       estado: "cancelando",
     });
     expect(repositorio.marcarCancelacionSolicitada).toHaveBeenCalledTimes(1);
-    expect(qlik.detenerEjecucion).toHaveBeenCalledWith("auto-1", "run-1");
     expect(jobs.cancelarJob).toHaveBeenCalledWith({
       projectId: "project-1",
       jobId: "job-1",
@@ -77,35 +72,22 @@ describe("CancelarEjecucionReporte", () => {
     expect(repositorio.marcarCancelacionSolicitada).not.toHaveBeenCalled();
   });
 
-  it("intenta ambos servicios aunque Qlik falle", async () => {
-    const { caso, entrada, qlik, jobs } = setup();
-    (
-      qlik.detenerEjecucion as unknown as ReturnType<typeof vi.fn>
-    ).mockRejectedValue(new Error("Qlik temporal"));
-    await expect(caso.ejecutar(entrada)).resolves.toEqual({
-      estado: "cancelando",
-    });
-    expect(jobs.cancelarJob).toHaveBeenCalledTimes(1);
-  });
-
-  it("intenta ambos servicios aunque BigQuery falle", async () => {
-    const { caso, entrada, qlik, jobs } = setup();
+  it("mantiene el estado cancelando aunque BigQuery falle", async () => {
+    const { caso, entrada, jobs } = setup();
     (jobs.cancelarJob as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error("BigQuery temporal"),
     );
     await expect(caso.ejecutar(entrada)).resolves.toEqual({
       estado: "cancelando",
     });
-    expect(qlik.detenerEjecucion).toHaveBeenCalledTimes(1);
   });
 
   it.each(["completada", "error", "detenida"] as const)(
     "devuelve el estado terminal %s sin solicitar cambios",
     async (estado) => {
-      const { caso, entrada, repositorio, qlik, jobs } = setup(estado);
+      const { caso, entrada, repositorio, jobs } = setup(estado);
       await expect(caso.ejecutar(entrada)).resolves.toEqual({ estado });
       expect(repositorio.marcarCancelacionSolicitada).not.toHaveBeenCalled();
-      expect(qlik.detenerEjecucion).not.toHaveBeenCalled();
       expect(jobs.cancelarJob).not.toHaveBeenCalled();
     },
   );
@@ -127,7 +109,7 @@ describe("CancelarEjecucionReporte", () => {
   });
 
   it("permite al administrador cancelar una ejecución ajena", async () => {
-    const { caso, entrada, qlik } = setup();
+    const { caso, entrada } = setup();
     await expect(
       caso.ejecutar({
         ...entrada,
@@ -135,6 +117,5 @@ describe("CancelarEjecucionReporte", () => {
         esAdministrador: true,
       }),
     ).resolves.toEqual({ estado: "cancelando" });
-    expect(qlik.detenerEjecucion).toHaveBeenCalledTimes(1);
   });
 });

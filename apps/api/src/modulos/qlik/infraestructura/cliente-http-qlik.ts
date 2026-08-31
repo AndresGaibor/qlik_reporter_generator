@@ -199,16 +199,6 @@ export class ClienteHttpQlik implements ServicioQlik {
     return { runId: ejecucion.id };
   }
 
-  async detenerEjecucion(
-    automatizacionId: string,
-    runId: string,
-  ): Promise<void> {
-    await this.solicitarCrudo({
-      metodo: "POST",
-      ruta: `/api/workflows/automations/${encodeURIComponent(automatizacionId)}/runs/${encodeURIComponent(runId)}/actions/stop`,
-    });
-  }
-
   async copiarAutomatizacion(
     id: string,
     nombre: string,

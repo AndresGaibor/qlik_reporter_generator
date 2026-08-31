@@ -231,8 +231,11 @@ describe("Esquema Drizzle", () => {
       await Bun.file(
         new URL("../drizzle/meta/_journal.json", import.meta.url),
       ).text(),
-    ) as { entries: Array<{ tag: string }> };
+    ) as { entries: Array<{ tag: string; when: number }> };
     expect(migraciones).toHaveLength(journal.entries.length);
+    const anterior = journal.entries.at(-2);
+    const ultima = journal.entries.at(-1);
+    expect(ultima?.when).toBeGreaterThan(anterior?.when ?? 0);
     expect(journal.entries.map(({ tag }) => tag)).toEqual([
       "0000_tan_zeigeist",
       "0001_spooky_marvel_apes",

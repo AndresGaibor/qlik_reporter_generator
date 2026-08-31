@@ -21,7 +21,7 @@ export function mapearTenantQlik(
     dataflowBaseIdQlik: fila.dataflowBaseIdQlik,
     dataflowBaseNombre: fila.dataflowBaseNombre,
     dataflowPlantillas:
-      fila.dataflowPlantillas.length > 0
+      Array.isArray(fila.dataflowPlantillas) && fila.dataflowPlantillas.length > 0
         ? fila.dataflowPlantillas
         : fila.dataflowBaseIdQlik
           ? [

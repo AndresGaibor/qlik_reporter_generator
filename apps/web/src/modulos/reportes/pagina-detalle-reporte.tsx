@@ -124,11 +124,15 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const ejecutar = useMutation({
     mutationFn: (confirmacionRiesgo?: { hashDataflowSha256: string }) =>
       ejecutarReporte(id, confirmacionRiesgo),
-    onSuccess: () => {
+    onSuccess: (resultado) => {
       setHashRiesgoPendiente(null);
       mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
+      });
+      void navegar({
+        to: "/descargas",
+        search: { carpeta: resultado.carpetaDescargas },
       });
     },
     onError: (error: Error) => {
@@ -313,8 +317,8 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             ¿Cancelar esta ejecución?
           </h2>
           <p className="mt-2 text-sm text-ink-700">
-            Se solicitará detener el procesamiento del reporte. El trabajo
-            realizado hasta ahora puede haber utilizado recursos y podrían
+            Se marcará la ejecución como cancelando y se solicitará cancelar el
+            trabajo de BigQuery. Talend podría continuar brevemente; podrían
             existir archivos incompletos.
           </p>
           <div className="mt-4 flex gap-2">
@@ -423,7 +427,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
             <HistorialAuditoriaReporte
               ejecuciones={ejecucionesActuales}
               hashConfiguracionActual={preflight.data?.hashDataflowSha256}
-              reporteId={id}
+              flujoId={id}
             />
           )}
         </div>

@@ -1,6 +1,5 @@
 import { ErrorAplicacion } from "../../../nucleo/errores/error-aplicacion.js";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
-import type { PuertoQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "./puertos/puerto-repositorio-reportes.js";
 
 export interface EntradaCancelarEjecucionReporte {
@@ -15,7 +14,6 @@ export interface EntradaCancelarEjecucionReporte {
 export class CancelarEjecucionReporte {
   constructor(
     private readonly repositorio: PuertoRepositorioReportes,
-    private readonly qlik: PuertoQlik,
     private readonly jobsBigQuery?: PuertoJobsBigQuery,
   ) {}
 
@@ -58,12 +56,6 @@ export class CancelarEjecucionReporte {
       );
     }
     await Promise.allSettled([
-      ejecucion.runIdQlik
-        ? this.qlik.detenerEjecucion(
-            ejecucion.automatizacionIdQlik,
-            ejecucion.runIdQlik,
-          )
-        : Promise.resolve(),
       ejecucion.jobIdPrincipalBigQuery &&
       ejecucion.bigqueryProjectId &&
       this.jobsBigQuery

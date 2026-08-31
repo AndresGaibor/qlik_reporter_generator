@@ -26,11 +26,11 @@ function formatearDuracionMs(ms: number): string {
 export function HistorialAuditoriaReporte({
   ejecuciones,
   hashConfiguracionActual,
-  reporteId,
+  flujoId,
 }: {
   ejecuciones: DetalleEjecucionReporte[];
   hashConfiguracionActual?: string;
-  reporteId?: string;
+  flujoId?: string;
   /** Compatibilidad con consumidores antiguos; la evidencia ahora siempre está disponible. */
   mostrarDetallesTecnicos?: boolean;
 }) {
@@ -110,7 +110,7 @@ export function HistorialAuditoriaReporte({
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {reporteId && (
+                {flujoId && (
                   <button
                     type="button"
                     className="rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-700 hover:bg-hover"
@@ -118,7 +118,7 @@ export function HistorialAuditoriaReporte({
                       void navegar({
                         to: "/descargas",
                         search: {
-                          reporte: reporteId,
+                          reporte: flujoId,
                           ejecucion: ejecucion.id,
                         },
                       })
