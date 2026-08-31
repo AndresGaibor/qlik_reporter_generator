@@ -223,7 +223,7 @@ export function extraerPrefijoLoad(
     const side = (
       rawSide === "outer"
         ? "full"
-        : rawSide ?? (operation === "join" ? "full" : "inner")
+        : (rawSide ?? (operation === "join" ? "full" : "inner"))
     ) as "inner" | "left" | "right" | "full";
     const target = joinKeep[3]?.trim();
     if (operation === "keep" && side === "full") return undefined;

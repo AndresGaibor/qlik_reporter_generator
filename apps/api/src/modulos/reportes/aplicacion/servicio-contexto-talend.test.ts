@@ -37,7 +37,6 @@ async function cargarFixtureSqlActual() {
   return JSON.parse(await Bun.file(fixture).text()) as Record<string, unknown>;
 }
 
-
 describe("contrato Talend moderno", () => {
   it("inyecta únicamente SQL, job y proyecto", async () => {
     const workspace = await cargarFixtureSqlActual();
@@ -68,7 +67,6 @@ describe("contrato Talend moderno", () => {
 
     expect(() => inyectarContextoTalend(workspace, consultas)).toThrow("sql");
   });
-
 
   it("enumera los bloques modernos faltantes", async () => {
     const workspace = await cargarFixtureSqlActual();

@@ -107,10 +107,13 @@ describe("relacional vNext", () => {
   });
 
   it("compone preceding LOAD sobre un LOAD RESIDENT en orden interno a externo", () => {
-    const result = compilarDataflowVNext(`
+    const result = compilarDataflowVNext(
+      `
       LIB CONNECT TO [Google BigQuery:Prod];
       [Base]: LOAD id, monto;
-      SELECT id, monto FROM ` + "`p.d.ventas`" + `;
+      SELECT id, monto FROM ` +
+        "`p.d.ventas`" +
+        `;
 
       [Salida]:
       NOCONCATENATE
@@ -118,7 +121,8 @@ describe("relacional vNext", () => {
       LOAD id, Sum(monto) AS Total
       RESIDENT [Base]
       GROUP BY id;
-    `);
+    `,
+    );
 
     expect(result.sql).toContain("SUM(`monto`) AS `Total`");
     expect(result.sql).toContain("`Total`");
@@ -126,15 +130,19 @@ describe("relacional vNext", () => {
   });
 
   it("preserva el componente numérico de un dual Num(Month()) reutilizado por RESIDENT", () => {
-    const result = compilarDataflowVNext(`
+    const result = compilarDataflowVNext(
+      `
       SET DateFormat='M/D/YYYY';
       SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
       LIB CONNECT TO [Google BigQuery:Prod];
       [Base]: LOAD Fecha, id;
-      SELECT Fecha, id FROM ` + "`p.d.ventas`" + `;
+      SELECT Fecha, id FROM ` +
+        "`p.d.ventas`" +
+        `;
       [Fechas]: LOAD Num(Month(Fecha)) AS Mes, id RESIDENT [Base];
       [Salida]: LOAD Mes, Count(id) AS Total RESIDENT [Fechas] GROUP BY Mes;
-    `);
+    `,
+    );
 
     expect(result.sql).toContain("COUNT(`id`) AS `Total`");
     expect(result.sql).toContain("GROUP BY");
@@ -142,20 +150,26 @@ describe("relacional vNext", () => {
   });
 
   it("preserva un dual Num(Month()) a través de GROUP BY y preceding LOAD", () => {
-    const result = compilarDataflowVNext(`
+    const result = compilarDataflowVNext(
+      `
       SET DateFormat='M/D/YYYY';
       SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
       LIB CONNECT TO [Google BigQuery:Prod];
       [Base]: LOAD Fecha, id;
-      SELECT Fecha, id FROM ` + "`p.d.ventas`" + `;
+      SELECT Fecha, id FROM ` +
+        "`p.d.ventas`" +
+        `;
       [Fechas]: LOAD Num(Month(Fecha)) AS Mes, id RESIDENT [Base];
       [Salida]: LOAD Mes AS MesFinal, Total;
       LOAD Mes, Count(id) AS Total RESIDENT [Fechas] GROUP BY Mes;
-    `);
+    `,
+    );
 
     expect(result.sql).toContain("COUNT(`id`) AS `Total`");
     expect(result.sql).toContain("AS `MesFinal`");
-    expect(result.sql).not.toContain("DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING");
+    expect(result.sql).not.toContain(
+      "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
+    );
     expect(result.diagnostics).toEqual([]);
   });
 

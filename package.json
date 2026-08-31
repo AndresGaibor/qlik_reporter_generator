@@ -1,10 +1,7 @@
 {
   "name": "qlik-automatizaciones",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "bun run --parallel dev:api dev:web",
     "dev:api": "bun run --cwd apps/api dev",

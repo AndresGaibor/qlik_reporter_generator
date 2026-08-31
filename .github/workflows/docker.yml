@@ -1,0 +1,55 @@
+name: Docker Compose Validate
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "compose.yaml"
+      - "Dockerfile"
+      - ".github/workflows/docker.yml"
+  pull_request:
+
+jobs:
+  validate-compose:
+    name: Validate Compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          curl -fsSL https://docs.docker.com/compose/install/linux/ -o /tmp/install-docker-compose.sh
+          chmod +x /tmp/install-docker-compose.sh
+          sudo /tmp/install-docker-compose.sh
+
+      - name: Validate compose configuration
+        run: |
+          docker compose -f compose.yaml config --quiet
+
+      - name: Check for insecure defaults
+        run: |
+          if grep -q "cambiar_en_produccion" compose.yaml; then
+            echo "WARNING: compose.yaml contains insecure default password"
+            exit 1
+          fi
+
+      - name: Verify internal network
+        run: |
+          if ! grep -q "internal: true" compose.yaml; then
+            echo "ERROR: compose.yaml missing internal network"
+            exit 1
+          fi
+
+      - name: Verify healthchecks
+        run: |
+          if ! grep -q "healthcheck:" compose.yaml; then
+            echo "ERROR: compose.yaml missing healthchecks"
+            exit 1
+          fi
+
+      - name: Verify migrate service
+        run: |
+          if ! grep -q "migrate:" compose.yaml; then
+            echo "ERROR: compose.yaml missing migrate service"
+            exit 1
+          fi

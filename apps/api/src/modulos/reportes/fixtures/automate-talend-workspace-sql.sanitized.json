@@ -20,7 +20,9 @@
     {
       "name": "Credenciales",
       "type": "VariableBlock",
-      "operations": [{ "id": "set_value", "value": "/etc/credentials/gsc.json" }]
+      "operations": [
+        { "id": "set_value", "value": "/etc/credentials/gsc.json" }
+      ]
     },
     {
       "name": "sql",

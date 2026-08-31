@@ -78,21 +78,25 @@ describe("contratos de reportes Dataflow", () => {
         },
       });
       expect(cero.success).toBe(true);
-      expect(esquemaCostoBigQueryEjecucion.parse({
-        tarifaUsdPorTiBAplicada: null,
-        costoBigQueryUsd: null,
-        moneda: null,
-        versionFormula: null,
-      }).costoBigQueryUsd).toBeNull();
+      expect(
+        esquemaCostoBigQueryEjecucion.parse({
+          tarifaUsdPorTiBAplicada: null,
+          costoBigQueryUsd: null,
+          moneda: null,
+          versionFormula: null,
+        }).costoBigQueryUsd,
+      ).toBeNull();
     });
 
     it("rechaza moneda distinta de USD y métricas numéricas", () => {
-      expect(esquemaCostoBigQueryEjecucion.safeParse({
-        tarifaUsdPorTiBAplicada: 6.25,
-        costoBigQueryUsd: "1.00",
-        moneda: "EUR",
-        versionFormula: 1,
-      }).success).toBe(false);
+      expect(
+        esquemaCostoBigQueryEjecucion.safeParse({
+          tarifaUsdPorTiBAplicada: 6.25,
+          costoBigQueryUsd: "1.00",
+          moneda: "EUR",
+          versionFormula: 1,
+        }).success,
+      ).toBe(false);
     });
   });
 

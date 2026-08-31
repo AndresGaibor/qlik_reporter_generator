@@ -103,7 +103,9 @@ export class EvaluadorPreview {
           };
         const idxPorNombre = this.crearIndiceColumnas(datos.columnas);
         const indices = relacion.projections.map((p) => ({
-          idx: idxPorNombre.get(this.normalizarReferenciaCampo(p.expression)) ?? -1,
+          idx:
+            idxPorNombre.get(this.normalizarReferenciaCampo(p.expression)) ??
+            -1,
           alias: p.alias,
           expr: p.expression,
         }));
@@ -363,11 +365,11 @@ export class EvaluadorPreview {
         );
         const indicesLeft = this.crearIndiceColumnas(datosLeft.columnas);
         const indicesRight = this.crearIndiceColumnas(datosRight.columnas);
-        const indicesKeyLeft = relacion.keys.map((key) =>
-          indicesLeft.get(this.normalizarReferenciaCampo(key)) ?? -1,
+        const indicesKeyLeft = relacion.keys.map(
+          (key) => indicesLeft.get(this.normalizarReferenciaCampo(key)) ?? -1,
         );
-        const indicesKeyRight = relacion.keys.map((key) =>
-          indicesRight.get(this.normalizarReferenciaCampo(key)) ?? -1,
+        const indicesKeyRight = relacion.keys.map(
+          (key) => indicesRight.get(this.normalizarReferenciaCampo(key)) ?? -1,
         );
         const coincideJoin = (filaLeft: string[], filaRight: string[]) =>
           indicesKeyLeft.every(
@@ -476,7 +478,9 @@ export class EvaluadorPreview {
         const sorted = [...datos.filas].sort((a, b) => {
           for (const order of relacion.orderBy) {
             const idx =
-              idxPorNombre.get(this.normalizarReferenciaCampo(order.expression)) ?? -1;
+              idxPorNombre.get(
+                this.normalizarReferenciaCampo(order.expression),
+              ) ?? -1;
             if (idx < 0) continue;
             const cmp = String(a[idx]).localeCompare(String(b[idx]), "es");
             if (cmp !== 0) return order.direction === "desc" ? -cmp : cmp;
@@ -539,8 +543,8 @@ export class EvaluadorPreview {
   private normalizarReferenciaCampo(valor: string): string {
     const limpio = valor.trim();
     const sinDelimitadores =
-      ((limpio.startsWith("[") && limpio.endsWith("]")) ||
-        (limpio.startsWith("`") && limpio.endsWith("`")))
+      (limpio.startsWith("[") && limpio.endsWith("]")) ||
+      (limpio.startsWith("`") && limpio.endsWith("`"))
         ? limpio.slice(1, -1)
         : limpio;
     return sinDelimitadores
@@ -571,12 +575,14 @@ export class EvaluadorPreview {
     const pares = Math.min(filasLeft.length, filasRight.length);
 
     for (const clave of claves) {
-      const idxLeft = this.crearIndiceColumnas(datosLeft.columnas).get(
-        this.normalizarReferenciaCampo(clave),
-      ) ?? -1;
-      const idxRight = this.crearIndiceColumnas(datosRight.columnas).get(
-        this.normalizarReferenciaCampo(clave),
-      ) ?? -1;
+      const idxLeft =
+        this.crearIndiceColumnas(datosLeft.columnas).get(
+          this.normalizarReferenciaCampo(clave),
+        ) ?? -1;
+      const idxRight =
+        this.crearIndiceColumnas(datosRight.columnas).get(
+          this.normalizarReferenciaCampo(clave),
+        ) ?? -1;
       if (idxLeft < 0 || idxRight < 0) continue;
 
       for (let indice = 0; indice < pares; indice++) {

@@ -16,7 +16,9 @@ describe("ServicioBigQueryAdminPostgres", () => {
     };
     const servicio = new ServicioBigQueryAdminPostgres(db as never, cifrado);
 
-    await expect(servicio.obtenerBigQuery("org-1", "tenant-1")).resolves.toMatchObject({
+    await expect(
+      servicio.obtenerBigQuery("org-1", "tenant-1"),
+    ).resolves.toMatchObject({
       configurada: false,
       credencialesConfiguradas: false,
       maximoFilasPorArchivo: 1_000_000,

@@ -8,7 +8,12 @@ import type {
   EntornoExpresionQlik,
 } from "./expresiones-qlik.js";
 
-const env = (fields: Record<string, { type: string; mode: "REQUIRED" | "NULLABLE" | "REPEATED" }>): EntornoExpresionQlik => ({
+const env = (
+  fields: Record<
+    string,
+    { type: string; mode: "REQUIRED" | "NULLABLE" | "REPEATED" }
+  >,
+): EntornoExpresionQlik => ({
   fieldMetadata: fields,
 });
 
@@ -16,13 +21,20 @@ const emit = (
   expression: string,
   environment: EntornoExpresionQlik,
   context: ContextoExpresion = "value",
-) => emitirExpresionBigQuery(parsearExpresionQlik(expression), context, environment);
+) =>
+  emitirExpresionBigQuery(
+    parsearExpresionQlik(expression),
+    context,
+    environment,
+  );
 
 describe("lowering BigQuery guiado por tipos", () => {
   it("evita coerción string para argumentos numéricos demostrados", () => {
     const environment = env({ monto: { type: "NUMERIC", mode: "NULLABLE" } });
     expect(emit("Sign(monto)", environment)).toBe("SIGN(`monto`)");
-    expect(emit("RangeSum(monto, 2)", environment)).toContain("COALESCE(`monto`, 0)");
+    expect(emit("RangeSum(monto, 2)", environment)).toContain(
+      "COALESCE(`monto`, 0)",
+    );
   });
 
   it("mantiene coerción defensiva cuando el campo físico es STRING", () => {
@@ -65,8 +77,12 @@ describe("lowering BigQuery guiado por tipos", () => {
 
   it("emite KeepChar/PurgeChar sin CAST en argumento de texto conocido", () => {
     const env2 = env({ campo: { type: "STRING", mode: "NULLABLE" } });
-    expect(emit("KeepChar(campo, 'ABC')", env2)).toContain("TO_CODE_POINTS(`campo`)");
-    expect(emit("PurgeChar(campo, 'ABC')", env2)).toContain("TO_CODE_POINTS(`campo`)");
+    expect(emit("KeepChar(campo, 'ABC')", env2)).toContain(
+      "TO_CODE_POINTS(`campo`)",
+    );
+    expect(emit("PurgeChar(campo, 'ABC')", env2)).toContain(
+      "TO_CODE_POINTS(`campo`)",
+    );
   });
 
   it("emite Index sin CAST en substring literal", () => {
@@ -89,12 +105,16 @@ describe("lowering BigQuery guiado por tipos", () => {
 
   it("emite TextBetween sin CAST en delimitadores literales", () => {
     const env2 = env({ texto: { type: "STRING", mode: "NULLABLE" } });
-    expect(emit("TextBetween(texto, '<', '>')", env2)).toContain("INSTR(`texto`, '<'");
+    expect(emit("TextBetween(texto, '<', '>')", env2)).toContain(
+      "INSTR(`texto`, '<'",
+    );
   });
 
   it("emite FindOneOf sin CAST en charset literal", () => {
     const env2 = env({ texto: { type: "STRING", mode: "NULLABLE" } });
-    expect(emit("FindOneOf(texto, 'aeiou')", env2)).toContain("TO_CODE_POINTS('aeiou')");
+    expect(emit("FindOneOf(texto, 'aeiou')", env2)).toContain(
+      "TO_CODE_POINTS('aeiou')",
+    );
   });
 
   it("emite SubField sin CAST en delimitador literal", () => {
@@ -117,7 +137,8 @@ describe("lowering BigQuery guiado por tipos", () => {
   });
 
   it("helpers de tipos complejos funcionan correctamente", async () => {
-    const { esRepeated, esTipoEscalar, esTipoComplejo, nombreTipoLegible } = await import("./expresiones-qlik/tipado-campos.js");
+    const { esRepeated, esTipoEscalar, esTipoComplejo, nombreTipoLegible } =
+      await import("./expresiones-qlik/tipado-campos.js");
     expect(esRepeated({ type: "STRING", mode: "REPEATED" })).toBe(true);
     expect(esRepeated({ type: "STRING", mode: "NULLABLE" })).toBe(false);
     expect(esTipoEscalar({ type: "STRING", mode: "NULLABLE" })).toBe(true);
@@ -125,8 +146,12 @@ describe("lowering BigQuery guiado por tipos", () => {
     expect(esTipoEscalar({ type: "RECORD", mode: "NULLABLE" })).toBe(false);
     expect(esTipoComplejo({ type: "JSON", mode: "NULLABLE" })).toBe(true);
     expect(esTipoComplejo({ type: "GEOGRAPHY", mode: "NULLABLE" })).toBe(true);
-    expect(nombreTipoLegible({ type: "STRING", mode: "REPEATED" })).toBe("STRING (ARRAY)");
-    expect(nombreTipoLegible({ type: "NUMERIC", mode: "NULLABLE" })).toBe("NUMERIC");
+    expect(nombreTipoLegible({ type: "STRING", mode: "REPEATED" })).toBe(
+      "STRING (ARRAY)",
+    );
+    expect(nombreTipoLegible({ type: "NUMERIC", mode: "NULLABLE" })).toBe(
+      "NUMERIC",
+    );
   });
 
   it("usa serial Qlik para SUM de DATE en contexto numérico", () => {

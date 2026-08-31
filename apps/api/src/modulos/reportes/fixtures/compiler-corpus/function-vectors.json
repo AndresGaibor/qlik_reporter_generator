@@ -6,13 +6,7 @@
       "name": "FirstSortedValue",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/firstsorted.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -20,13 +14,7 @@
       "name": "Max",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/max.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -34,13 +22,7 @@
       "name": "Min",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/min.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -48,13 +30,7 @@
       "name": "Mode",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/mode.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -62,13 +38,7 @@
       "name": "Only",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/only.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -76,13 +46,7 @@
       "name": "Sum",
       "category": "Basic aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/AggregationFunctions/sum.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -90,13 +54,7 @@
       "name": "Chi2Test_chi2",
       "category": "Chi2-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_chi2.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -104,13 +62,7 @@
       "name": "Chi2Test_df",
       "category": "Chi2-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -118,13 +70,7 @@
       "name": "Chi2Test_p",
       "category": "Chi2-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/chi2-tests/chi2test_p.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -132,13 +78,7 @@
       "name": "ARGB",
       "category": "Color functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/ARGB.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -146,13 +86,7 @@
       "name": "HSL",
       "category": "Color functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/HSL.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -160,13 +94,7 @@
       "name": "RGB",
       "category": "Color functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/ColorFunctions/RGB.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -174,13 +102,7 @@
       "name": "alt",
       "category": "Conditional functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/alt.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -188,13 +110,7 @@
       "name": "class",
       "category": "Conditional functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/class.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -202,13 +118,7 @@
       "name": "coalesce",
       "category": "Conditional functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/coalesce.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -216,13 +126,7 @@
       "name": "if",
       "category": "Conditional functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/if.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -262,13 +166,7 @@
       "name": "pick",
       "category": "Conditional functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ConditionalFunctions/pick.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -292,13 +190,7 @@
       "name": "Count",
       "category": "Counter aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/count.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -306,13 +198,7 @@
       "name": "MissingCount",
       "category": "Counter aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/MissingCount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -320,13 +206,7 @@
       "name": "NullCount",
       "category": "Counter aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NullCount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -334,13 +214,7 @@
       "name": "NumericCount",
       "category": "Counter aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/NumericCount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -348,13 +222,7 @@
       "name": "TextCount",
       "category": "Counter aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterAggregationFunctions/TextCount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -362,13 +230,7 @@
       "name": "autonumber",
       "category": "Counter functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumber.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -376,13 +238,7 @@
       "name": "autonumberhash128",
       "category": "Counter functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash128.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -390,13 +246,7 @@
       "name": "autonumberhash256",
       "category": "Counter functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/CounterFunctions/autonumberhash256.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1524,13 +1374,7 @@
       "name": "Avg",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/avg.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1538,13 +1382,7 @@
       "name": "Correl",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/correl.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1552,13 +1390,7 @@
       "name": "Fractile",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractile.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1566,13 +1398,7 @@
       "name": "FractileExc",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/fractileexc.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1580,13 +1406,7 @@
       "name": "Kurtosis",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/kurtosis.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1594,13 +1414,7 @@
       "name": "LINEST_B",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_b.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1608,13 +1422,7 @@
       "name": "LINEST_DF",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1622,13 +1430,7 @@
       "name": "LINEST_F",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_f.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1636,13 +1438,7 @@
       "name": "LINEST_M",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_m.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1650,13 +1446,7 @@
       "name": "LINEST_R2",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_r2.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1664,13 +1454,7 @@
       "name": "LINEST_SEB",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_seb.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1678,13 +1462,7 @@
       "name": "LINEST_SEM",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sem.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1692,13 +1470,7 @@
       "name": "LINEST_SEY",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_sey.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1706,13 +1478,7 @@
       "name": "LINEST_SSREG",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssreg.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1720,13 +1486,7 @@
       "name": "LINEST_SSRESID",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/linest_ssresid.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1734,13 +1494,7 @@
       "name": "Median",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/median.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1748,13 +1502,7 @@
       "name": "Skew",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/skew.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1762,13 +1510,7 @@
       "name": "Stdev",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/stdev.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1776,13 +1518,7 @@
       "name": "Sterr",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1790,13 +1526,7 @@
       "name": "STEYX",
       "category": "Examples of how to use linest functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StatisticalAggregationFunctions/steyx.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1804,13 +1534,7 @@
       "name": "exp",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#exp?id=1309",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1818,13 +1542,7 @@
       "name": "log",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#log",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1832,13 +1550,7 @@
       "name": "log10",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#log10",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1846,13 +1558,7 @@
       "name": "pow",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#pow",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1860,13 +1566,7 @@
       "name": "sqr",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#sqr",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1874,13 +1574,7 @@
       "name": "sqrt",
       "category": "Exponential and logarithmic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/ExponentialAndLogarithmicFunctions/exponential-logarithmic-functions.htm#sqrt",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1888,13 +1582,7 @@
       "name": "Attribute",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/Attribute.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1902,13 +1590,7 @@
       "name": "ConnectString",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/ConnectString.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1916,13 +1598,7 @@
       "name": "FileBaseName",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileBaseName.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1930,13 +1606,7 @@
       "name": "FileDir",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileDir.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1944,13 +1614,7 @@
       "name": "FileExtension",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileExtension.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1958,13 +1622,7 @@
       "name": "FileName",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileName.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1972,13 +1630,7 @@
       "name": "FilePath",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FilePath.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -1986,13 +1638,7 @@
       "name": "FileSize",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/FileSize.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2032,13 +1678,7 @@
       "name": "QvdFieldName",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdFieldName.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2046,13 +1686,7 @@
       "name": "QvdNoOfFields",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfFields.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2060,13 +1694,7 @@
       "name": "QvdNoOfRecords",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdNoOfRecords.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2074,13 +1702,7 @@
       "name": "QvdTableName",
       "category": "File functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FileFunctions/QvdTableName.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2248,13 +1870,7 @@
       "name": "ApplyCodepage",
       "category": "Formatting functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/ApplyCodePage.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2278,13 +1894,7 @@
       "name": "Dual",
       "category": "Formatting functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Dual.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2292,13 +1902,7 @@
       "name": "Interval",
       "category": "Formatting functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Interval.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2306,13 +1910,7 @@
       "name": "Money",
       "category": "Formatting functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Money.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2320,13 +1918,7 @@
       "name": "Num",
       "category": "Formatting functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/FormattingFunctions/Num.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2366,13 +1958,7 @@
       "name": "BitCount",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/bitcount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2380,13 +1966,7 @@
       "name": "Ceil",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/ceil.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2394,13 +1974,7 @@
       "name": "Combin",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/combin.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2408,13 +1982,7 @@
       "name": "Div",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/div.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2422,13 +1990,7 @@
       "name": "Even",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/even.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2436,13 +1998,7 @@
       "name": "Fabs",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fabs.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2450,13 +2006,7 @@
       "name": "Fact",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fact.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2464,13 +2014,7 @@
       "name": "Floor",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/floor.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2478,13 +2022,7 @@
       "name": "Fmod",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/fmod.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2492,13 +2030,7 @@
       "name": "Frac",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/frac.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2506,13 +2038,7 @@
       "name": "Mod",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/mod.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2520,13 +2046,7 @@
       "name": "Odd",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/odd.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2534,13 +2054,7 @@
       "name": "Permut",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/permut.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2548,13 +2062,7 @@
       "name": "Round",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/round.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2562,13 +2070,7 @@
       "name": "Sign",
       "category": "General numeric functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/GeneralNumericFunctions/sign.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2576,13 +2078,7 @@
       "name": "GeoAggrGeometry",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoAggrGeometry.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2590,13 +2086,7 @@
       "name": "GeoBoundingBox",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoBoundingBox.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2604,13 +2094,7 @@
       "name": "GeoCountVertex",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoCountVertex.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2618,13 +2102,7 @@
       "name": "GeoGetBoundingBox",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetBoundingBox.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2632,13 +2110,7 @@
       "name": "GeoGetPolygonCenter",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoGetPolygonCenter.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2646,13 +2118,7 @@
       "name": "GeoInvProjectGeometry",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoInvProjectGeometry.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2660,13 +2126,7 @@
       "name": "GeoMakePoint",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoMakePoint.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2674,13 +2134,7 @@
       "name": "GeoProject",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProject.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2688,13 +2142,7 @@
       "name": "GeoProjectGeometry",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoProjectGeometry.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2702,13 +2150,7 @@
       "name": "GeoReduceGeometry",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/GeoReduceGeometry.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2716,13 +2158,7 @@
       "name": "MakeGeoLine",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoLine.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2730,13 +2166,7 @@
       "name": "MakeGeoPoint",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPoint.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2744,13 +2174,7 @@
       "name": "MakeGeoPolygon",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoPolygon.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2758,13 +2182,7 @@
       "name": "MakeGeoRegion",
       "category": "Geospatial functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/GeospatialFunctions/MakeGeoRegion.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2772,13 +2190,7 @@
       "name": "Exists",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Exists.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2786,13 +2198,7 @@
       "name": "FieldIndex",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldindex.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2800,13 +2206,7 @@
       "name": "FieldValue",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvalue.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2814,13 +2214,7 @@
       "name": "FieldValueCount",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/fieldvaluecount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2828,13 +2222,7 @@
       "name": "LookUp",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/LookUp.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2842,13 +2230,7 @@
       "name": "NoOfRows",
       "category": "Inter-record functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/InterRecordFunctions/noofrows.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2904,13 +2286,7 @@
       "name": "Interval#",
       "category": "Interpretation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/interval_hash.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2918,13 +2294,7 @@
       "name": "Money#",
       "category": "Interpretation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/money_hash.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2932,13 +2302,7 @@
       "name": "Num#",
       "category": "Interpretation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/num_hash.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2946,13 +2310,7 @@
       "name": "Text",
       "category": "Interpretation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/InterpretationFunctions/Text.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -2992,13 +2350,7 @@
       "name": "IsNum",
       "category": "Logical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm#IsNum?id=1414",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3006,13 +2358,7 @@
       "name": "IsText",
       "category": "Logical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/LogicalFunctions/logical-functions.htm#IsText",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3020,13 +2366,7 @@
       "name": "ApplyMap",
       "category": "Mapping functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/ApplyMap.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3034,13 +2374,7 @@
       "name": "MapSubstring",
       "category": "Mapping functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MappingFunctions/MapSubstring.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3048,13 +2382,7 @@
       "name": "e",
       "category": "Mathematical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#e?id=1419",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3062,13 +2390,7 @@
       "name": "false",
       "category": "Mathematical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#false",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3076,13 +2398,7 @@
       "name": "pi",
       "category": "Mathematical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#pi",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3090,13 +2406,7 @@
       "name": "rand",
       "category": "Mathematical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#rand",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3104,13 +2414,7 @@
       "name": "true",
       "category": "Mathematical functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/MathConstantsAndParamFreeFunctions/mathematical-functions.htm#true",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3118,13 +2422,7 @@
       "name": "EmptyIsNull",
       "category": "NULL functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/EmptyIsNull.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3132,13 +2430,7 @@
       "name": "IsNull",
       "category": "NULL functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/IsNull.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3146,13 +2438,7 @@
       "name": "NULL",
       "category": "NULL functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/NULLFunctions/Null.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3160,13 +2446,7 @@
       "name": "RangeAvg",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeavg.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3174,13 +2454,7 @@
       "name": "RangeCorrel",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecorrel.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3188,13 +2462,7 @@
       "name": "RangeCount",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangecount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3202,13 +2470,7 @@
       "name": "RangeFractile",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangefractile.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3216,13 +2478,7 @@
       "name": "RangeIRR",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeIRR.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3230,13 +2486,7 @@
       "name": "RangeKurtosis",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangekurtosis.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3244,13 +2494,7 @@
       "name": "RangeMax",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemax.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3258,13 +2502,7 @@
       "name": "RangeMaxString",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemaxstring.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3272,13 +2510,7 @@
       "name": "RangeMin",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemin.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3286,13 +2518,7 @@
       "name": "RangeMinString",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeminstring.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3300,13 +2526,7 @@
       "name": "RangeMissingCount",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemissingcount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3314,13 +2534,7 @@
       "name": "RangeMode",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangemode.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3328,13 +2542,7 @@
       "name": "RangeNPV",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeNPV.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3342,13 +2550,7 @@
       "name": "RangeNullCount",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenullcount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3356,13 +2558,7 @@
       "name": "RangeNumericCount",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangenumericcount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3370,13 +2566,7 @@
       "name": "RangeOnly",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeonly.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3384,13 +2574,7 @@
       "name": "RangeSkew",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangeskew.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3398,13 +2582,7 @@
       "name": "RangeStdev",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangestdev.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3412,13 +2590,7 @@
       "name": "RangeSum",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangesum.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3426,13 +2598,7 @@
       "name": "RangeTextCount",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/RangeFunctions/rangetextcount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3440,13 +2606,7 @@
       "name": "RangeXIRR",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXIRR.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3454,13 +2614,7 @@
       "name": "RangeXNPV",
       "category": "Range functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/RangeFunctions/RangeXNPV.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3852,13 +3006,7 @@
       "name": "Concat",
       "category": "String aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/concat.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3898,13 +3046,7 @@
       "name": "MaxString",
       "category": "String aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MaxString.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3912,13 +3054,7 @@
       "name": "MinString",
       "category": "String aggregation functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringAggregationFunctions/MinString.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3926,13 +3062,7 @@
       "name": "Capitalize",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Capitalize.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3940,13 +3070,7 @@
       "name": "Chr",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Chr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -3986,13 +3110,7 @@
       "name": "Evaluate",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Evaluate.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4064,13 +3182,7 @@
       "name": "FindOneOf",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/FindOneOf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4078,13 +3190,7 @@
       "name": "Hash128",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash128.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4092,13 +3198,7 @@
       "name": "Hash160",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash160.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4106,13 +3206,7 @@
       "name": "Hash256",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Hash256.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4120,13 +3214,7 @@
       "name": "Index",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Index.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4198,13 +3286,7 @@
       "name": "IsJson",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/IsJson.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4244,13 +3326,7 @@
       "name": "JsonArray",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonArray.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4258,13 +3334,7 @@
       "name": "JsonGet",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonGet.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4272,13 +3342,7 @@
       "name": "JsonObject",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonObject.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4286,13 +3350,7 @@
       "name": "JsonSet",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSet.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4300,13 +3358,7 @@
       "name": "JsonSetEx",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/JsonSetEx.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4314,13 +3366,7 @@
       "name": "KeepChar",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/KeepChar.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4328,13 +3374,7 @@
       "name": "Left",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Left.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4342,13 +3382,7 @@
       "name": "Len",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Len.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4356,13 +3390,7 @@
       "name": "LevenshteinDist",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LevenshteinDist.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4370,13 +3398,7 @@
       "name": "Lower",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4384,13 +3406,7 @@
       "name": "LTrim",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/LTrim.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4430,13 +3446,7 @@
       "name": "Mid",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Mid.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4444,13 +3454,7 @@
       "name": "Ord",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Ord.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4458,13 +3462,7 @@
       "name": "PurgeChar",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/PurgeChar.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4472,13 +3470,7 @@
       "name": "Repeat",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Repeat.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4486,13 +3478,7 @@
       "name": "Replace",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Replace.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4564,13 +3550,7 @@
       "name": "Right",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Right.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4578,13 +3558,7 @@
       "name": "RTrim",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/RTrim.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4592,13 +3566,7 @@
       "name": "SubField",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubField.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4638,13 +3606,7 @@
       "name": "SubStringCount",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/SubStringCount.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4652,13 +3614,7 @@
       "name": "TextBetween",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/TextBetween.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4666,13 +3622,7 @@
       "name": "Trim",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Trim.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4680,13 +3630,7 @@
       "name": "Upper",
       "category": "String functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/StringFunctions/Upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4694,13 +3638,7 @@
       "name": "ComputerName",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#ComputerName",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4708,13 +3646,7 @@
       "name": "DocumentName",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentName",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4722,13 +3654,7 @@
       "name": "DocumentPath",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentPath",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4736,13 +3662,7 @@
       "name": "DocumentTitle",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#DocumentTitle",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4750,13 +3670,7 @@
       "name": "EngineVersion",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/EngineVersion.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4764,13 +3678,7 @@
       "name": "GetCollationLocale",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#GetCollationLocale",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4778,13 +3686,7 @@
       "name": "GetSysAttr",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetSysAttr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4792,13 +3694,7 @@
       "name": "GetUserAttr",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/GetUserAttr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4806,13 +3702,7 @@
       "name": "IsPartialReload",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/IsPartialReload.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4820,13 +3710,7 @@
       "name": "OSUser",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/system-functions.htm#OSUser",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4834,13 +3718,7 @@
       "name": "ProductVersion",
       "category": "System functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/SystemFunctions/ProductVersion.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4864,13 +3742,7 @@
       "name": "TTest1_conf",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4878,13 +3750,7 @@
       "name": "TTest1_df",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4892,13 +3758,7 @@
       "name": "TTest1_dif",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4906,13 +3766,7 @@
       "name": "TTest1_lower",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4920,13 +3774,7 @@
       "name": "TTest1_sig",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4934,13 +3782,7 @@
       "name": "TTest1_sterr",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4948,13 +3790,7 @@
       "name": "TTest1_t",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_t.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4962,13 +3798,7 @@
       "name": "TTest1_upper",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4976,13 +3806,7 @@
       "name": "TTest1w_conf",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -4990,13 +3814,7 @@
       "name": "TTest1w_df",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5004,13 +3822,7 @@
       "name": "TTest1w_dif",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5018,13 +3830,7 @@
       "name": "TTest1w_lower",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5032,13 +3838,7 @@
       "name": "TTest1w_sig",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5046,13 +3846,7 @@
       "name": "TTest1w_sterr",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5060,13 +3854,7 @@
       "name": "TTest1w_t",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_t.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5074,13 +3862,7 @@
       "name": "TTest1w_upper",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest1w_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5088,13 +3870,7 @@
       "name": "TTest_conf",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5102,13 +3878,7 @@
       "name": "TTest_df",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5116,13 +3886,7 @@
       "name": "TTest_dif",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5130,13 +3894,7 @@
       "name": "TTest_lower",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5144,13 +3902,7 @@
       "name": "TTest_sig",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5158,13 +3910,7 @@
       "name": "TTest_sterr",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5172,13 +3918,7 @@
       "name": "TTest_t",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_t.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5186,13 +3926,7 @@
       "name": "TTest_upper",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttest_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5200,13 +3934,7 @@
       "name": "TTestw_conf",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5214,13 +3942,7 @@
       "name": "TTestw_df",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_df.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5228,13 +3950,7 @@
       "name": "TTestw_dif",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5242,13 +3958,7 @@
       "name": "TTestw_lower",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5256,13 +3966,7 @@
       "name": "TTestw_sig",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5270,13 +3974,7 @@
       "name": "TTestw_sterr",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5284,13 +3982,7 @@
       "name": "TTestw_t",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_t.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5298,13 +3990,7 @@
       "name": "TTestw_upper",
       "category": "T-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ttest/ttestw_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5312,13 +3998,7 @@
       "name": "FieldName",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldName.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5326,13 +4006,7 @@
       "name": "FieldNumber",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/FieldNumber.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5340,13 +4014,7 @@
       "name": "NoOfFields",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfFields.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5354,13 +4022,7 @@
       "name": "NoOfRows",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/NoOfRows.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5368,13 +4030,7 @@
       "name": "NoOfTables",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#NoOfTables",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5382,13 +4038,7 @@
       "name": "TableName",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#TableName",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5396,13 +4046,7 @@
       "name": "TableNumber",
       "category": "Table functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TableFunctions/table-functions.htm#TableNumber",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5410,13 +4054,7 @@
       "name": "acos",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#acos",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5424,13 +4062,7 @@
       "name": "acosh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#acosh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5438,13 +4070,7 @@
       "name": "asin",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#asin",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5452,13 +4078,7 @@
       "name": "asinh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#asinh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5466,13 +4086,7 @@
       "name": "atan",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atan",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5480,13 +4094,7 @@
       "name": "atan2",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atan2",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5494,13 +4102,7 @@
       "name": "atanh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#atanh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5508,13 +4110,7 @@
       "name": "cos",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#cos",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5522,13 +4118,7 @@
       "name": "cosh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#cosh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5536,13 +4126,7 @@
       "name": "sin",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#sin",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5550,13 +4134,7 @@
       "name": "sinh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#sinh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5564,13 +4142,7 @@
       "name": "tan",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#tan",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5578,13 +4150,7 @@
       "name": "tanh",
       "category": "Trigonometric and hyperbolic functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/TrigonometricAndHyperbolicFunctions/trigonometric-hyperbolic-functions.htm#tanh",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5592,13 +4158,7 @@
       "name": "Window",
       "category": "Window functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/Window.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5606,13 +4166,7 @@
       "name": "WRank",
       "category": "Window functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/Scripting/WindowFunctions/WRank.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5620,13 +4174,7 @@
       "name": "ZTest_conf",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5634,13 +4182,7 @@
       "name": "ZTest_dif",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5648,13 +4190,7 @@
       "name": "ZTest_lower",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5662,13 +4198,7 @@
       "name": "ZTest_sig",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5676,13 +4206,7 @@
       "name": "ZTest_sterr",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5690,13 +4214,7 @@
       "name": "ZTest_upper",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5704,13 +4222,7 @@
       "name": "ZTest_z",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztest_z.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5718,13 +4230,7 @@
       "name": "ZTestw_conf",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_conf.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5732,13 +4238,7 @@
       "name": "ZTestw_dif",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_dif.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5746,13 +4246,7 @@
       "name": "ZTestw_lower",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_lower.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5760,13 +4254,7 @@
       "name": "ZTestw_sig",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sig.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5774,13 +4262,7 @@
       "name": "ZTestw_sterr",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_sterr.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5788,13 +4270,7 @@
       "name": "ZTestw_upper",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_upper.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     },
@@ -5802,13 +4278,7 @@
       "name": "ZTestw_z",
       "category": "Z-test functions",
       "docs": "https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/ChartFunctions/StatisticalTestFunctions/ztest/ztestw_z.htm",
-      "vectors": [
-        "boundary",
-        "empty",
-        "normal",
-        "null",
-        "type_coercion"
-      ],
+      "vectors": ["boundary", "empty", "normal", "null", "type_coercion"],
       "reference_status": "needs_reference_outcome",
       "notes": "Expected Qlik outputs must be captured or derived from official semantics before support is certified."
     }
