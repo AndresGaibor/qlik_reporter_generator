@@ -25,6 +25,8 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
 COPY packages/contratos/package.json ./packages/contratos/package.json
 COPY drizzle.config.ts ./drizzle.config.ts
+COPY apps/api/drizzle.config.ts ./apps/api/drizzle.config.ts
+COPY apps/api/drizzle ./apps/api/drizzle
 COPY apps/api/src/plataforma/persistencia ./apps/api/src/plataforma/persistencia
 RUN bun install --frozen-lockfile
 COPY apps/api/src ./apps/api/src

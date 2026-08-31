@@ -93,4 +93,22 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
     expect(compose).toContain("qlik_automatizaciones");
     expect(compose).toContain("postgres_data");
   });
+
+  test("despliegue de producción incluye migraciones y salida a integraciones externas", () => {
+    const compose = readFileSync(resolve(ROOT, "compose.yaml"), "utf-8");
+    const dockerfile = readFileSync(resolve(ROOT, "Dockerfile"), "utf-8");
+
+    const nginx = readFileSync(resolve(ROOT, "deploy/nginx.conf"), "utf-8");
+
+    expect(compose).toContain("target: migrate");
+    expect(dockerfile).toContain(
+      "COPY apps/api/drizzle.config.ts ./apps/api/drizzle.config.ts",
+    );
+    expect(dockerfile).toContain("COPY apps/api/drizzle ./apps/api/drizzle");
+    expect(compose).toContain("egress-network");
+    expect(compose).toContain("ingress-network");
+    expect(compose).toContain("${HOST_IP:-127.0.0.1}:${PORT_WEB:-4524}:80");
+    expect(nginx).not.toContain("limit_req_zone");
+    expect(nginx).not.toContain("location ~ ^/(api/admin|api/config)");
+  });
 });
