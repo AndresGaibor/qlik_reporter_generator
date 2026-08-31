@@ -173,9 +173,26 @@ export function crearRutasAutenticacionQlik(
       !verificador ||
       !tenantQlikId
     ) {
-      return responderError(c, "Estado OAuth inválido", 400, {
-        codigo: "OAUTH_ESTADO_INVALIDO",
+      opciones.registrador?.advertencia("autenticacion.qlik.estado_invalido", {
+        trazaId: c.req.header("x-request-id"),
+        tieneCodigo: Boolean(codigo),
+        tieneEstado: Boolean(estado),
+        estadoCoincide: Boolean(estado && estado === estadoGuardado),
+        tieneVerificador: Boolean(verificador),
+        tieneTenant: Boolean(tenantQlikId),
       });
+      const acceptHeader = c.req.header("accept") ?? "";
+      if (
+        acceptHeader.includes("application/json") ||
+        c.req.query("format") === "json"
+      ) {
+        return responderError(c, "Estado OAuth inválido", 400, {
+          codigo: "OAUTH_ESTADO_INVALIDO",
+        });
+      }
+      const url = new URL(retorno ?? "/login", opciones.frontendUrl);
+      url.searchParams.set("oauth_error", "oauth_state_invalid");
+      return c.redirect(url.toString());
     }
 
     try {

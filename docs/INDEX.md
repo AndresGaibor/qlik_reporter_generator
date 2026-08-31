@@ -18,6 +18,9 @@ Target Path: `/Users/andresgaibor/code/javascript/qlik_reportes_creator/docs`
 
 - [Bootstrap inicial](desarrollo/bootstrap-inicial.md)
 - [Puesta en marcha](desarrollo/puesta-en-marcha.md)
+- [Despliegue desde cero](despliegue/LEVANTAR-DESDE-CERO.md)
+- [Checklist de producción](despliegue/CHECKLIST-PRODUCCION.md)
+- [Cloudflare Tunnel](despliegue/CLOUDFLARE-TUNNEL.md)
 
 ## ⚡ REST API Endpoints Specifications
 

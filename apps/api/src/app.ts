@@ -141,10 +141,11 @@ export async function crearAplicacion(
     (configuracion?.NODE_ENV ?? process.env.NODE_ENV) === "production";
   const redirectUriConfigurado =
     process.env.QLIK_REDIRECT_URI ?? configuracion?.QLIK_REDIRECT_URI;
-  const redirectUriOAuth = frontendUrlGuardado
-    ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
-    : (redirectUriConfigurado ??
-      "http://localhost:4523/api/auth/qlik/callback");
+  const redirectUriOAuth =
+    redirectUriConfigurado ??
+    (produccion || frontendUrlGuardado
+      ? new URL("/api/auth/qlik/callback", frontendUrl).toString()
+      : "http://localhost:4523/api/auth/qlik/callback");
 
   const configuracionApp = new ConfiguracionAppPostgres(db);
   await servicioCifrado.inicializarConDb(configuracionApp);

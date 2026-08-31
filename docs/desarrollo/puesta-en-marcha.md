@@ -1,26 +1,21 @@
 # Puesta en marcha
 
-Consulta la [guia de arranque local](guia-arranque-local.md). Antes del primer arranque, ejecuta `bun run db:migrate`.
+Hay dos flujos distintos:
 
-## Variables críticas
+- Producción/Docker completo: [Levantar desde cero](../despliegue/LEVANTAR-DESDE-CERO.md). El servicio `migrate` aplica migraciones automáticamente.
+- Desarrollo con Bun: [Guía de arranque local](guia-arranque-local.md). En este caso ejecuta `bun run db:migrate` después de levantar PostgreSQL y antes de iniciar API/web.
 
-- `QLIK_TENANT_HOST`: host del tenant sin rutas.
-- `QLIK_CLIENT_ID`, `QLIK_CLIENT_SECRET`, `QLIK_REDIRECT_URI`: cliente OAuth Web.
-- `QLIK_OAUTH_SCOPES`: scopes permitidos por el cliente y consentidos por el usuario.
-- `CIFRADO_CLAVE_PRINCIPAL`: 32 bytes codificados en Base64.
-- `DATABASE_URL`: PostgreSQL, fuente de verdad.
+## Configuración externa
+
+OAuth y el tenant Qlik se configuran por tenant desde el wizard/administración. BigQuery/GCS, la plantilla base de automatizaciones y las plantillas Dataflow se completan después del primer login administrativo.
 
 ## Comandos de calidad
 
 ```bash
+bun run lint
 bun run typecheck
 bun run test
-bun run lint
 bun run build
 ```
 
-## PostgreSQL
-
-El esquema vigente parte de `0000_tan_zeigeist.sql`. `0001_spooky_marvel_apes.sql` retira tablas y columnas históricas, normaliza roles a `admin | usuario` y limpia sesiones/idempotencias expiradas. `0002_absent_thing.sql` elimina campos redundantes de configuración y ejecución de reportes.
-
-La persistencia activa incluye organizaciones, usuarios, tenants Qlik, OAuth/sesiones, configuración BigQuery, reportes, ejecuciones, auditoría e idempotencia.
+La persistencia activa vive en PostgreSQL; no elimines su volumen para actualizar la aplicación.

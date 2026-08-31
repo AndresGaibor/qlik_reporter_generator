@@ -43,6 +43,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${PORT_API:-4523}
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL es obligatoria en producción}
+      CIFRADO_CLAVE_PRINCIPAL: ${CIFRADO_CLAVE_PRINCIPAL:-}
       DATABASE_URL: postgres://${POSTGRES_USER:-qlik_app}:${POSTGRES_PASSWORD}@postgres:5432/qlik_automatizaciones
     expose:
       - "4523"

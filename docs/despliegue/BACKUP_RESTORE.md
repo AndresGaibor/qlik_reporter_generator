@@ -1,132 +1,94 @@
-# Backup y Restore - Qlik Automate Creator
+# Backup, restore y recuperación
 
-## Backup Automático
+La guía general está en [LEVANTAR-DESDE-CERO.md](LEVANTAR-DESDE-CERO.md).
 
-El script `scripts/ops/backup.sh` realiza:
+## Qué debe formar una unidad de recuperación
 
-1. Dump completo de PostgreSQL con `pg_dump`
-2. Compresión con gzip
-3. Rotación automática (mantiene últimos 7 backups)
+Para recuperar producción no basta con PostgreSQL. Conserva:
 
-### Uso
+- dump PostgreSQL;
+- `.env` protegido;
+- `CIFRADO_CLAVE_PRINCIPAL` correspondiente;
+- commit/tag desplegado;
+- configuración/credenciales del Cloudflare Tunnel;
+- `compose.override.yaml` local, si existe;
+- documentación de dependencias Qlik/Google necesarias.
+
+Guarda al menos una copia fuera del host.
+
+## Backup PostgreSQL
 
 ```bash
-# Backup con configuración por defecto
 ./scripts/ops/backup.sh
-
-# Backup con variables personalizadas
-BACKUP_DIR=/mnt/backups CONTAINER_NAME=mi-postgres ./scripts/ops/backup.sh
 ```
 
-### Variables de Entorno
+Variables opcionales:
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `BACKUP_DIR` | `./backups` | Directorio para almacenar backups |
-| `CONTAINER_NAME` | `qlik_reportes_creator-postgres-1` | Nombre del contenedor PostgreSQL |
-| `DB_NAME` | `qlik_automatizaciones` | Nombre de la base de datos |
+| Variable | Default |
+| --- | --- |
+| `BACKUP_DIR` | `./backups` |
+| `CONTAINER_NAME` | `qlik_reportes_creator-postgres-1` |
+| `DB_NAME` | `qlik_automatizaciones` |
+| `POSTGRES_USER` | `qlik_app` |
 
-### Programar Backups con Cron
+El script usa `pg_dump`, comprime con gzip y conserva los siete dumps más recientes de su patrón local.
 
-```bash
-# Editar crontab
-crontab -e
-
-# Agregar línea para backup diario a las 2am
-0 2 * * * /opt/qlik-automate-creator/scripts/ops/backup.sh >> /var/log/backup.log 2>&1
-```
-
-## Restore
-
-El script `scripts/ops/restore.sh` realiza:
-
-1. Backup del estado actual antes de restaurar
-2. Verificación de integridad del archivo gzip
-3. Terminación de conexiones activas a la DB
-4. Drop y recreate de la base de datos
-5. Restauración del dump
-
-### Uso
+Verifica el archivo:
 
 ```bash
-# Restaurar desde un archivo de backup
-./scripts/ops/restore.sh ./backups/postgres_qlik_automatizaciones_20250831_120000.sql.gz
-```
-
-### Restauración Paso a Paso
-
-Si prefieres hacer la restauración manualmente:
-
-```bash
-# 1. Verificar que el archivo es válido
-gzip -t ./backups/archivo.sql.gz
-
-# 2. Hacer backup del estado actual (por seguridad)
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-docker exec qlik_reportes_creator-postgres-1 pg_dump -U qlik_app -d qlik_automatizaciones \
-  | gzip > ./backups/pre_restore_${TIMESTAMP}.sql.gz
-
-# 3. Terminar conexiones activas
-docker exec qlik_reportes_creator-postgres-1 psql -U qlik_app -d postgres -c \
-  "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'qlik_automatizaciones';"
-
-# 4. Drop y recreate
-docker exec qlik_reportes_creator-postgres-1 psql -U qlik_app -d postgres -c \
-  "DROP DATABASE IF EXISTS qlik_automatizaciones; CREATE DATABASE qlik_automatizaciones;"
-
-# 5. Restaurar
-gunzip -c ./backups/archivo.sql.gz | docker exec -i qlik_reportes_creator-postgres-1 \
-  psql -U qlik_app -d qlik_automatizaciones
-```
-
-## Verificar Integridad del Backup
-
-```bash
-# Listar backups disponibles
+gzip -t ./backups/postgres_qlik_automatizaciones_FECHA.sql.gz
 ls -lh ./backups/
-
-# Ver contenido de un backup sin restaurar
-gunzip -c ./backups/archivo.sql.gz | head -20
-
-# Verificar sintaxis SQL
-gunzip -c ./backups/archivo.sql.gz | grep -E "^(CREATE|INSERT)" | head -5
 ```
 
-## Disaster Recovery Plan
+## Política recomendada
 
-### Escenario: Pérdida total de datos
+Ajusta a los requisitos del negocio, pero como base:
 
-1. Detener servicios
-   ```bash
-   docker compose -f compose.yaml stop api web
-   ```
+- backup antes de cada despliegue con migraciones;
+- backup periódico automatizado;
+- copia fuera del servidor;
+- retención suficiente para cubrir errores descubiertos tarde;
+- restore drill periódico.
 
-2. Restaurar desde backup
-   ```bash
-   ./scripts/ops/restore.sh ./backups/postgres_qlik_automatizaciones_ULTIMO.sql.gz
-   ```
+No dependas exclusivamente de “los últimos 7” del script si necesitas una retención mayor: copia los artefactos a almacenamiento externo antes de la limpieza local.
 
-3. Reiniciar servicios
-   ```bash
-   docker compose -f compose.yaml start api web
-   ```
+## Restore de producción
 
-4. Verificar
-   ```bash
-   ./scripts/ops/smoke.sh
-   ```
+**Destructivo sobre la DB destino.**
 
-### Escenario: Corrupción de datos específica
+```bash
+docker compose stop api web
+./scripts/ops/restore.sh ./backups/postgres_qlik_automatizaciones_FECHA.sql.gz
+docker compose up -d
+HOST=127.0.0.1 PORT_WEB=<puerto> ./scripts/ops/smoke.sh
+```
 
-1. Identificar momento del problema (logs)
-2. Encontrar backup más reciente antes del problema
-3. Restaurar a ese punto
+El script:
 
-## Políticas de Retención
+1. valida que el gzip sea legible;
+2. crea un `pre_restore_*` del estado actual;
+3. termina conexiones activas;
+4. ejecuta `DROP DATABASE` y `CREATE DATABASE` por separado;
+5. restaura con `psql -v ON_ERROR_STOP=1`, por lo que un error SQL detiene el proceso.
 
-- Backups diarios: mantener 7 días
-- Backups semanales: mantener 4 semanas
-- Backups mensuales: mantener 12 meses
-- Backups anuales: mantener 7 años
+Después de restaurar prueba:
 
-Configurar en cron o sistema de backup externo.
+- `/api/ready`;
+- login OAuth;
+- configuración Qlik;
+- descifrado/prueba BigQuery;
+- una operación funcional representativa.
+
+## Restore drill aislado
+
+No esperes a una emergencia para descubrir que el dump está corrupto. Restaura periódicamente en una DB/contenedor temporal y verifica tablas/datos básicos.
+
+Nunca hagas el ensayo con `docker compose down -v` sobre producción.
+
+## Qué no hacer
+
+```bash
+docker compose down -v
+```
+
+No es backup, restore ni rollback; elimina el volumen persistente del proyecto.

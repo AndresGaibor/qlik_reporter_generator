@@ -107,6 +107,10 @@ describe("Task 1.1: Configurar raíz del monorepo", () => {
     expect(dockerfile).toContain("COPY apps/api/drizzle ./apps/api/drizzle");
     expect(compose).toContain("egress-network");
     expect(compose).toContain("ingress-network");
+    expect(compose).toContain("FRONTEND_URL es obligatoria en producción");
+    expect(compose).toContain(
+      "CIFRADO_CLAVE_PRINCIPAL: ${CIFRADO_CLAVE_PRINCIPAL:-}",
+    );
     expect(compose).toContain("${HOST_IP:-127.0.0.1}:${PORT_WEB:-4524}:80");
     expect(nginx).not.toContain("limit_req_zone");
     expect(nginx).not.toContain("location ~ ^/(api/admin|api/config)");

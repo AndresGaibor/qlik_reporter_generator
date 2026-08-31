@@ -1,150 +1,91 @@
-# Observabilidad - Qlik Automate Creator
+# Observabilidad operativa
 
-## Métricas Disponibles
+La guía canónica está en [LEVANTAR-DESDE-CERO.md](LEVANTAR-DESDE-CERO.md).
 
-### Health Endpoints
+## Capacidades que existen hoy
 
-| Endpoint | Propósito | Respuesta |
-|----------|-----------|-----------|
-| `GET /api/live` | Liveness probe | `{ estado: "ok", fecha: "..." }` |
-| `GET /api/ready` | Readiness probe | `{ estado: "ok", fecha: "...", db: "connected" }` |
-| `GET /api/salud` | Estado general | `{ estado: "ok", fecha: "...", arquitectura: "..." }` |
+### Health endpoints
 
-## Logs
+| Endpoint | Uso |
+| --- | --- |
+| `GET /api/live` | proceso API vivo |
+| `GET /api/ready` | API lista y PostgreSQL accesible |
+| `GET /api/salud` | estado general/arquitectura |
+| `GET /api/setup/status` | estado del bootstrap inicial |
 
-### API (Bun/Hono)
+Prueba pública recomendada para monitor externo: `/api/ready`.
 
-Logs van a stdout/stderr del contenedor.
+### Logs API
 
-```bash
-# Ver logs de API
-docker compose -f compose.yaml logs api
-
-# Logs en tiempo real
-docker compose -f compose.yaml logs -f api
-
-# Últimas 100 líneas
-docker compose -f compose.yaml logs --tail=100 api
-```
-
-### Nginx
+La API escribe eventos JSON estructurados a stdout/stderr mediante el registrador interno.
 
 ```bash
-# Ver logs de acceso
-docker compose -f compose.yaml logs web
-
-# Dentro del contenedor
-docker exec qlik_reportes_creator-web-1 cat /var/log/nginx/access.log
-docker exec qlik_reportes_creator-web-1 cat /var/log/nginx/error.log
+docker compose logs api --tail=200
+docker compose logs -f api
 ```
 
-## Monitoreo con Healthchecks
+El formato actual contiene campos como `nivel`, `evento`, `trazaId`, ruta HTTP y duración cuando aplica. No dependas de un formato Pino específico solo porque el paquete exista en dependencias.
 
-### Script de Smoke Test
+### Logs web/Nginx
 
 ```bash
-# Ejecutar smoke tests
-./scripts/ops/smoke.sh
-
-# Con salida detallada
-HOST=tu-servidor PORT_WEB=4524 ./scripts/ops/smoke.sh
+docker compose logs web --tail=200
+docker compose exec -T web sh -lc 'tail -100 /var/log/nginx/error.log'
 ```
 
-### Docker Healthcheck
-
-Los contenedores tienen healthchecks configurados:
+### Estado Docker
 
 ```bash
-# Ver estado de salud
-docker inspect qlik_reportes_creator-api-1 --format='{{.State.Health}}'
-docker inspect qlik_reportes_creator-web-1 --format='{{.State.Health}}'
+docker compose ps -a
+docker inspect qlik_reportes_creator-api-1 --format='{{.State.Health.Status}}'
+docker inspect qlik_reportes_creator-web-1 --format='{{.State.Health.Status}}'
 ```
 
-## Alertas Recomendadas
+### Cloudflare Tunnel
 
-### Kubernetes/External Monitoring
-
-```yaml
-# Alerta: API no responde
-- alert: QlikAPIUnhealthy
-  expr: http_requests_total{status!~"2.."}[5m] > 0
-  annotations:
-    summary: "API returns non-2xx responses"
-
-# Alerta: DB desconectada
-- alert: QlikAPIDBUnhealthy
-  expr: http_requests_total{endpoint="/api/ready"}[5m] == 0
-  annotations:
-    summary: "API cannot connect to database"
-
-# Alerta: Servicio caido
-- alert: QlikServiceDown
-  expr: up{job="qlik-automate"} == 0
-  annotations:
-    summary: "Qlik Automate service is down"
+```bash
+systemctl is-active cloudflared
+systemctl status cloudflared --no-pager
+journalctl -u cloudflared --since '15 min ago' --no-pager
 ```
 
-## Dashboards Recomendados
+## Lo que NO existe todavía
 
-### Prometheus + Grafana
+El proyecto no expone actualmente:
 
-Métricas a monitorear:
+- endpoint Prometheus `/metrics`;
+- métricas `http_requests_total`/histogramas Prometheus;
+- stack Grafana/Prometheus incluido en Compose;
+- trazas OpenTelemetry exportadas a un collector.
 
-- `http_requests_total` - Total de requests por endpoint y status
-- `http_request_duration_seconds` - Latencia de requests
-- `docker_container_cpu_seconds_total` - Uso de CPU
-- `docker_container_memory_usage_bytes` - Uso de memoria
+No escribas alertas contra métricas inexistentes. Si se implementan en el futuro, documenta primero el contrato real y su despliegue.
 
-### Paneles de Grafana
+## Monitor externo mínimo recomendado
 
-1. **Salud General**
-   - Status de todos los servicios
-   - Tiempo desde último backup
-   - Versión desplegada
+Configura un monitor HTTPS para:
 
-2. **Rendimiento**
-   - Requests por minuto
-   - Latencia p50, p95, p99
-   - Errores 5xx
-
-3. **Recursos**
-   - CPU y memoria por contenedor
-   - Conexiones DB activas
-   - Espacio en disco
-
-## Logs Estructurados
-
-La API usa Pino para logs estructurados:
-
-```json
-{
-  "level": 30,
-  "time": 1699999999999,
-  "pid": 1,
-  "hostname": "api-container",
-  "msg": "Request completed",
-  "method": "GET",
-  "url": "/api/salud",
-  "status": 200,
-  "duration": 5
-}
+```text
+GET https://DOMINIO/api/ready
 ```
 
-## Trazas Distribuidas
+Además vigila:
 
-Para implementar trazas (futuro):
+- certificado/DNS/dominio;
+- `cloudflared` activo;
+- contenedores unhealthy/restarting;
+- disco disponible;
+- errores HTTP 5xx en logs;
+- fecha/tamaño del último backup;
+- éxito de jobs de backup si se automatizan.
 
-- OpenTelemetry
-- Jaeger o Zipkin como backend
-- Headers de correlación (`X-Request-ID`)
+## Diagnóstico OAuth
+
+```bash
+docker compose logs api --since=15m | grep -E 'autenticacion|oauth|http.solicitud'
+```
+
+No copies a herramientas externas códigos OAuth, tokens, cookies ni secretos completos.
 
 ## Auditoría
 
-La aplicación registra acciones sensibles:
-
-- Login/logout de usuarios
-- Cambios de configuración
-- Ejecuciones de reportes
-- Acceso a datos sensibles
-
-Logs de auditoría van a la tabla `auditoria` en PostgreSQL.
+La aplicación dispone de persistencia de auditoría para acciones sensibles de negocio/configuración. La auditoría de aplicación complementa, no reemplaza, logs de Docker, Cloudflare, Qlik y Google Cloud.

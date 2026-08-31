@@ -189,6 +189,7 @@ describe("ZIP de carpeta privada", () => {
     expect(respuesta.status).toBe(202);
     expect((await respuesta.json()).datos).toEqual({
       estado: "preparando",
+      filas: null,
       partes: [
         {
           numero: 1,

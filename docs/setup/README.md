@@ -1,22 +1,21 @@
-# Configuración Inicial
+# Configuración inicial
 
-## Arranque
+Para producción usa la guía canónica: [Levantar desde cero](../despliegue/LEVANTAR-DESDE-CERO.md).
+
+## Docker Compose
 
 ```bash
-cp .env.example .env
-docker compose up --build
+cp .env.production.example .env
+# configura FRONTEND_URL, POSTGRES_PASSWORD y CIFRADO_CLAVE_PRINCIPAL
+docker compose up -d --build
 ```
 
-Abre `http://localhost:4524` y completa el wizard de configuración. La API está disponible en `http://localhost:4523`.
+En este modo `migrate` aplica las migraciones antes de arrancar el API. No ejecutes `bun run db:migrate` adicionalmente.
+
+## Desarrollo local con Bun
+
+Consulta [Guía de arranque local](../desarrollo/guia-arranque-local.md). En ese flujo PostgreSQL se levanta con Docker y las migraciones se ejecutan desde el host con `bun run db:migrate`.
 
 ## Wizard
 
-1. Crea la organización.
-2. Registra el tenant, Client ID y Client Secret de Qlik Cloud.
-3. Define el superadministrador.
-
-Antes del primer arranque, ejecuta `bun run db:migrate`. Los cambios futuros se gestionan con nuevas migraciones Drizzle.
-
-## Variables de entorno
-
-`PORT_WEB`, `PORT_API`, `HOST_IP` y `DATABASE_URL` controlan el entorno local. Las credenciales OAuth y la clave de cifrado son opcionales hasta que se configure Qlik desde la interfaz. Consulta [el ejemplo de entorno](../../.env.example) y la [guía local](../desarrollo/guia-arranque-local.md).
+El wizard crea la organización, registra el tenant y OAuth de Qlik y define el superadministrador. La URL pública debe coincidir con `FRONTEND_URL` para que el callback OAuth permanezca en el mismo origen.

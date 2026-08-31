@@ -5,6 +5,55 @@ import { ErrorOAuthQlik } from "../infraestructura/cliente-oauth-qlik.js";
 import { crearRutasAutenticacionQlik } from "./rutas.js";
 
 describe("rutas OAuth Qlik", () => {
+  it("redirige un callback con state inválido a la UI en vez de dejar JSON crudo", async () => {
+    const servicio = {} as unknown as ServicioAutenticacionQlik;
+    const app = new Hono();
+    app.route(
+      "/api/auth/qlik",
+      crearRutasAutenticacionQlik(servicio, {
+        frontendUrl: "https://app.example.com",
+        produccion: true,
+      }),
+    );
+
+    const callback = await app.request(
+      "/api/auth/qlik/callback?code=codigo-1&state=estado-ajeno",
+      { headers: { Accept: "text/html" } },
+    );
+
+    expect(callback.status).toBe(302);
+    expect(callback.headers.get("location")).toBe(
+      "https://app.example.com/login?oauth_error=oauth_state_invalid",
+    );
+  });
+
+  it("conserva una ruta de retorno segura cuando el callback falla", async () => {
+    const servicio = {} as unknown as ServicioAutenticacionQlik;
+    const app = new Hono();
+    app.route(
+      "/api/auth/qlik",
+      crearRutasAutenticacionQlik(servicio, {
+        frontendUrl: "https://app.example.com",
+        produccion: true,
+      }),
+    );
+
+    const callback = await app.request(
+      "/api/auth/qlik/callback?code=codigo-1&state=estado-ajeno",
+      {
+        headers: {
+          Accept: "text/html",
+          Cookie: "oauth_retorno=%2Fconfiguracion%23oauth",
+        },
+      },
+    );
+
+    expect(callback.status).toBe(302);
+    expect(callback.headers.get("location")).toBe(
+      "https://app.example.com/configuracion?oauth_error=oauth_state_invalid#oauth",
+    );
+  });
+
   it("conserva configuración OAuth y retorno entre inicio y callback", async () => {
     let completarRecibido: Record<string, unknown> | undefined;
     const servicio = {

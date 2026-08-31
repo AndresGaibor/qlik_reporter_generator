@@ -25,6 +25,8 @@ const MENSAJES_PERMITIDOS: Record<string, string> = {
     "No pudimos validar la configuración OAuth del tenant. Un administrador debe revisar el client ID, client secret y URL de redirección configurados en Qlik Cloud.",
   oauth_token_error:
     "Qlik no pudo completar el inicio de sesión. Intenta nuevamente; si continúa, un administrador debe revisar la configuración OAuth del tenant.",
+  oauth_state_invalid:
+    "El intento de inicio de sesión expiró o regresó a una dirección distinta. Inicia sesión nuevamente desde esta página. Si vuelve a ocurrir, un administrador debe revisar FRONTEND_URL y el Redirect URI de Qlik Cloud.",
   oauth_identity_scope_error:
     "Qlik no permitió consultar tu identidad. Pertenecer al tenant no es suficiente: un administrador debe habilitar los scopes user_default, identity.subject:read, identity.email:read e identity.name:read en el cliente OAuth.",
   oauth_identity_error:

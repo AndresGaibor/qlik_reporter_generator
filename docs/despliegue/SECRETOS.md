@@ -1,155 +1,106 @@
-# Gestión de Secretos - Qlik Automate Creator
+# Secretos de producción
+
+La guía canónica de despliegue está en [LEVANTAR-DESDE-CERO.md](LEVANTAR-DESDE-CERO.md).
 
 ## Principios
 
-1. **Nunca hacer commit de secretos** - Usar .gitignore
-2. **Rotación periódica** - Cambiar secretos cada 90 días
-3. **Mínimo privilegio** - Solo servicios necesarios tienen acceso
-4. **Auditoría** - Registrar acceso a secretos
+- Nunca hagas commit de `.env`, OAuth Client Secrets, tokens ni JSON de Service Account.
+- Usa secretos aleatorios y distintos por ambiente.
+- Limita permisos de archivos (`chmod 600 .env`).
+- Respalda los secretos necesarios para recuperación fuera del servidor.
+- No rote secretos “por rutina” sin entender su procedimiento: una rotación mal hecha puede causar una caída.
 
-## Secretos Requeridos
+## `POSTGRES_PASSWORD`
 
-### 1. POSTGRES_PASSWORD
-
-Contraseña de PostgreSQL.
+Para una instalación nueva:
 
 ```bash
-# Generar
+openssl rand -hex 32
+```
+
+Debe existir en `.env`. Cambiar solo `.env` **no cambia la contraseña dentro de PostgreSQL**.
+
+Una rotación requiere coordinar DB y aplicaciones. Haz backup primero y evita imprimir el nuevo password en logs/shell history.
+
+## `CIFRADO_CLAVE_PRINCIPAL`
+
+Es una clave AES-256-GCM. Genera 32 bytes y codifícalos en Base64:
+
+```bash
 openssl rand -base64 32
-
-# Requisitos:
-# - Mínimo 32 caracteres
-# - Aleatorio (no predecible)
-# - Almacenado en .env o sistema de secretos
 ```
 
-### 2. CIFRADO_CLAVE_PRINCIPAL
-
-Clave AES-256-GCM para cifrar secretos en la base de datos.
+Comprueba sin mostrarla:
 
 ```bash
-# Generar
-openssl rand -base64 32
-
-# IMPORTANTE:
-# - Si se pierde, los datos cifrados en DB son irrecuperables
-# - Hacer backup de esta clave en lugar seguro
+bytes=$(printf '%s' "$CIFRADO_CLAVE_PRINCIPAL" | base64 -d 2>/dev/null | wc -c)
+test "$bytes" -eq 32
+unset bytes
 ```
 
-### 3. QLIK_CLIENT_SECRET
+### Regla de oro
 
-Client secret de OAuth Qlik.
+**No cambies esta clave en una instalación existente salvo que exista un procedimiento explícito de recifrado.**
 
-```bash
-# Obtener del portal de Qlik
-# Formato: típico UUID o string largo
-```
+La aplicación no implementa actualmente una rotación automática de todos los secretos cifrados. La documentación histórica que afirmaba lo contrario era incorrecta.
 
-## Almacenamiento de Secretos
+### Instalaciones históricas
 
-### Opción 1: Variables de Entorno (Desarrollo)
+El código puede haber persistido una clave generada en `app_config` con la clave lógica `cifrado_clave_principal` cuando la variable de entorno no estaba definida.
 
-```bash
-# .env (NO committing este archivo)
-POSTGRES_PASSWORD=mi_password_seguro
-CIFRADO_CLAVE_PRINCIPAL=mi_clave_de_32_bytes
-```
+Antes de empezar a pasar `CIFRADO_CLAVE_PRINCIPAL` desde `.env` a una instalación antigua:
 
-### Opción 2: Docker Secrets (Swarm)
+1. crea backup de PostgreSQL;
+2. respalda `.env` actual;
+3. comprueba si `app_config` contiene `cifrado_clave_principal`;
+4. si existe, sincroniza `.env` con **esa misma clave** de forma segura;
+5. prueba que OAuth/BigQuery sigan pudiendo descifrarse;
+6. solo entonces elimina dependencias del comportamiento histórico.
 
-```yaml
-# docker-compose.prod.yml
-services:
-  api:
-    secrets:
-      - postgres_password
-      - cifrado_clave
-secrets:
-  postgres_password:
-    file: ./secrets/postgres_password.txt
-  cifrado_clave:
-    file: ./secrets/cifrado_clave.txt
-```
+Nunca publiques el valor al comparar claves. Compara hashes o longitudes de forma local si necesitas diagnóstico.
 
-### Opción 3: Sistema Externo (Producción)
+## Qlik OAuth Client Secret
 
-- HashiCorp Vault
-- AWS Secrets Manager
-- Google Secret Manager
-- Azure Key Vault
+Normalmente se introduce desde el wizard/administración por tenant. La aplicación lo cifra antes de persistirlo.
 
-```bash
-# Ejemplo con Vault
-vault kv get -field=postgres_password secret/qlik/automate
-```
+Si se compromete:
 
-## Rotación de Secretos
+1. revócalo/rotalo en Qlik Cloud;
+2. actualiza la configuración del tenant en la aplicación;
+3. inicia un login nuevo;
+4. invalida/revisa sesiones según corresponda;
+5. revisa auditoría/logs.
 
-### ROTACIÓN POSTGRES_PASSWORD
+## Google Service Account
 
-```bash
-# 1. Generar nuevo password
-NEW_PASSWORD=$(openssl rand -base64 32)
+El JSON se usa al configurar BigQuery y se cifra antes de persistirse. No lo dejes en el directorio del repositorio ni en backups sin protección.
 
-# 2. Actualizar en PostgreSQL
-docker exec qlik_reportes_creator-postgres-1 psql -U qlik_app -d postgres \
-  -c "ALTER USER qlik_app WITH PASSWORD '$NEW_PASSWORD';"
+Aplica mínimo privilegio sobre:
 
-# 3. Actualizar .env
-sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$NEW_PASSWORD/" .env
+- proyecto/dataset BigQuery requerido;
+- bucket/prefijo GCS requerido;
+- operaciones concretas de lectura/escritura que use la aplicación.
 
-# 4. Reiniciar servicios
-docker compose -f compose.yaml restart api
-```
+## Cloudflare Tunnel
 
-### ROTACIÓN CIFRADO_CLAVE_PRINCIPAL
+Protege el archivo de credenciales del túnel y `config.yml`. Inclúyelos en el plan de recuperación, pero no en Git.
 
-**ADVERTENCIA**: Este cambio requiere recifrado de datos existentes.
+## Backups y cifrado
 
-```bash
-# 1. Backup de la base de datos
-./scripts/ops/backup.sh
+Un dump de PostgreSQL y la clave necesaria para descifrar sus secretos deben almacenarse de forma separada/protegida según el modelo de amenazas. Un backup presente únicamente en el mismo disco del servidor no cuenta como recuperación externa.
 
-# 2. Generar nueva clave
-NEW_KEY=$(openssl rand -base64 32)
-
-# 3. La aplicación migrará automáticamente al reiniciar
-# (requiere implementar lógica de recifrado si es crítico)
-
-# 4. Actualizar .env
-sed -i "s/CIFRADO_CLAVE_PRINCIPAL=.*/CIFRADO_CLAVE_PRINCIPAL=$NEW_KEY/" .env
-
-# 5. Reiniciar
-docker compose -f compose.yaml restart api
-```
-
-## Escaneo de Secretos
-
-Ejecutar regularmente:
+## Escaneo del repositorio
 
 ```bash
 ./scripts/ops/secret-scan.sh
 ```
 
-## Lista Negra de Secretos (si se comprometen)
+El script hace un escaneo básico; no sustituye secret scanning del proveedor Git ni revisión de historial si un secreto fue commiteado.
 
-Si un secreto se filtra:
+## Si un secreto se filtra
 
-1. **Rotar inmediatamente** el secreto comprometido
-2. **Revocar** acceso si es posible (OAuth tokens, API keys)
-3. **Auditar** logs de acceso
-4. **Notificar** si hay datos de usuarios afectados
-5. **Documentar** el incidente
-
-## Permisos de Archivos
-
-```bash
-# .env debe tener permisos restrictivos
-chmod 600 .env
-
-# Directory de secretos
-chmod 700 ./secrets
-
-# Archivos de secretos
-chmod 600 ./secrets/*
-```
+- Revoca/rota el secreto real en el proveedor.
+- No basta con borrarlo del último commit: puede seguir en el historial.
+- Revisa accesos/auditoría desde el momento de exposición.
+- Reemplaza credenciales en producción de forma coordinada.
+- Documenta el incidente sin copiar el secreto comprometido.
