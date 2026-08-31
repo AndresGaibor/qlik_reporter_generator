@@ -103,11 +103,7 @@ export function normalizarRutaArchivo(valor: string): string {
 }
 
 export function esAdministrador(sesion: SesionDescarga): boolean {
-  return Boolean(
-    sesion.esSuperadmin ||
-      sesion.roles?.includes("admin") ||
-      sesion.roles?.includes("administrador"),
-  );
+  return Boolean(sesion.esSuperadmin || sesion.roles?.includes("admin"));
 }
 
 export function normalizarSubruta(valor: string): string {

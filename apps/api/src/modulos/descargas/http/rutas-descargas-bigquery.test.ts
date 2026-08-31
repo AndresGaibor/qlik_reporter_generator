@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import { Hono } from "hono";
-import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoJobsBigQuery } from "../../google-cloud/aplicacion/puerto-jobs-bigquery.js";
+import type { ServicioQlik } from "../../qlik/aplicacion/puertos/puerto-qlik.js";
 import type { PuertoRepositorioReportes } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import type { PuertoAlmacenamientoDescargas } from "../aplicacion/puerto-almacenamiento-descargas.js";
 import { crearRutasDescargas } from "./rutas-descargas.js";
@@ -59,15 +59,13 @@ describe("GET /api/descargas — BigQuery sync", () => {
       return [{ ...execFlujoVentas }, { ...execFlujoCompras }];
     });
 
-    const listarEjecucionesPorFlujo = vi.fn().mockImplementation(
-      async (flujoIdQlik: string) => {
-        if (flujoIdQlik === "flujo-ventas")
-          return [{ ...execFlujoVentas }];
-        if (flujoIdQlik === "flujo-compras")
-          return [{ ...execFlujoCompras }];
+    const listarEjecucionesPorFlujo = vi
+      .fn()
+      .mockImplementation(async (flujoIdQlik: string) => {
+        if (flujoIdQlik === "flujo-ventas") return [{ ...execFlujoVentas }];
+        if (flujoIdQlik === "flujo-compras") return [{ ...execFlujoCompras }];
         return [];
-      },
-    );
+      });
 
     const jobsBigQueryMock = {
       obtenerJob: vi.fn().mockResolvedValue({
@@ -111,9 +109,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
             return null;
           }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
-        actualizarTimestampsEjecucionBigQuery: vi.fn(
-          async () => undefined,
-        ),
+        actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({
@@ -190,13 +186,13 @@ describe("GET /api/descargas — BigQuery sync", () => {
       { ...execSinBq },
     ]);
 
-    const listarEjecucionesPorFlujo = vi.fn().mockImplementation(
-      async (flujoIdQlik: string) => {
+    const listarEjecucionesPorFlujo = vi
+      .fn()
+      .mockImplementation(async (flujoIdQlik: string) => {
         if (flujoIdQlik === "flujo-bq") return [{ ...execConBq }];
         if (flujoIdQlik === "flujo-sin-bq") return [{ ...execSinBq }];
         return [];
-      },
-    );
+      });
 
     const jobsBigQueryMock = {
       obtenerJob: vi.fn().mockResolvedValue({
@@ -233,9 +229,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
             return null;
           }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
-        actualizarTimestampsEjecucionBigQuery: vi.fn(
-          async () => undefined,
-        ),
+        actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({
@@ -282,18 +276,14 @@ describe("GET /api/descargas — BigQuery sync", () => {
       finalizadoEn: null,
     };
 
-    const listarEjecucionesDescargas = vi.fn(async () => [
-      { ...execFallida },
-    ]);
+    const listarEjecucionesDescargas = vi.fn(async () => [{ ...execFallida }]);
 
     const listarEjecucionesPorFlujo = vi
       .fn()
       .mockResolvedValue([{ ...execFallida }]);
 
     const jobsBigQueryMock = {
-      obtenerJob: vi
-        .fn()
-        .mockRejectedValue(new Error("BigQuery unavailable")),
+      obtenerJob: vi.fn().mockRejectedValue(new Error("BigQuery unavailable")),
       listarHijos: vi.fn().mockResolvedValue([]),
     };
 
@@ -309,9 +299,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
           .fn()
           .mockResolvedValue({ ...execFallida, id: "exec-falla" }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
-        actualizarTimestampsEjecucionBigQuery: vi.fn(
-          async () => undefined,
-        ),
+        actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({

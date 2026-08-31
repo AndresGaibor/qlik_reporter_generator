@@ -437,11 +437,7 @@
       "kind": "compiler-subsystem",
       "agents": "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/conformance-gates/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "./calidad-sql.js",
-        "./contrato.js",
-        "./tipos.js"
-      ]
+      "internalImports": ["./calidad-sql.js", "./contrato.js", "./tipos.js"]
     },
     {
       "path": "apps/api/src/modulos/reportes/aplicacion/compilador-vnext/emisor-bigquery",
@@ -691,10 +687,7 @@
       "kind": "frontend-module",
       "agents": "apps/web/src/modulos/inicio/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "./pagina-inicio",
-        "./rutas"
-      ]
+      "internalImports": ["./pagina-inicio", "./rutas"]
     },
     {
       "path": "apps/web/src/modulos/reportes",
@@ -741,9 +734,7 @@
       "path": "apps/web/src/modulos/setup",
       "kind": "frontend-module",
       "agents": "apps/web/src/modulos/setup/AGENTS.md",
-      "tests": [
-        "apps/web/src/modulos/setup/scopes-oauth.test.ts"
-      ],
+      "tests": ["apps/web/src/modulos/setup/scopes-oauth.test.ts"],
       "internalImports": [
         "./api",
         "./componentes/paso-1-empresa",
@@ -764,58 +755,42 @@
         "packages/contratos/src/admin/configuracion-secreta.test.ts",
         "packages/contratos/src/admin/tenant-qlik.test.ts"
       ],
-      "internalImports": [
-        "./index.js"
-      ]
+      "internalImports": ["./index.js"]
     },
     {
       "path": "packages/contratos/src/autenticacion",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/autenticacion/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "./sesion.js"
-      ]
+      "internalImports": ["./sesion.js"]
     },
     {
       "path": "packages/contratos/src/automatizaciones",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/automatizaciones/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "../qlik/comunes.js",
-        "./panel.js"
-      ]
+      "internalImports": ["../qlik/comunes.js", "./panel.js"]
     },
     {
       "path": "packages/contratos/src/comun",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/comun/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "./respuesta-api.js"
-      ]
+      "internalImports": ["./respuesta-api.js"]
     },
     {
       "path": "packages/contratos/src/descargas",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/descargas/AGENTS.md",
-      "tests": [
-        "packages/contratos/src/descargas/index.test.ts"
-      ],
-      "internalImports": [
-        "./index.js"
-      ]
+      "tests": ["packages/contratos/src/descargas/index.test.ts"],
+      "internalImports": ["./index.js"]
     },
     {
       "path": "packages/contratos/src/flujos",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/flujos/AGENTS.md",
       "tests": [],
-      "internalImports": [
-        "./resumen-flujo.js",
-        "./resumen-reporte-dataflow.js"
-      ]
+      "internalImports": ["./resumen-flujo.js", "./resumen-reporte-dataflow.js"]
     },
     {
       "path": "packages/contratos/src/qlik",
@@ -835,12 +810,8 @@
       "path": "packages/contratos/src/reportes",
       "kind": "contracts-domain",
       "agents": "packages/contratos/src/reportes/AGENTS.md",
-      "tests": [
-        "packages/contratos/src/reportes/dataflow.test.ts"
-      ],
-      "internalImports": [
-        "./dataflow.js"
-      ]
+      "tests": ["packages/contratos/src/reportes/dataflow.test.ts"],
+      "internalImports": ["./dataflow.js"]
     }
   ]
 }

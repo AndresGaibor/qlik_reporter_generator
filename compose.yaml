@@ -2,8 +2,6 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: qlik_automatizaciones
       POSTGRES_USER: ${POSTGRES_USER:-qlik_app}
@@ -15,6 +13,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    networks:
+      - qlik-network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
+    restart: "no"
+    command: >
+      sh -c "bun run db:migrate"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-qlik_app}:${POSTGRES_PASSWORD}@postgres:5432/qlik_automatizaciones
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - qlik-network
 
   api:
     build:
@@ -25,12 +43,21 @@ services:
     environment:
       NODE_ENV: production
       PORT: ${PORT_API:-4523}
-      DATABASE_URL: postgres://${POSTGRES_USER:-qlik_app}:${POSTGRES_PASSWORD:-cambiar_en_produccion}@postgres:5432/qlik_automatizaciones
-    ports:
-      - "${HOST_IP:-127.0.0.1}:${PORT_API:-4523}:${PORT_API:-4523}"
+      DATABASE_URL: postgres://${POSTGRES_USER:-qlik_app}:${POSTGRES_PASSWORD}@postgres:5432/qlik_automatizaciones
+    expose:
+      - "4523"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4523/api/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - qlik-network
+      - egress-network
 
   web:
     build:
@@ -39,11 +66,31 @@ services:
     restart: unless-stopped
     environment:
       PORT_API: ${PORT_API:-4523}
+    expose:
+      - "80"
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-4524}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       api:
         condition: service_healthy
-    ports:
-      - "${HOST_IP:-127.0.0.1}:${PORT_WEB:-4524}:80"
+    networks:
+      - qlik-network
+      - ingress-network
+
+networks:
+  qlik-network:
+    driver: bridge
+    internal: true
+  egress-network:
+    driver: bridge
+  ingress-network:
+    driver: bridge
 
 volumes:
   postgres_data:

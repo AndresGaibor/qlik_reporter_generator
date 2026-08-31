@@ -248,8 +248,7 @@ describe("ServicioDescargas", () => {
         automatizacionIdQlik: "auto-1",
         estado: "completada",
         mensajeError: null,
-        uriBaseGcs:
-          "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-inicio-real/",
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-inicio-real/",
         creadoEn: new Date("2026-08-26T12:04:00Z"),
         iniciadoEn: new Date("2026-08-26T17:04:00Z"),
         finalizadoEn: new Date("2026-08-26T17:04:15Z"),

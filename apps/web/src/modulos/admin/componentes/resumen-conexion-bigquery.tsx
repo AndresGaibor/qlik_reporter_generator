@@ -24,7 +24,9 @@ export function ResumenConexionBigQuery({
         <DatoResumen etiqueta="Dataset" valor={configuracion.dataset ?? "—"} />
         <DatoResumen
           etiqueta="Máx. filas / CSV"
-          valor={(configuracion.maximoFilasPorArchivo ?? 1_000_000).toLocaleString("es-EC")}
+          valor={(
+            configuracion.maximoFilasPorArchivo ?? 1_000_000
+          ).toLocaleString("es-EC")}
         />
         <DatoResumen
           etiqueta="Cuenta de servicio"

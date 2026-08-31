@@ -166,12 +166,8 @@ describe("pipeline Dataflow → Automate → Talend", () => {
     );
     expect(auditorias[0]?.scriptDataflow).toBe(SCRIPT_V1);
     expect(auditorias[1]?.scriptDataflow).toBe(SCRIPT_V2);
-    expect(valorVariable(workspaces[0] ?? {}, "sql")).toContain(
-      "monto > 0",
-    );
-    expect(valorVariable(workspaces[1] ?? {}, "sql")).toContain(
-      "monto > 100",
-    );
+    expect(valorVariable(workspaces[0] ?? {}, "sql")).toContain("monto > 0");
+    expect(valorVariable(workspaces[1] ?? {}, "sql")).toContain("monto > 100");
     expect(valorVariable(workspaces[0] ?? {}, "sql")).not.toBe(
       valorVariable(workspaces[1] ?? {}, "sql"),
     );

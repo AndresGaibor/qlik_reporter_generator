@@ -87,12 +87,8 @@ describe("parser de expresiones Qlik vNext / numéricas y runtime", () => {
 
   it("implementa Match case-sensitive y devuelve posición 1-based", () => {
     const sql = compile("Match([valor], 'A', 'B', 'C')");
-    expect(sql).toContain(
-      "WHEN CAST(`valor` AS STRING) = 'A' THEN 1",
-    );
-    expect(sql).toContain(
-      "WHEN CAST(`valor` AS STRING) = 'C' THEN 3",
-    );
+    expect(sql).toContain("WHEN CAST(`valor` AS STRING) = 'A' THEN 1");
+    expect(sql).toContain("WHEN CAST(`valor` AS STRING) = 'C' THEN 3");
     expect(sql).toContain("ELSE 0 END");
   });
 

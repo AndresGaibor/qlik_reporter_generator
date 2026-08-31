@@ -72,7 +72,7 @@ describe("CancelarEjecucionReporte", () => {
     expect(repositorio.marcarCancelacionSolicitada).not.toHaveBeenCalled();
   });
 
-  it("mantiene el estado cancelando aunque BigQuery falle", async () => {
+  it("intenta BigQuery aunque falle", async () => {
     const { caso, entrada, jobs } = setup();
     (jobs.cancelarJob as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(
       new Error("BigQuery temporal"),
@@ -80,6 +80,7 @@ describe("CancelarEjecucionReporte", () => {
     await expect(caso.ejecutar(entrada)).resolves.toEqual({
       estado: "cancelando",
     });
+    expect(jobs.cancelarJob).toHaveBeenCalledTimes(1);
   });
 
   it.each(["completada", "error", "detenida"] as const)(
@@ -109,7 +110,7 @@ describe("CancelarEjecucionReporte", () => {
   });
 
   it("permite al administrador cancelar una ejecución ajena", async () => {
-    const { caso, entrada } = setup();
+    const { caso, entrada, jobs } = setup();
     await expect(
       caso.ejecutar({
         ...entrada,
@@ -117,5 +118,6 @@ describe("CancelarEjecucionReporte", () => {
         esAdministrador: true,
       }),
     ).resolves.toEqual({ estado: "cancelando" });
+    expect(jobs.cancelarJob).toHaveBeenCalledTimes(1);
   });
 });

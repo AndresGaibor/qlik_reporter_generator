@@ -148,8 +148,8 @@ test("usa un boton de expansion en lugar del marcador nativo", () => {
 
   expect(container.querySelector("summary")).toBeNull();
   expect(
-    Array.from(container.querySelectorAll("button")).some(
-      (button) => button.textContent?.includes("SQL generado"),
+    Array.from(container.querySelectorAll("button")).some((button) =>
+      button.textContent?.includes("SQL generado"),
     ),
   ).toBe(true);
 });
