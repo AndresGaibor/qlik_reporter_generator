@@ -42,6 +42,7 @@ export interface ParteCsvNormalizada {
 export function listarPartesNormalizadas(id: string) {
   return clienteApi.get<{
     estado: "preparando" | "lista";
+    filas: string | null;
     partes: ParteCsvNormalizada[];
   }>(`/descargas/${encodeURIComponent(id)}/partes`);
 }

@@ -22,7 +22,7 @@ export async function particionarCsvDescarga(
   fuentes: ArchivoGcs[],
   maximoFilas: number,
   abrirDestinoParte: (nombre: string) => Writable,
-): Promise<string[]> {
+): Promise<{ nombres: string[]; filas: number }> {
   validarMaximoFilas(maximoFilas);
   if (!almacenamiento.abrirLectura) {
     throw new ErrorAplicacion(
@@ -47,6 +47,7 @@ export async function particionarCsvDescarga(
   let destinoActual: Writable | null = null;
   let filasParte = 0;
   let indiceParte = 0;
+  let filas = 0;
   let lote: Buffer[] = [];
   let bytesLote = 0;
   const nombres: string[] = [];
@@ -100,6 +101,7 @@ export async function particionarCsvDescarga(
       lote.push(registro, NUEVA_LINEA);
       bytesLote += registro.length + 1;
       filasParte += 1;
+      filas += 1;
       if (bytesLote >= TAMANO_LOTE_ESCRITURA) await vaciarLote();
     }
   }
@@ -117,7 +119,7 @@ export async function particionarCsvDescarga(
     await vaciarLote();
     await cerrarDestino(destinoActual);
   }
-  return nombres;
+  return { nombres, filas };
 }
 
 export function abrirCsvFuente(

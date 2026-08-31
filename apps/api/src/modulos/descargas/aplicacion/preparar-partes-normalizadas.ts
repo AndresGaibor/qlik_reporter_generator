@@ -7,7 +7,7 @@ import type {
 } from "./puerto-almacenamiento-descargas.js";
 
 const DIRECTORIO = "__download_cache__/";
-const MARCADOR = "__completo__.csv";
+const MARCADOR = /^__completo__(?:-(\d+))?\.csv$/;
 const preparaciones = new Map<string, Promise<void>>();
 
 export function prefijoPartesNormalizadas(prefijo: string) {
@@ -29,8 +29,10 @@ export async function listarPartesNormalizadas(
   const archivos = await almacenamiento.listar(
     prefijoPartesNormalizadas(prefijo),
   );
+  const marcador = archivos.find((archivo) => MARCADOR.test(archivo.nombre));
   return {
-    completa: archivos.some((archivo) => archivo.nombre === MARCADOR),
+    completa: Boolean(marcador),
+    filas: marcador ? (MARCADOR.exec(marcador.nombre)?.[1] ?? null) : null,
     partes: archivos
       .filter((archivo) => /^parte-\d+\.csv$/i.test(archivo.nombre))
       .sort((a, b) => a.nombre.localeCompare(b.nombre)),
@@ -48,7 +50,7 @@ export function iniciarPreparacionPartesNormalizadas(
   if (preparaciones.has(prefijo)) return;
   const prefijoCache = prefijoPartesNormalizadas(prefijo);
   const tarea = (async () => {
-    await particionarCsvDescarga(
+    const { filas } = await particionarCsvDescarga(
       almacenamiento,
       fuentes,
       maximoFilas,
@@ -56,7 +58,7 @@ export function iniciarPreparacionPartesNormalizadas(
         almacenamiento.abrirEscritura?.(`${prefijoCache}${nombre}`) as Writable,
     );
     const marcador = almacenamiento.abrirEscritura?.(
-      `${prefijoCache}${MARCADOR}`,
+      `${prefijoCache}__completo__-${filas}.csv`,
     );
     if (!marcador) return;
     const terminado = once(marcador, "finish");

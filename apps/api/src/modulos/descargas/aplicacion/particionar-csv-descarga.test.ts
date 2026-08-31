@@ -33,7 +33,7 @@ describe("particionado CSV en streaming", () => {
       firmar: async () => "",
     } as PuertoAlmacenamientoDescargas;
 
-    const nombres = await particionarCsvDescarga(
+    const resultado = await particionarCsvDescarga(
       almacenamiento,
       fuentes,
       2,
@@ -49,7 +49,10 @@ describe("particionado CSV en streaming", () => {
       },
     );
 
-    expect(nombres).toEqual(["parte-001.csv", "parte-002.csv"]);
+    expect(resultado).toEqual({
+      nombres: ["parte-001.csv", "parte-002.csv"],
+      filas: 3,
+    });
     expect(Buffer.concat(salidas.get("parte-001.csv") ?? []).toString()).toBe(
       'id|texto\n1|"hola\nmundo"\n2|dos\n',
     );
@@ -70,7 +73,7 @@ describe("particionado CSV en streaming", () => {
       firmar: async () => "",
     } as PuertoAlmacenamientoDescargas;
 
-    const nombres = await particionarCsvDescarga(
+    const resultado = await particionarCsvDescarga(
       almacenamiento,
       [
         {
@@ -90,7 +93,7 @@ describe("particionado CSV en streaming", () => {
         }),
     );
 
-    expect(nombres).toEqual(["parte-001.csv"]);
+    expect(resultado).toEqual({ nombres: ["parte-001.csv"], filas: 2 });
     expect(Buffer.concat(salidas).toString()).toBe("id|texto\n1|uno\n2|dos\n");
   });
 

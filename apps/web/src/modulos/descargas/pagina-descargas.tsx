@@ -451,6 +451,8 @@ function CarpetaCompartida({
                   0,
                 ) ?? 0,
               )}
+              {partes.data?.filas != null &&
+                ` · ${Number(partes.data?.filas).toLocaleString("es-EC")} filas`}
             </p>
           )}
           {(partes.data?.partes ?? []).map((parte) => (
@@ -473,7 +475,7 @@ function CarpetaCompartida({
               </Button>
             </div>
           ))}
-          {partes.data?.estado === "lista" && (
+          {partes.data && (
             <div className="flex flex-wrap justify-end gap-2 py-3">
               <Button asChild variant="outline">
                 <a href={urlZipEjecucion(descarga.id)}>
@@ -518,25 +520,27 @@ function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
           Preparando archivos; los terminados ya se pueden descargar.
         </p>
       )}
-      {(partes.data?.partes.length ?? 0) > 0 && (
+      {partes.data && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
-          <p className="text-sm font-semibold text-ink-800">
-            {partes.data?.partes.length} archivos ·{" "}
-            {formatearTamano(
-              partes.data?.partes.reduce(
-                (total, parte) => total + parte.tamano,
-                0,
-              ) ?? 0,
-            )}
-          </p>
-          {partes.data?.estado === "lista" && (
-            <a
-              href={urlZipEjecucion(ejecucionId)}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-            >
-              <Icon name="download" size="sm" /> Descargar todo (.zip)
-            </a>
+          {(partes.data.partes.length > 0 || partes.data.filas != null) && (
+            <p className="text-sm font-semibold text-ink-800">
+              {partes.data.partes.length} archivos ·{" "}
+              {formatearTamano(
+                partes.data.partes.reduce(
+                  (total, parte) => total + parte.tamano,
+                  0,
+                ),
+              )}
+              {partes.data.filas != null &&
+                ` · ${Number(partes.data.filas).toLocaleString("es-EC")} filas`}
+            </p>
           )}
+          <a
+            href={urlZipEjecucion(ejecucionId)}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+          >
+            <Icon name="download" size="sm" /> Descargar todo (.zip)
+          </a>
         </div>
       )}
       {(partes.data?.partes ?? []).map((parte) => (

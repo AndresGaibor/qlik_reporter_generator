@@ -18,6 +18,7 @@ vi.mock("@/modulos/descargas/api", () => ({
   listarPartesNormalizadas: vi.fn((id: string) =>
     Promise.resolve({
       estado: "lista",
+      filas: "2458729",
       partes: [
         {
           numero: 1,
@@ -427,6 +428,7 @@ test("expande una descarga compartida y muestra sus archivos", async () => {
   });
   await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"));
   expect(vista.textContent).toContain("2 archivos · 3 MB");
+  expect(vista.textContent).toContain("2.458.729 filas");
   expect(
     [...vista.querySelectorAll("a")].some(
       (enlace) => enlace.getAttribute("href") === "/api/descargas/e-1/partes/1",
@@ -435,9 +437,10 @@ test("expande una descarga compartida y muestra sus archivos", async () => {
   expect(vista.textContent).toContain("compartido@example.com");
 });
 
-test("actualiza las partes terminadas sin recargar la pÃ¡gina", async () => {
+test("permite descargar el ZIP mientras las partes siguen preparándose", async () => {
   vi.mocked(listarPartesNormalizadas).mockResolvedValueOnce({
     estado: "preparando",
+    filas: null,
     partes: [
       {
         numero: 1,
@@ -457,6 +460,13 @@ test("actualiza las partes terminadas sin recargar la pÃ¡gina", async () => {
   await vi.waitFor(() =>
     expect(vista.textContent).toContain("parte-parcial.csv"),
   );
+  expect(
+    [...vista.querySelectorAll("a")].some(
+      (enlace) =>
+        enlace.textContent?.includes("CSV (.zip)") &&
+        enlace.getAttribute("href") === "/api/descargas/e-1/zip",
+    ),
+  ).toBe(true);
   await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"), {
     timeout: 3_500,
   });

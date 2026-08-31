@@ -156,6 +156,7 @@ export function registrarRutasEjecuciones(
         c,
         {
           estado: estadoPartes.completa ? "lista" : "preparando",
+          filas: estadoPartes.filas,
           partes: estadoPartes.partes.map((parte, indice) => ({
             numero: indice + 1,
             nombre: parte.nombre,
