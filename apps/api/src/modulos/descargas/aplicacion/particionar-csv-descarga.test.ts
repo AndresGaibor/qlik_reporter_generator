@@ -60,6 +60,40 @@ describe("particionado CSV en streaming", () => {
     expect(salidas.get("parte-002.csv")).toHaveLength(2);
   });
 
+  it("acepta límites CSV superiores a un millón sin excederlos", async () => {
+    const contenido = Buffer.from("id|texto\n1|uno\n2|dos\n");
+    const salidas: Buffer[] = [];
+    const almacenamiento = {
+      abrirLectura: () => Readable.from([contenido]),
+      listar: async () => [],
+      estaFinalizada: async () => false,
+      firmar: async () => "",
+    } as PuertoAlmacenamientoDescargas;
+
+    const nombres = await particionarCsvDescarga(
+      almacenamiento,
+      [
+        {
+          nombre: "ventas.csv",
+          rutaCompleta: "reportes/ventas.csv",
+          tamanoBytes: contenido.length,
+          formato: "CSV",
+        },
+      ],
+      20_000_000,
+      () =>
+        new Writable({
+          write(chunk, _encoding, callback) {
+            salidas.push(Buffer.from(chunk));
+            callback();
+          },
+        }),
+    );
+
+    expect(nombres).toEqual(["parte-001.csv"]);
+    expect(Buffer.concat(salidas).toString()).toBe("id|texto\n1|uno\n2|dos\n");
+  });
+
   it("rechaza cabeceras distintas entre archivos fuente", async () => {
     const contenidos = new Map<string, Buffer>([
       ["reportes/a.csv", Buffer.from("id|texto\n1|uno\n")],

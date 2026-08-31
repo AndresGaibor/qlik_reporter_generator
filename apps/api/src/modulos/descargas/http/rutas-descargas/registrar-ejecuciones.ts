@@ -9,6 +9,7 @@ import {
 } from "../../../../nucleo/http/respuestas.js";
 import { SincronizarEjecucionesReporte } from "../../../reportes/aplicacion/sincronizar-ejecuciones-reporte.js";
 import { SincronizarJobsBigQueryEjecucion } from "../../../reportes/aplicacion/sincronizar-jobs-bigquery-ejecucion.js";
+import { generarXlsxDescarga } from "../../aplicacion/generar-xlsx-descarga.js";
 import {
   MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
   particionarCsvDescarga,
@@ -22,6 +23,7 @@ import {
 import { parsearUriGcsPermitida } from "../../aplicacion/puerto-almacenamiento-descargas.js";
 import { ServicioDescargas } from "../../aplicacion/servicio-descargas.js";
 import { esAdministrador } from "./helpers.js";
+import { respuestaZipEjecucion } from "./respuesta-zip.js";
 import type { DependenciasRutasDescargas } from "./tipos.js";
 
 export function registrarRutasEjecuciones(
@@ -335,10 +337,12 @@ export function registrarRutasEjecuciones(
     const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
     if (!prefijo.endsWith(`${ejecucion.id}/`))
       return responderError(c, "La ruta de resultados no es válida", 422);
-    const partesNormalizadas = await obtenerPartesNormalizadas(
-      almacenamiento,
-      prefijo,
-    );
+    const formato =
+      c.req.query("formato")?.toLowerCase() === "xlsx" ? "xlsx" : "csv";
+    const partesNormalizadas =
+      formato === "csv"
+        ? await obtenerPartesNormalizadas(almacenamiento, prefijo)
+        : null;
     const fuentes = partesNormalizadas
       ? []
       : (await almacenamiento.listar(prefijo)).filter(
@@ -361,28 +365,24 @@ export function registrarRutasEjecuciones(
         });
       }
       void zip.finalize();
-      return new Response(
-        Readable.toWeb(zip as Readable) as unknown as BodyInit,
-        {
-          headers: {
-            "Content-Type": "application/zip",
-            "Content-Disposition": `attachment; filename="${ejecucion.flujoNombreSnapshot.replace(/[^a-zA-Z0-9._-]/g, "_") || "reporte"}.zip"`,
-            "Cache-Control": "no-store",
-          },
-        },
-      );
+      return respuestaZipEjecucion(zip, ejecucion.flujoNombreSnapshot);
     }
-    void particionarCsvDescarga(
-      almacenamiento,
-      fuentes,
-      configuracion?.maximoFilasPorArchivo ??
-        MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
-      (nombre) => {
-        const entrada = new PassThrough();
-        zip.append(entrada, { name: nombre });
-        return entrada;
-      },
-    )
+    const abrirParte = (nombre: string) => {
+      const entrada = new PassThrough();
+      zip.append(entrada, { name: nombre });
+      return entrada;
+    };
+    const generar =
+      formato === "xlsx"
+        ? generarXlsxDescarga(almacenamiento, fuentes, abrirParte)
+        : particionarCsvDescarga(
+            almacenamiento,
+            fuentes,
+            configuracion?.maximoFilasPorArchivo ??
+              MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
+            abrirParte,
+          );
+    void generar
       .then(() => zip.finalize())
       .catch((error) =>
         zip.destroy(

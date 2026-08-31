@@ -152,7 +152,9 @@ async function cerrarDestino(destino: Writable): Promise<void> {
   await terminado;
 }
 
-async function* leerRegistrosCsv(lectura: Readable): AsyncGenerator<Buffer> {
+export async function* leerRegistrosCsv(
+  lectura: Readable,
+): AsyncGenerator<Buffer> {
   let dentroComillas = false;
   let partes: Buffer[] = [];
   let longitud = 0;
@@ -204,10 +206,10 @@ async function* leerRegistrosCsv(lectura: Readable): AsyncGenerator<Buffer> {
 }
 
 function validarMaximoFilas(valor: number) {
-  if (!Number.isInteger(valor) || valor < 1 || valor > 1_000_000) {
+  if (!Number.isSafeInteger(valor) || valor < 1) {
     throw new ErrorAplicacion(
       "MAXIMO_FILAS_DESCARGA_INVALIDO",
-      "El máximo de filas por CSV debe estar entre 1 y 1.000.000",
+      "El máximo de filas por CSV debe ser un entero positivo",
       422,
     );
   }

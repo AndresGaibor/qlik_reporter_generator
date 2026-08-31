@@ -461,12 +461,20 @@ function CarpetaCompartida({
             </div>
           ))}
           {partes.data?.estado === "lista" && (
-            <div className="flex justify-end py-3">
-              <Button asChild>
+            <div className="flex flex-wrap justify-end gap-2 py-3">
+              <Button asChild variant="outline">
                 <a href={urlZipEjecucion(descarga.id)}>
-                  <Icon name="download" size="sm" /> Descargar ZIP normalizado
+                  <Icon name="download" size="sm" /> CSV (.zip)
                 </a>
               </Button>
+              <Button asChild>
+                <a href={urlZipEjecucion(descarga.id, "xlsx")}>
+                  <Icon name="download" size="sm" /> Excel (.zip)
+                </a>
+              </Button>
+              <p className="w-full text-right text-xs text-ink-500">
+                Excel usa un máximo de 1.000.000 filas por archivo.
+              </p>
             </div>
           )}
         </div>

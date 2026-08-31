@@ -27,8 +27,9 @@ export function solicitarManifiesto(id: string): Promise<ManifiestoDescarga> {
   );
 }
 
-export function urlZipEjecucion(id: string) {
-  return `/api/descargas/${encodeURIComponent(id)}/zip`;
+export function urlZipEjecucion(id: string, formato: "csv" | "xlsx" = "csv") {
+  const query = formato === "xlsx" ? "?formato=xlsx" : "";
+  return `/api/descargas/${encodeURIComponent(id)}/zip${query}`;
 }
 
 export interface ParteCsvNormalizada {

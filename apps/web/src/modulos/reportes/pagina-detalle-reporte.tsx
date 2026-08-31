@@ -124,15 +124,11 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const ejecutar = useMutation({
     mutationFn: (confirmacionRiesgo?: { hashDataflowSha256: string }) =>
       ejecutarReporte(id, confirmacionRiesgo),
-    onSuccess: (resultado) => {
+    onSuccess: () => {
       setHashRiesgoPendiente(null);
       mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
-      });
-      void navegar({
-        to: "/descargas",
-        search: { carpeta: resultado.carpetaDescargas },
       });
     },
     onError: (error: Error) => {

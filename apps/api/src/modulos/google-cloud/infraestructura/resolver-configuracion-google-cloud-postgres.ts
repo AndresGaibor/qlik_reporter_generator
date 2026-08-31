@@ -50,8 +50,7 @@ export class ResolverConfiguracionGoogleCloudPostgres {
     const maximoFilasPorArchivo =
       typeof config.maximoFilasPorArchivo === "number" &&
       Number.isInteger(config.maximoFilasPorArchivo) &&
-      config.maximoFilasPorArchivo > 0 &&
-      config.maximoFilasPorArchivo <= 1_000_000
+      config.maximoFilasPorArchivo > 0
         ? config.maximoFilasPorArchivo
         : 1_000_000;
 

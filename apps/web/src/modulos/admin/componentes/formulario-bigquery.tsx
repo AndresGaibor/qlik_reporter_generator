@@ -95,18 +95,18 @@ export function FormularioBigQuery({
             id="bigquery-max-rows"
             type="number"
             min={1}
-            max={1_000_000}
             step={1}
             value={maximoFilasPorArchivo}
             onChange={(e) => {
               const valor = Number(e.target.value);
-              if (Number.isInteger(valor) && valor >= 1 && valor <= 1_000_000)
+              if (Number.isSafeInteger(valor) && valor >= 1)
                 onMaximoFilasPorArchivo(valor);
             }}
             className="mt-1 w-full rounded-md border border-line-200 bg-surface px-3 py-2 font-mono text-sm text-ink-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           />
           <p className="mt-1 text-[11px] text-ink-500">
-            La app repartirá los CSV al descargar; BigQuery no contará ni numerará filas para este límite.
+            La app repartirá los CSV al descargar y nunca superará este valor;
+            el último archivo puede contener menos filas.
           </p>
         </div>
       </div>

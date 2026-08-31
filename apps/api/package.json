@@ -22,6 +22,7 @@
     "@types/archiver": "^8.0.0",
     "archiver": "^8.0.0",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "hono": "^4.13.2",
     "pino": "^9.3.0",
     "pino-pretty": "^11.2.0",
