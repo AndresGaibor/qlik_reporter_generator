@@ -332,6 +332,28 @@ export async function crearAplicacion(
     }),
   );
 
+  aplicacion.get("/api/live", (c) =>
+    responderExito(c, { estado: "ok", fecha: new Date().toISOString() }),
+  );
+
+  aplicacion.get("/api/ready", async (c) => {
+    try {
+      await dbHolder.client`SELECT 1`;
+      return responderExito(c, {
+        estado: "ok",
+        fecha: new Date().toISOString(),
+        db: "connected",
+      });
+    } catch (error) {
+      return responderError(
+        c,
+        "Base de datos no disponible",
+        503,
+        { codigo: "DB_NOT_READY" },
+      );
+    }
+  });
+
   const repoOAuthSetup = new RepositorioConfiguracionOAuthPostgres(
     db,
     servicioCifrado,

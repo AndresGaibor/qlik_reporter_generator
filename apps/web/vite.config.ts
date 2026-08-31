@@ -5,6 +5,8 @@ import { defineConfig } from "vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const production = process.env.NODE_ENV === "production";
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -13,16 +15,28 @@ export default defineConfig({
     },
   },
   server: {
-    host: "localhost",
+    host: production ? "127.0.0.1" : "localhost",
     port: 4525,
     strictPort: true,
-    hmr: {
-      host: "localhost",
-    },
-    proxy: {
-      "/api": {
-        target: "http://localhost:4523",
-        changeOrigin: true,
+    hmr: production
+      ? { host: "localhost", port: 4525 }
+      : { host: "localhost" },
+    proxy: production
+      ? {
+          "/api": {
+            target: "http://localhost:4523",
+            changeOrigin: true,
+          },
+        }
+      : undefined,
+  },
+  build: {
+    outDir: "dist",
+    sourcemap: false,
+    minify: "esbuild",
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
       },
     },
   },

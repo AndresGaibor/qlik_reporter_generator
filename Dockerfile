@@ -18,6 +18,19 @@ COPY apps/web ./apps/web
 WORKDIR /app/apps/web
 RUN bun run build
 
+FROM oven/bun:1.3.10@sha256:b86c67b531d87b4db11470d9b2bd0c519b1976eee6fcd71634e73abfa6230d2e AS migrate
+WORKDIR /app
+COPY package.json bun.lock tsconfig.base.json ./
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/contratos/package.json ./packages/contratos/package.json
+COPY drizzle.config.ts ./drizzle.config.ts
+COPY apps/api/src/plataforma/persistencia ./apps/api/src/plataforma/persistencia
+RUN bun install --frozen-lockfile
+COPY apps/api/src ./apps/api/src
+WORKDIR /app
+CMD ["bun", "run", "db:migrate"]
+
 FROM node:22-alpine AS api
 WORKDIR /app
 ENV NODE_ENV=production
@@ -25,7 +38,7 @@ ENV PORT=4523
 COPY --from=build-api /app/apps/api/dist ./dist
 EXPOSE 4523
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:4523/api/salud || exit 1
+  CMD wget -qO- http://127.0.0.1:4523/api/ready || exit 1
 CMD ["node", "dist/node.js"]
 
 FROM nginx:alpine AS web
