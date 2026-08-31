@@ -22,11 +22,13 @@ vi.mock("@/modulos/descargas/api", () => ({
         {
           numero: 1,
           nombre: "parte-001.csv",
+          tamano: 1_048_576,
           url: `/api/descargas/${id}/partes/1`,
         },
         {
           numero: 2,
           nombre: "parte-002.csv",
+          tamano: 2_097_152,
           url: `/api/descargas/${id}/partes/2`,
         },
       ],
@@ -424,6 +426,7 @@ test("expande una descarga compartida y muestra sus archivos", async () => {
     boton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
   });
   await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"));
+  expect(vista.textContent).toContain("2 archivos · 3 MB");
   expect(
     [...vista.querySelectorAll("a")].some(
       (enlace) => enlace.getAttribute("href") === "/api/descargas/e-1/partes/1",
@@ -439,6 +442,7 @@ test("actualiza las partes terminadas sin recargar la pÃ¡gina", async () => {
       {
         numero: 1,
         nombre: "parte-parcial.csv",
+        tamano: 1_048_576,
         url: "/api/descargas/e-1/partes/1",
       },
     ],

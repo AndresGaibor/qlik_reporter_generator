@@ -159,6 +159,7 @@ export function registrarRutasEjecuciones(
           partes: estadoPartes.partes.map((parte, indice) => ({
             numero: indice + 1,
             nombre: parte.nombre,
+            tamano: parte.tamanoBytes,
             url: `/api/descargas/${encodeURIComponent(c.req.param("id"))}/partes/${indice + 1}`,
           })),
         },

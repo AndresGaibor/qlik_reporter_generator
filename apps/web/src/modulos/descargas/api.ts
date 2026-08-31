@@ -35,6 +35,7 @@ export function urlZipEjecucion(id: string, formato: "csv" | "xlsx" = "csv") {
 export interface ParteCsvNormalizada {
   numero: number;
   nombre: string;
+  tamano: number;
   url: string;
 }
 

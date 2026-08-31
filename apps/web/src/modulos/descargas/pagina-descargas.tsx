@@ -442,6 +442,17 @@ function CarpetaCompartida({
               {partes.error.message}
             </p>
           )}
+          {(partes.data?.partes.length ?? 0) > 0 && (
+            <p className="py-3 text-sm font-semibold text-ink-800">
+              {partes.data?.partes.length} archivos ·{" "}
+              {formatearTamano(
+                partes.data?.partes.reduce(
+                  (total, parte) => total + parte.tamano,
+                  0,
+                ) ?? 0,
+              )}
+            </p>
+          )}
           {(partes.data?.partes ?? []).map((parte) => (
             <div
               key={parte.nombre}
@@ -451,7 +462,9 @@ function CarpetaCompartida({
                 <p className="truncate text-sm font-medium text-ink-800">
                   {parte.nombre}
                 </p>
-                <p className="text-xs text-ink-500">CSV normalizado</p>
+                <p className="text-xs text-ink-500">
+                  CSV normalizado · {formatearTamano(parte.tamano)}
+                </p>
               </div>
               <Button asChild variant="outline" size="sm">
                 <a href={parte.url}>
@@ -505,6 +518,27 @@ function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
           Preparando archivos; los terminados ya se pueden descargar.
         </p>
       )}
+      {(partes.data?.partes.length ?? 0) > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
+          <p className="text-sm font-semibold text-ink-800">
+            {partes.data?.partes.length} archivos ·{" "}
+            {formatearTamano(
+              partes.data?.partes.reduce(
+                (total, parte) => total + parte.tamano,
+                0,
+              ) ?? 0,
+            )}
+          </p>
+          {partes.data?.estado === "lista" && (
+            <a
+              href={urlZipEjecucion(ejecucionId)}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+            >
+              <Icon name="download" size="sm" /> Descargar todo (.zip)
+            </a>
+          )}
+        </div>
+      )}
       {(partes.data?.partes ?? []).map((parte) => (
         <div
           key={parte.nombre}
@@ -512,7 +546,9 @@ function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
         >
           <div>
             <p className="text-sm font-semibold text-ink-800">{parte.nombre}</p>
-            <p className="text-xs text-ink-500">CSV normalizado</p>
+            <p className="text-xs text-ink-500">
+              CSV normalizado · {formatearTamano(parte.tamano)}
+            </p>
           </div>
           <Button asChild variant="outline" size="sm">
             <a href={parte.url}>
@@ -806,26 +842,28 @@ function SeccionExploradorGcs({
               {datos.ruta}
             </p>
           )}
-          {urlDescargarTodo && datos.archivos.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
-              <p className="text-sm font-semibold text-ink-800">
-                {datos.archivos.length}{" "}
-                {datos.archivos.length === 1 ? "archivo" : "archivos"} ·{" "}
-                {formatearTamano(
-                  datos.archivos.reduce(
-                    (total, archivo) => total + archivo.tamano,
-                    0,
-                  ),
-                )}
-              </p>
-              <a
-                href={urlDescargarTodo}
-                className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-              >
-                <Icon name="download" size="sm" /> Descargar todo (.zip)
-              </a>
-            </div>
-          )}
+          {!esCarpetaEjecucion &&
+            urlDescargarTodo &&
+            datos.archivos.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
+                <p className="text-sm font-semibold text-ink-800">
+                  {datos.archivos.length}{" "}
+                  {datos.archivos.length === 1 ? "archivo" : "archivos"} ·{" "}
+                  {formatearTamano(
+                    datos.archivos.reduce(
+                      (total, archivo) => total + archivo.tamano,
+                      0,
+                    ),
+                  )}
+                </p>
+                <a
+                  href={urlDescargarTodo}
+                  className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                >
+                  <Icon name="download" size="sm" /> Descargar todo (.zip)
+                </a>
+              </div>
+            )}
         </div>
       )}
       {cargando && (
