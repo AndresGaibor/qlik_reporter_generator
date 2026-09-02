@@ -124,15 +124,11 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const ejecutar = useMutation({
     mutationFn: (confirmacionRiesgo?: { hashDataflowSha256: string }) =>
       ejecutarReporte(id, confirmacionRiesgo),
-    onSuccess: (resultado) => {
+    onSuccess: () => {
       setHashRiesgoPendiente(null);
       mostrarExito("Reporte enviado a procesamiento");
       void client.invalidateQueries({
         queryKey: ["ejecuciones-reporte", tenantActivo?.id, id],
-      });
-      void navegar({
-        to: "/descargas",
-        search: { carpeta: resultado.carpetaDescargas },
       });
     },
     onError: (error: Error) => {
@@ -434,19 +430,16 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
       )}
 
       {mostrarConfirmacion && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink-900/40 p-4"
-          role="presentation"
+        <dialog
+          open
+          aria-labelledby="confirmar-ejecucion"
+          className="fixed inset-0 z-50 m-0 h-full max-h-none w-full max-w-none place-items-center border-0 bg-ink-900/40 p-4 open:grid"
           onMouseDown={(evento) => {
             if (evento.target === evento.currentTarget)
               setMostrarConfirmacion(false);
           }}
         >
-          <dialog
-            open
-            aria-labelledby="confirmar-ejecucion"
-            className="w-full max-w-md rounded-xl border border-line-200 bg-surface p-6 shadow-xl"
-          >
+          <div className="w-full max-w-md rounded-xl border border-line-200 bg-surface p-6 shadow-xl">
             <h2
               id="confirmar-ejecucion"
               className="text-lg font-semibold text-ink-900"
@@ -506,8 +499,8 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
                 {ejecutar.isPending ? "Iniciando…" : "Ejecutar reporte"}
               </Button>
             </div>
-          </dialog>
-        </div>
+          </div>
+        </dialog>
       )}
       <ModalConfirmacionRiesgo
         abierto={hashRiesgoPendiente !== null}

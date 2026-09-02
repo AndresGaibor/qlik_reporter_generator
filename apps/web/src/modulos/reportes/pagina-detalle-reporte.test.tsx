@@ -118,6 +118,70 @@ test("carga metadata, resumen, preflight e historial por el ID Qlik", async () =
   expect(container?.textContent).not.toContain("Inactivo");
 });
 
+test("centra la confirmación de ejecución como overlay de pantalla completa", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Ejecutar reporte"),
+  );
+  const iniciar = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar reporte"),
+  );
+  await act(async () =>
+    iniciar?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  const dialogo = container?.querySelector("dialog");
+  expect(dialogo).toBeTruthy();
+  expect(dialogo?.classList.contains("fixed")).toBe(true);
+  expect(dialogo?.classList.contains("inset-0")).toBe(true);
+  expect(dialogo?.classList.contains("place-items-center")).toBe(true);
+  expect(dialogo?.classList.contains("open:grid")).toBe(true);
+});
+
+test("permanece en el detalle tras enviar el reporte a procesamiento", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  container = document.createElement("div");
+  document.body.append(container);
+  root = createRoot(container);
+  await act(async () =>
+    root?.render(
+      <QueryClientProvider client={client}>
+        <PaginaDetalleReporte id="df-1" />
+      </QueryClientProvider>,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(container?.textContent).toContain("Ejecutar reporte"),
+  );
+  const iniciar = [...(container?.querySelectorAll("button") ?? [])].find(
+    (item) => item.textContent?.includes("Ejecutar reporte"),
+  );
+  await act(async () =>
+    iniciar?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  const confirmar = [
+    ...(container?.querySelectorAll("dialog button") ?? []),
+  ].find((item) => item.textContent?.trim() === "Ejecutar reporte");
+  await act(async () =>
+    confirmar?.dispatchEvent(new MouseEvent("click", { bubbles: true })),
+  );
+  await vi.waitFor(() => expect(api.ejecutarReporte).toHaveBeenCalledTimes(1));
+  expect(navegacion.navegar).not.toHaveBeenCalled();
+});
+
 test("requiere confirmación de riesgo y reintenta con H1 tras el modal", async () => {
   const h1 = "b".repeat(64);
   api.ejecutarReporte
