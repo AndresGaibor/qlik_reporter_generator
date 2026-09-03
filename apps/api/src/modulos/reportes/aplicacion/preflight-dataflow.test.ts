@@ -134,6 +134,9 @@ describe("PreflightDataflow", () => {
     expect(resultado.compatible).toBe(true);
     expect(resultado.operacionesNoSoportadas).toEqual([]);
     expect(resultado.sqlBigQuery).toContain(
+      "REGEXP_INSTR(CAST(`NOM_TIPO_UOP` AS STRING), CAST(CASE WHEN `NOM_TIPO_UOP` = 'TIENDA' THEN 1 ELSE 0 END AS STRING), 1, 1)",
+    );
+    expect(resultado.sqlBigQuery).not.toContain(
       "REGEXP_INSTR(CAST(`NOM_TIPO_UOP` AS STRING), CAST(`FILTRO_UOP` AS STRING), 1, 1)",
     );
     expect(estimador.estimarConsulta).toHaveBeenCalledTimes(1);
