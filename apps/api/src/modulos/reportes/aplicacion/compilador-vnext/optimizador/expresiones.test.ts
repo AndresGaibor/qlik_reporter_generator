@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  esExpresionDeterminista,
   referenciasExpresion,
   sustituirProyeccionEnExpresion,
 } from "./expresiones.js";
@@ -47,8 +48,17 @@ describe("optimizador de expresiones Qlik", () => {
   });
 
   it("extrae referencias sin confundir nombres de funciones o strings", () => {
-    expect(
-      [...referenciasExpresion("Upper([Sub bodega]) = 'Fecha' and Fecha > 0")],
-    ).toEqual(["Sub bodega", "Fecha"]);
+    expect([
+      ...referenciasExpresion("Upper([Sub bodega]) = 'Fecha' and Fecha > 0"),
+    ]).toEqual(["Sub bodega", "Fecha"]);
+  });
+});
+
+describe("determinismo de expresiones para optimización", () => {
+  it("marca Rand como no determinista y funciones puras como seguras", () => {
+    expect(esExpresionDeterminista("Rand() + monto")).toBe(false);
+    expect(esExpresionDeterminista("Upper(categoria) & Year(Fecha)")).toBe(
+      true,
+    );
   });
 });

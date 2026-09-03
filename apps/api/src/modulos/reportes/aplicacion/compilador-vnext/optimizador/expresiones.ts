@@ -1,8 +1,24 @@
-import {
-  parsearExpresionQlik,
-  type ExprQlik,
-} from "../expresiones-qlik.js";
+import { type ExprQlik, parsearExpresionQlik } from "../expresiones-qlik.js";
 import type { CampoLoadVNext } from "../parser-carga.js";
+
+const FUNCIONES_NO_DETERMINISTAS = new Set(["rand"]);
+
+export function esExpresionDeterminista(expression: string): boolean {
+  try {
+    let deterministic = true;
+    visitar(parsearExpresionQlik(expression), (node) => {
+      if (
+        node.kind === "call" &&
+        FUNCIONES_NO_DETERMINISTAS.has(node.name.toLowerCase())
+      ) {
+        deterministic = false;
+      }
+    });
+    return deterministic;
+  } catch {
+    return false;
+  }
+}
 
 export function referenciasExpresion(expression: string): Set<string> {
   const result = new Set<string>();
@@ -19,7 +35,10 @@ export function sustituirProyeccionEnExpresion(
   const projectionMap = construirMapaProyecciones(projections);
   if (!projectionMap) return undefined;
   try {
-    const substituted = sustituir(parsearExpresionQlik(expression), projectionMap);
+    const substituted = sustituir(
+      parsearExpresionQlik(expression),
+      projectionMap,
+    );
     return substituted ? imprimir(substituted) : undefined;
   } catch {
     return undefined;
@@ -32,7 +51,8 @@ function construirMapaProyecciones(
   const result = new Map<string, ExprQlik>();
   try {
     for (const projection of projections) {
-      if (projection.alias === "*" || result.has(projection.alias)) return undefined;
+      if (projection.alias === "*" || result.has(projection.alias))
+        return undefined;
       result.set(projection.alias, parsearExpresionQlik(projection.expression));
     }
     return result;
@@ -74,7 +94,7 @@ function visitar(expression: ExprQlik, visit: (node: ExprQlik) => void): void {
   visit(expression);
   switch (expression.kind) {
     case "call":
-      expression.args.forEach((arg) => visitar(arg, visit));
+      for (const arg of expression.args) visitar(arg, visit);
       return;
     case "unary":
       visitar(expression.operand, visit);

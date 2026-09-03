@@ -1,4 +1,24 @@
 import type { PlanCompilacionVNext, RelacionVNext } from "./ir.js";
+import {
+  clasificarPredicadoJoin,
+  esProjectFusionable,
+  esProjectIdentidad,
+} from "./optimizador/capacidades.js";
+import {
+  esExpresionDeterminista,
+  sustituirProyeccionEnExpresion,
+} from "./optimizador/expresiones.js";
+import {
+  crearFiltroDerivado,
+  crearIdOptimizacion,
+  entradasUnionDistribuibles,
+  esquemasUnionCompatibles,
+  redirigirMappings,
+  redirigirReferencia,
+  redirigirTablas,
+  referenciaRelacion,
+  tieneCamposInternos,
+} from "./optimizador/grafo.js";
 import type { CampoLoadVNext } from "./parser-carga.js";
 
 function descorchetar(nombre: string): string {
@@ -6,38 +26,6 @@ function descorchetar(nombre: string): string {
     return nombre.slice(1, -1);
   }
   return nombre;
-}
-
-function esProjectFusionable(
-  rel: Extract<RelacionVNext, { op: "project" }>,
-): boolean {
-  return (
-    !rel.distinct &&
-    (!rel.mappingLookups || rel.mappingLookups.length === 0) &&
-    (!rel.mapSubstringLookups || rel.mapSubstringLookups.length === 0) &&
-    (!rel.dualExpressions || Object.keys(rel.dualExpressions).length === 0) &&
-    (!rel.orderBy || rel.orderBy.length === 0)
-  );
-}
-
-function sustituirReferenciasDirectas(
-  expression: string,
-  projections: readonly CampoLoadVNext[],
-): string {
-  let result = expression;
-  for (const projection of [...projections].sort(
-    (a, b) => b.alias.length - a.alias.length,
-  )) {
-    if (descorchetar(projection.expression) === projection.alias) continue;
-    const escaped = projection.alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const replacement = `(${projection.expression})`;
-    result = result.replace(new RegExp(`\\[${escaped}\\]`, "g"), replacement);
-    result = result.replace(
-      new RegExp(`(?<![A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, "g"),
-      replacement,
-    );
-  }
-  return result;
 }
 
 /**
@@ -52,83 +40,76 @@ export function optimizarPlanRelacionalVNext(
 ): PlanCompilacionVNext {
   let relations = [...plan.relations];
   let outputId = plan.outputRelationId;
+  let tables = { ...plan.tables };
+  let mappings = { ...plan.mappings };
 
   let byId = new Map(relations.map((r) => [r.id, r]));
 
   let changed = true;
-  let iterations = 0;
-  while (changed && iterations < 20) {
+  const seenStates = new Set<string>();
+  while (changed) {
+    const signature = JSON.stringify({ relations, outputId, tables, mappings });
+    if (seenStates.has(signature)) {
+      throw new Error(
+        "El optimizador relacional entró en un ciclo de reescritura",
+      );
+    }
+    seenStates.add(signature);
     changed = false;
-    iterations++;
 
     for (let i = 0; i < relations.length; i++) {
       const rel = relations[i];
-      if (rel.op === "project") {
+      if (rel.op === "filter") {
         const inputRel = byId.get(rel.input);
-        if (!inputRel) continue;
-
-        // Comprobar si es proyección identidad pura:
-        const isIdentity =
-          !rel.distinct &&
-          (!rel.mappingLookups || rel.mappingLookups.length === 0) &&
-          (!rel.mapSubstringLookups || rel.mapSubstringLookups.length === 0) &&
-          (!rel.dualExpressions ||
-            Object.keys(rel.dualExpressions).length === 0) &&
-          rel.projections.every(
-            (p) =>
-              descorchetar(p.expression) === p.alias &&
-              inputRel.fields.includes(p.alias),
-          ) &&
-          rel.fields.length === inputRel.fields.length &&
-          rel.fields.every((f, idx) => f === inputRel.fields[idx]);
-
-        // Si es identidad y su entrada ya es un project o filter sobre project
         if (
-          isIdentity &&
-          (inputRel.op === "project" || inputRel.op === "filter")
+          inputRel?.op === "filter" &&
+          esExpresionDeterminista(inputRel.condition) &&
+          esExpresionDeterminista(rel.condition)
         ) {
-          const targetId = rel.input;
-          relations = relations
-            .filter((r) => r.id !== rel.id)
-            .map((r) => redirigirReferencia(r, rel.id, targetId));
-
-          if (outputId === rel.id) {
-            outputId = targetId;
-          }
-
-          byId = new Map(relations.map((r) => [r.id, r]));
+          relations[i] = {
+            ...rel,
+            input: inputRel.input,
+            condition: `(${inputRel.condition}) and (${rel.condition})`,
+          };
+          byId = new Map(
+            relations.map((candidate) => [candidate.id, candidate]),
+          );
           changed = true;
           break;
         }
 
-        // Colapsa un project escalar consumido por un aggregate. Sustituye los
-        // aliases calculados (p. ej. Año_year) por su expresión original y
-        // conecta el aggregate directamente a la entrada del project.
-        if (esProjectFusionable(rel)) {
-          const consumer = relations.find(
-            (candidate) =>
-              candidate.op === "aggregate" && candidate.input === rel.id,
+        if (inputRel?.op === "project" && esProjectFusionable(inputRel)) {
+          const condition = sustituirProyeccionEnExpresion(
+            rel.condition,
+            inputRel.projections,
           );
-          if (consumer?.op === "aggregate") {
-            const updatedAggregate: RelacionVNext = {
-              ...consumer,
-              input: rel.input,
-              projections: consumer.projections.map((projection) => ({
-                ...projection,
-                expression: sustituirReferenciasDirectas(
-                  projection.expression,
-                  rel.projections,
-                ),
-              })),
-              groupBy: consumer.groupBy.map((expression) =>
-                sustituirReferenciasDirectas(expression, rel.projections),
-              ),
+          const source = byId.get(inputRel.input);
+          if (
+            condition &&
+            esExpresionDeterminista(condition) &&
+            source?.schemaKnown &&
+            source.fields.length > 0
+          ) {
+            const pushedId = crearIdOptimizacion(
+              relations,
+              `${rel.id}__filter`,
+            );
+            const pushed = crearFiltroDerivado(
+              source,
+              pushedId,
+              condition,
+              rel.span,
+            );
+            const replacementProject: RelacionVNext = {
+              ...inputRel,
+              id: rel.id,
+              input: pushedId,
+              fields: [...rel.fields],
             };
-            relations = relations
-              .filter((candidate) => candidate.id !== rel.id)
-              .map((candidate) =>
-                candidate.id === consumer.id ? updatedAggregate : candidate,
-              );
+            relations = relations.map((candidate) =>
+              candidate.id === rel.id ? replacementProject : candidate,
+            );
+            relations.push(pushed);
             byId = new Map(
               relations.map((candidate) => [candidate.id, candidate]),
             );
@@ -137,15 +118,288 @@ export function optimizarPlanRelacionalVNext(
           }
         }
 
+        if (inputRel?.op === "join" && inputRel.join === "inner") {
+          const left = byId.get(inputRel.left);
+          const right = byId.get(inputRel.right);
+          if (left && right) {
+            const branch = clasificarPredicadoJoin(rel.condition, left, right);
+            if (branch === "left" || branch === "right") {
+              const source = branch === "left" ? left : right;
+              const pushedId = crearIdOptimizacion(
+                relations,
+                `${rel.id}__filter`,
+              );
+              const pushed = crearFiltroDerivado(
+                source,
+                pushedId,
+                rel.condition,
+                rel.span,
+              );
+              const replacementJoin: RelacionVNext = {
+                ...inputRel,
+                id: rel.id,
+                fields: [...rel.fields],
+                ...(branch === "left"
+                  ? { left: pushedId }
+                  : { right: pushedId }),
+              };
+              relations = relations.map((candidate) =>
+                candidate.id === rel.id ? replacementJoin : candidate,
+              );
+              relations.push(pushed);
+              byId = new Map(
+                relations.map((candidate) => [candidate.id, candidate]),
+              );
+              changed = true;
+              break;
+            }
+          }
+        }
+
+        if (
+          inputRel?.op === "union_all" &&
+          esExpresionDeterminista(rel.condition)
+        ) {
+          const branches = entradasUnionDistribuibles(inputRel, byId);
+          if (branches) {
+            const pushedFilters = branches.map((source, index) =>
+              crearFiltroDerivado(
+                source,
+                crearIdOptimizacion(
+                  relations,
+                  `${rel.id}__branch_${index + 1}_filter`,
+                ),
+                rel.condition,
+                rel.span,
+              ),
+            );
+            const replacementUnion: RelacionVNext = {
+              ...inputRel,
+              id: rel.id,
+              inputs: pushedFilters.map((filter) => filter.id),
+              fields: [...rel.fields],
+              schemaKnown: rel.schemaKnown,
+              fieldMetadata: rel.fieldMetadata,
+              span: rel.span,
+            };
+            relations = relations.map((candidate) =>
+              candidate.id === rel.id ? replacementUnion : candidate,
+            );
+            relations.push(...pushedFilters);
+            byId = new Map(
+              relations.map((candidate) => [candidate.id, candidate]),
+            );
+            changed = true;
+            break;
+          }
+        }
+      }
+
+      if (rel.op === "sort") {
+        const consumers = relations.filter((candidate) =>
+          referenciaRelacion(candidate, rel.id),
+        );
+        const consumer = consumers.length === 1 ? consumers[0] : undefined;
+        const anchored =
+          outputId === rel.id ||
+          Object.values(tables).includes(rel.id) ||
+          Object.values(mappings).some(
+            (mapping) => mapping.relationId === rel.id,
+          );
+        if (consumer?.op === "aggregate" && !anchored) {
+          relations = relations
+            .filter((candidate) => candidate.id !== rel.id)
+            .map((candidate) =>
+              redirigirReferencia(candidate, rel.id, rel.input),
+            );
+          byId = new Map(
+            relations.map((candidate) => [candidate.id, candidate]),
+          );
+          changed = true;
+          break;
+        }
+      }
+
+      if (rel.op === "union_all") {
+        const flattened: string[] = [];
+        let canFlatten = false;
+        for (const inputId of rel.inputs) {
+          const input = byId.get(inputId);
+          if (
+            input?.op === "union_all" &&
+            esquemasUnionCompatibles(rel, input)
+          ) {
+            flattened.push(...input.inputs);
+            canFlatten = true;
+          } else {
+            flattened.push(inputId);
+          }
+        }
+        if (canFlatten) {
+          relations[i] = { ...rel, inputs: flattened };
+          byId = new Map(
+            relations.map((candidate) => [candidate.id, candidate]),
+          );
+          changed = true;
+          break;
+        }
+      }
+
+      if (rel.op === "project") {
+        const inputRel = byId.get(rel.input);
+        if (!inputRel) continue;
+
+        const isIdentity = esProjectIdentidad(rel, inputRel);
+
+        // Si es identidad y su entrada ya es un project o filter sobre project
+        if (isIdentity) {
+          const targetId = rel.input;
+          relations = relations
+            .filter((r) => r.id !== rel.id)
+            .map((r) => redirigirReferencia(r, rel.id, targetId));
+
+          if (outputId === rel.id) {
+            outputId = targetId;
+          }
+          tables = redirigirTablas(tables, rel.id, targetId);
+          mappings = redirigirMappings(mappings, rel.id, targetId);
+
+          byId = new Map(relations.map((r) => [r.id, r]));
+          changed = true;
+          break;
+        }
+
+        if (inputRel.op === "union_all" && esProjectFusionable(rel)) {
+          const branches = entradasUnionDistribuibles(inputRel, byId);
+          if (branches) {
+            const branchProjects = branches.map((source, index) => ({
+              ...rel,
+              id: crearIdOptimizacion(
+                relations,
+                `${rel.id}__branch_${index + 1}_project`,
+              ),
+              input: source.id,
+            }));
+            const replacementUnion: RelacionVNext = {
+              ...inputRel,
+              id: rel.id,
+              inputs: branchProjects.map((project) => project.id),
+              fields: [...rel.fields],
+              schemaKnown: rel.schemaKnown,
+              fieldMetadata: rel.fieldMetadata,
+              span: rel.span,
+            };
+            relations = relations.map((candidate) =>
+              candidate.id === rel.id ? replacementUnion : candidate,
+            );
+            relations.push(...branchProjects);
+            byId = new Map(
+              relations.map((candidate) => [candidate.id, candidate]),
+            );
+            changed = true;
+            break;
+          }
+        }
+
+        if (
+          inputRel.op === "project" &&
+          esProjectFusionable(rel) &&
+          esProjectFusionable(inputRel)
+        ) {
+          const projections = rel.projections.map((projection) => {
+            const expression = sustituirProyeccionEnExpresion(
+              projection.expression,
+              inputRel.projections,
+            );
+            return expression ? { ...projection, expression } : undefined;
+          });
+          if (
+            projections.every(
+              (projection): projection is CampoLoadVNext => !!projection,
+            )
+          ) {
+            relations[i] = {
+              ...rel,
+              input: inputRel.input,
+              projections,
+            };
+            byId = new Map(
+              relations.map((candidate) => [candidate.id, candidate]),
+            );
+            changed = true;
+            break;
+          }
+        }
+
+        // Colapsa un project escalar consumido por un aggregate. Sustituye los
+        // aliases calculados (p. ej. Año_year) por su expresión original y
+        // conecta el aggregate directamente a la entrada del project.
+        if (esProjectFusionable(rel)) {
+          const consumers = relations.filter((candidate) =>
+            referenciaRelacion(candidate, rel.id),
+          );
+          const consumer = consumers.length === 1 ? consumers[0] : undefined;
+          const anchored =
+            outputId === rel.id ||
+            Object.values(tables).includes(rel.id) ||
+            Object.values(mappings).some(
+              (mapping) => mapping.relationId === rel.id,
+            );
+          if (consumer?.op === "aggregate" && !anchored) {
+            const projections = consumer.projections.map((projection) => {
+              const expression = sustituirProyeccionEnExpresion(
+                projection.expression,
+                rel.projections,
+              );
+              return expression ? { ...projection, expression } : undefined;
+            });
+            const groupBy = consumer.groupBy.map((expression) =>
+              sustituirProyeccionEnExpresion(expression, rel.projections),
+            );
+            if (
+              projections.every(
+                (projection): projection is CampoLoadVNext => !!projection,
+              ) &&
+              groupBy.every((expression): expression is string => !!expression)
+            ) {
+              const updatedAggregate: RelacionVNext = {
+                ...consumer,
+                input: rel.input,
+                projections,
+                groupBy,
+              };
+              relations = relations
+                .filter((candidate) => candidate.id !== rel.id)
+                .map((candidate) =>
+                  candidate.id === consumer.id ? updatedAggregate : candidate,
+                );
+              byId = new Map(
+                relations.map((candidate) => [candidate.id, candidate]),
+              );
+              changed = true;
+              break;
+            }
+          }
+        }
+
         // Colapso de project de salida sobre aggregate:
         // Si `rel` es la salida final, no tiene distinct, ni mappingLookups,
         // y su entrada `inputRel` es un `aggregate`.
+        const inputConsumers = relations.filter((candidate) =>
+          referenciaRelacion(candidate, inputRel.id),
+        );
+        const inputAggregateAnchored =
+          Object.values(tables).includes(inputRel.id) ||
+          Object.values(mappings).some(
+            (mapping) => mapping.relationId === inputRel.id,
+          );
         if (
           rel.id === outputId &&
-          !rel.distinct &&
-          (!rel.mappingLookups || rel.mappingLookups.length === 0) &&
-          (!rel.mapSubstringLookups || rel.mapSubstringLookups.length === 0) &&
-          inputRel.op === "aggregate"
+          esProjectFusionable(rel) &&
+          inputRel.op === "aggregate" &&
+          inputConsumers.length === 1 &&
+          inputConsumers[0]?.id === rel.id &&
+          !inputAggregateAnchored
         ) {
           const inputProjectionsMap = new Map<string, CampoLoadVNext>();
           for (const p of inputRel.projections) {
@@ -195,6 +449,8 @@ export function optimizarPlanRelacionalVNext(
               .map((r) => (r.id === inputRel.id ? updatedAggregate : r));
 
             outputId = inputRel.id;
+            tables = redirigirTablas(tables, rel.id, inputRel.id);
+            mappings = redirigirMappings(mappings, rel.id, inputRel.id);
             byId = new Map(relations.map((r) => [r.id, r]));
             changed = true;
             break;
@@ -207,52 +463,8 @@ export function optimizarPlanRelacionalVNext(
   return {
     ...plan,
     relations,
+    tables,
+    mappings,
     outputRelationId: outputId,
   };
-}
-
-function redirigirReferencia(
-  rel: RelacionVNext,
-  fromId: string,
-  toId: string,
-): RelacionVNext {
-  switch (rel.op) {
-    case "filter":
-    case "project":
-    case "aggregate":
-    case "sort":
-    case "limit":
-    case "semi_filter":
-    case "unpivot":
-    case "generic":
-    case "stateful":
-      if (rel.input === fromId) {
-        return { ...rel, input: toId } as RelacionVNext;
-      }
-      return rel;
-    case "join": {
-      let updated = false;
-      let left = rel.left;
-      let right = rel.right;
-      if (left === fromId) {
-        left = toId;
-        updated = true;
-      }
-      if (right === fromId) {
-        right = toId;
-        updated = true;
-      }
-      return updated ? ({ ...rel, left, right } as RelacionVNext) : rel;
-    }
-    case "union_all":
-      if (rel.inputs.includes(fromId)) {
-        return {
-          ...rel,
-          inputs: rel.inputs.map((id) => (id === fromId ? toId : id)),
-        } as RelacionVNext;
-      }
-      return rel;
-    default:
-      return rel;
-  }
 }

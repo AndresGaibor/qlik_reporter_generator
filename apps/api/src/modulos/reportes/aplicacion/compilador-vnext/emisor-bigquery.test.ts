@@ -209,6 +209,71 @@ describe("emisión BigQuery vNext fase 1", () => {
     expect(result.sql.match(/FROM `p\.d\.ventas`/g)).toHaveLength(1);
     expect(result.sql.match(/SUM\(`monto`\)/g)).toHaveLength(1);
   });
+  it("aplana filtro final sobre proyección de una vista simple sin subconsulta", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD Tipo, [Transacción], [Año], Mes, Fecha, Bodega, Sub_bodega;
+      SQL SELECT Tipo, \`Transacción\`, \`Año\`, Mes, Fecha, Bodega, Sub_bodega
+      FROM \`lafavorita-182519.EDWH_REP.VW_VENTAS_MENSUALES_QL\`;
+
+      [Salida]:
+      NOCONCATENATE
+      LOAD Tipo, [Transacción], [Año], Mes, Fecha, Bodega, Sub_bodega
+      RESIDENT [Base]
+      WHERE Fecha = '2026-06-01';
+    `);
+
+    expect(result.sql).toContain(
+      "FROM `lafavorita-182519.EDWH_REP.VW_VENTAS_MENSUALES_QL`",
+    );
+    expect(result.sql).toContain("WHERE `Fecha` = '2026-06-01'");
+    expect(result.sql).not.toContain("SELECT *\nFROM (");
+    expect(result.sql).not.toMatch(/FROM \(\s*SELECT[\s\S]*FROM \(/);
+  });
+
+  it("mantiene identificadores con acentos, espacios y aliases quoted al aplanar", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Base]: LOAD [Transacción], [Año], [Sub bodega] AS [Sub_bodega];
+      SQL SELECT \`Transacción\`, \`Año\`, \`Sub bodega\` FROM \`p.d.ventas\`;
+      [Salida]: NOCONCATENATE
+      LOAD [Transacción], [Año], [Sub_bodega]
+      RESIDENT [Base]
+      WHERE [Año] = 2026;
+    `);
+
+    expect(result.sql).toBe(
+      "SELECT\n" +
+        "  `Transacción`,\n" +
+        "  `Año`,\n" +
+        "  `Sub bodega` AS `Sub_bodega`\n" +
+        "FROM `p.d.ventas`\n" +
+        "WHERE `Año` = 2026",
+    );
+  });
+
+  it("emite UNION ALL compatible sin adaptadores de subconsulta", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [A]: LOAD id, valor; SQL SELECT id, valor FROM \`p.d.a\`;
+      CONCATENATE ([A]) LOAD id, valor; SQL SELECT id, valor FROM \`p.d.b\`;
+      CONCATENATE ([A]) LOAD id, valor; SQL SELECT id, valor FROM \`p.d.c\`;
+    `);
+
+    expect(result.sql.match(/UNION ALL/g)).toHaveLength(2);
+    expect(result.sql).not.toContain("AS u1");
+    expect(result.sql).not.toContain("AS u2");
+    expect(result.sql).not.toMatch(/SELECT\n\s+u\d+\./);
+  });
+
+  it("mantiene adaptador de UNION cuando una rama no expone el mismo esquema", () => {
+    const result = compilarDataflowVNext(`
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [A]: LOAD id, valor; SQL SELECT id, valor FROM \`p.d.a\`;
+      CONCATENATE ([A]) LOAD id, valor, extra; SQL SELECT id, valor, extra FROM \`p.d.b\`;
+    `);
+    expect(result.sql).toContain("NULL AS `extra`");
+  });
 });
 
 describe("emisión BigQuery de estado inter-record", () => {

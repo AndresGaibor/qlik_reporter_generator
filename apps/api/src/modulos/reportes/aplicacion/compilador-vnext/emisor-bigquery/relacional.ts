@@ -45,17 +45,38 @@ export function emitirJoin(
 export function emitirUnion(
   relation: Extract<RelacionVNext, { op: "union_all" }>,
   byId: Map<string, RelacionVNext>,
-  emit: (id: string) => string,
+  emit: (id: string, includeInternal?: boolean) => string,
+  includeInternal = false,
 ): string {
+  const directInputs = relation.inputs.map((id) => byId.get(id));
+  if (
+    directInputs.every(
+      (input): input is RelacionVNext =>
+        !!input &&
+        input.fields.length === relation.fields.length &&
+        input.fields.every(
+          (field, index) => field === relation.fields[index],
+        ) &&
+        (!includeInternal || componentesInternosCompatibles(relation, input)),
+    )
+  ) {
+    return relation.inputs
+      .map((id) => emit(id, includeInternal))
+      .join("\nUNION ALL\n");
+  }
+
   const flattened = aplanarUnionSimple(relation.inputs, byId);
   if (
+    !includeInternal &&
     flattened?.every(
       (input) =>
         input.fields.length === relation.fields.length &&
         input.fields.every((field, index) => field === relation.fields[index]),
     )
   )
-    return flattened.map((input) => emit(input.id)).join("\nUNION ALL\n");
+    return flattened
+      .map((input) => emit(input.id, false))
+      .join("\nUNION ALL\n");
 
   return relation.inputs
     .map((id, index) => {
@@ -63,16 +84,74 @@ export function emitirUnion(
       if (!input)
         fail("BIGQUERY_UNION_INPUT_MISSING", `UNION referencia ${id}`);
       const alias = `u${index + 1}`;
-      const fields = relation.fields
-        .map((field) =>
-          input.fields.includes(field)
-            ? `${alias}.${quote(field)} AS ${quote(field)}`
-            : `NULL AS ${quote(field)}`,
-        )
-        .join(",\n  ");
-      return `SELECT\n  ${fields}\nFROM ${wrap(emit(id), alias)}`;
+      const visibleFields = relation.fields.map((field) =>
+        input.fields.includes(field)
+          ? `${alias}.${quote(field)} AS ${quote(field)}`
+          : `NULL AS ${quote(field)}`,
+      );
+      const internalFields = includeInternal
+        ? emitirCamposInternosUnion(relation, input, alias)
+        : [];
+      const fields = [...visibleFields, ...internalFields].join(",\n  ");
+      return `SELECT\n  ${fields}\nFROM ${wrap(emit(id, includeInternal), alias)}`;
     })
     .join("\nUNION ALL\n");
+}
+
+function componentesInternosCompatibles(
+  relation: Extract<RelacionVNext, { op: "union_all" }>,
+  input: RelacionVNext,
+): boolean {
+  const expected = relation.internalFields ?? [];
+  const actual = input.internalFields ?? [];
+  if (expected.length !== actual.length) return false;
+  return expected.every((field, index) => {
+    if (actual[index] !== field) return false;
+    const parent = relation.dualComponents?.[field];
+    const child = input.dualComponents?.[field];
+    return (
+      !!parent &&
+      !!child &&
+      parent.numericField === child.numericField &&
+      parent.textField === child.textField
+    );
+  });
+}
+
+function emitirCamposInternosUnion(
+  relation: Extract<RelacionVNext, { op: "union_all" }>,
+  input: RelacionVNext,
+  alias: string,
+): string[] {
+  const result: string[] = [];
+  for (const field of relation.internalFields ?? []) {
+    const target = relation.dualComponents?.[field];
+    if (!target)
+      fail(
+        "BIGQUERY_UNION_INTERNAL_FIELD_UNTYPED",
+        `UNION no tiene componentes internos tipados para ${field}`,
+      );
+    if (!input.fields.includes(field)) {
+      result.push(`NULL AS ${quote(target.numericField)}`);
+      if (target.textField !== field)
+        result.push(`NULL AS ${quote(target.textField)}`);
+      continue;
+    }
+    const source = input.dualComponents?.[field];
+    if (!source)
+      fail(
+        "BIGQUERY_UNION_DUAL_COMPONENT_MISSING",
+        `UNION no puede preservar el dual ${field} en ${input.id}`,
+      );
+    result.push(
+      `${alias}.${quote(source.numericField)} AS ${quote(target.numericField)}`,
+    );
+    if (target.textField !== field)
+      result.push(
+        `${alias}.${quote(source.textField)} AS ${quote(target.textField)}`,
+      );
+  }
+  return result;
 }
 
 export function aplanarUnionSimple(
@@ -93,6 +172,15 @@ export function aplanarUnionSimple(
     flattened.push(input);
   }
   return flattened;
+}
+
+function tieneCamposInternos(relation: RelacionVNext): boolean {
+  return (
+    (relation.internalFields?.length ?? 0) > 0 ||
+    Object.keys(relation.dualComponents ?? {}).length > 0 ||
+    ("dualExpressions" in relation &&
+      Object.keys(relation.dualExpressions ?? {}).length > 0)
+  );
 }
 
 export function emitirSemiFilter(

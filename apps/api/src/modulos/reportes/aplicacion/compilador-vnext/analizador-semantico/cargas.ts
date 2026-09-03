@@ -18,6 +18,7 @@ import {
   sameFieldSet,
 } from "./proyecciones.js";
 import type { CargaPendiente } from "./tipos.js";
+import { metadataDualUnion } from "./uniones.js";
 
 export function aplicarCarga(
   estado: EstadoAnalisisSemantico,
@@ -418,11 +419,13 @@ export function aplicarCarga(
       ...left.fields,
       ...current.fields.filter((field) => !left.fields.includes(field)),
     ];
+    const dual = metadataDualUnion([left, current], fields);
     const union = estado.add({
       op: "union_all",
       inputs: [left.id, current.id],
       fields,
       schemaKnown: true,
+      ...dual,
       span: load.span,
     });
     estado.assignTable(targetName, union.id);
@@ -516,11 +519,13 @@ export function aplicarCarga(
       const previous = estado.byId(
         estado.tables[estado.lastTableName] as string,
       );
+      const dual = metadataDualUnion([previous, current], previous.fields);
       const union = estado.add({
         op: "union_all",
         inputs: [previous.id, current.id],
         fields: previous.fields,
         schemaKnown: true,
+        ...dual,
         span: load.span,
       });
       estado.tables[estado.lastTableName] = union.id;

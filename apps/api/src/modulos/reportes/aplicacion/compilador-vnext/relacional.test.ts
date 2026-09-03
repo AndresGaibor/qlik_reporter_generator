@@ -173,6 +173,83 @@ describe("relacional vNext", () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it("preserva un dual a través de CONCATENATE antes de un RESIDENT agregado", () => {
+    const result = compilarDataflowVNext(
+      `
+      SET DateFormat='M/D/YYYY';
+      SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Fechas]: LOAD Num(Month(Fecha)) AS Mes, id;
+      SQL SELECT Fecha, id FROM ` +
+        "`p.d.ventas_2025`" +
+        `;
+      CONCATENATE ([Fechas]) LOAD Num(Month(Fecha)) AS Mes, id;
+      SQL SELECT Fecha, id FROM ` +
+        "`p.d.ventas_2026`" +
+        `;
+      [Salida]: LOAD Mes, Count(id) AS Total RESIDENT [Fechas] GROUP BY Mes;
+    `,
+    );
+
+    expect(result.sql).toContain("UNION ALL");
+    expect(result.sql).toContain("COUNT(`id`) AS `Total`");
+    expect(result.sql).toContain("__qlik_dual_Mes__numeric");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("rellena con NULL los componentes duales cuando una rama CONCATENATE no tiene el campo", () => {
+    const result = compilarDataflowVNext(
+      `
+      SET DateFormat='M/D/YYYY';
+      SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+      LIB CONNECT TO [Google BigQuery:Prod];
+      [Fechas]: LOAD Num(Month(Fecha)) AS Mes, id;
+      SQL SELECT Fecha, id FROM ` +
+        "`p.d.ventas_2025`" +
+        `;
+      CONCATENATE ([Fechas]) LOAD id;
+      SQL SELECT id FROM ` +
+        "`p.d.ventas_2026`" +
+        `;
+      [Salida]: LOAD Mes, Count(id) AS Total RESIDENT [Fechas] GROUP BY Mes;
+    `,
+    );
+
+    expect(result.sql).toContain("NULL AS `__qlik_dual_Mes__numeric`");
+    expect(result.sql).toContain("COUNT(`id`) AS `Total`");
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("rechaza reutilizar un campo mezclado dual/no-dual después de CONCATENATE", () => {
+    const compileMixed = () =>
+      compilarDataflowVNext(
+        `
+        SET DateFormat='M/D/YYYY';
+        SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+        LIB CONNECT TO [Google BigQuery:Prod];
+        [Fechas]: LOAD Num(Month(Fecha)) AS Mes, id;
+        SQL SELECT Fecha, id FROM ` +
+          "`p.d.ventas_2025`" +
+          `;
+        CONCATENATE ([Fechas]) LOAD categoria AS Mes, id;
+        SQL SELECT categoria, id FROM ` +
+          "`p.d.ventas_2026`" +
+          `;
+        [Salida]: LOAD Mes, Count(id) AS Total RESIDENT [Fechas] GROUP BY Mes;
+      `,
+      );
+
+    try {
+      compileMixed();
+      throw new Error("debió rechazar el dual mezclado");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ErrorCompilacionVNext);
+      expect((error as ErrorCompilacionVNext).diagnostic.code).toBe(
+        "DUAL_FIELD_REUSE_REQUIRES_TYPED_LOWERING",
+      );
+    }
+  });
+
   it("Generic queda explícitamente no exportable a una sola relación", async () => {
     try {
       await compile("qlik-generic-load.qlik");

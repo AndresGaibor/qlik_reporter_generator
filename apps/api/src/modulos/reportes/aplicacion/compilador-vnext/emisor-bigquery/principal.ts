@@ -1,6 +1,8 @@
 import type { EntornoExpresionQlik } from "../expresiones-qlik.js";
 import type { OpcionesCompilacionVNext } from "../index.js";
 import type { PlanCompilacionVNext, RelacionVNext } from "../ir.js";
+import { esProjectFusionable } from "../optimizador/capacidades.js";
+import { sustituirProyeccionEnExpresion } from "../optimizador/expresiones.js";
 import {
   construirMapSubstringBindings,
   entornoAgregacion,
@@ -197,6 +199,34 @@ export function emitirRelacion(
       return relation.sql.trim().replace(/;\s*$/, "");
     case "filter": {
       const input = byId.get(relation.input);
+      if (input?.op === "project" && esProjectFusionable(input)) {
+        const condition = sustituirProyeccionEnExpresion(
+          relation.condition,
+          input.projections,
+        );
+        const projectInput = byId.get(input.input);
+        if (condition && projectInput) {
+          const projectEnvironment = entornoProyeccion(
+            input,
+            projectInput,
+            environment,
+            construirMapSubstringBindings(input, byId, emit),
+          );
+          const from = emitirFuenteParaProyeccion(
+            input.input,
+            input,
+            byId,
+            emit,
+            environment,
+          );
+          return `SELECT\n  ${emitFields(
+            input.projections,
+            projectEnvironment,
+            input,
+            includeInternal,
+          )}\nFROM ${from}\nWHERE ${qlik(condition, "condition", projectEnvironment)}`;
+        }
+      }
       const filterEnvironment = {
         ...environment,
         ...metadataDeEntrada(input, environment),
@@ -312,7 +342,7 @@ export function emitirRelacion(
     case "join":
       return emitirJoin(relation, byId, emit);
     case "union_all":
-      return emitirUnion(relation, byId, emit);
+      return emitirUnion(relation, byId, emit, includeInternal);
     case "semi_filter":
       return emitirSemiFilter(relation, emit);
     case "unpivot":
