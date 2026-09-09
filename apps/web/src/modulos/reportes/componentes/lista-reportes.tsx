@@ -36,7 +36,7 @@ export function ListaReportes({
   }
   return (
     <div className="overflow-visible rounded-lg border border-line-200 bg-surface">
-      <div className="hidden grid-cols-[minmax(0,1.45fr)_minmax(220px,0.85fr)_230px_240px] gap-5 border-b border-line-200 bg-app/50 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 lg:grid">
+      <div className="hidden grid-cols-[minmax(0,1.45fr)_minmax(180px,0.75fr)_230px_320px] gap-5 border-b border-line-200 bg-app/50 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-400 lg:grid">
         <span>Reporte</span>
         <span>Espacio</span>
         <span title="Ordenado de más reciente a más antiguo">
@@ -52,7 +52,7 @@ export function ListaReportes({
           return (
             <article
               key={reporte.id}
-              className="grid gap-4 px-4 py-4 transition-colors hover:bg-hover/60 sm:px-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(220px,0.85fr)_230px_240px] lg:items-center lg:gap-5"
+              className="grid gap-4 px-4 py-4 transition-colors hover:bg-hover/60 sm:px-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(180px,0.75fr)_230px_320px] lg:items-center lg:gap-5"
             >
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -89,7 +89,7 @@ export function ListaReportes({
                   {actividad.etiqueta}
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+              <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
                 <Button
                   variant="outline"
                   size="sm"

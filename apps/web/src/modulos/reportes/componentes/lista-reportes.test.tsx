@@ -91,3 +91,26 @@ test("identifica visualmente un Dataflow compartido", () => {
   );
   expect(html).toContain("Compartido contigo");
 });
+
+test("mantiene las acciones en una sola fila en escritorio", () => {
+  const html = renderToStaticMarkup(
+    ListaReportes({
+      reportes: [
+        {
+          id: "55555555-5555-4555-8555-555555555555",
+          nombre: "Ventas",
+          espacioId: "sp-1",
+          espacioNombre: "Corp. Favorita",
+          modificadoEn: "2026-09-09T13:49:00Z",
+        },
+      ],
+      idEjecutando: null,
+      onEjecutar: () => {},
+      onCompartir: () => {},
+      hayFiltros: false,
+    }),
+  );
+
+  expect(html).toContain("lg:flex-nowrap");
+  expect(html).toContain("_320px]");
+});
