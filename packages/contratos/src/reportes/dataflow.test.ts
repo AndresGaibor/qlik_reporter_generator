@@ -44,10 +44,12 @@ describe("contratos de reportes Dataflow", () => {
       modificadoEn: "2026-08-19T00:00:00.000Z",
       creadoEn: "2026-08-10T00:00:00.000Z",
       ultimaEjecucionEn: "2026-08-20T12:00:00.000Z",
+      creadoPorNombre: "Andrés Gaibor",
     });
 
     expect(resultado.creadoEn).toBe("2026-08-10T00:00:00.000Z");
     expect(resultado.ultimaEjecucionEn).toBe("2026-08-20T12:00:00.000Z");
+    expect(resultado.creadoPorNombre).toBe("Andrés Gaibor");
     expect(resultado).not.toHaveProperty("activa");
   });
 

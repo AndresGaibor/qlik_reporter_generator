@@ -25,4 +25,19 @@ describe("ConsultaFlujosQlik", () => {
       }),
     ]);
   });
+  it("conserva el identificador del creador entregado por Qlik", async () => {
+    const consulta = new ConsultaFlujosQlik({
+      listarFlujos: async () => [
+        { id: "df-1", name: "Ventas", creatorId: "user-1" },
+      ],
+      listarEspacios: async () => [],
+    } as never);
+
+    expect(await consulta.listar()).toEqual([
+      expect.objectContaining({
+        id: "df-1",
+        creadorId: "user-1",
+      }),
+    ]);
+  });
 });

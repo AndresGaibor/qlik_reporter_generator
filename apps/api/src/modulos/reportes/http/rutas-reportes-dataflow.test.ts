@@ -62,6 +62,7 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
                   spaceId?: string;
                   createdAt?: string;
                   updatedAt?: string;
+                  creatorId?: string;
                 }>
               >
             )(espacioId)
@@ -73,6 +74,7 @@ function appCon(qlik: Record<string, unknown>, extras = {}) {
             espacioNombre: f.spaceId ?? "Espacio personal",
             ...(f.createdAt ? { creadoEn: f.createdAt } : {}),
             ...(f.updatedAt ? { modificadoEn: f.updatedAt } : {}),
+            ...(f.creatorId ? { creadorId: f.creatorId } : {}),
           })),
       }),
       resolverBigQuery: async () => ({
@@ -216,11 +218,23 @@ describe("fachada /api/reportes para Dataflows", () => {
 
   it("lista Dataflows Qlik y aplica búsqueda y espacio, sin leer reportes locales", async () => {
     const listarFlujos = vi.fn(async () => [
-      { id: "df-1", name: "Ventas", spaceId: "sp-1" },
+      {
+        id: "df-1",
+        name: "Ventas",
+        spaceId: "sp-1",
+        creatorId: "user-1",
+      },
       { id: "df-2", name: "Compras", spaceId: "sp-2" },
     ]);
     const app = appCon(
-      { listarFlujos, listarEspacios: vi.fn(async () => []) },
+      {
+        listarFlujos,
+        listarEspacios: vi.fn(async () => []),
+        obtenerUsuario: vi.fn(async () => ({
+          id: "user-1",
+          name: "Andrés Gaibor",
+        })),
+      },
       {
         repositorioReportes: {
           listar: vi.fn(),
@@ -236,8 +250,48 @@ describe("fachada /api/reportes para Dataflows", () => {
     expect(respuesta.status).toBe(200);
     expect(listarFlujos).toHaveBeenCalledWith("sp-1");
     expect((await respuesta.json()).datos).toEqual([
-      expect.objectContaining({ id: "df-1", nombre: "Ventas" }),
+      expect.objectContaining({
+        id: "df-1",
+        nombre: "Ventas",
+        creadoPorNombre: "Andrés Gaibor",
+      }),
     ]);
+  });
+
+  it("resuelve creadores una vez por usuario y no falla si Qlik no encuentra uno", async () => {
+    const consultados: string[] = [];
+    const app = appCon({
+      listarFlujos: vi.fn(async () => [
+        { id: "df-1", name: "Ventas", creatorId: "user-1" },
+        { id: "df-2", name: "Compras", creatorId: "user-1" },
+        { id: "df-3", name: "Inventario", creatorId: "user-x" },
+      ]),
+      obtenerUsuario: vi.fn(async (id: string) => {
+        consultados.push(id);
+        if (id === "user-x") throw new Error("Usuario no disponible");
+        return { id, name: "Andrés Gaibor" };
+      }),
+    });
+
+    const respuesta = await app.request("/api/reportes");
+    const datos = (await respuesta.json()).datos;
+
+    expect(consultados.sort()).toEqual(["user-1", "user-x"]);
+    expect(
+      datos.find((item: { id: string }) => item.id === "df-1"),
+    ).toMatchObject({
+      creadoPorNombre: "Andrés Gaibor",
+    });
+    expect(
+      datos.find((item: { id: string }) => item.id === "df-2"),
+    ).toMatchObject({
+      creadoPorNombre: "Andrés Gaibor",
+    });
+    expect(
+      datos.find((item: { id: string }) => item.id === "df-3"),
+    ).toMatchObject({
+      creadoPorNombre: null,
+    });
   });
 
   it("ordena reportes por última ejecución y usa creación como respaldo", async () => {

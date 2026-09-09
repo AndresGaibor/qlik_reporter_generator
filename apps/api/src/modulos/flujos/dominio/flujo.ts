@@ -5,6 +5,7 @@ export interface Flujo {
   espacioId?: string;
   espacioNombre: string;
   propietarioId?: string;
+  creadorId?: string;
   creadoEn?: string;
   modificadoEn?: string;
 }

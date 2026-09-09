@@ -27,6 +27,7 @@ export interface FlujoQlik {
   spaceId?: string;
   owner?: { id: string; name: string };
   ownerId?: string;
+  creatorId?: string;
   createdDate?: string;
   modifiedDate?: string;
   createdAt?: string;

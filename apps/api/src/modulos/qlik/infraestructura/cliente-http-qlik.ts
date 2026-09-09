@@ -272,6 +272,7 @@ export class ClienteHttpQlik implements ServicioQlik {
           description: obtenerDescripcionItem(item),
           spaceId: item.spaceId ? String(item.spaceId) : undefined,
           ownerId: item.ownerId ? String(item.ownerId) : undefined,
+          creatorId: item.creatorId ? String(item.creatorId) : undefined,
           createdAt: item.resourceCreatedAt
             ? String(item.resourceCreatedAt)
             : undefined,

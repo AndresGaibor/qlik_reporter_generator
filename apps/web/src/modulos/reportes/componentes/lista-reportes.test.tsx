@@ -8,6 +8,7 @@ test("muestra nombre y enlace del Dataflow como reporte", () => {
     nombre: "Reporte Ventas",
     espacioId: "sp-1",
     espacioNombre: "Ventas",
+    creadoPorNombre: "Andrés Gaibor",
     modificadoEn: "2026-08-18T12:00:00Z",
   };
   expect(
@@ -18,6 +19,16 @@ test("muestra nombre y enlace del Dataflow como reporte", () => {
       hayFiltros: false,
     }),
   ).toBeTruthy();
+  const html = renderToStaticMarkup(
+    ListaReportes({
+      reportes: [reporte],
+      idEjecutando: null,
+      onEjecutar: () => {},
+      hayFiltros: false,
+    }),
+  );
+  expect(html).toContain("Creado por");
+  expect(html).toContain("Andrés Gaibor");
 });
 
 test("muestra la última ejecución como la actividad que explica el orden", () => {

@@ -182,6 +182,7 @@ export const esquemaResumenReporte = z
     modificadoEn: z.string().datetime().nullable(),
     creadoEn: z.string().datetime().nullable().optional(),
     ultimaEjecucionEn: z.string().datetime().nullable().optional(),
+    creadoPorNombre: z.string().nullable().optional(),
     propietarioIdQlik: z.string().nullable().optional(),
     esPropietario: z.boolean().optional(),
     compartidoConmigo: z.boolean().optional(),

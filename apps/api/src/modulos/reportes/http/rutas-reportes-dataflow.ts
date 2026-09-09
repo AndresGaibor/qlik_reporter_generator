@@ -209,6 +209,10 @@ export function crearRutasReportesDataflow(
       compartidos,
       Boolean(esAdministrador),
     );
+    const nombresCreadores = await resolverNombresCreadores(
+      await dependencias.resolverQlik(c),
+      flujosVisibles,
+    );
     const reportes = flujosVisibles
       .map((flujo) => ({
         id: flujo.id,
@@ -219,6 +223,9 @@ export function crearRutasReportesDataflow(
         creadoEn: flujo.creadoEn ?? null,
         ultimaEjecucionEn:
           ultimaEjecucionPorFlujo.get(flujo.id)?.toISOString() ?? null,
+        creadoPorNombre: flujo.creadorId
+          ? (nombresCreadores.get(flujo.creadorId) ?? null)
+          : null,
         propietarioIdQlik: flujo.propietarioId ?? null,
         esPropietario: flujo.propietarioId === sesion.usuarioIdQlik,
         compartidoConmigo: compartidos.get(flujo.id)?.directo ?? false,
@@ -233,8 +240,16 @@ export function crearRutasReportesDataflow(
   rutas.get("/:flujoId", async (c) => {
     const flujo = await obtenerFlujo(c);
     if (!flujo) return noEncontradoDataflow(c);
+    const nombresCreadores = await resolverNombresCreadores(
+      await dependencias.resolverQlik(c),
+      [flujo],
+    );
+    const { creadorId, ...detalleFlujo } = flujo;
     return responderExito(c, {
-      ...flujo,
+      ...detalleFlujo,
+      creadoPorNombre: creadorId
+        ? (nombresCreadores.get(creadorId) ?? null)
+        : null,
       carpetaDescargas: construirCarpetaDescargasReporte(flujo.nombre),
     });
   });
@@ -516,6 +531,30 @@ export function crearRutasReportesDataflow(
     }
   });
   return rutas;
+}
+
+async function resolverNombresCreadores(
+  qlik: PuertoQlik,
+  flujos: Flujo[],
+): Promise<Map<string, string>> {
+  const ids = [
+    ...new Set(
+      flujos
+        .map((flujo) => flujo.creadorId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const resultados = await Promise.allSettled(
+    ids.map((id) => qlik.obtenerUsuario(id, "name")),
+  );
+  const nombres = new Map<string, string>();
+  resultados.forEach((resultado, indice) => {
+    if (resultado.status !== "fulfilled") return;
+    const nombre = resultado.value.name?.trim();
+    const id = ids[indice];
+    if (id && nombre) nombres.set(id, nombre);
+  });
+  return nombres;
 }
 
 export function filtrarFlujosVisibles(

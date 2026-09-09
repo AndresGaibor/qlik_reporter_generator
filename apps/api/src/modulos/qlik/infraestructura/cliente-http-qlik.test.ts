@@ -87,6 +87,7 @@ describe("ClienteHttpQlik", () => {
             id: "incluido-1",
             resourceId: "flujo-1",
             name: "Ventas",
+            creatorId: "user-creator-1",
             description: "Creado por QLIK GENERATOR para ventas",
             resourceSubType: "qix-df",
             resourceAttributes: {
@@ -132,6 +133,7 @@ describe("ClienteHttpQlik", () => {
 
     expect(flujos.map((flujo) => flujo.id)).toEqual(["flujo-1", "incluido-2"]);
     expect(flujos[0]?.appId).toBe("app-real-1");
+    expect(flujos[0]?.creatorId).toBe("user-creator-1");
   });
 
   it("valida el script mediante el endpoint nativo de Qlik", async () => {
