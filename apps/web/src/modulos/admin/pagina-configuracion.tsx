@@ -1,35 +1,38 @@
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { EstadoCarga } from "@/compartido/componentes/ui/estado-carga";
 import { PageLayout } from "@/compartido/componentes/ui/page-layout";
+import { obtenerSesion } from "@/modulos/autenticacion/api";
 import { useQuery } from "@tanstack/react-query";
-import { obtenerTenants } from "./api";
 import { PaginaDetalleTenant } from "./pagina-detalle-tenant";
-import { seleccionarConfiguracionPrincipal } from "./utiles-configuracion";
 
 export function PaginaConfiguracion() {
-  const configuraciones = useQuery({
-    queryKey: ["admin-tenants"],
-    queryFn: obtenerTenants,
+  const sesion = useQuery({
+    queryKey: ["sesion"],
+    queryFn: obtenerSesion,
+    retry: false,
   });
 
-  if (configuraciones.isLoading) {
+  if (sesion.isLoading) {
     return <EstadoCarga mensaje="Cargando configuración..." />;
   }
 
-  if (configuraciones.isError) {
+  if (sesion.isError) {
     return (
       <EstadoError
         mensaje="No pudimos cargar la configuración de la plataforma."
-        onReintentar={() => configuraciones.refetch()}
+        onReintentar={() => sesion.refetch()}
       />
     );
   }
 
-  const configuracion = seleccionarConfiguracionPrincipal(
-    configuraciones.data ?? [],
+  const tenantActivo = sesion.data?.tenantsDisponibles.find(
+    (tenant) => tenant.id === sesion.data?.tenantActivoId,
   );
+  const organizacionId =
+    tenantActivo?.organizacionId ??
+    sesion.data?.tenantsDisponibles[0]?.organizacionId;
 
-  if (!configuracion) {
+  if (!organizacionId) {
     return (
       <PageLayout>
         <div className="rounded-lg border border-danger-200 bg-surface p-6 text-center">
@@ -45,5 +48,5 @@ export function PaginaConfiguracion() {
     );
   }
 
-  return <PaginaDetalleTenant tenantId={configuracion.id} modoConfiguracion />;
+  return <PaginaDetalleTenant tenantId={organizacionId} modoConfiguracion />;
 }
