@@ -130,6 +130,9 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
   const idsDescargables = descargasAccesibles.data
     ? new Set(descargasAccesibles.data.map((descarga) => descarga.id))
     : undefined;
+  const resumenesDescarga = descargasAccesibles.data
+    ? new Map(descargasAccesibles.data.map((descarga) => [descarga.id, descarga]))
+    : undefined;
 
   const cancelar = useMutation({
     mutationFn: (ejecucionId: string) =>
@@ -447,6 +450,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
               hashConfiguracionActual={preflight.data?.hashDataflowSha256}
               id={id}
               ejecucionesDescargables={idsDescargables}
+              resumenesDescarga={resumenesDescarga}
             />
           )}
         </div>

@@ -11,6 +11,11 @@ export function crearRutasDescargas(rutaRaiz: AnyRoute) {
     }),
     createRoute({
       getParentRoute: () => rutaRaiz,
+      path: "/descargas/ejecuciones/$ejecucionId",
+      component: PaginaDescargas,
+    }),
+    createRoute({
+      getParentRoute: () => rutaRaiz,
       path: "/descargas/administracion",
       component: PaginaAdministracionDescargas,
     }),

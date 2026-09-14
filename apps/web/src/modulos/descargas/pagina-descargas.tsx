@@ -48,7 +48,7 @@ export function PaginaDescargas() {
   const [rutaGcs, setRutaGcs] = useRutaPersistidaEnUrl("almacenamiento");
   const ejecucionDirectaId =
     typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("ejecucion")
+      ? obtenerEjecucionDirecta(window.location.pathname, window.location.search)
       : null;
 
   const { data: sesion } = useQuery({
@@ -680,6 +680,14 @@ function ResumenPartesDescarga({
       </a>
     </div>
   );
+}
+
+function obtenerEjecucionDirecta(pathname: string, search: string): string | null {
+  const coincidencia = pathname.match(
+    /^\/descargas\/ejecuciones\/([^/]+)\/?$/,
+  );
+  if (coincidencia?.[1]) return decodeURIComponent(coincidencia[1]);
+  return new URLSearchParams(search).get("ejecucion");
 }
 
 function useRutaPersistidaEnUrl(clave: "carpeta" | "almacenamiento") {

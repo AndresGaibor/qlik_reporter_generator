@@ -1,4 +1,5 @@
 import type { DetalleEjecucionReporte } from "@qlik/contratos";
+import type { ResumenDescargaEjecucion } from "@qlik/contratos/descargas";
 import { act } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { afterEach, expect, test, vi } from "vitest";
@@ -50,6 +51,7 @@ function montar(
   ejecucion: DetalleEjecucionReporte = ejecucionBase,
   id?: string,
   ejecucionesDescargables?: ReadonlySet<string>,
+  resumenesDescarga?: ReadonlyMap<string, ResumenDescargaEjecucion>,
 ) {
   container = document.createElement("div");
   document.body.append(container);
@@ -61,6 +63,7 @@ function montar(
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
         id={id}
         ejecucionesDescargables={ejecucionesDescargables}
+        resumenesDescarga={resumenesDescarga}
       />,
     );
   });
@@ -91,8 +94,8 @@ test("Ver archivos abre el reporte y la ejecución seleccionada", () => {
   expect(boton).toBeTruthy();
   act(() => boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
   expect(navegar).toHaveBeenCalledWith({
-    to: "/descargas",
-    search: { ejecucion: "e-1" },
+    to: "/descargas/ejecuciones/$ejecucionId",
+    params: { ejecucionId: "e-1" },
   });
 });
 
@@ -101,6 +104,42 @@ test("no ofrece Ver archivos cuando la ejecución no está compartida", () => {
   const vista = montar(false, ejecucionBase, "reporte-25", new Set());
   expect(vista.textContent).not.toContain("Ver archivos");
   expect(vista.textContent).toContain("Archivos no compartidos contigo");
+});
+
+
+
+test("muestra archivos agrupados y registros cuando la metadata está disponible", () => {
+  const resumen = {
+    id: "e-1",
+    flujoIdQlik: "flujo-1",
+    creadoPorUsuarioId: null,
+    propietarioCorreo: null,
+    reporteNombre: "Test Flow",
+    automatizacionIdQlik: "auto-1",
+    estado: "completada",
+    mensajeError: null,
+    creadoEn: "2026-08-18T12:00:00.000Z",
+    finalizadoEn: "2026-08-18T12:01:30.000Z",
+    archivos: [],
+    filasExportadas: "2458729",
+    resultado: {
+      estado: "disponible",
+      filasExportadas: "2458729",
+      fuenteFilasExportadas: "procesamiento_resultado",
+      partesDescarga: 3,
+      tamanoBytes: "10485760",
+    },
+  } satisfies ResumenDescargaEjecucion;
+  const vista = montar(
+    false,
+    ejecucionBase,
+    "reporte-25",
+    new Set(["e-1"]),
+    new Map([["e-1", resumen]]),
+  );
+
+  expect(vista.textContent).toContain("3 archivos agrupados");
+  expect(vista.textContent).toContain("2.458.729 registros");
 });
 
 test("mantiene el Job ID de BigQuery dentro de la auditoría técnica con acción de copia", () => {

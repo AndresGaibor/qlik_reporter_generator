@@ -1,5 +1,6 @@
 import { Icon } from "@/compartido/componentes/ui/icon";
 import type { DetalleEjecucionReporte } from "@qlik/contratos";
+import type { ResumenDescargaEjecucion } from "@qlik/contratos/descargas";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { calcularDuracion } from "../../utiles-presentacion-reporte";
@@ -28,11 +29,13 @@ export function HistorialAuditoriaReporte({
   hashConfiguracionActual,
   id,
   ejecucionesDescargables,
+  resumenesDescarga,
 }: {
   ejecuciones: DetalleEjecucionReporte[];
   hashConfiguracionActual?: string;
   id?: string;
   ejecucionesDescargables?: ReadonlySet<string>;
+  resumenesDescarga?: ReadonlyMap<string, ResumenDescargaEjecucion>;
   /** Compatibilidad con consumidores antiguos; la evidencia ahora siempre está disponible. */
   mostrarDetallesTecnicos?: boolean;
 }) {
@@ -56,7 +59,15 @@ export function HistorialAuditoriaReporte({
         </div>
       ) : (
         <div className="divide-y divide-line-200">
-          {ejecuciones.map((ejecucion) => (
+          {ejecuciones.map((ejecucion) => {
+            const resumenDescarga = resumenesDescarga?.get(ejecucion.id);
+            const filasDescarga =
+              resumenDescarga?.filasExportadas ??
+              resumenDescarga?.resultado?.filasExportadas ??
+              null;
+            const partesDescarga =
+              resumenDescarga?.resultado?.partesDescarga ?? null;
+            return (
             <article key={ejecucion.id} className="px-5 py-4 sm:px-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -108,6 +119,14 @@ export function HistorialAuditoriaReporte({
                       </>
                     )}
                   </p>
+                  {partesDescarga != null && (
+                    <p className="mt-2 text-sm font-medium text-ink-600">
+                      {partesDescarga} {partesDescarga === 1 ? "archivo agrupado" : "archivos agrupados"}
+                      {filasDescarga != null
+                        ? ` · ${Number(filasDescarga).toLocaleString("es-EC")} registros`
+                        : ""}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -120,10 +139,8 @@ export function HistorialAuditoriaReporte({
                     className="rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-700 hover:bg-hover"
                     onClick={() =>
                       void navegar({
-                        to: "/descargas",
-                        search: {
-                          ejecucion: ejecucion.id,
-                        },
+                        to: "/descargas/ejecuciones/$ejecucionId",
+                        params: { ejecucionId: ejecucion.id },
                       })
                     }
                   >
@@ -269,7 +286,8 @@ export function HistorialAuditoriaReporte({
                 </div>
               </details>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

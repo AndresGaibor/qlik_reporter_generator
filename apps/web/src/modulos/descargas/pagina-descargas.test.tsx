@@ -501,3 +501,15 @@ test("administrador en vista de usuario final no accede a ejecuciones ajenas no 
   expect(listarDescargasAdministracion).not.toHaveBeenCalled();
   expect(listarPartesNormalizadas).not.toHaveBeenCalledWith("e-admin-1");
 });
+
+
+test("abre una ejecución desde la ruta canónica por id", async () => {
+  window.history.replaceState({}, "", "/descargas/ejecuciones/e-1");
+  const vista = await montar();
+
+  await vi.waitFor(() =>
+    expect(vista.textContent).toContain("Archivos correspondientes únicamente a esta ejecución."),
+  );
+  await vi.waitFor(() => expect(vista.textContent).toContain("parte-001.csv"));
+  expect(vista.textContent).not.toContain("Mi carpeta");
+});

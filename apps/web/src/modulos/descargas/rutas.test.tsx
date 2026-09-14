@@ -7,3 +7,13 @@ test("la ruta principal conserva la experiencia de descargas normalizadas y comp
 
   expect(rutaPrincipal.options.component).toBe(PaginaDescargas);
 });
+
+test("registra una ruta canónica por id de ejecución", () => {
+  const rutas = crearRutasDescargas({} as never);
+  const rutaEjecucion = rutas.find(
+    (ruta) => ruta.options.path === "/descargas/ejecuciones/$ejecucionId",
+  );
+
+  expect(rutaEjecucion).toBeTruthy();
+  expect(rutaEjecucion?.options.component).toBe(PaginaDescargas);
+});
