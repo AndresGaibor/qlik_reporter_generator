@@ -84,6 +84,7 @@ function crearApp() {
     resolverQlik: async () => ({}) as never,
     repositorioReportes: {
       listarEjecucionesDescargas: async () => [],
+      guardarResultadoEjecucion: async () => undefined,
       obtenerEjecucionDescarga: async () => ({
         id: "test",
         estado: "completada",

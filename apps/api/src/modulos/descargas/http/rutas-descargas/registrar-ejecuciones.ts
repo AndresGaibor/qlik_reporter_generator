@@ -151,6 +151,19 @@ export function registrarRutasEjecuciones(
           fuentes,
           maximoFilas,
         );
+      } else {
+        const servicio = new ServicioDescargas(
+          dependencias.repositorioReportes,
+          almacenamiento,
+          dependencias.minutosFirma ?? 15,
+          maximoFilas,
+        );
+        await servicio.registrarResultadoNormalizado(c.req.param("id"), {
+          filas: estadoPartes.filas,
+          partes: estadoPartes.partes,
+          fuentes,
+          maximoFilas,
+        });
       }
       return responderExito(
         c,

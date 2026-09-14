@@ -26,6 +26,13 @@ function crearRepoMock() {
     ),
     marcarEjecucionCompletada: vi.fn(async () => undefined),
     marcarGcsFinalizada: vi.fn(async () => undefined),
+    listarResultadosEjecuciones: vi.fn(
+      async () => new Map<string, unknown>(),
+    ),
+    guardarResultadoEjecucion: vi.fn(async () => undefined),
+    listarJobsBigQueryPorEjecucionIds: vi.fn(
+      async () => new Map<string, unknown[]>(),
+    ),
     obtenerEjecucionDescarga: vi.fn(
       async () =>
         null as {
@@ -520,4 +527,255 @@ describe("ServicioDescargas", () => {
     expect(resultado[0]?.estado).toBe("completada");
     expect(repo.marcarGcsFinalizada).not.toHaveBeenCalled();
   });
+
+  it("prefiere metadata persistida de resultado sobre la heurística de BigQuery", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-persistida",
+        flujoIdQlik: "flujo-1",
+        creadoPorUsuarioId: null,
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-persistida/",
+        creadoEn: new Date("2026-09-14T20:00:00Z"),
+        finalizadoEn: new Date("2026-09-14T20:01:00Z"),
+        filasExportadas: 2_458_729n,
+        fuenteFilasExportadas: "procesamiento_resultado",
+      },
+    ] as never);
+    repo.listarResultadosEjecuciones.mockResolvedValue(
+      new Map([
+        [
+          "e-persistida",
+          {
+            ejecucionReporteId: "e-persistida",
+            estado: "disponible",
+            tamanoAlmacenadoBytes: 10_485_760n,
+            objetosFuente: 17n,
+            partesDescarga: 3,
+            maximoFilasPorArchivoAplicado: 1_000_000n,
+            disponibleEn: new Date("2026-09-14T20:01:00Z"),
+          },
+        ],
+      ]),
+    );
+    const alm = crearAlmacenamientoMock([
+      { nombre: "origen-000.csv.gz", tamanoBytes: 1024 },
+    ]);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+      1_000_000,
+    );
+
+    const [resultado] = await servicio.listarEjecuciones(CONTEXTO);
+
+    expect(resultado?.filasExportadas).toBe("2458729");
+    expect(resultado?.fuenteFilasExportadas).toBe("procesamiento_resultado");
+    expect(resultado?.resultado).toEqual(
+      expect.objectContaining({
+        estado: "disponible",
+        partesDescarga: 3,
+        tamanoBytes: "10485760",
+      }),
+    );
+    expect(repo.guardarResultadoEjecucion).not.toHaveBeenCalled();
+  });
+
+  it("materializa metadata histórica usando filas BigQuery y objetos GCS", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-historica",
+        flujoIdQlik: "flujo-1",
+        creadoPorUsuarioId: null,
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-historica/",
+        creadoEn: new Date("2026-09-14T20:00:00Z"),
+        finalizadoEn: new Date("2026-09-14T20:01:00Z"),
+        jobIdBigQuery: "job-historica",
+        filasExportadas: null,
+        fuenteFilasExportadas: null,
+      },
+    ] as never);
+    repo.listarResultadosEjecuciones.mockResolvedValue(new Map());
+    repo.listarJobsBigQueryPorEjecucionIds.mockResolvedValue(
+      new Map([
+        [
+          "e-historica",
+          [
+            {
+              ejecucionReporteId: "e-historica",
+              jobId: "job-historica",
+              parentJobId: null,
+              projectId: "proyecto",
+              location: "US",
+              tipo: "principal",
+              estado: "done",
+              creationTime: null,
+              startTime: null,
+              endTime: null,
+              duracionMs: null,
+              totalBytesProcessed: null,
+              totalBytesBilled: null,
+              totalSlotMs: null,
+              cacheHit: null,
+              statementType: "EXPORT_DATA",
+              errorReason: null,
+              errorMessage: null,
+              metadataJson: {
+                queryPlan: [{ recordsWritten: "2458729" }],
+              },
+            },
+          ],
+        ],
+      ]) as never,
+    );
+    const alm = crearAlmacenamientoMock([
+      { nombre: "origen-001.csv.gz", tamanoBytes: 2048 },
+      { nombre: "origen-002.csv.gz", tamanoBytes: 4096 },
+    ]);
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      alm,
+      15,
+      1_000_000,
+    );
+
+    const [resultado] = await servicio.listarEjecuciones(CONTEXTO);
+
+    expect(resultado?.filasExportadas).toBe("2458729");
+    expect(resultado?.resultado).toEqual(
+      expect.objectContaining({
+        estado: "disponible",
+        partesDescarga: 3,
+        tamanoBytes: "6144",
+      }),
+    );
+    expect(repo.guardarResultadoEjecucion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ejecucionReporteId: "e-historica",
+        estado: "disponible",
+        filasExportadas: 2_458_729n,
+        fuenteFilasExportadas: "procesamiento_resultado",
+        tamanoAlmacenadoBytes: 6_144n,
+        objetosFuente: 2n,
+        partesDescarga: 3,
+        maximoFilasPorArchivoAplicado: 1_000_000n,
+      }),
+    );
+  });
+
+  it("no inventa un archivo agrupado cuando BigQuery exportó cero registros", async () => {
+    const repo = crearRepoMock();
+    repo.listarEjecucionesDescargas.mockResolvedValue([
+      {
+        id: "e-vacia",
+        flujoIdQlik: "flujo-1",
+        creadoPorUsuarioId: null,
+        flujoNombreSnapshot: "Ventas",
+        automatizacionIdQlik: "auto-1",
+        estado: "completada",
+        mensajeError: null,
+        uriBaseGcs: "gs://bkt_dwh/POCs/TalendDescargados/ventas/e-vacia/",
+        creadoEn: new Date("2026-09-14T20:00:00Z"),
+        finalizadoEn: new Date("2026-09-14T20:01:00Z"),
+        jobIdBigQuery: "job-vacio",
+        filasExportadas: null,
+        fuenteFilasExportadas: null,
+      },
+    ] as never);
+    repo.listarResultadosEjecuciones.mockResolvedValue(new Map());
+    repo.listarJobsBigQueryPorEjecucionIds.mockResolvedValue(
+      new Map([
+        [
+          "e-vacia",
+          [
+            {
+              ejecucionReporteId: "e-vacia",
+              jobId: "job-vacio",
+              parentJobId: null,
+              projectId: "proyecto",
+              location: "US",
+              tipo: "principal",
+              estado: "done",
+              creationTime: null,
+              startTime: null,
+              endTime: null,
+              duracionMs: null,
+              totalBytesProcessed: null,
+              totalBytesBilled: null,
+              totalSlotMs: null,
+              cacheHit: null,
+              statementType: "EXPORT_DATA",
+              errorReason: null,
+              errorMessage: null,
+              metadataJson: { queryPlan: [{ recordsWritten: "0" }] },
+            },
+          ],
+        ],
+      ]) as never,
+    );
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      crearAlmacenamientoMock([]),
+      15,
+      1_000_000,
+    );
+
+    const [resultado] = await servicio.listarEjecuciones(CONTEXTO);
+
+    expect(resultado?.filasExportadas).toBe("0");
+    expect(resultado?.resultado?.partesDescarga).toBe(0);
+    expect(resultado?.resultado?.estado).toBe("sin_archivos");
+    expect(repo.guardarResultadoEjecucion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filasExportadas: 0n,
+        partesDescarga: 0,
+        estado: "sin_archivos",
+      }),
+    );
+  });
+
+
+  it("persiste el conteo y tamaño reales cuando las partes normalizadas terminan", async () => {
+    const repo = crearRepoMock();
+    const servicio = new ServicioDescargas(
+      repo as unknown as PuertoRepositorioReportes,
+      crearAlmacenamientoMock(),
+      15,
+      1_000_000,
+    );
+
+    await servicio.registrarResultadoNormalizado("e-normalizada", {
+      filas: "2458729",
+      partes: [
+        { tamanoBytes: 4_000_000 },
+        { tamanoBytes: 5_000_000 },
+        { tamanoBytes: 1_000_000 },
+      ],
+      fuentes: [{ tamanoBytes: 2_000_000 }, { tamanoBytes: 3_000_000 }],
+      maximoFilas: 1_000_000,
+    });
+
+    expect(repo.guardarResultadoEjecucion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ejecucionReporteId: "e-normalizada",
+        estado: "disponible",
+        filasExportadas: 2_458_729n,
+        partesDescarga: 3,
+        tamanoAlmacenadoBytes: 10_000_000n,
+        objetosFuente: 2n,
+        maximoFilasPorArchivoAplicado: 1_000_000n,
+      }),
+    );
+  });
+
 });

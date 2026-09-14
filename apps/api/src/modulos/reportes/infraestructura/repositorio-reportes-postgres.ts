@@ -5,14 +5,17 @@ import {
   ejecucionesReportes,
   jobsBigQueryEjecucion,
   reportesCompartidos,
+  resultadosEjecucionesReportes,
   usuarios,
 } from "../../../plataforma/persistencia/esquema.js";
 import type {
   CrearEjecucionReportePersistida,
   EjecucionReportePersistida,
+  GuardarResultadoEjecucionPersistido,
   JobBigQueryPersistido,
   PuertoRepositorioReportes,
   ResumenEjecucionDescarga,
+  ResultadoEjecucionPersistido,
 } from "../aplicacion/puertos/puerto-repositorio-reportes.js";
 
 export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
@@ -362,6 +365,8 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         bigqueryLocation: ejecucionesReportes.bigqueryLocation,
         bigqueryIniciadoEn: ejecucionesReportes.bigqueryIniciadoEn,
         bigqueryFinalizadoEn: ejecucionesReportes.bigqueryFinalizadoEn,
+        filasExportadas: ejecucionesReportes.filasExportadas,
+        fuenteFilasExportadas: ejecucionesReportes.fuenteFilasExportadas,
       })
       .from(ejecucionesReportes)
       .leftJoin(
@@ -384,7 +389,12 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
       )
       .orderBy(desc(ejecucionesReportes.creadoEn))
       .limit(Math.min(Math.max(limite, 1), 100));
-    return filas;
+    return filas.map((fila) => ({
+      ...fila,
+      fuenteFilasExportadas: normalizarFuenteFilasExportadas(
+        fila.fuenteFilasExportadas,
+      ),
+    }));
   }
 
   async obtenerEjecucionDescarga(contexto: {
@@ -419,6 +429,8 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         bigqueryLocation: ejecucionesReportes.bigqueryLocation,
         bigqueryIniciadoEn: ejecucionesReportes.bigqueryIniciadoEn,
         bigqueryFinalizadoEn: ejecucionesReportes.bigqueryFinalizadoEn,
+        filasExportadas: ejecucionesReportes.filasExportadas,
+        fuenteFilasExportadas: ejecucionesReportes.fuenteFilasExportadas,
       })
       .from(ejecucionesReportes)
       .leftJoin(
@@ -441,7 +453,92 @@ export class RepositorioReportesPostgres implements PuertoRepositorioReportes {
         ),
       )
       .limit(1);
-    return fila ?? null;
+    return fila
+      ? {
+          ...fila,
+          fuenteFilasExportadas: normalizarFuenteFilasExportadas(
+            fila.fuenteFilasExportadas,
+          ),
+        }
+      : null;
+  }
+
+  async listarResultadosEjecuciones(
+    ejecucionIds: string[],
+  ): Promise<Map<string, ResultadoEjecucionPersistido>> {
+    if (ejecucionIds.length === 0) return new Map();
+    const filas = await this.db
+      .select({
+        ejecucionReporteId: resultadosEjecucionesReportes.ejecucionReporteId,
+        estado: resultadosEjecucionesReportes.estado,
+        tamanoAlmacenadoBytes:
+          resultadosEjecucionesReportes.tamanoAlmacenadoBytes,
+        objetosFuente: resultadosEjecucionesReportes.objetosFuente,
+        partesDescarga: resultadosEjecucionesReportes.partesDescarga,
+        maximoFilasPorArchivoAplicado:
+          resultadosEjecucionesReportes.maximoFilasPorArchivoAplicado,
+        disponibleEn: resultadosEjecucionesReportes.disponibleEn,
+      })
+      .from(resultadosEjecucionesReportes)
+      .where(
+        inArray(resultadosEjecucionesReportes.ejecucionReporteId, ejecucionIds),
+      );
+    return new Map(
+      filas.map((fila) => [
+        fila.ejecucionReporteId,
+        fila as ResultadoEjecucionPersistido,
+      ]),
+    );
+  }
+
+  async guardarResultadoEjecucion(
+    entrada: GuardarResultadoEjecucionPersistido,
+  ): Promise<void> {
+    if (
+      entrada.filasExportadas !== undefined ||
+      entrada.fuenteFilasExportadas !== undefined
+    ) {
+      await this.db
+        .update(ejecucionesReportes)
+        .set({
+          ...(entrada.filasExportadas !== undefined
+            ? { filasExportadas: entrada.filasExportadas }
+            : {}),
+          ...(entrada.fuenteFilasExportadas !== undefined
+            ? { fuenteFilasExportadas: entrada.fuenteFilasExportadas }
+            : {}),
+          actualizadoEn: new Date(),
+        })
+        .where(eq(ejecucionesReportes.id, entrada.ejecucionReporteId));
+    }
+
+    const ahora = new Date();
+    await this.db
+      .insert(resultadosEjecucionesReportes)
+      .values({
+        ejecucionReporteId: entrada.ejecucionReporteId,
+        estado: entrada.estado,
+        tamanoAlmacenadoBytes: entrada.tamanoAlmacenadoBytes,
+        objetosFuente: entrada.objetosFuente,
+        partesDescarga: entrada.partesDescarga,
+        maximoFilasPorArchivoAplicado:
+          entrada.maximoFilasPorArchivoAplicado,
+        disponibleEn: entrada.disponibleEn,
+        actualizadoEn: ahora,
+      })
+      .onConflictDoUpdate({
+        target: resultadosEjecucionesReportes.ejecucionReporteId,
+        set: {
+          estado: entrada.estado,
+          tamanoAlmacenadoBytes: entrada.tamanoAlmacenadoBytes,
+          objetosFuente: entrada.objetosFuente,
+          partesDescarga: entrada.partesDescarga,
+          maximoFilasPorArchivoAplicado:
+            entrada.maximoFilasPorArchivoAplicado,
+          disponibleEn: entrada.disponibleEn,
+          actualizadoEn: ahora,
+        },
+      });
   }
 
   async obtenerEjecucionPorJobId(
@@ -619,4 +716,16 @@ function mapearJobBigQuery(
     errorMessage: fila.errorMessage,
     metadataJson: fila.metadataJson as Record<string, unknown> | null,
   };
+}
+
+function normalizarFuenteFilasExportadas(
+  valor: string | null,
+): "pipeline" | "procesamiento_resultado" | "legacy" | null {
+  if (
+    valor === "pipeline" ||
+    valor === "procesamiento_resultado" ||
+    valor === "legacy"
+  )
+    return valor;
+  return null;
 }

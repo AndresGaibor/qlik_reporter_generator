@@ -92,6 +92,34 @@ export interface EjecucionReportePersistida
   creadoEn?: Date;
 }
 
+export type FuenteFilasExportadasPersistida =
+  | "pipeline"
+  | "procesamiento_resultado"
+  | "legacy";
+
+export type EstadoResultadoEjecucionPersistido =
+  | "pendiente"
+  | "disponible"
+  | "sin_archivos"
+  | "eliminado"
+  | "error_parcial";
+
+export interface ResultadoEjecucionPersistido {
+  ejecucionReporteId: string;
+  estado: EstadoResultadoEjecucionPersistido;
+  tamanoAlmacenadoBytes: bigint | null;
+  objetosFuente: bigint | null;
+  partesDescarga: number | null;
+  maximoFilasPorArchivoAplicado: bigint | null;
+  disponibleEn: Date | null;
+}
+
+export interface GuardarResultadoEjecucionPersistido
+  extends ResultadoEjecucionPersistido {
+  filasExportadas?: bigint | null;
+  fuenteFilasExportadas?: FuenteFilasExportadasPersistida | null;
+}
+
 export interface ResumenEjecucionDescarga {
   id: string;
   flujoIdQlik: string;
@@ -111,6 +139,8 @@ export interface ResumenEjecucionDescarga {
   bigqueryLocation?: string | null;
   bigqueryIniciadoEn?: Date | null;
   bigqueryFinalizadoEn?: Date | null;
+  filasExportadas?: bigint | null;
+  fuenteFilasExportadas?: FuenteFilasExportadasPersistida | null;
 }
 
 export interface PuertoRepositorioReportes {
@@ -199,6 +229,12 @@ export interface PuertoRepositorioReportes {
     usuarioId?: string;
     esAdministrador?: boolean;
   }): Promise<ResumenEjecucionDescarga | null>;
+  listarResultadosEjecuciones(
+    ejecucionIds: string[],
+  ): Promise<Map<string, ResultadoEjecucionPersistido>>;
+  guardarResultadoEjecucion(
+    entrada: GuardarResultadoEjecucionPersistido,
+  ): Promise<void>;
   obtenerEjecucionPorJobId(
     jobId: string,
   ): Promise<EjecucionReportePersistida | null>;

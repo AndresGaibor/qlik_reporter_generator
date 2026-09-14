@@ -110,6 +110,7 @@ describe("GET /api/descargas", () => {
           finalizadoEn: new Date("2026-08-15T00:01:00Z"),
         },
       ],
+      listarResultadosEjecuciones: async () => new Map(),
       obtenerEjecucionDescarga: async () => null,
     };
     const rutas = crearRutasDescargas({
@@ -187,6 +188,7 @@ describe("GET /api/descargas", () => {
       resolverQlik,
       repositorioReportes: {
         listarEjecucionesDescargas,
+        listarResultadosEjecuciones: async () => new Map(),
         listarEjecuciones: listarHistorial,
         obtenerEjecucionDescarga: async () => null,
       } as unknown as PuertoRepositorioReportes,

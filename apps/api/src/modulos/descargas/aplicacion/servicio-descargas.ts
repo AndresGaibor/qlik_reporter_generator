@@ -10,6 +10,7 @@ import type {
   PuertoRepositorioReportes,
 } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
 import { MAXIMO_FILAS_DESCARGA_PREDETERMINADO } from "./particionar-csv-descarga.js";
+import { prefijoPartesNormalizadas } from "./preparar-partes-normalizadas.js";
 import { parsearUriGcsPermitida } from "./puerto-almacenamiento-descargas.js";
 import type { PuertoAlmacenamientoDescargas } from "./puerto-almacenamiento-descargas.js";
 
@@ -115,6 +116,41 @@ export class ServicioDescargas implements IServicioDescargas {
     };
   }
 
+  async registrarResultadoNormalizado(
+    ejecucionReporteId: string,
+    datos: {
+      filas: string | null;
+      partes: Array<{ tamanoBytes: number }>;
+      fuentes: Array<{ tamanoBytes: number }>;
+      maximoFilas: number;
+    },
+  ): Promise<void> {
+    const filas =
+      datos.filas != null && /^\d+$/.test(datos.filas)
+        ? BigInt(datos.filas)
+        : null;
+    const tamanoNormalizado = datos.partes.reduce(
+      (total, parte) => total + parte.tamanoBytes,
+      0,
+    );
+    const sinArchivos = datos.partes.length === 0 && filas === 0n;
+    await this.repositorio.guardarResultadoEjecucion({
+      ejecucionReporteId,
+      estado: sinArchivos ? "sin_archivos" : "disponible",
+      ...(filas != null
+        ? {
+            filasExportadas: filas,
+            fuenteFilasExportadas: "procesamiento_resultado" as const,
+          }
+        : {}),
+      tamanoAlmacenadoBytes: BigInt(tamanoNormalizado),
+      objetosFuente: BigInt(datos.fuentes.length),
+      partesDescarga: datos.partes.length,
+      maximoFilasPorArchivoAplicado: BigInt(datos.maximoFilas),
+      disponibleEn: new Date(),
+    });
+  }
+
   async listarEjecuciones(
     contexto: ContextoDescarga,
     limite?: number,
@@ -162,6 +198,12 @@ export class ServicioDescargas implements IServicioDescargas {
       idsConJob.length > 0
         ? await this.repositorio.listarJobsBigQueryPorEjecucionIds(idsConJob)
         : new Map<string, JobBigQueryPersistido[]>();
+    const resultadosPersistidos =
+      ejecuciones.length > 0
+        ? await this.repositorio.listarResultadosEjecuciones(
+            ejecuciones.map((ejecucion) => ejecucion.id),
+          )
+        : new Map();
 
     return Promise.all(
       ejecuciones.map(async (e) => {
@@ -172,15 +214,27 @@ export class ServicioDescargas implements IServicioDescargas {
           fecha: string | null;
         }> = [];
         let archivosExistentes = false;
+        let cantidadObjetosFuente = 0;
+        let tamanoObjetosFuente = 0;
         if (e.estado === "completada") {
           const { prefijo } = parsearUriGcsPermitida(e.uriBaseGcs);
           if (prefijo.endsWith(`${e.id}/`)) {
+            const prefijoCache = prefijoPartesNormalizadas(prefijo);
             const objetos = (
               await ejecutarOperacionGcs(
                 () => this.almacenamiento.listar(prefijo),
                 "listar",
               )
-            ).filter(esArchivoDescargable);
+            ).filter(
+              (objeto) =>
+                esArchivoDescargable(objeto) &&
+                !objeto.rutaCompleta.startsWith(prefijoCache),
+            );
+            cantidadObjetosFuente = objetos.length;
+            tamanoObjetosFuente = objetos.reduce(
+              (total, objeto) => total + objeto.tamanoBytes,
+              0,
+            );
             archivos = objetos.map((obj) => ({
               nombre: obj.nombre,
               formato:
@@ -197,13 +251,66 @@ export class ServicioDescargas implements IServicioDescargas {
           }
         }
 
+        const resultadoPersistido = resultadosPersistidos.get(e.id);
         const jobs = jobsPorEjecucion.get(e.id) ?? [];
         const jobPrincipal = jobs.find((j) => j.jobId === e.jobIdBigQuery);
-        const registrosExportados = obtenerRegistrosEscritos(jobPrincipal);
+        const registrosDesdeJob = obtenerRegistrosEscritos(jobPrincipal);
+        const registrosExportados =
+          e.filasExportadas != null
+            ? Number(e.filasExportadas)
+            : registrosDesdeJob;
+        const fuenteFilasExportadas =
+          e.fuenteFilasExportadas ??
+          (registrosDesdeJob != null ? "procesamiento_resultado" : null);
         const partesAgrupadasEstimadas =
           registrosExportados != null
-            ? Math.max(1, Math.ceil(registrosExportados / this.maximoFilasPorArchivo))
+            ? Math.ceil(registrosExportados / this.maximoFilasPorArchivo)
             : null;
+
+        let resultado = resultadoPersistido
+          ? {
+              estado: resultadoPersistido.estado,
+              filasExportadas:
+                registrosExportados != null ? String(registrosExportados) : null,
+              fuenteFilasExportadas,
+              partesDescarga: resultadoPersistido.partesDescarga,
+              tamanoBytes:
+                resultadoPersistido.tamanoAlmacenadoBytes != null
+                  ? String(resultadoPersistido.tamanoAlmacenadoBytes)
+                  : null,
+            }
+          : null;
+
+        if (
+          !resultadoPersistido &&
+          e.estado === "completada" &&
+          registrosExportados != null
+        ) {
+          const estadoResultado =
+            archivosExistentes || registrosExportados > 0
+              ? ("disponible" as const)
+              : ("sin_archivos" as const);
+          const partesDescarga = partesAgrupadasEstimadas ?? 0;
+          const disponibleEn = e.finalizadoEn ?? new Date();
+          await this.repositorio.guardarResultadoEjecucion({
+            ejecucionReporteId: e.id,
+            estado: estadoResultado,
+            filasExportadas: BigInt(registrosExportados),
+            fuenteFilasExportadas,
+            tamanoAlmacenadoBytes: BigInt(tamanoObjetosFuente),
+            objetosFuente: BigInt(cantidadObjetosFuente),
+            partesDescarga,
+            maximoFilasPorArchivoAplicado: BigInt(this.maximoFilasPorArchivo),
+            disponibleEn,
+          });
+          resultado = {
+            estado: estadoResultado,
+            filasExportadas: String(registrosExportados),
+            fuenteFilasExportadas,
+            partesDescarga,
+            tamanoBytes: String(tamanoObjetosFuente),
+          };
+        }
 
         const duracionTotalMs =
           e.finalizadoEn && (e.iniciadoEn ?? e.creadoEn)
@@ -242,16 +349,8 @@ export class ServicioDescargas implements IServicioDescargas {
           totalSlotMs: jobPrincipal?.totalSlotMs ?? null,
           filasExportadas:
             registrosExportados != null ? String(registrosExportados) : null,
-          resultado:
-            partesAgrupadasEstimadas != null
-              ? {
-                  estado: "pendiente" as const,
-                  filasExportadas: String(registrosExportados),
-                  fuenteFilasExportadas: "procesamiento_resultado" as const,
-                  partesDescarga: partesAgrupadasEstimadas,
-                  tamanoBytes: null,
-                }
-              : null,
+          fuenteFilasExportadas,
+          resultado,
           archivosExistentes,
         };
       }),
