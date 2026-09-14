@@ -1,3 +1,4 @@
+import { useContextoVista } from "@/app/contexto-vista";
 import { EstadoError } from "@/compartido/componentes/feedback/estado-error";
 import { useNotificaciones } from "@/compartido/componentes/feedback/notificaciones";
 import { Button } from "@/compartido/componentes/ui/button";
@@ -7,6 +8,10 @@ import { PageLayout } from "@/compartido/componentes/ui/page-layout";
 import { useTenantActivo } from "@/compartido/hooks/use-tenant-activo";
 import { construirUrlVerFlujoQlik } from "@/compartido/utiles/qlik-urls";
 import { PestanaMetadataFlujo } from "@/modulos/flujos/componentes/detalle/pestana-metadata-flujo";
+import {
+  listarDescargas,
+  listarDescargasAdministracion,
+} from "@/modulos/descargas/api";
 import {
   cancelarEjecucionReporte,
   ejecutarReporte,
@@ -42,6 +47,8 @@ function leerHashPestana(): Pestana {
 
 export function PaginaDetalleReporte({ id }: { id: string }) {
   const { tenant: tenantActivo } = useTenantActivo();
+  const { esAdmin, modoUsuarioFinal } = useContextoVista();
+  const puedeAdministrarDescargas = esAdmin && !modoUsuarioFinal;
   const { mostrarError, mostrarExito } = useNotificaciones();
   const client = useQueryClient();
   const navegar = useNavigate();
@@ -108,6 +115,21 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
         ? 2_000
         : false,
   });
+  const descargasAccesibles = useQuery({
+    queryKey: [
+      "descargas-accesibles",
+      tenantActivo?.id,
+      puedeAdministrarDescargas ? "administracion" : "usuario",
+    ],
+    queryFn: puedeAdministrarDescargas
+      ? listarDescargasAdministracion
+      : listarDescargas,
+    retry: false,
+    enabled: pestana === "historial",
+  });
+  const idsDescargables = descargasAccesibles.data
+    ? new Set(descargasAccesibles.data.map((descarga) => descarga.id))
+    : undefined;
 
   const cancelar = useMutation({
     mutationFn: (ejecucionId: string) =>
@@ -424,6 +446,7 @@ export function PaginaDetalleReporte({ id }: { id: string }) {
               ejecuciones={ejecucionesActuales}
               hashConfiguracionActual={preflight.data?.hashDataflowSha256}
               id={id}
+              ejecucionesDescargables={idsDescargables}
             />
           )}
         </div>

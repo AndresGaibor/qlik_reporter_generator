@@ -9,6 +9,7 @@ import type {
   JobBigQueryPersistido,
   PuertoRepositorioReportes,
 } from "../../reportes/aplicacion/puertos/puerto-repositorio-reportes.js";
+import { MAXIMO_FILAS_DESCARGA_PREDETERMINADO } from "./particionar-csv-descarga.js";
 import { parsearUriGcsPermitida } from "./puerto-almacenamiento-descargas.js";
 import type { PuertoAlmacenamientoDescargas } from "./puerto-almacenamiento-descargas.js";
 
@@ -17,6 +18,7 @@ export class ServicioDescargas implements IServicioDescargas {
     private readonly repositorio: PuertoRepositorioReportes,
     private readonly almacenamiento: PuertoAlmacenamientoDescargas,
     private readonly minutosFirma: number,
+    private readonly maximoFilasPorArchivo = MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
   ) {}
 
   async crearManifiesto(
@@ -197,6 +199,11 @@ export class ServicioDescargas implements IServicioDescargas {
 
         const jobs = jobsPorEjecucion.get(e.id) ?? [];
         const jobPrincipal = jobs.find((j) => j.jobId === e.jobIdBigQuery);
+        const registrosExportados = obtenerRegistrosEscritos(jobPrincipal);
+        const partesAgrupadasEstimadas =
+          registrosExportados != null
+            ? Math.max(1, Math.ceil(registrosExportados / this.maximoFilasPorArchivo))
+            : null;
 
         const duracionTotalMs =
           e.finalizadoEn && (e.iniciadoEn ?? e.creadoEn)
@@ -233,11 +240,36 @@ export class ServicioDescargas implements IServicioDescargas {
           totalBytesProcessed: jobPrincipal?.totalBytesProcessed ?? null,
           totalBytesBilled: jobPrincipal?.totalBytesBilled ?? null,
           totalSlotMs: jobPrincipal?.totalSlotMs ?? null,
+          filasExportadas:
+            registrosExportados != null ? String(registrosExportados) : null,
+          resultado:
+            partesAgrupadasEstimadas != null
+              ? {
+                  estado: "pendiente" as const,
+                  filasExportadas: String(registrosExportados),
+                  fuenteFilasExportadas: "procesamiento_resultado" as const,
+                  partesDescarga: partesAgrupadasEstimadas,
+                  tamanoBytes: null,
+                }
+              : null,
           archivosExistentes,
         };
       }),
     );
   }
+}
+
+function obtenerRegistrosEscritos(job: JobBigQueryPersistido | undefined): number | null {
+  const plan = job?.metadataJson?.queryPlan;
+  if (!Array.isArray(plan)) return null;
+  let maximo: number | null = null;
+  for (const etapa of plan) {
+    if (!etapa || typeof etapa !== "object") continue;
+    const valor = Number((etapa as Record<string, unknown>).recordsWritten);
+    if (!Number.isSafeInteger(valor) || valor < 0) continue;
+    maximo = maximo == null ? valor : Math.max(maximo, valor);
+  }
+  return maximo;
 }
 
 function esArchivoDescargable(objeto: { nombre: string }): boolean {

@@ -19,6 +19,7 @@ import {
   listarCarpetaUsuarioGcs,
   listarCarpetasUsuariosGcs,
   listarDescargas,
+  listarDescargasAdministracion,
   listarExploradorGcs,
   listarPartesNormalizadas,
   listarUsuariosCompartibles,
@@ -45,6 +46,10 @@ export function PaginaDescargas() {
   const puedeAdministrar = esAdmin && !modoUsuarioFinal;
   const [rutaCarpeta, setRutaCarpeta] = useRutaPersistidaEnUrl("carpeta");
   const [rutaGcs, setRutaGcs] = useRutaPersistidaEnUrl("almacenamiento");
+  const ejecucionDirectaId =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("ejecucion")
+      : null;
 
   const { data: sesion } = useQuery({
     queryKey: ["sesion"],
@@ -57,10 +62,25 @@ export function PaginaDescargas() {
     retry: false,
   });
   const descargas = useQuery({
-    queryKey: ["descargas-compartidas"],
-    queryFn: listarDescargas,
+    queryKey: [
+      "descargas-accesibles",
+      puedeAdministrar ? "administracion" : "usuario",
+    ],
+    queryFn: puedeAdministrar ? listarDescargasAdministracion : listarDescargas,
     retry: false,
   });
+  const ejecucionIdRuta = rutaCarpeta
+    .split("/")
+    .filter(Boolean)
+    .reverse()
+    .find(esUuid);
+  const ejecucionIdSeleccionada = ejecucionDirectaId ?? ejecucionIdRuta;
+  const descargaRuta = ejecucionIdSeleccionada
+    ? (descargas.data ?? []).find((item) => item.id === ejecucionIdSeleccionada)
+    : undefined;
+  const archivosAgrupadosRuta = descargaRuta?.resultado?.partesDescarga ?? null;
+  const registrosRuta =
+    descargaRuta?.filasExportadas ?? descargaRuta?.resultado?.filasExportadas ?? null;
   const [compartiendo, setCompartiendo] =
     useState<ResumenDescargaEjecucion | null>(null);
 
@@ -143,17 +163,70 @@ export function PaginaDescargas() {
               )}
             </div>
           </div>
-          <div className="sm:min-w-[150px]">
-            <MetricaCarpeta
-              icono="download"
-              etiqueta="Archivos"
-              valor={carpetaUsuario.data?.archivos.length ?? 0}
-            />
+          <div className="flex flex-wrap gap-2 sm:min-w-[150px] sm:justify-end">
+            {ejecucionIdSeleccionada ? (
+              <>
+                <MetricaCarpeta
+                  icono="download"
+                  etiqueta="Archivos agrupados"
+                  valor={archivosAgrupadosRuta ?? "Calculando…"}
+                />
+                <MetricaCarpeta
+                  icono="file-text"
+                  etiqueta="Registros"
+                  valor={
+                    registrosRuta != null
+                      ? Number(registrosRuta).toLocaleString("es-EC")
+                      : "Calculando…"
+                  }
+                />
+              </>
+            ) : (
+              <MetricaCarpeta
+                icono="download"
+                etiqueta="Archivos"
+                valor={carpetaUsuario.data?.archivos.length ?? 0}
+              />
+            )}
           </div>
         </div>
       </section>
 
-      <SeccionExploradorGcs
+      {ejecucionDirectaId && (
+        <section className="rounded-xl border border-line-200 bg-surface p-5 shadow-card">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink-900">
+                {descargaRuta?.reporteNombre ?? "Archivos de la ejecución"}
+              </h2>
+              <p className="mt-1 text-sm text-ink-500">
+                Archivos correspondientes únicamente a esta ejecución.
+              </p>
+            </div>
+            <a
+              href="/descargas"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+            >
+              Volver a mis descargas
+            </a>
+          </div>
+          {descargas.isLoading ? (
+            <p className="text-sm text-ink-500">Comprobando acceso…</p>
+          ) : descargaRuta ? (
+            <PartesNormalizadas
+              ejecucionId={ejecucionDirectaId}
+              resumen={descargaRuta}
+            />
+          ) : (
+            <p className="rounded-lg bg-warning-50 px-3 py-2 text-sm text-ink-700">
+              No tienes acceso a los archivos de esta ejecución.
+            </p>
+          )}
+        </section>
+      )}
+
+      {!ejecucionDirectaId && (
+        <SeccionExploradorGcs
         titulo="Mi carpeta"
         descripcion="Navega por tus carpetas y descarga los archivos disponibles."
         nombreRaiz={carpetaUsuario.data?.carpetaUsuario ?? "Tu carpeta"}
@@ -205,6 +278,7 @@ export function PaginaDescargas() {
           descargarDesdeEnlace(firmado);
         }}
       />
+      )}
 
       {puedeAdministrar && (
         <>
@@ -498,7 +572,13 @@ function CarpetaCompartida({
   );
 }
 
-function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
+function PartesNormalizadas({
+  ejecucionId,
+  resumen,
+}: {
+  ejecucionId: string;
+  resumen?: ResumenDescargaEjecucion;
+}) {
   const partes = useQuery({
     queryKey: ["partes-normalizadas", ejecucionId],
     queryFn: () => listarPartesNormalizadas(ejecucionId),
@@ -510,38 +590,48 @@ function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
     return () => window.clearTimeout(temporizador);
   }, [partes.data?.estado, partes.refetch]);
   if (partes.isLoading)
-    return <p className="text-sm text-ink-500">Preparando archivos...</p>;
+    return <p className="text-sm text-ink-500">Preparando archivos agrupados...</p>;
   if (partes.isError)
     return <p className="text-sm text-danger-600">{partes.error.message}</p>;
+  if (partes.data?.estado === "preparando") {
+    const archivosEstimados = resumen?.resultado?.partesDescarga ?? null;
+    const registrosEstimados =
+      resumen?.filasExportadas ?? resumen?.resultado?.filasExportadas ?? null;
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-ink-800">
+            {archivosEstimados != null && registrosEstimados != null
+              ? `${archivosEstimados} ${archivosEstimados === 1 ? "archivo agrupado" : "archivos agrupados"} · ${Number(registrosEstimados).toLocaleString("es-EC")} registros`
+              : "Calculando archivos agrupados…"}
+          </p>
+          <p className="mt-1 text-xs text-ink-500">
+            {archivosEstimados != null
+              ? "Terminando de preparar los archivos para descarga individual."
+              : "La cantidad aparecerá cuando esté disponible la metadata de la ejecución."}
+          </p>
+        </div>
+        <a
+          href={urlZipEjecucion(ejecucionId)}
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+        >
+          <Icon name="download" size="sm" /> Descargar todo (.zip)
+        </a>
+      </div>
+    );
+  }
   return (
     <>
-      {partes.data?.estado === "preparando" && (
-        <p className="text-sm text-ink-500">
-          Preparando archivos; los terminados ya se pueden descargar.
-        </p>
-      )}
       {partes.data && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
-          {(partes.data.partes.length > 0 || partes.data.filas != null) && (
-            <p className="text-sm font-semibold text-ink-800">
-              {partes.data.partes.length} archivos ·{" "}
-              {formatearTamano(
-                partes.data.partes.reduce(
-                  (total, parte) => total + parte.tamano,
-                  0,
-                ),
-              )}
-              {partes.data.filas != null &&
-                ` · ${Number(partes.data.filas).toLocaleString("es-EC")} filas`}
-            </p>
+        <ResumenPartesDescarga
+          archivos={partes.data.partes.length}
+          tamano={partes.data.partes.reduce(
+            (total, parte) => total + parte.tamano,
+            0,
           )}
-          <a
-            href={urlZipEjecucion(ejecucionId)}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-          >
-            <Icon name="download" size="sm" /> Descargar todo (.zip)
-          </a>
-        </div>
+          filas={partes.data.filas}
+          ejecucionId={ejecucionId}
+        />
       )}
       {(partes.data?.partes ?? []).map((parte) => (
         <div
@@ -562,6 +652,33 @@ function PartesNormalizadas({ ejecucionId }: { ejecucionId: string }) {
         </div>
       ))}
     </>
+  );
+}
+
+function ResumenPartesDescarga({
+  archivos,
+  tamano,
+  filas,
+  ejecucionId,
+}: {
+  archivos: number;
+  tamano: number;
+  filas?: string | null;
+  ejecucionId: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 px-4 py-3">
+      <p className="text-sm font-semibold text-ink-800">
+        {archivos} {archivos === 1 ? "archivo" : "archivos"} · {formatearTamano(tamano)}
+        {filas != null && ` · ${Number(filas).toLocaleString("es-EC")} filas`}
+      </p>
+      <a
+        href={urlZipEjecucion(ejecucionId)}
+        className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+      >
+        <Icon name="download" size="sm" /> Descargar todo (.zip)
+      </a>
+    </div>
   );
 }
 
@@ -616,7 +733,7 @@ function MetricaCarpeta({
 }: {
   icono: "file-text" | "download";
   etiqueta: string;
-  valor: number;
+  valor: number | string;
 }) {
   return (
     <div className="rounded-lg border border-line-200 bg-surface px-3 py-2.5 shadow-sm">
@@ -1003,6 +1120,7 @@ function SeccionExploradorGcs({
           {esCarpetaEjecucion && datosUsuario?.ejecucionActual && (
             <PartesNormalizadas
               ejecucionId={datosUsuario.ejecucionActual.ejecucionId}
+              resumen={descargaPorId.get(datosUsuario.ejecucionActual.ejecucionId)}
             />
           )}
           {!esCarpetaEjecucion &&

@@ -214,6 +214,8 @@ import {
   eliminarArchivoCarpetaUsuarioGcs,
   firmarArchivoCarpetaUsuarioGcs,
   listarCarpetaUsuarioGcs,
+  listarDescargas,
+  listarDescargasAdministracion,
   listarExploradorGcs,
   listarPartesNormalizadas,
   urlCsvParteCarpetaUsuarioGcs,
@@ -471,4 +473,31 @@ test("permite descargar el ZIP mientras las partes siguen preparándose", async 
     timeout: 3_500,
   });
   expect(listarPartesNormalizadas).toHaveBeenCalledTimes(2);
+});
+
+
+test("administrador puede abrir por ID una ejecución de otro usuario", async () => {
+  window.history.replaceState({}, "", "/descargas?ejecucion=e-admin-1");
+  const vista = await montar({ modoUsuarioFinal: false, esAdmin: true });
+
+  await vi.waitFor(() => expect(vista.textContent).toContain("Inventario"));
+  expect(listarDescargasAdministracion).toHaveBeenCalled();
+  expect(listarDescargas).not.toHaveBeenCalled();
+  await vi.waitFor(() =>
+    expect(listarPartesNormalizadas).toHaveBeenCalledWith("e-admin-1"),
+  );
+});
+
+test("administrador en vista de usuario final no accede a ejecuciones ajenas no compartidas", async () => {
+  window.history.replaceState({}, "", "/descargas?ejecucion=e-admin-1");
+  const vista = await montar({ modoUsuarioFinal: true, esAdmin: true });
+
+  await vi.waitFor(() =>
+    expect(vista.textContent).toContain(
+      "No tienes acceso a los archivos de esta ejecución.",
+    ),
+  );
+  expect(listarDescargas).toHaveBeenCalled();
+  expect(listarDescargasAdministracion).not.toHaveBeenCalled();
+  expect(listarPartesNormalizadas).not.toHaveBeenCalledWith("e-admin-1");
 });

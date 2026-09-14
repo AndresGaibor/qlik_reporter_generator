@@ -24,6 +24,16 @@ import { NAVEGACION } from "./navegacion";
 const WEB_INTEGRATION_ID =
   import.meta.env.VITE_QLIK_WEB_INTEGRATION_ID?.trim() ?? "";
 const INTERVALO_VERIFICACION_QLIK_MS = 60_000;
+const CLAVE_MODO_USUARIO_FINAL = "qlik-report:modo-usuario-final";
+
+function leerModoUsuarioFinal(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(CLAVE_MODO_USUARIO_FINAL) === "1";
+  } catch {
+    return false;
+  }
+}
 
 function claveSesionWebVerificada(tenantHost: string): string {
   return `qlik-report:sesion-web-verificada:${tenantHost}:${WEB_INTEGRATION_ID}`;
@@ -35,7 +45,7 @@ export function LayoutPrincipal() {
   const ubicacion = useLocation();
   const { mostrarError } = useNotificaciones();
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
-  const [modoUsuarioFinal, setModoUsuarioFinal] = useState(false);
+  const [modoUsuarioFinal, setModoUsuarioFinal] = useState(leerModoUsuarioFinal);
   const cierreAutomaticoEnCurso = useRef(false);
 
   const esLogin = ubicacion.pathname === "/login";
@@ -153,6 +163,17 @@ export function LayoutPrincipal() {
       else mostrarError(consulta.error.message);
     }
   }, [consulta.error, esLogin, mostrarError, navegar]);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(
+        CLAVE_MODO_USUARIO_FINAL,
+        modoUsuarioFinal ? "1" : "0",
+      );
+    } catch {
+      // Si el almacenamiento está bloqueado, el modo sigue funcionando en memoria.
+    }
+  }, [modoUsuarioFinal]);
 
   useEffect(() => {
     const sesion = consulta.data;

@@ -27,10 +27,12 @@ export function HistorialAuditoriaReporte({
   ejecuciones,
   hashConfiguracionActual,
   id,
+  ejecucionesDescargables,
 }: {
   ejecuciones: DetalleEjecucionReporte[];
   hashConfiguracionActual?: string;
   id?: string;
+  ejecucionesDescargables?: ReadonlySet<string>;
   /** Compatibilidad con consumidores antiguos; la evidencia ahora siempre está disponible. */
   mostrarDetallesTecnicos?: boolean;
 }) {
@@ -110,7 +112,9 @@ export function HistorialAuditoriaReporte({
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {id && (
+                {id &&
+                  ejecucion.estado === "completada" &&
+                  ejecucionesDescargables?.has(ejecucion.id) && (
                   <button
                     type="button"
                     className="rounded-md border border-line-200 px-3 py-1.5 text-sm font-semibold text-ink-700 hover:bg-hover"
@@ -118,7 +122,6 @@ export function HistorialAuditoriaReporte({
                       void navegar({
                         to: "/descargas",
                         search: {
-                          reporte: id,
                           ejecucion: ejecucion.id,
                         },
                       })
@@ -127,6 +130,14 @@ export function HistorialAuditoriaReporte({
                     Ver archivos
                   </button>
                 )}
+                {id &&
+                  ejecucionesDescargables &&
+                  !ejecucionesDescargables.has(ejecucion.id) &&
+                  ejecucion.estado === "completada" && (
+                    <span className="px-1 py-1.5 text-sm text-ink-500">
+                      Archivos no compartidos contigo
+                    </span>
+                  )}
               </div>
 
               {ejecucion.mensajeError ? (

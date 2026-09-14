@@ -409,10 +409,14 @@ export function registrarRutasEjecuciones(
     const sesion = await dependencias.resolverSesion(c);
 
     const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+    const configuracionGcs = dependencias.resolverConfiguracionGcs
+      ? await dependencias.resolverConfiguracionGcs(c)
+      : undefined;
     const servicio = new ServicioDescargas(
       dependencias.repositorioReportes,
       almacenamiento,
       dependencias.minutosFirma ?? 15,
+      configuracionGcs?.maximoFilasPorArchivo,
     );
 
     let ejecuciones = await servicio.listarEjecuciones({
@@ -507,10 +511,14 @@ export function registrarRutasEjecuciones(
       });
     }
     const almacenamiento = await dependencias.resolverAlmacenamiento(c);
+    const configuracionGcs = dependencias.resolverConfiguracionGcs
+      ? await dependencias.resolverConfiguracionGcs(c)
+      : undefined;
     const servicio = new ServicioDescargas(
       dependencias.repositorioReportes,
       almacenamiento,
       dependencias.minutosFirma ?? 15,
+      configuracionGcs?.maximoFilasPorArchivo,
     );
     const ejecuciones = await servicio.listarEjecuciones({
       tenantQlikId: sesion.tenantId,

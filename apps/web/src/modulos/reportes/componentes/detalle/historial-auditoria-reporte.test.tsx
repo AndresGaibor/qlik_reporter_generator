@@ -49,6 +49,7 @@ function montar(
   mostrarDetallesTecnicos: boolean,
   ejecucion: DetalleEjecucionReporte = ejecucionBase,
   id?: string,
+  ejecucionesDescargables?: ReadonlySet<string>,
 ) {
   container = document.createElement("div");
   document.body.append(container);
@@ -59,6 +60,7 @@ function montar(
         ejecuciones={[ejecucion]}
         mostrarDetallesTecnicos={mostrarDetallesTecnicos}
         id={id}
+        ejecucionesDescargables={ejecucionesDescargables}
       />,
     );
   });
@@ -76,7 +78,12 @@ test("mantiene la evidencia técnica dentro del acordeón sin mostrarla fuera", 
 
 test("Ver archivos abre el reporte y la ejecución seleccionada", () => {
   navegar.mockClear();
-  const vista = montar(false, ejecucionBase, "reporte-25");
+  const vista = montar(
+    false,
+    ejecucionBase,
+    "reporte-25",
+    new Set([ejecucionBase.id]),
+  );
   const boton = [...vista.querySelectorAll("button")].find((item) =>
     item.textContent?.includes("Ver archivos"),
   );
@@ -85,8 +92,15 @@ test("Ver archivos abre el reporte y la ejecución seleccionada", () => {
   act(() => boton?.dispatchEvent(new MouseEvent("click", { bubbles: true })));
   expect(navegar).toHaveBeenCalledWith({
     to: "/descargas",
-    search: { reporte: "reporte-25", ejecucion: "e-1" },
+    search: { ejecucion: "e-1" },
   });
+});
+
+
+test("no ofrece Ver archivos cuando la ejecución no está compartida", () => {
+  const vista = montar(false, ejecucionBase, "reporte-25", new Set());
+  expect(vista.textContent).not.toContain("Ver archivos");
+  expect(vista.textContent).toContain("Archivos no compartidos contigo");
 });
 
 test("mantiene el Job ID de BigQuery dentro de la auditoría técnica con acción de copia", () => {
