@@ -20,21 +20,11 @@ import { useEffect, useRef, useState } from "react";
 import { BarraUsuario, HeaderLink } from "./componentes-header";
 import { VistaContext } from "./contexto-vista";
 import { NAVEGACION } from "./navegacion";
+import { leerModoUsuarioFinal, persistirModoUsuarioFinal } from "./modo-usuario-final";
 
 const WEB_INTEGRATION_ID =
   import.meta.env.VITE_QLIK_WEB_INTEGRATION_ID?.trim() ?? "";
 const INTERVALO_VERIFICACION_QLIK_MS = 60_000;
-const CLAVE_MODO_USUARIO_FINAL = "qlik-report:modo-usuario-final";
-
-function leerModoUsuarioFinal(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.sessionStorage.getItem(CLAVE_MODO_USUARIO_FINAL) === "1";
-  } catch {
-    return false;
-  }
-}
-
 function claveSesionWebVerificada(tenantHost: string): string {
   return `qlik-report:sesion-web-verificada:${tenantHost}:${WEB_INTEGRATION_ID}`;
 }
@@ -165,14 +155,7 @@ export function LayoutPrincipal() {
   }, [consulta.error, esLogin, mostrarError, navegar]);
 
   useEffect(() => {
-    try {
-      window.sessionStorage.setItem(
-        CLAVE_MODO_USUARIO_FINAL,
-        modoUsuarioFinal ? "1" : "0",
-      );
-    } catch {
-      // Si el almacenamiento está bloqueado, el modo sigue funcionando en memoria.
-    }
+    persistirModoUsuarioFinal(modoUsuarioFinal);
   }, [modoUsuarioFinal]);
 
   useEffect(() => {

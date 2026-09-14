@@ -5,7 +5,7 @@ import {
 } from "../../../../nucleo/http/respuestas.js";
 import {
   carpetaDesdeCorreo,
-  esAdministrador,
+  esAdministradorEfectivo,
   esRutaDescargable,
   normalizarSubruta,
   responderErrorGcs,
@@ -18,7 +18,7 @@ export function registrarRutasExplorador(
 ): void {
   rutas.get("/explorador", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) {
+    if (!esAdministradorEfectivo(c, sesion)) {
       return responderError(c, "Acceso restringido a administradores", 403, {
         codigo: "SOLO_ADMIN",
       });
@@ -71,7 +71,7 @@ export function registrarRutasExplorador(
 
   rutas.post("/explorador/firma", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) {
+    if (!esAdministradorEfectivo(c, sesion)) {
       return responderError(c, "Acceso restringido a administradores", 403, {
         codigo: "SOLO_ADMIN",
       });
@@ -116,7 +116,7 @@ export function registrarRutasExplorador(
 
   rutas.get("/administracion/carpetas", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) {
+    if (!esAdministradorEfectivo(c, sesion)) {
       return responderError(c, "Acceso restringido a administradores", 403, {
         codigo: "SOLO_ADMIN",
       });

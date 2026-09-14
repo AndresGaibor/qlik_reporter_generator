@@ -106,6 +106,22 @@ export function esAdministrador(sesion: SesionDescarga): boolean {
   return Boolean(sesion.esSuperadmin || sesion.roles?.includes("admin"));
 }
 
+export const COOKIE_MODO_USUARIO_FINAL = "qlik_vista_usuario_final";
+
+export function esAdministradorEfectivo(
+  c: Context,
+  sesion: SesionDescarga,
+): boolean {
+  const cookies = c.req.header("Cookie") ?? "";
+  const previsualizandoUsuarioFinal = cookies
+    .split(";")
+    .some(
+      (cookie) =>
+        cookie.trim() === `${COOKIE_MODO_USUARIO_FINAL}=1`,
+    );
+  return esAdministrador(sesion) && !previsualizandoUsuarioFinal;
+}
+
 export function normalizarSubruta(valor: string): string {
   const limpio = valor.replace(/\\/g, "/").replace(/^\/+/, "");
   if (!limpio) return "";

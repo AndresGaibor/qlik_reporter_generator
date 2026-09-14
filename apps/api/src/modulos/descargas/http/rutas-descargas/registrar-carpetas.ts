@@ -14,7 +14,7 @@ import {
 } from "../../aplicacion/particionar-csv-descarga.js";
 import {
   carpetaDesdeCorreo,
-  esAdministrador,
+  esAdministradorEfectivo,
   esRutaDescargable,
   normalizarRutaArchivo,
   normalizarSubruta,
@@ -251,7 +251,7 @@ export function registrarRutasCarpeta(
 
   rutas.delete("/carpeta/archivo", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion))
+    if (!esAdministradorEfectivo(c, sesion))
       return responderError(
         c,
         "Solo un administrador puede eliminar archivos",
@@ -297,7 +297,7 @@ export function registrarRutasCarpeta(
 
   rutas.delete("/carpeta/directorio", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion))
+    if (!esAdministradorEfectivo(c, sesion))
       return responderError(
         c,
         "Solo un administrador puede eliminar carpetas",

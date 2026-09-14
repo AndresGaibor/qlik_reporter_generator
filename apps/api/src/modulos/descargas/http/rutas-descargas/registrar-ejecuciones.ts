@@ -22,7 +22,7 @@ import {
 } from "../../aplicacion/preparar-partes-normalizadas.js";
 import { parsearUriGcsPermitida } from "../../aplicacion/puerto-almacenamiento-descargas.js";
 import { ServicioDescargas } from "../../aplicacion/servicio-descargas.js";
-import { esAdministrador } from "./helpers.js";
+import { esAdministradorEfectivo } from "./helpers.js";
 import { respuestaZipEjecucion } from "./respuesta-zip.js";
 import type { DependenciasRutasDescargas } from "./tipos.js";
 
@@ -38,7 +38,7 @@ export function registrarRutasEjecuciones(
         tenantQlikId: sesion.tenantId,
         organizacionId: sesion.organizacionId,
         usuarioId: sesion.usuarioId,
-        esAdministrador: esAdministrador(sesion),
+        esAdministrador: esAdministradorEfectivo(c, sesion),
       });
     if (!ejecucion)
       throw new ErrorAplicacion(
@@ -253,7 +253,7 @@ export function registrarRutasEjecuciones(
       return responderError(c, "Descarga no encontrada", 404);
     if (
       ejecucion.ejecutadoPorUsuarioId !== sesion.usuarioId &&
-      !esAdministrador(sesion)
+      !esAdministradorEfectivo(c, sesion)
     )
       return responderError(
         c,
@@ -282,7 +282,7 @@ export function registrarRutasEjecuciones(
       return responderError(c, "Descarga no encontrada", 404);
     if (
       ejecucion.ejecutadoPorUsuarioId !== sesion.usuarioId &&
-      !esAdministrador(sesion)
+      !esAdministradorEfectivo(c, sesion)
     )
       return responderError(
         c,
@@ -323,7 +323,7 @@ export function registrarRutasEjecuciones(
         tenantQlikId: sesion.tenantId,
         organizacionId: sesion.organizacionId,
         usuarioId: sesion.usuarioId,
-        esAdministrador: esAdministrador(sesion),
+        esAdministrador: esAdministradorEfectivo(c, sesion),
       });
     if (!ejecucion)
       return responderError(c, "Descarga no encontrada", 404, {
@@ -505,7 +505,7 @@ export function registrarRutasEjecuciones(
 
   rutas.get("/administracion", async (c) => {
     const sesion = await dependencias.resolverSesion(c);
-    if (!esAdministrador(sesion)) {
+    if (!esAdministradorEfectivo(c, sesion)) {
       return responderError(c, "Acceso restringido a administradores", 403, {
         codigo: "SOLO_ADMIN",
       });
@@ -547,7 +547,7 @@ export function registrarRutasEjecuciones(
           tenantQlikId: sesion.tenantId,
           organizacionId: sesion.organizacionId,
           usuarioId: sesion.usuarioId,
-          esAdministrador: esAdministrador(sesion),
+          esAdministrador: esAdministradorEfectivo(c, sesion),
         },
         (archivo) =>
           `/api/descargas/${encodeURIComponent(ejecucionId)}/archivo?nombre=${encodeURIComponent(archivo.nombre)}`,
