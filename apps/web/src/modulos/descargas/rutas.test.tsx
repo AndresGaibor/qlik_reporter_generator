@@ -11,7 +11,9 @@ test("la ruta principal conserva la experiencia de descargas normalizadas y comp
 test("registra una ruta canónica por id de ejecución", () => {
   const rutas = crearRutasDescargas({} as never);
   const rutaEjecucion = rutas.find(
-    (ruta) => ruta.options.path === "/descargas/ejecuciones/$ejecucionId",
+    (ruta) =>
+      (ruta.options as { path?: string }).path ===
+      "/descargas/ejecuciones/$ejecucionId",
   );
 
   expect(rutaEjecucion).toBeTruthy();
