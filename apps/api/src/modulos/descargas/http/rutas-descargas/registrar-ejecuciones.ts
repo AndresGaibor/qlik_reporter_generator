@@ -1,7 +1,7 @@
 import { PassThrough, Readable } from "node:stream";
 import { esquemaCompartirDescarga } from "@qlik/contratos/descargas";
 import { ZipArchive } from "archiver";
-import type { Context, Hono } from "hono";
+import type { Hono } from "hono";
 import { ErrorAplicacion } from "../../../../nucleo/errores/error-aplicacion.js";
 import {
   responderError,
@@ -23,6 +23,10 @@ import {
 import { parsearUriGcsPermitida } from "../../aplicacion/puerto-almacenamiento-descargas.js";
 import { ServicioDescargas } from "../../aplicacion/servicio-descargas.js";
 import { esAdministradorEfectivo } from "./helpers.js";
+import {
+  prepararDescargaEjecucion,
+  prepararParticionadoEjecucion,
+} from "./preparar-descarga.js";
 import { respuestaZipEjecucion } from "./respuesta-zip.js";
 import type { DependenciasRutasDescargas } from "./tipos.js";
 
@@ -30,66 +34,6 @@ export function registrarRutasEjecuciones(
   rutas: Hono,
   dependencias: DependenciasRutasDescargas,
 ): void {
-  const prepararDescarga = async (c: Context, id: string) => {
-    const sesion = await dependencias.resolverSesion(c);
-    const ejecucion =
-      await dependencias.repositorioReportes.obtenerEjecucionDescarga({
-        id,
-        tenantQlikId: sesion.tenantId,
-        organizacionId: sesion.organizacionId,
-        usuarioId: sesion.usuarioId,
-        esAdministrador: esAdministradorEfectivo(c, sesion),
-      });
-    if (!ejecucion)
-      throw new ErrorAplicacion(
-        "EJECUCION_NO_ENCONTRADA",
-        "Descarga no encontrada",
-        404,
-      );
-    if (ejecucion.estado !== "completada")
-      throw new ErrorAplicacion(
-        "EJECUCION_NO_COMPLETADA",
-        "La ejecución aún no está completada",
-        409,
-      );
-    const almacenamiento = await dependencias.resolverAlmacenamiento(c);
-    if (!almacenamiento.abrirLectura)
-      throw new ErrorAplicacion(
-        "GCS_LECTURA_NO_DISPONIBLE",
-        "El almacenamiento no permite transmitir archivos",
-        501,
-      );
-    const { prefijo } = parsearUriGcsPermitida(ejecucion.uriBaseGcs);
-    if (!prefijo.endsWith(`${ejecucion.id}/`))
-      throw new ErrorAplicacion(
-        "PREFIJO_GCS_INVALIDO",
-        "La ruta de resultados no es válida",
-        422,
-      );
-    return { ejecucion, prefijo, almacenamiento };
-  };
-
-  const prepararParticionado = async (c: Context, id: string) => {
-    const base = await prepararDescarga(c, id);
-    const fuentes = (await base.almacenamiento.listar(base.prefijo)).filter(
-      (archivo) =>
-        /\.csv(?:\.gz)?$/i.test(archivo.nombre) &&
-        !archivo.rutaCompleta.startsWith(
-          prefijoPartesNormalizadas(base.prefijo),
-        ),
-    );
-    const configuracion = dependencias.resolverConfiguracionGcs
-      ? await dependencias.resolverConfiguracionGcs(c)
-      : undefined;
-    return {
-      ...base,
-      fuentes,
-      maximoFilas:
-        configuracion?.maximoFilasPorArchivo ??
-        MAXIMO_FILAS_DESCARGA_PREDETERMINADO,
-    };
-  };
-
   rutas.get("/:id/archivo", async (c) => {
     try {
       const nombre = c.req.query("nombre")?.trim();
@@ -98,9 +42,10 @@ export function registrarRutasEjecuciones(
           codigo: "ARCHIVO_INVALIDO",
         });
 
-      const { almacenamiento, prefijo } = await prepararDescarga(
+      const { almacenamiento, prefijo } = await prepararDescargaEjecucion(
         c,
         c.req.param("id"),
+        dependencias,
       );
       const archivo = (await almacenamiento.listar(prefijo)).find(
         (candidato) =>
@@ -139,7 +84,7 @@ export function registrarRutasEjecuciones(
   rutas.get("/:id/partes", async (c) => {
     try {
       const { almacenamiento, prefijo, fuentes, maximoFilas } =
-        await prepararParticionado(c, c.req.param("id"));
+        await prepararParticionadoEjecucion(c, c.req.param("id"), dependencias);
       const estadoPartes = await listarPartesNormalizadas(
         almacenamiento,
         prefijo,
@@ -198,9 +143,10 @@ export function registrarRutasEjecuciones(
     if (!Number.isSafeInteger(numero) || numero < 1)
       return responderError(c, "Número de parte inválido", 422);
     try {
-      const { almacenamiento, prefijo } = await prepararParticionado(
+      const { almacenamiento, prefijo } = await prepararParticionadoEjecucion(
         c,
         c.req.param("id"),
+        dependencias,
       );
       const { partes } = await listarPartesNormalizadas(
         almacenamiento,

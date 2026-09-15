@@ -110,6 +110,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
           }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
         actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+        listarResultadosEjecuciones: vi.fn(async () => new Map()),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({
@@ -230,6 +231,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
           }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
         actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+        listarResultadosEjecuciones: vi.fn(async () => new Map()),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({
@@ -300,6 +302,7 @@ describe("GET /api/descargas — BigQuery sync", () => {
           .mockResolvedValue({ ...execFallida, id: "exec-falla" }),
         guardarJobBigQueryEjecucion: vi.fn(async () => undefined),
         actualizarTimestampsEjecucionBigQuery: vi.fn(async () => undefined),
+        listarResultadosEjecuciones: vi.fn(async () => new Map()),
       } as unknown as PuertoRepositorioReportes,
       resolverAlmacenamiento: async () =>
         ({
